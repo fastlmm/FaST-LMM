@@ -146,9 +146,6 @@ def getTestSuite():
     return unittest.TestSuite([suite1, suite2])
 
 if __name__ == '__main__':
-
-    #from pysnptools.test import getTestSuite as pstTestSuite
-
     logging.basicConfig(level=logging.INFO)
 
     import fastlmm.util.testdistributable

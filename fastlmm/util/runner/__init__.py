@@ -16,7 +16,7 @@ import cPickle as cPickle
 import fastlmm.util.util as util
 from itertools import *
 
-def work_sequence_to_result_sequence (work_sequence):
+def work_sequence_to_result_sequence(work_sequence):
     '''
     Does all the work in a sequence of work items and returns a sequence of results.
     '''
@@ -35,7 +35,7 @@ def run_all_in_memory(work):
     if callable(work):
         return work()
     else:
-        assert hasattr(work,"work_sequence"), "Your work item doesn't have a work_sequence. This can be caused by having 'map_reduce(nested=something,...)' where you should have 'map_reduce(mapper=something,...)' because the 'something' is not a nested 'map_reduce'"
+        assert hasattr(work,"work_sequence"), "Your work item doesn't have a work_sequence. This can be caused by having 'map_reduce(nested=something,...)' where you should have 'map_reduce(mapper=something,...)' because the 'something' is not a nested 'map_reduce'. The exception can also be caused by giving a 'runner' on an inner, nested map_reduce."
         work_sequence = work.work_sequence()
         result_sequence = work_sequence_to_result_sequence(work_sequence)
         return work.reduce(result_sequence)
@@ -196,7 +196,7 @@ class BatchUpWork(object): # implements IDistributable
 
     #optional
     def __str__(self):
-        return "{0}({1},{2},{3})".format(self.__class__.__str__,self.sub_distributable,self.sub_workcount,self._workcount)
+        return "{0}({1},{2},{3})".format(self.__class__.__name__,self.sub_distributable,self.sub_workcount,self._workcount)
 
     def createSubWorkIndexList(self, workindex):
         assert 0 <= workindex and workindex < self._workcount, "real assert"
@@ -347,7 +347,7 @@ class ExpandWork(object): # implements IDistributable
 
     #optional
     def __str__(self):
-        return "{0}({1},{2},{3})".format(self.__class__.__str__,self.sub_distributable,self.sub_workcount,self._workcount)
+        return "{0}({1},{2},{3})".format(self.__class__.__name__,self.sub_distributable,self.sub_workcount,self._workcount)
 
 
 class MakeWork(object): # implements IDistributable
@@ -374,7 +374,7 @@ class MakeWork(object): # implements IDistributable
         return "This return value should always be ignored"
 
     def __str__(self):
-        return "{0}({1})".format(self.__class__.__str__,self._workcount)
+        return "{0}({1})".format(self.__class__.__name__,self._workcount)
 
 
 class SubGen:

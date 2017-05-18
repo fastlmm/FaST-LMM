@@ -640,7 +640,7 @@ class LMM(object):
         --------------------------------------------------------------------------
         '''
 
-        N = self.Y.shape[0] - self.linreg.D #number of degrees of freedom
+        #N = self.Y.shape[0] - self.linreg.D #number of degrees of freedom - commented out because not use and misleading name for dof
         S,U = self.getSU()
         k = S.shape[0]
 
@@ -663,7 +663,7 @@ class LMM(object):
         P = UY.shape[1] #number of phenotypes used
 
         if (snps is not None) and (Usnps is None):
-            assert snps.shape[0] == self.Y.shape[0], "shape missmatch between snps and Y"
+            assert snps.shape[0] == self.Y.shape[0], "shape mismatch between snps and Y"
             Usnps,UUsnps = self.rotate(A=snps)
 
         if weightW is not None:
