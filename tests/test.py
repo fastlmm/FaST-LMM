@@ -168,8 +168,8 @@ if __name__ == '__main__':
                                     ])
 
     
-    if False: #Standard test run //!!!cmk
-        r = unittest.TextTestRunner(failfast=True) #!!!cmk change back to False
+    if True: #Standard test run
+        r = unittest.TextTestRunner(failfast=False)
         r.run(suites)
     else: #Cluster test run
         task_count = 150
@@ -193,6 +193,7 @@ if __name__ == '__main__':
 
 
         #runner = Local()
+        k
         runner = LocalMultiProc(taskcount=12,mkl_num_threads=5,just_one_process=False)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
         #runner = Hadoop2(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")

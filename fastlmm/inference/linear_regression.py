@@ -370,7 +370,6 @@ def f_regression_cov_alt(X, y, C):
     # TODO: make this smarter using either stride tricks or cython
     X *= X
     denom = X.sum(0) * y.T.dot(y) - yS
-    #!!!cmk
     F = yS / denom
 
     # degrees of freedom

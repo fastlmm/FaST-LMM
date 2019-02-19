@@ -110,15 +110,21 @@ If you have Visual Studio 2010 installed, execute:
 
     SET VS90COMNTOOLS=%VS100COMNTOOLS%
 
-
 or with Visual Studio 2012 installed:
 
     SET VS90COMNTOOLS=%VS110COMNTOOLS%
 
-
 or with Visual Studio 2013 installed:
 
     SET VS90COMNTOOLS=%VS120COMNTOOLS%
+
+or with Visual Studio 2015 installed:
+
+    SET VS90COMNTOOLS=%VS130COMNTOOLS%
+
+or with Visual Studio 2017 installed:
+
+    SET VS90COMNTOOLS=%VS140COMNTOOLS%
 
 
 Running regression tests
