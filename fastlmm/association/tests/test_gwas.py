@@ -160,12 +160,12 @@ class TestGwas(unittest.TestCase):
         # Fix delta
         from pysnptools.snpreader import Bed as BedSnpReader
         from fastlmm.association.single_snp import single_snp
-        snpreader = BedSnpReader(bed_fn)
-        frame = single_snp(test_snps=snpreader[:,idx_test], pheno=pheno_fn, G0=snpreader[:,idx_sim],h2=1.0/(delta+1.0),leave_out_one_chrom=False)
-        sid_list,pvalue_list = frame['SNP'].as_matrix(),frame['PValue'].as_matrix()
+        snpreader = BedSnpReader(bed_fn,count_A1=False)
+        frame = single_snp(test_snps=snpreader[:,idx_test], pheno=pheno_fn, G0=snpreader[:,idx_sim],h2=1.0/(delta+1.0),leave_out_one_chrom=False,count_A1=False)
+        sid_list,pvalue_list = frame['SNP'].values,frame['PValue'].values
         np.testing.assert_allclose(gwas_f.sorted_p_values_F, pvalue_list, rtol=1e-10)
 
-        p_vals_by_genomic_pos = frame.sort(["Chr", "ChrPos"])["PValue"].tolist()
+        p_vals_by_genomic_pos = frame.sort_values(["Chr", "ChrPos"])["PValue"].tolist()
         np.testing.assert_allclose(gwas_c_reml.p_values, p_vals_by_genomic_pos, rtol=.1)
         np.testing.assert_allclose(gwas_c_reml.p_values, gwas_f.p_values_F, rtol=.1)
         np.testing.assert_allclose(gwas_f.sorted_p_values_F, gwas_c_reml.sorted_p_values, rtol=.1)
@@ -175,10 +175,10 @@ class TestGwas(unittest.TestCase):
         gwas_c_reml_search = GwasTest(bed_fn, pheno_fn, snp_pos_sim, snp_pos_test, delta=None, REML=True)
         gwas_c_reml_search.run_gwas()
 
-        frame_search = single_snp(test_snps=snpreader[:,idx_test], pheno=pheno_fn, G0=snpreader[:,idx_sim],h2=None,leave_out_one_chrom=False)
-        _,pvalue_list_search = frame_search['SNP'].as_matrix(),frame_search['PValue'].as_matrix()
+        frame_search = single_snp(test_snps=snpreader[:,idx_test], pheno=pheno_fn, G0=snpreader[:,idx_sim],h2=None,leave_out_one_chrom=False,count_A1=False)
+        _,pvalue_list_search = frame_search['SNP'].values,frame_search['PValue'].values
 
-        p_vals_by_genomic_pos = frame_search.sort(["Chr", "ChrPos"])["PValue"].tolist()
+        p_vals_by_genomic_pos = frame_search.sort_values(["Chr", "ChrPos"])["PValue"].tolist()
         np.testing.assert_allclose(gwas_c_reml_search.p_values, p_vals_by_genomic_pos, rtol=.001)
         np.testing.assert_allclose(gwas_c_reml_search.sorted_p_values, pvalue_list_search, rtol=.001)
 
@@ -454,7 +454,7 @@ class GwasTest(object):
         self.sorted_p_values = table["Pvalue"].tolist()
         self.sorted_snps = table["SNP"].tolist()
         
-        self.p_values = table.sort(["Chromosome", "Position"])["Pvalue"].tolist()
+        self.p_values = table.sort_values(["Chromosome", "Position"])["Pvalue"].tolist()
 
 
 def getTestSuite():

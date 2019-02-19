@@ -204,7 +204,7 @@ class GLMM(object):
     @beta.setter
     def beta(self, v):
         assert NP.all(NP.isfinite(v))
-        if NP.all(self._beta == v):
+        if self._beta is not None and NP.all(self._beta == v):
             return
         self._updateApproximationCount += 1
         self._beta = v.copy()

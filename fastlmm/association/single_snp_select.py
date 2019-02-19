@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 from fastlmm.association import single_snp
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 import pandas as pd
 import os
 import time
@@ -23,13 +23,13 @@ from fastlmm.util.runner import Local
 from pysnptools.kernelreader import Identity as KernelIdentity
 
 
-def _fixup(test_snps, G, pheno, covar):
-    test_snps = _snps_fixup(test_snps)
-    G = _snps_fixup(G or test_snps)
-    pheno = _pheno_fixup(pheno).read()
+def _fixup(test_snps, G, pheno, covar,count_A1=None):
+    test_snps = _snps_fixup(test_snps,count_A1=count_A1)
+    G = _snps_fixup(G or test_snps,count_A1=count_A1)
+    pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
     assert pheno.sid_count == 1, "Expect pheno to be just one variable"
     pheno = pheno[(pheno.val==pheno.val)[:,0],:]
-    covar = _pheno_fixup(covar, iid_if_none=pheno.iid)
+    covar = _pheno_fixup(covar, iid_if_none=pheno.iid,count_A1=count_A1)
     G, test_snps, pheno, covar  = pstutil.intersect_apply([G, test_snps, pheno, covar])
     return test_snps, G, pheno, covar
 
@@ -38,7 +38,7 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
                  n_folds=10, #1 is special and means test on train
                  just_return_selected_snps=False,
                  seed = 0, output_file_name = None,
-                 GB_goal=None, force_full_rank=False, force_low_rank=False, h2=None, runner=None):
+                 GB_goal=None, force_full_rank=False, force_low_rank=False, h2=None, runner=None, count_A1=None):
     """
     Function performing single SNP GWAS based on covariates (often PCs) and a similarity matrix constructed of the top *k* SNPs where
     SNPs are ordered via the PValue from :meth:`.single_snp_linreg` and *k* is determined via out-of-sample prediction. Will reorder and intersect IIDs as needed.
@@ -95,6 +95,11 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
         If not given, the function is run locally.
     :type runner: a runner.
 
+    :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+         alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+    :type count_A1: bool
+
+
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
 
 
@@ -105,11 +110,10 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     >>> from fastlmm.association import single_snp_select
     >>> from pysnptools.snpreader import Bed
     >>> from fastlmm.util import compute_auto_pcs
-    >>> logging.basicConfig(level=logging.INFO)
     >>> bed_fn = "../../tests/datasets/synth/all.bed"
     >>> phen_fn = "../../tests/datasets/synth/pheno_10_causals.txt"
-    >>> covar = compute_auto_pcs(bed_fn)
-    >>> results_dataframe = single_snp_select(test_snps=bed_fn, G=bed_fn, pheno=phen_fn, covar=covar, GB_goal=2)
+    >>> covar = compute_auto_pcs(bed_fn,count_A1=False)
+    >>> results_dataframe = single_snp_select(test_snps=bed_fn, G=bed_fn, pheno=phen_fn, covar=covar, GB_goal=2, count_A1=False)
     >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
     snp495_m0_.01m1_.04 0.0 5000
 
@@ -124,15 +128,15 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     if k_list is None:
         k_list = np.logspace(start=0, stop=13, num=14, base=2)
 
-    test_snps, G, pheno, covar = _fixup(test_snps, G, pheno, covar)
+    test_snps, G, pheno, covar = _fixup(test_snps, G, pheno, covar, count_A1=count_A1)
     common_input_files = [test_snps, G, pheno, covar]
 
     k_list_in = [0] + [int(k) for k in k_list if 0 < k and k <= G.sid_count]
 
     def top_snps_for_each_fold_nested(kfold_item):
         fold_index, (train_idx, test_idx) = kfold_item
-        _, G_in, pheno_in, covar_in = _fixup(test_snps, G, pheno, covar)
-        nested = single_snp_linreg(G_in[train_idx,:],pheno_in[train_idx,:],covar_in[train_idx,:],GB_goal=GB_goal,max_output_len=max(k_list_in))
+        _, G_in, pheno_in, covar_in = _fixup(test_snps, G, pheno, covar,count_A1=count_A1)
+        nested = single_snp_linreg(G_in[train_idx,:],pheno_in[train_idx,:],covar_in[train_idx,:],GB_goal=GB_goal,max_output_len=max(k_list_in),count_A1=count_A1)
         return nested
     def top_snps_for_each_fold_reducer(dataframe_list):
         result = [list(dataframe['SNP']) for dataframe in dataframe_list]
@@ -151,7 +155,7 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     # Start of definition of inner functions
     #=================================================
     def k_index_to_nLL_mapper(k):
-        _, G_in, pheno_in, covar_in = _fixup(test_snps, G, pheno, covar)
+        _, G_in, pheno_in, covar_in = _fixup(test_snps, G, pheno, covar,count_A1=count_A1)
         nll_sum=0
         mse_sum = 0
         n_folds_in = 0
@@ -193,13 +197,13 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     single_snp_result = single_snp(test_snps=test_snps, K0=G_top, pheno=pheno,
                                 covar=covar, leave_out_one_chrom=True,
                                 GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank, h2=h2,
-                                output_file_name=output_file_name,runner=runner)
+                                output_file_name=output_file_name,runner=runner,count_A1=count_A1)
 
     return single_snp_result
 
 if __name__ == "__main__":
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARN)
 
     import doctest
     doctest.testmod()

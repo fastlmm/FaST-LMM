@@ -197,9 +197,9 @@ class GWAS(object):
             raise NotImplementedError("phenotype is assumed to be a numpy.ndarray or pandas.DataFrame, found %s instead" % (str(type(phenotype))))
 
     @staticmethod
-    def _snp_fixup(snp_input, iid_source_if_none=None):
+    def _snp_fixup(snp_input, iid_source_if_none=None,count_A1=None):
         if isinstance(snp_input, str):
-            return Bed(snp_input)
+            return Bed(snp_input,count_A1=count_A1)
         elif snp_input is None:
             return iid_source_if_none[:,0:0] #return snpreader with no snps
         else:

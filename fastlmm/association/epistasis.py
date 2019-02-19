@@ -15,7 +15,7 @@ import pandas as pd
 def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_name=None,sid_list_0=None,sid_list_1=None,
                  log_delta=None, min_log_delta=-5, max_log_delta=10, 
                  cache_file = None,
-                 runner=None):
+                 runner=None, count_A1=None):
     """
     Function performing epistasis GWAS with ML (never REML).  See http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html.
 
@@ -79,6 +79,11 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
         If not given, the function is run locally.
     :type runner: a runner.
 
+    :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+         alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+    :type count_A1: bool
+
+
     :rtype: Pandas dataframe with one row per SNP pair. Columns include "PValue"
 
     :Example:
@@ -92,7 +97,8 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
     >>> covar = '../../tests/datasets/all_chr.maf0.001.covariates.N300.txt'
     >>> results_dataframe = epistasis(test_snps, pheno, G0=test_snps, covar=covar, 
     ...                                 sid_list_0=test_snps.sid[:10], #first 10 snps
-    ...                                 sid_list_1=test_snps.sid[5:15]) #Skip 5 snps, use next 10
+    ...                                 sid_list_1=test_snps.sid[5:15], #Skip 5 snps, use next 10
+    ...                                 count_A1=False)
     >>> print results_dataframe.iloc[0].SNP0, results_dataframe.iloc[0].SNP1,round(results_dataframe.iloc[0].PValue,5),len(results_dataframe)
     1_12 1_9 0.07779 85
 
@@ -101,7 +107,7 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
     if runner is None:
         runner = Local()
 
-    epistasis = _Epistasis(test_snps,pheno,G0, G1, mixing, covar,sid_list_0,sid_list_1, log_delta, min_log_delta, max_log_delta, output_file_name, cache_file)
+    epistasis = _Epistasis(test_snps,pheno,G0, G1, mixing, covar,sid_list_0,sid_list_1, log_delta, min_log_delta, max_log_delta, output_file_name, cache_file, count_A1=count_A1)
     logging.info("# of pairs is {0}".format(epistasis.pair_count))
     epistasis.fill_in_cache_file()
     result = runner.run(epistasis)
@@ -121,13 +127,14 @@ def write(sid0_list, sid1_list, pvalue_list, output_file):
 class _Epistasis(object) : #implements IDistributable
 
     def __init__(self,test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,sid_list_0=None,sid_list_1=None,
-                 log_delta=None, min_log_delta=-5, max_log_delta=10, output_file=None, cache_file=None):
+                 log_delta=None, min_log_delta=-5, max_log_delta=10, output_file=None, cache_file=None, count_A1=None):
         self._ran_once = False
 
         self.test_snps = test_snps
         self.pheno = pheno
         self.output_file_or_none = output_file
         self.cache_file = cache_file
+        self.count_A1 = count_A1
         self.covar = covar
         self.sid_list_0 = sid_list_0
         self.sid_list_1 = sid_list_1
@@ -156,10 +163,10 @@ class _Epistasis(object) : #implements IDistributable
         self._ran_once = None
 
         if isinstance(self.test_snps, str):
-            self.test_snps = Bed(self.test_snps)
+            self.test_snps = Bed(self.test_snps,count_A1=self.count_A1)
 
         if isinstance(self.G0, str):
-            self.G0 = Bed(self.G0)
+            self.G0 = Bed(self.G0,count_A1=self.count_A1)
 
         if isinstance(self.pheno, str):
             self.pheno = pstpheno.loadOnePhen(self.pheno,vectorize=True,missing='NaN')
@@ -168,7 +175,7 @@ class _Epistasis(object) : #implements IDistributable
             self.covar = pstpheno.loadPhen(self.covar,missing='NaN')
 
         if self.G1_or_none is not None and isinstance(self.G1_or_none, str):
-            self.G1_or_none = Bed(self.G1_or_none)
+            self.G1_or_none = Bed(self.G1_or_none,count_A1=self.count_A1)
 
         if self.sid_list_0 is None:
             self.sid_list_0 = self.test_snps.sid

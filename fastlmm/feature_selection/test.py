@@ -10,7 +10,7 @@ from pysnptools.snpreader import Dat
 from pysnptools.snpreader import Ped
 
 #  sklearn
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 from pysnptools.standardizer import Unit
 
 from fastlmm.inference import getLMM
@@ -33,7 +33,7 @@ class TestTwoKernelFeatureSelection(unittest.TestCase):
 
         # load data
         ###################################################################
-        snp_reader = Bed(self.snp_fn)
+        snp_reader = Bed(self.snp_fn,count_A1=False)
         pheno = pstpheno.loadOnePhen(self.pheno_fn)
         #cov = pstpheno.loadPhen(self.cov_fn)
         
@@ -89,7 +89,7 @@ class TestFeatureSelection(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
-        self.snpreader_bed = Bed(currentFolder + "/examples/toydata")
+        self.snpreader_bed = Bed(currentFolder + "/examples/toydata",count_A1=False)
         #Creating Hdf5 data ...
         #snpData = self.snpreader_bed.read()
         #Hdf5.write(snpData, currentFolder + "/examples/toydata.snpmajor.hdf5")
@@ -127,7 +127,7 @@ class TestFeatureSelection(unittest.TestCase):
         num_pcs = 2
         random_state = 42
         output_prefix = None
-        fss = FeatureSelectionStrategy(self.snpreader, self.pheno_fn, num_folds, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000)
+        fss = FeatureSelectionStrategy(self.snpreader, self.pheno_fn, num_folds, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000,count_A1=False)
         fss.run_once()
 
         pca = PCA(n_components=fss.num_pcs)
@@ -191,7 +191,7 @@ class TestFeatureSelection(unittest.TestCase):
         output_prefix = None
 
         # select by LL
-        fss = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, random_state=random_state, cov_fn=cov_fn, num_pcs=num_pcs, interpolate_delta=True)
+        fss = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, random_state=random_state, cov_fn=cov_fn, num_pcs=num_pcs, interpolate_delta=True,count_A1=False)
         best_k, best_delta, best_obj, best_snps = fss.perform_selection(k_values, delta_values, strategy, output_prefix=output_prefix, select_by_ll=True)
         
         self.assertEqual(best_k, answers[0])
@@ -199,7 +199,7 @@ class TestFeatureSelection(unittest.TestCase):
         self.assertTrue(abs(best_obj-answers[2])<.005) #accept a range answers for when standardization is done with doubles, floats, etc
 
         # select by MSE
-        fss = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, random_state=random_state, cov_fn=cov_fn, num_pcs=num_pcs, interpolate_delta=True)
+        fss = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, random_state=random_state, cov_fn=cov_fn, num_pcs=num_pcs, interpolate_delta=True,count_A1=False)
         best_k, best_delta, best_obj, best_snps = fss.perform_selection(k_values, delta_values, strategy, output_prefix=output_prefix, select_by_ll=False)
         
         self.assertEqual(best_k, answers[0])
@@ -327,7 +327,7 @@ class TestFeatureSelection(unittest.TestCase):
 
 
         # case 1
-        fss_1 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000)
+        fss_1 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000,count_A1=False)
         best_k_1, best_delta_1, best_obj_1, best_snps_1 = fss_1.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
 
         #some misc testing
@@ -338,29 +338,29 @@ class TestFeatureSelection(unittest.TestCase):
         s = str(perform_selection_distributable)
         s = "%r" % perform_selection_distributable
         from fastlmm.feature_selection.feature_selection_cv import GClass
-        s = "%r" % GClass.factory(snpreader,1000000, Unit(), 50)
+        s = "%r" % GClass.factory(snpreader,1000000, Unit(), 50,count_A1=False)
         s = s
         #!!making  test for each break point.
 
 
         # case 2
-        fss_2 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=5000)
+        fss_2 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=5000,count_A1=False)
         best_k_2, best_delta_2, best_obj_2, best_snps_2 = fss_2.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
 
         # case 3
-        fss_3 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=600)
+        fss_3 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=600,count_A1=False)
         best_k_3, best_delta_3, best_obj_3, best_snps_3 = fss_3.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
 
         # case 4
-        fss_4 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000)
+        fss_4 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000,count_A1=False)
         best_k_4, best_delta_4, best_obj_4, best_snps_4 = fss_4.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
 
         # case 5
-        fss_5 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=5000)
+        fss_5 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=5000,count_A1=False)
         best_k_5, best_delta_5, best_obj_5, best_snps_5 = fss_5.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
 
         # case 6
-        fss_6 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=600)
+        fss_6 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=600,count_A1=False)
         best_k_6, best_delta_6, best_obj_6, best_snps_6 = fss_6.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
 
         self.assertEqual(int(best_k_1), int(best_k_2))
@@ -448,7 +448,7 @@ def core_run(snpreader, pheno_fn, k, delta):
     """
 
     G, X, y = load_snp_data(snpreader, pheno_fn, standardizer=Unit())
-    kf = KFold(len(y), n_folds=10, shuffle=False)
+    kf = KFold(n_splits=10, shuffle=False).split(range(len(y)))
 
     ll = np.zeros(10)
 

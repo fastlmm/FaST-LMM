@@ -247,7 +247,7 @@ class FastLMM(object):
         >>> from pysnptools.snpreader import Bed, Pheno
         >>> from fastlmm.inference import FastLMM
         >>> logging.basicConfig(level=logging.INFO)
-        >>> snpreader = Bed('../feature_selection/examples/toydata.bed')
+        >>> snpreader = Bed('../feature_selection/examples/toydata.bed',count_A1=False)
         >>> cov_fn = "../feature_selection/examples/toydata.cov"
         >>> pheno_fn = "../feature_selection/examples/toydata.phe"
         >>> train_idx = np.r_[10:snpreader.iid_count] # iids 10 and on
@@ -255,10 +255,10 @@ class FastLMM(object):
         >>> fastlmm = FastLMM(GB_goal=2)
         >>> #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
         >>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
-        >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn)
+        >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
         >>> print mean.iid[0], round(mean.val[0],7), round(covariance.val[0,0],7)
         ['per0' 'per0'] 0.1791958 0.8995209
-        >>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn)
+        >>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
         >>> print round(nll,7)
         13.4623234
 
@@ -275,7 +275,7 @@ class FastLMM(object):
         self.is_fitted = False
 
     #!!!update doc to explain h2raw w.r.t h2
-    def fit(self, X=None, y=None, K0_train=None, K1_train=None, h2raw=None, mixing=None):#!!!is this h2 or h2corr????
+    def fit(self, X=None, y=None, K0_train=None, K1_train=None, h2raw=None, mixing=None,count_A1=None):#!!!is this h2 or h2corr????
         """
         Method for training a :class:`FastLMM` predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.
 
@@ -306,6 +306,9 @@ class FastLMM(object):
                 If you give no mixing number and a K1_train is given, the best weight will be learned.
         :type mixing: number
 
+        :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+             alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+        :type count_A1: bool
 
         :rtype: self, the fitted FastLMM predictor
         """
@@ -316,12 +319,12 @@ class FastLMM(object):
 
         assert y is not None, "y must be given"
 
-        y = _pheno_fixup(y)
+        y = _pheno_fixup(y,count_A1=count_A1)
         assert y.sid_count == 1, "Expect y to be just one variable"
-        X = _pheno_fixup(X, iid_if_none=y.iid)
+        X = _pheno_fixup(X, iid_if_none=y.iid,count_A1=count_A1)
 
-        K0_train = _kernel_fixup(K0_train, iid_if_none=y.iid, standardizer=self.snp_standardizer)
-        K1_train = _kernel_fixup(K1_train, iid_if_none=y.iid, standardizer=self.snp_standardizer)
+        K0_train = _kernel_fixup(K0_train, iid_if_none=y.iid, standardizer=self.snp_standardizer,count_A1=count_A1)
+        K1_train = _kernel_fixup(K1_train, iid_if_none=y.iid, standardizer=self.snp_standardizer,count_A1=count_A1)
 
         K0_train, K1_train, X, y = intersect_apply([K0_train, K1_train, X, y],intersect_before_standardize=True) #!!! test this on both K's as None
         from fastlmm.association.single_snp import _set_block_size
@@ -399,7 +402,7 @@ class FastLMM(object):
             new_snp += "_"
     
 
-    def score(self, X=None, y=None, K0_whole_test=None, K1_whole_test=None, iid_if_none=None, return_mse_too=False, return_per_iid=False):
+    def score(self, X=None, y=None, K0_whole_test=None, K1_whole_test=None, iid_if_none=None, return_mse_too=False, return_per_iid=False, count_A1=None):
         """
         Method for calculating the negative log likelihood of testing examples.
         If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.
@@ -430,10 +433,18 @@ class FastLMM(object):
         :param return_mse_too: If true, will also return the mean squared error.
         :type return_mse_too: bool
 
+        :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+             alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+        :type count_A1: bool
+
+        :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+             alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+        :type count_A1: bool
+
         :rtype: a float of the negative log likelihood and, optionally, a float of the mean squared error.
         """
-        mean0, covar0 = self.predict(K0_whole_test=K0_whole_test,K1_whole_test=K1_whole_test,X=X,iid_if_none=iid_if_none)
-        y = _pheno_fixup(y, iid_if_none=covar0.iid)
+        mean0, covar0 = self.predict(K0_whole_test=K0_whole_test,K1_whole_test=K1_whole_test,X=X,iid_if_none=iid_if_none,count_A1=count_A1)
+        y = _pheno_fixup(y, iid_if_none=covar0.iid,count_A1=count_A1)
         mean, covar, y = intersect_apply([mean0, covar0, y])
         mean = mean.read(order='A',view_ok=True).val
         covar = covar.read(order='A',view_ok=True).val
@@ -462,7 +473,7 @@ class FastLMM(object):
         assert kernel.iid0_count >= kernel.iid1_count, "Expect iid0 to be at least as long as iid1"
 
 
-    def predict(self,X=None,K0_whole_test=None,K1_whole_test=None,iid_if_none=None):
+    def predict(self,X=None,K0_whole_test=None,K1_whole_test=None,iid_if_none=None, count_A1=None):
         """
         Method for predicting from a fitted :class:`FastLMM` predictor.
         If the examples in X, K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.
@@ -494,9 +505,9 @@ class FastLMM(object):
         #!!!later is it too wasteful to keep both G0_train, G1_train, and lmm.G when storing to disk?
         #!!!later all _kernel_fixup's should use block_size input
 
-        K0_whole_test_b = _kernel_fixup(K0_whole_test, train_snps=self.G0_train, iid_if_none=iid_if_none, standardizer=self.mixer.snp_trained0, test=K0_whole_test, test_iid_if_none=None, block_size=self.block_size)
-        K1_whole_test = _kernel_fixup(K1_whole_test, train_snps=self.G1_train, iid_if_none=K0_whole_test_b.iid0, standardizer=self.mixer.snp_trained1, test=K1_whole_test, test_iid_if_none=K0_whole_test_b.iid1, block_size=self.block_size)
-        X = _pheno_fixup(X,iid_if_none=K0_whole_test_b.iid1)
+        K0_whole_test_b = _kernel_fixup(K0_whole_test, train_snps=self.G0_train, iid_if_none=iid_if_none, standardizer=self.mixer.snp_trained0, test=K0_whole_test, test_iid_if_none=None, block_size=self.block_size,count_A1=count_A1)
+        K1_whole_test = _kernel_fixup(K1_whole_test, train_snps=self.G1_train, iid_if_none=K0_whole_test_b.iid0, standardizer=self.mixer.snp_trained1, test=K1_whole_test, test_iid_if_none=K0_whole_test_b.iid1, block_size=self.block_size,count_A1=count_A1)
+        X = _pheno_fixup(X,iid_if_none=K0_whole_test_b.iid1,count_A1=count_A1)
         K0_whole_test_c, K1_whole_test, X = intersect_apply([K0_whole_test_b, K1_whole_test, X],intersect_before_standardize=True,is_test=True)
         X = X.read().standardize(self.covar_unit_trained)
         # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset

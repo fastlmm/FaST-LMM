@@ -10,7 +10,7 @@ import logging
 
 # common modules
 import matplotlib
-matplotlib.use('Agg') #This lets it work even on machines without graphics displays
+matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
 import scipy as sp
 import numpy as np
 import pandas as pd
@@ -18,11 +18,11 @@ import sys
 
 # sklearn
 from sklearn.linear_model import RidgeCV, Ridge
-from sklearn.cross_validation import KFold, LeaveOneOut, ShuffleSplit
+from sklearn.model_selection import KFold, LeaveOneOut, ShuffleSplit
 from sklearn.datasets import load_boston, load_diabetes
 from sklearn.metrics import mean_squared_error
 from sklearn.feature_selection import f_regression
-from sklearn import grid_search
+from sklearn import model_selection
 from sklearn.decomposition import PCA
 
 # project

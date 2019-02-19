@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use("TKAgg") 
+matplotlib.use("TKAgg",warn=False)
 import pylab
 import pandas as pd
 
@@ -35,29 +35,29 @@ class TestSingleSnpSelect(unittest.TestCase):
     #Break these tests up into six parts so they can run faster when on cluster.
     def test_sel_plus_pc_h2Search(self): #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2Search")
-        self._sel_plus_pc(None,None,None)
+        self._sel_plus_pc(None,None,None,count_A1=False)
 
     def test_sel_plus_pc_h2Search_low(self): #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2Search_low")
-        self._sel_plus_pc(None,True,False)
+        self._sel_plus_pc(None,True,False,count_A1=False)
 
     def test_sel_plus_pc_h2Search_full(self): #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2Search_full")
-        self._sel_plus_pc(None,False,True)
+        self._sel_plus_pc(None,False,True,count_A1=False)
 
     def test_sel_plus_pc_h2IsHalf(self): #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2IsHalf")
-        self._sel_plus_pc(.5,None,None)
+        self._sel_plus_pc(.5,None,None,count_A1=False)
 
     def test_sel_plus_pc_h2IsHalf_low(self): #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2IsHalf_low")
-        self._sel_plus_pc(.5,True,False)
+        self._sel_plus_pc(.5,True,False,count_A1=False)
 
     def test_sel_plus_pc_h2IsHalf_full(self): #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2IsHalf_full")
-        self._sel_plus_pc(.5,False,True)
+        self._sel_plus_pc(.5,False,True,count_A1=False)
 
-    def _sel_plus_pc(self,h2,force_low_rank,force_full_rank):
+    def _sel_plus_pc(self,h2,force_low_rank,force_full_rank,count_A1=None):
         do_plot = False
         use_cache = False
 
@@ -68,7 +68,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         pcs_fn = os.path.join(self.tempout_dir,"sel_plus_pc.pcs.txt")
         if not (use_cache and os.path.exists(pcs_fn)):
             from fastlmm.util import compute_auto_pcs
-            covar = compute_auto_pcs(bed_fn)
+            covar = compute_auto_pcs(bed_fn,count_A1=count_A1)
             logging.info("selected number of PCs: {0}".format(covar["vals"].shape[1]))
             Pheno.write(pcs_fn,SnpData(iid=covar['iid'],sid=covar['header'],val=covar['vals']))
         else:
@@ -90,6 +90,7 @@ class TestSingleSnpSelect(unittest.TestCase):
                                         output_file_name=output_file_name,
                                         force_low_rank=force_low_rank,force_full_rank=force_full_rank,
                                         GB_goal=2,
+                                        count_A1=False
                                         #runner = runner
                                     )
         logging.info(results.head())
@@ -108,7 +109,7 @@ class TestSingleSnpSelect(unittest.TestCase):
 
         # run PCgeno
         #TODO: rename to auto_pcs
-        result = compute_auto_pcs(bed_fn, output_file_name=cov_fn)
+        result = compute_auto_pcs(bed_fn, output_file_name=cov_fn,count_A1=False)
         logging.info("selected number of PCs: {0}".format(result["vals"].shape[1]))
 
         # import algorithms
@@ -134,7 +135,7 @@ class TestSingleSnpSelect(unittest.TestCase):
     def compare_files(self,frame,ref_base):
         reffile = TestFeatureSelection.reference_file("single_snp_select/"+ref_base+".txt")
 
-        #sid_list,pvalue_list = frame['SNP'].as_matrix(),frame['Pvalue'].as_matrix()
+        #sid_list,pvalue_list = frame['SNP'].values,frame['Pvalue'].values
 
         #sid_to_pvalue = {}
         #for index, sid in enumerate(sid_list):

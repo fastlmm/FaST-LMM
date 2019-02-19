@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use("TKAgg") 
+matplotlib.use("TKAgg",warn=False)
 import pylab
 import pandas as pd
 
@@ -232,7 +232,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         logging.info("TestSingleSnpAllPlusSelect test_one")
         # define file names
-        snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all")
+        snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
         cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
 
@@ -240,7 +240,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         test_snps = snp_reader[:,snp_reader.pos[:,0] == 5]
 
         #select the 2nd kernel and run GWAS
-        results = single_snp_all_plus_select(test_snps=test_snps,G=snp_reader,pheno=pheno_fn,GB_goal=2,do_plot=do_plot,output_file_name=output_file_name,runner=runner)
+        results = single_snp_all_plus_select(test_snps=test_snps,G=snp_reader,pheno=pheno_fn,GB_goal=2,do_plot=do_plot,output_file_name=output_file_name,runner=runner, count_A1=False)
 
 
         self.compare_files(results,"notebook")
@@ -262,6 +262,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
                                   output_file_name = output_file_name,
                                   GB_goal=2,
                                   #runner = LocalMultiProc(taskcount=20,mkl_num_threads=5,just_one_process=True)
+                                  count_A1=False
                                   )
 
         self.compare_files(results,"one")
@@ -271,7 +272,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         logging.info("TestSingleSnpAllPlusSelect test_three")
 
         bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
-        bed_fn = Bed(bed_fn)
+        bed_fn = Bed(bed_fn,count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
         cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
 
@@ -288,7 +289,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
                                   do_plot=False,
                                   GB_goal=2,
                                   output_file_name=output_file_name,
-                                  runner = runner
+                                  runner = runner,count_A1=False
                                   )
         logging.info(results)
         self.compare_files(results,"three")
@@ -304,7 +305,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         # partition snps on chr5 vs rest
         test_chr = 5
-        snp_reader = Bed(bed_fn)
+        snp_reader = Bed(bed_fn,count_A1=False)
         test_snps = snp_reader[:,snp_reader.pos[:,0] == test_chr]
 
         mf_name = "lmpl" #"lmpl" "local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
@@ -320,7 +321,8 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
                                       do_plot=do_plot,
                                       GB_goal=GB_goal,
                                       output_file_name=output_file_name,
-                                      runner = runner
+                                      runner = runner,
+                                      count_A1=False
                                       )
             logging.info(results.head())
             self.compare_files(results,"two")
@@ -338,7 +340,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         #load data
         ###################################################################
-        snp_reader = Bed(bed_fn)
+        snp_reader = Bed(bed_fn,count_A1=False)
         pheno = Pheno(pheno_fn)
         cov = Pheno(cov_fn)
 
@@ -384,7 +386,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         G1 = G0[:,feat_idx]
 
         output_file_name = self.file_name("old")
-        results_df = single_snp(test_snps, pheno, G0=G0, G1=G1, mixing=best_mix, h2=None,leave_out_one_chrom=False,output_file_name=output_file_name)
+        results_df = single_snp(test_snps, pheno, G0=G0, G1=G1, mixing=best_mix, h2=None,leave_out_one_chrom=False,output_file_name=output_file_name,count_A1=False)
 
         logging.info("results:")
         logging.info("#"*40)
@@ -395,7 +397,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
     def compare_files(self,frame,ref_base):
         reffile = TestFeatureSelection.reference_file("single_snp_all_plus_select/"+ref_base+".txt")
 
-        #sid_list,pvalue_list = frame['SNP'].as_matrix(),frame['Pvalue'].as_matrix()
+        #sid_list,pvalue_list = frame['SNP'].values,frame['Pvalue'].values
 
         #sid_to_pvalue = {}
         #for index, sid in enumerate(sid_list):

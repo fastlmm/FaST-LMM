@@ -30,7 +30,7 @@ from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kern
 import fastlmm.inference.linear_regression as lin_reg
 from fastlmm.association.single_snp import _set_block_size
 
-def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_file_name=None, GB_goal=None, runner=None):
+def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_file_name=None, GB_goal=None, runner=None, count_A1=None):
     """
     Function performing single SNP GWAS using linear regression. Will reorder and intersect IIDs as needed.
 
@@ -64,6 +64,10 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
         If not given, the function is run locally.
     :type runner: a runner.
 
+    :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+         alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+    :type count_A1: bool
+
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
 
 
@@ -75,15 +79,15 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
     >>> from pysnptools.snpreader import Bed
     >>> logging.basicConfig(level=logging.INFO)
     >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-    >>> results_dataframe = single_snp_linreg(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn)
+    >>> results_dataframe = single_snp_linreg(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
     >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
     null_576 1e-07 10000
 
 
     """
     assert test_snps is not None, "test_snps must be given as input"
-    test_snps = _snps_fixup(test_snps)
-    pheno = _pheno_fixup(pheno).read()
+    test_snps = _snps_fixup(test_snps,count_A1=count_A1)
+    pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
     assert pheno.sid_count == 1, "Expect pheno to be just one variable"
     pheno = pheno[(pheno.val==pheno.val)[:,0],:]
     covar = _pheno_fixup(covar, iid_if_none=pheno.iid)

@@ -15,7 +15,7 @@ import logging
 
 import numpy as np
 
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 
 from fastlmm.association.LocoGwas import FastGwas
@@ -127,7 +127,7 @@ class FeatureSelectionInSample(object):
             np.testing.assert_array_almost_equal(norm_factor, norm_factor_check, decimal=1)
             
 
-        for kfold_idx, (train_idx, test_idx) in enumerate(KFold(num_ind, n_folds=self.n_folds, random_state=self.random_state, shuffle=True)):
+        for kfold_idx, (train_idx, test_idx) in enumerate(KFold(n_splits=self.n_folds, random_state=self.random_state, shuffle=True).split(range(num_ind))):
 
             t0 = time.time()
             logging.info("running fold: %i" % kfold_idx)
@@ -314,7 +314,7 @@ class FeatureSelectionInSample(object):
         """
 
         import matplotlib
-        matplotlib.use('Agg') #This lets it work even on machines without graphics displays
+        matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
         import pylab
         if measure == "ll":
             pylab.plot(self.grid_k, self.ll.mean(axis=0).T, "-x", label=self.grid_k)

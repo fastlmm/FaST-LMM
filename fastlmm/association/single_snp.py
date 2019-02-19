@@ -133,7 +133,7 @@ def single_snp(test_snps, pheno, K0=None,
     >>> from pysnptools.snpreader import Bed
     >>> logging.basicConfig(level=logging.INFO)
     >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-    >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn)
+    >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
     >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
     null_576 1e-07 10000
 
@@ -256,11 +256,11 @@ def single_snp_leave_out_one_chrom(*args, **kwargs):
     warnings.warn("'single_snp_leave_out_one_chrom' is deprecated. Use 'single_snp(...) instead.", DeprecationWarning)
     return single_snp(*args, **kwargs)
 
-def _K_per_chrom(K, chrom, iid):
+def _K_per_chrom(K, chrom, iid,count_A1=None):
     if K is None:
         return KernelIdentity(iid)
     else:
-        K_all = _kernel_fixup(K, iid_if_none=iid, standardizer=Unit()) 
+        K_all = _kernel_fixup(K, iid_if_none=iid, standardizer=Unit(),count_A1=count_A1) 
         if isinstance(K_all, SnpKernel):
             return SnpKernel(K_all.snpreader[:,K_all.pos[:,0] != chrom],K_all.standardizer)
         else:
@@ -643,10 +643,10 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
 
 
-def _create_covar_chrom(covar, covar_by_chrom, chrom):
+def _create_covar_chrom(covar, covar_by_chrom, chrom,count_A1=None):
     if covar_by_chrom is not None:
         covar_by_chrom_chrom = covar_by_chrom[chrom]
-        covar_by_chrom_chrom = _pheno_fixup(covar_by_chrom_chrom, iid_if_none=covar)
+        covar_by_chrom_chrom = _pheno_fixup(covar_by_chrom_chrom, iid_if_none=covar,count_A1=count_A1)
         covar_after,  covar_by_chrom_chrom = pstutil.intersect_apply([covar,  covar_by_chrom_chrom])
         ret = SnpData(iid=covar_after.iid,sid=np.r_[covar_after.sid,covar_by_chrom_chrom.sid],
                       val=np.c_[covar_after.read(order='A',view_ok=True).val,

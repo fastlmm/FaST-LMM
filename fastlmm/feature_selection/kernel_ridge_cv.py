@@ -6,7 +6,7 @@ import scipy as SP
 import sklearn.metrics as SKM
 
 import sklearn.feature_selection as SKFS
-import sklearn.cross_validation as SKCV 
+import sklearn.model_selection as SKCV 
 import sklearn.metrics as SKM
 
 from fastlmm.util.distributable import *
@@ -84,7 +84,7 @@ class KernelRidgeCV(): # implements IDistributable
 
         """
         import matplotlib
-        matplotlib.use('Agg') #This lets it work even on machines without graphics displays
+        matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
         import matplotlib.pylab as PLT 
 
 
@@ -130,7 +130,7 @@ class KernelRidgeCV(): # implements IDistributable
             
         if strategy=='cv':
             # run cross-validation for determining best delta
-            kfoldIter = SKCV.KFold(nInds,n_folds=self.num_folds,shuffle=True,random_state=self.random_state)
+            kfoldIter = SKCV.KFold(n_splits=self.num_folds,shuffle=True,random_state=self.random_state).split(range(nInds))
             Ypred = SP.zeros((len(delta_values),nInds))
             for Itrain,Itest in kfoldIter:
                 model.setK(self.K[Itrain][:,Itrain])

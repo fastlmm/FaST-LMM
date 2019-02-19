@@ -34,7 +34,7 @@ def compute_auto_pcs(snpreader, cutoff=.1, k_values=np.arange(11), output_file_n
     >>> from fastlmm.util import compute_auto_pcs
     >>> logging.basicConfig(level=logging.INFO)
     >>> file_name = "../feature_selection/examples/toydata"
-    >>> best_pcs = compute_auto_pcs(file_name)
+    >>> best_pcs = compute_auto_pcs(file_name,count_A1=False)
     >>> print int(best_pcs['vals'].shape[0]),int(best_pcs['vals'].shape[1])
     500 0
 
@@ -63,9 +63,9 @@ def compute_auto_pcs(snpreader, cutoff=.1, k_values=np.arange(11), output_file_n
         raise Exception("The number of PCs search should be less than the # of rows and also the # of cols in the matrix after near relatives are removed")
     randomstate = 1
 
-    from sklearn.cross_validation import KFold
+    from sklearn.model_selection import KFold
     n_folds = 10
-    folds = KFold(nofam_snpreader.sid_count, n_folds = n_folds, shuffle=True, random_state=randomstate)
+    folds = KFold(n_splits = n_folds, shuffle=True, random_state=randomstate).split(range(nofam_snpreader.sid_count))
         
     scores = np.zeros((k_values.shape[0],n_folds))
     for i_fold, [train_idx,test_idx] in enumerate(folds):

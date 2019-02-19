@@ -24,7 +24,7 @@ class TestLinRegTrain(unittest.TestCase):
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
 
-        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all")
+        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
         self.covariate_whole = Pheno(self.pythonpath + "/tests/datasets/synth/cov.txt")
         self.pheno_whole = Pheno(self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt")
 

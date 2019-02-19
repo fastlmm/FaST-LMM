@@ -489,7 +489,7 @@ def extractpvals(filein,pnames=pnames(), rownames=rownames(),sort=False,includef
     except:
         data=pd.read_csv(filein,delimiter = '\t',dtype={pname: np.float64},usecols=[pname,rowname])
     if sort:        
-        data=data.sort([rowname],ascending=[True])
+        data=data.sort_values([rowname],ascending=[True])
     pv=data[pname].values      
     try:
         llalt = data[altname]

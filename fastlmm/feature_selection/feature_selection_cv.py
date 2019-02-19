@@ -23,11 +23,11 @@ import pandas as pd
 
 # sklearn
 from sklearn.linear_model import RidgeCV, Ridge
-from sklearn.cross_validation import KFold, LeaveOneOut, ShuffleSplit
+from sklearn.model_selection import KFold, LeaveOneOut, ShuffleSplit
 from sklearn.datasets import load_boston, load_diabetes
 from sklearn.metrics import mean_squared_error
 from sklearn.feature_selection import f_regression
-from sklearn import grid_search
+from sklearn import model_selection
 from sklearn.decomposition import KernelPCA
 
 # project
@@ -46,7 +46,7 @@ import pysnptools.snpreader as sr
 class FeatureSelectionStrategy(object):
 
     def __init__(self, snpreader, pheno_fn, num_folds, test_size=0.1, cov_fn=None, num_snps_in_memory=100000,
-                 random_state=None, log=None, offset=True, num_pcs=0, interpolate_delta=False, mpheno = 0, standardizer=Unit()):
+                 random_state=None, log=None, offset=True, num_pcs=0, interpolate_delta=False, mpheno = 0, standardizer=Unit(),count_A1=None):
     
         """Set up Feature selection strategy
         ----------
@@ -91,13 +91,18 @@ class FeatureSelectionStrategy(object):
 
         standardizer: a standandizer-like object such as Unit() or Beta(1,25), default=Unit()
 
+        count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+             alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+
+
         """
         self._ran_once = False
  
         # data file names
         self.snpreader = snpreader
+        self.count_A1 = count_A1
         if isinstance(self.snpreader, str):
-            self.snpreader = Bed(self.snpreader)
+            self.snpreader = Bed(self.snpreader,count_A1=count_A1)
         #!!test speed of new vs old
         #!!make all readers take optional file extension
 
@@ -183,7 +188,7 @@ class FeatureSelectionStrategy(object):
 
         # Set up the snps
         # G is the standardized snps. The GClass.factory will either load them into memory or will note their file and read them as needed.
-        self.G = GClass.factory(self.snpreader, self.num_snps_in_memory, self.standardizer, self.blocksize)
+        self.G = GClass.factory(self.snpreader, self.num_snps_in_memory, self.standardizer, self.blocksize,count_A1=self.count_A1)
 
         #!!LATER Should we give preference to self.G since reordering it is the most expensive?
         (self.y, yiid), (self.X, xiid), self.G = pstutil.intersect_apply([(pheno['vals'], pheno['iid']), (self.X, cov_iid), self.G], sort_by_dataset=False)
@@ -269,7 +274,7 @@ class FeatureSelectionStrategy(object):
         self.run_once()
 
         # set up splitting strategy
-        kf = ShuffleSplit(len(self.y), n_iter=self.num_folds, test_size=self.test_size, random_state=self.random_state)
+        kf = ShuffleSplit(n_splits=self.num_folds, test_size=self.test_size, random_state=self.random_state).split(range(len(self.y)))
 
         fold_idx = start -1
         for (train_idx, test_idx) in islice(kf,start,stop):
@@ -410,7 +415,7 @@ class FeatureSelectionStrategy(object):
                 cols = pd.MultiIndex.from_arrays([split_idx, k_values*(self.num_folds+1)], names=['split_id','k_value'])
                 df = pd.DataFrame(stacked_result, columns=delta_values, index=cols)
                 util.create_directory_if_necessary(out_fn)
-                df.to_csv(out_fn, column_label="delta")
+                df.to_csv(out_fn)
             
             # make sure delta is not at the boundary for any k
             assert average_loss.shape[0] == len(k_values)
@@ -448,7 +453,7 @@ class FeatureSelectionStrategy(object):
             if create_pdf and (output_prefix != None):
                 # visualize results
                 import matplotlib
-                matplotlib.use('Agg') #This lets it work even on machines without graphics displays
+                matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
                 import pylab
                 pylab.figure()
                 ax = pylab.subplot(111)
@@ -512,11 +517,11 @@ class FeatureSelectionStrategy(object):
                 print "Christoph: bug, this is a quick fix that runs but may write out wrong results"
                 df = pd.DataFrame(stacked_result.flatten()[:, None], columns=[label], index=cols)
                 util.create_directory_if_necessary(out_fn)
-                df.to_csv(out_fn, column_label="delta")
+                df.to_csv(out_fn)
             if create_pdf and (output_prefix != None):
                 # visualize results
                 import matplotlib
-                matplotlib.use('Agg') #This lets it work even on machines without graphics displays
+                matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
                 import pylab
                 pylab.figure()
                 ax = pylab.subplot(111)
@@ -839,7 +844,7 @@ def main():
     ##############################
 
     if os.path.exists(args.snpreader + ".bed") :
-        snpreader = Bed(args.snpreader)
+        snpreader = Bed(args.snpreader,count_A1=self.count_A1)
     else:
         logging.info("'{0}' + '.bed' doesn't exisit as a file so will evaluate it as an expression".format(args.snpreader))
         eval("snpreader = " + args.snpreader)
@@ -854,9 +859,9 @@ def main():
 
 class GClass(object):
     @staticmethod
-    def factory(snpreader, num_snps_in_memory, standardizer, blocksize):
+    def factory(snpreader, num_snps_in_memory, standardizer, blocksize,count_A1=None):
         if isinstance(snpreader, str):
-            snpreader = Bed(snpreader)
+            snpreader = Bed(snpreader,count_A1=count_A1)
 
         if num_snps_in_memory >= snpreader.sid_count:
             in_memory = InMemory(snpreader.read(order='C').standardize(standardizer), standardizer, blocksize)

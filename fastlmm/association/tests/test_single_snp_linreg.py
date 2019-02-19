@@ -37,7 +37,7 @@ class TestSingleSnpLinReg(unittest.TestCase):
 
     def test_linreg(self):
         logging.info("TestSingleSnpLinReg test_linreg")
-        test_snps = Bed(self.bedbase)
+        test_snps = Bed(self.bedbase,count_A1=False)
         pheno = self.phen_fn
         covar = self.cov_fn
 
@@ -45,7 +45,8 @@ class TestSingleSnpLinReg(unittest.TestCase):
 
         frame1 = single_snp_linreg(test_snps=test_snps[:,:10], pheno=pheno,
                                     covar=covar, 
-                                    output_file_name=output_file
+                                    output_file_name=output_file,
+                                    count_A1=False
                                     )
 
         frame1 = frame1[['sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue']]
@@ -53,7 +54,7 @@ class TestSingleSnpLinReg(unittest.TestCase):
 
         frame2 = single_snp_linreg(test_snps=test_snps[:,:10], pheno=pheno, 
                                     covar=covar, 
-                                    output_file_name=output_file
+                                    output_file_name=output_file,count_A1=False
                                     )
         self.compare_files(frame2,"linreg")
 
@@ -61,7 +62,7 @@ class TestSingleSnpLinReg(unittest.TestCase):
     def compare_files(self,frame,ref_base):
         reffile = TestFeatureSelection.reference_file("single_snp/"+ref_base+".txt") #Results are in single_snp, not single_snp_lin_reg
 
-        #sid_list,pvalue_list = frame['SNP'].as_matrix(),frame['Pvalue'].as_matrix()
+        #sid_list,pvalue_list = frame['SNP'].values,frame['Pvalue'].values
 
         #sid_to_pvalue = {}
         #for index, sid in enumerate(sid_list):

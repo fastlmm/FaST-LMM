@@ -168,8 +168,8 @@ if __name__ == '__main__':
                                     ])
 
     
-    if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=False)
+    if False: #Standard test run //!!!cmk
+        r = unittest.TextTestRunner(failfast=True) #!!!cmk change back to False
         r.run(suites)
     else: #Cluster test run
         task_count = 150

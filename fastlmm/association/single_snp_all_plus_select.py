@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 from fastlmm.association import single_snp
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 import pandas as pd
 import os
 import time
@@ -136,12 +136,12 @@ def _kfold(iid_count, n_folds, seed, end_with_all=False, iid_to_index=None):
 
     if n_folds < 0:
         logging.info("Running just one train/test split")
-        result = list(enumerate(KFold(iid_count, n_folds=-n_folds, random_state=seed, shuffle=True)))[0:1]
+        result = list(enumerate(KFold(n_splits=-n_folds, random_state=seed, shuffle=True).split(range(iid_count))))[0:1]
         if end_with_all:
             result = result +[(1, [range(iid_count),[]])]
         return result
 
-    result = list(enumerate(KFold(iid_count, n_folds=n_folds, random_state=seed, shuffle=True)))
+    result = list(enumerate(KFold(n_splits=n_folds, random_state=seed, shuffle=True).split(range(iid_count))))
     if end_with_all:
         result = result +[(n_folds, [range(iid_count),[]])]
     return result 
@@ -151,7 +151,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
                  k_list = None,
                  n_folds=10, #1 is special and means test on train
                  seed = 0, output_file_name = None,
-                 GB_goal=None, force_full_rank=False, force_low_rank=False, mixing=None, h2=None, do_plot=False, runner=None):
+                 GB_goal=None, force_full_rank=False, force_low_rank=False, mixing=None, h2=None, do_plot=False, runner=None, count_A1=None):
     """
     Function performing single SNP GWAS based on two kernels. The first kernel is based on all SNPs. The second kernel is a similarity matrix
     constructed of the top *k* SNPs where the SNPs are ordered via the PValue from :meth:`.single_snp` and *k* is determined via out-of-sample prediction.
@@ -215,6 +215,11 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
         If not given, the function is run locally.
     :type runner: a runner.
 
+    :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+         alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+    :type count_A1: bool
+
+
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
 
 
@@ -227,9 +232,9 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     >>> from fastlmm.util.runner import LocalMultiProc
     >>> logging.basicConfig(level=logging.INFO)
     >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-    >>> snps = Bed("../feature_selection/examples/toydata.5chrom.bed")[:,::100] #To make example faster, run on only 1/100th of the data
+    >>> snps = Bed("../feature_selection/examples/toydata.5chrom.bed",count_A1=False)[:,::100] #To make example faster, run on only 1/100th of the data
     >>> chrom5_snps = snps[:,snps.pos[:,0]==5] # Test on only chrom5
-    >>> results_dataframe = single_snp_all_plus_select(test_snps=chrom5_snps,G=snps,pheno=pheno_fn,GB_goal=2,runner=LocalMultiProc(20,mkl_num_threads=5)) #Run multiproc
+    >>> results_dataframe = single_snp_all_plus_select(test_snps=chrom5_snps,G=snps,pheno=pheno_fn,GB_goal=2,runner=LocalMultiProc(20,mkl_num_threads=5), count_A1=False) #Run multiproc
     >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
     null_9800 0.0793385 4
 
@@ -264,7 +269,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
                     
                 single_snp_result = single_snp(test_snps=G_train, K0=K_train, pheno=pheno, #iid intersection means when can give the whole covariate and pheno
                              covar=covar, leave_out_one_chrom=False,
-                             GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank, mixing=mixing, h2=h2)
+                             GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank, mixing=mixing, h2=h2, count_A1=count_A1)
 
                 is_all = (i_fold == n_folds) if n_folds > 1 else True
 
@@ -357,7 +362,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
             K1 = G_for_chrom[:,G_for_chrom.sid_to_index(best_sid)]
             result = single_snp(test_snps=test_snps_chrom, K0=G_for_chrom, K1=K1, pheno=pheno,
                         covar=covar, leave_out_one_chrom=False, 
-                        GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank,mixing=mixing,h2=h2)
+                        GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank,mixing=mixing,h2=h2,count_A1=count_A1)
             return result
     
         def reducer_closure(frame_sequence): #!!!very similar code in single_snp
@@ -394,12 +399,12 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
         k_list = np.logspace(start=0, stop=13, num=14, base=2)
 
     assert test_snps is not None, "test_snps must be given as input"
-    test_snps = _snps_fixup(test_snps)
-    G = _snps_fixup(G or test_snps)
-    pheno = _pheno_fixup(pheno).read()
+    test_snps = _snps_fixup(test_snps,count_A1=count_A1)
+    G = _snps_fixup(G or test_snps,count_A1=count_A1)
+    pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
     assert pheno.sid_count == 1, "Expect pheno to be just one variable"
     pheno = pheno[(pheno.val==pheno.val)[:,0],:]
-    covar = _pheno_fixup(covar, iid_if_none=pheno.iid)
+    covar = _pheno_fixup(covar, iid_if_none=pheno.iid,count_A1=count_A1)
     chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
     G, test_snps, pheno, covar  = pstutil.intersect_apply([G, test_snps, pheno, covar])
     common_input_files = [test_snps, G, pheno, covar]
@@ -411,8 +416,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     return frame
 
 if __name__ == "__main__":
-
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARN) #Needs to be WARN and not INFO to stop Doctest from putting out extra messages.
 
     import doctest
     doctest.testmod()

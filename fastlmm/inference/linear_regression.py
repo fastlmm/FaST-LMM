@@ -60,7 +60,7 @@ class LinearRegression(object):
         self.covariate_standardizer = covariate_standardizer
         self.is_fitted = False
 
-    def fit(self, X=None, y=None, K0_train=None, K1_train=None, h2=None, mixing=None):
+    def fit(self, X=None, y=None, K0_train=None, K1_train=None, h2=None, mixing=None,count_A1=None):
         """
         Method for training a :class:`FastLMM` predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.
 
@@ -84,6 +84,11 @@ class LinearRegression(object):
         :param mixing: Ignored. Optional.
         :type mixing: number
 
+        :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+             alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+        :type count_A1: bool
+
+
         :rtype: self, the fitted Linear Regression predictor
         """
         self.is_fitted = True
@@ -92,9 +97,9 @@ class LinearRegression(object):
 
         assert y is not None, "y must be given"
 
-        y = _pheno_fixup(y)
+        y = _pheno_fixup(y,count_A1=count_A1)
         assert y.sid_count == 1, "Expect y to be just one variable"
-        X = _pheno_fixup(X, iid_if_none=y.iid)
+        X = _pheno_fixup(X, iid_if_none=y.iid,count_A1=count_A1)
 
         X, y  = intersect_apply([X, y])
         y = y.read()
@@ -122,7 +127,7 @@ class LinearRegression(object):
         return self
     
 
-    def predict(self,X=None,K0_whole_test=None,K1_whole_test=None,iid_if_none=None):
+    def predict(self,X=None,K0_whole_test=None,K1_whole_test=None,iid_if_none=None,count_A1=None):
         """
         Method for predicting from a fitted :class:`FastLMM` predictor.
         If the examples in X, K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.
@@ -140,6 +145,10 @@ class LinearRegression(object):
         :param iid_if_none: Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.
         :type iid_if_none: an ndarray of two strings
 
+        :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+             alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+        :type count_A1: bool
+
         :rtype: A :class:`SnpData` of the means and a :class:`KernelData` of the covariance
         """
 
@@ -147,7 +156,7 @@ class LinearRegression(object):
         assert K0_whole_test is None or isinstance(K0_whole_test,KernelIdentity) # could also accept no snps
         assert K1_whole_test is None or isinstance(K1_whole_test,KernelIdentity) # could also accept no snps
 
-        X = _pheno_fixup(X,iid_if_none=iid_if_none)
+        X = _pheno_fixup(X,iid_if_none=iid_if_none,count_A1=count_A1)
         X = X.read().standardize(self.covar_unit_trained)
 
         # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
@@ -163,7 +172,7 @@ class LinearRegression(object):
         ret1 = KernelData(iid=X.iid,val=np.eye(X.iid_count)* self.ssres / self.iid_count)
         return ret0, ret1
 
-    def score(self, X=None, y=None, K0_whole_test=None, K1_whole_test=None, iid_if_none=None, return_mse_too=False):
+    def score(self, X=None, y=None, K0_whole_test=None, K1_whole_test=None, iid_if_none=None, return_mse_too=False, count_A1=None):
         """
         Method for calculating the negative log likelihood of testing examples.
         If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.
@@ -188,10 +197,14 @@ class LinearRegression(object):
         :param return_mse_too: If true, will also return the mean squared error.
         :type return_mse_too: bool
 
+        :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+             alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+        :type count_A1: bool
+
         :rtype: a float of the negative log likelihood and, optionally, a float of the mean squared error.
         """
-        mean0, covar0 = self.predict(K0_whole_test=K0_whole_test,K1_whole_test=K1_whole_test,X=X,iid_if_none=iid_if_none)
-        y = _pheno_fixup(y, iid_if_none=covar0.iid)
+        mean0, covar0 = self.predict(K0_whole_test=K0_whole_test,K1_whole_test=K1_whole_test,X=X,iid_if_none=iid_if_none,count_A1=count_A1)
+        y = _pheno_fixup(y, iid_if_none=covar0.iid,count_A1=count_A1)
         mean, covar, y = intersect_apply([mean0, covar0, y])
         var = multivariate_normal(mean=mean.read(order='A',view_ok=True).val.reshape(-1), cov=covar.read(order='A',view_ok=True).val)
         y_actual = y.read().val
@@ -357,6 +370,7 @@ def f_regression_cov_alt(X, y, C):
     # TODO: make this smarter using either stride tricks or cython
     X *= X
     denom = X.sum(0) * y.T.dot(y) - yS
+    #!!!cmk
     F = yS / denom
 
     # degrees of freedom

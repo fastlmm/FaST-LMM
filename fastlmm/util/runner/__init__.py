@@ -12,7 +12,7 @@ interface IRunner
 
 '''
 import os
-import cPickle as cPickle
+import dill
 import fastlmm.util.util as util
 from itertools import *
 
@@ -108,7 +108,7 @@ def doMainWorkForOneIndex(distributable, taskAndWorkcount, taskindex, workdirect
     with open(task_file_name, mode='wb') as f:
         for work in work_sequence_for_one_index(distributable, taskAndWorkcount, taskindex):
             result = run_all_in_memory(work)
-            cPickle.dump(result, f, cPickle.HIGHEST_PROTOCOL) # save a result to the temp results file
+            dill.dump(result, f, dill.HIGHEST_PROTOCOL) # save a result to the temp results file
 
 def work_sequence_from_disk(workdirectory, taskAndWorkcount):
     '''
@@ -118,7 +118,7 @@ def work_sequence_from_disk(workdirectory, taskAndWorkcount):
         task_file_name = create_task_file_name(workdirectory, taskindex, taskAndWorkcount)
         with open(task_file_name, mode='rb') as f:
             try:
-                result = cPickle.load(f)
+                result = dill.load(f)
             except Exception, detail:
                 raise Exception("Error trying to unpickle '{0}'. {1}".format(task_file_name,detail))
         #if True:

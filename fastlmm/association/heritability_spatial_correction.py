@@ -17,7 +17,7 @@ import sklearn.metrics
 from pysnptools.snpreader import Pheno
 from pysnptools.standardizer import Unit
 import itertools
-from sklearn import cross_validation
+from sklearn import model_selection
 from scipy import stats
 
 
@@ -67,7 +67,7 @@ def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power,  
         assert spatial_iid is None, "if spatial_coor is a str, then spatial_iid should be None"
         gps_table = pd.read_table(spatial_coor, delimiter=" ").dropna()
         spatial_iid = np.array([(v,v) for v in gps_table["id"].values])
-        spatial_coor = gps_table[["south_new", "east_new"]].as_matrix()
+        spatial_coor = gps_table[["south_new", "east_new"]].values
 
 
     #########################################
@@ -92,7 +92,7 @@ def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power,  
     if jackknife_index >= 0:
         assert jackknife_count <= G_kernel.iid_count, "expect the number of groups to be less than the number of iids"
         assert jackknife_index < jackknife_count, "expect the jackknife index to be less than the count"
-        m_fold = cross_validation.KFold(n=G_kernel.iid_count, n_folds=jackknife_count, shuffle=True, random_state=jackknife_seed%4294967295)
+        m_fold = model_selection.KFold(n_splits=jackknife_count, shuffle=True, random_state=jackknife_seed%4294967295).split(range(G_kernel.iid_count))
         iid_index,_ = _nth(m_fold, jackknife_index)
         pheno = pheno[iid_index,:]
         G_kernel = G_kernel[iid_index]
@@ -207,7 +207,8 @@ def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power,  
 def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_list, alpha_power, pheno, 
                      map_function = map, cache_folder=None, 
                      jackknife_count=500, permute_plus_count=10000, permute_times_count=10000, seed=0,
-                     just_testing=False,  always_remote=False, allow_gxe2 = True
+                     just_testing=False,  always_remote=False, allow_gxe2 = True,
+                     count_A1=None
                      ):
     """
     Function measuring heritability with correction for spatial location.
@@ -262,6 +263,10 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
     :param just_testing: (default False) If true, skips actual LMM-related search and calculation.
     :type just_testing: bool
 
+    :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+         alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+    :type count_A1: bool
+
     :rtype: Pandas dataframe with one row per phenotyper. Columns include "h2uncorr", "h2corr", etc.
 
     """
@@ -271,8 +276,8 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
     ######################
 
     from fastlmm.inference.fastlmm_predictor import _kernel_fixup, _pheno_fixup
-    G_kernel = _kernel_fixup(G_kernel, iid_if_none=None, standardizer=Unit())  # Create a kernel from an in-memory kernel, some snps, or a text file.
-    pheno = _pheno_fixup(pheno,iid_if_none=G_kernel.iid, missing='NA') # Create phenotype data from in-memory data or a text file.
+    G_kernel = _kernel_fixup(G_kernel, iid_if_none=None, standardizer=Unit(),count_A1=count_A1)  # Create a kernel from an in-memory kernel, some snps, or a text file.
+    pheno = _pheno_fixup(pheno,iid_if_none=G_kernel.iid, missing='NA',count_A1=count_A1) # Create phenotype data from in-memory data or a text file.
 
     if cache_folder is not None:
         pstutil.create_directory_if_necessary(cache_folder,isfile=False)
@@ -526,7 +531,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
 
     #Rename sort the phenotypes
     final3['lower'] = [pheno_one.lower() for pheno_one in final3.phenotype]
-    final3.sort(['lower'],inplace=True)
+    final3.sort_values(['lower'],inplace=True)
     del final3['lower']
 
     if cache_folder is not None:

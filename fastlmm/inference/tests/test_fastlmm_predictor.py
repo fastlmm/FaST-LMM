@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use("TKAgg") 
+matplotlib.use("TKAgg",warn=False)
 import pylab
 
 import logging
@@ -32,7 +32,7 @@ class TestFastLMM(unittest.TestCase):
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
 
-        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all")
+        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
         self.covariate_whole = Pheno(self.pythonpath + "/tests/datasets/synth/cov.txt")
         self.pheno_whole = Pheno(self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt")
 
@@ -88,7 +88,7 @@ class TestFastLMM(unittest.TestCase):
         whole_test_kernel = whole_kernel[:,test_idx].read(order='A',view_ok=True)
         fastlmm1 = FastLMM(snp_standardizer=SS_Identity(), kernel_standardizer=KS_Identity())
         fastlmm1.fit(K0_train=train_kernel, X=self.covariate_whole, y=self.pheno_whole) #iid intersection means we won't really be using whole covar or pheno
-        predicted_pheno, covar = fastlmm1.predict(K0_whole_test=whole_test_kernel, X=self.covariate_whole)
+        predicted_pheno, covar = fastlmm1.predict(K0_whole_test=whole_test_kernel, X=self.covariate_whole,count_A1=False)
         output_file = self.file_name("whole")
         Dat.write(output_file,predicted_pheno)
         self.compare_files(predicted_pheno,"whole")
@@ -96,7 +96,7 @@ class TestFastLMM(unittest.TestCase):
         # b -- just files
         fastlmm2 = FastLMM()
         fastlmm2.fit(K0_train=self.snpreader_whole[train_idx,:], X=self.covariate_whole, y=self.pheno_whole[train_idx,:]) #iid intersection means we won't really be using whole covar
-        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=self.snpreader_whole[test_idx,:], X=self.covariate_whole)
+        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=self.snpreader_whole[test_idx,:], X=self.covariate_whole,count_A1=False)
         self.compare_files(predicted_pheno,"one")
 
     def test_notebook1(self):
@@ -104,7 +104,7 @@ class TestFastLMM(unittest.TestCase):
 
         import matplotlib.pyplot as plt
         from pysnptools.snpreader import Pheno,Bed
-        bed = Bed(self.pythonpath + "/tests/datasets/synth/all")
+        bed = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
         cov = Pheno(self.pythonpath + "/tests/datasets/synth/cov.txt")
         pheno = Pheno(self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt").read()
 
@@ -116,7 +116,7 @@ class TestFastLMM(unittest.TestCase):
 
         # Predict on training data:
         predicted_score,covariance = fastlmm2.predict(K0_whole_test=training,
-                                                            X=cov[:400,:])
+                                                            X=cov[:400,:],count_A1=False)
 
         assert np.array_equal(pheno.iid[:400],predicted_score.iid), "for plots to make sense, the iids must be in the order"
         if do_plot:
@@ -128,7 +128,7 @@ class TestFastLMM(unittest.TestCase):
 
         # How well does this model predict the (unseen) TEST data?
         predicted_score,covariance = fastlmm2.predict(K0_whole_test=bed[400:500,:],
-                                                            X=cov[400:500,:])
+                                                            X=cov[400:500,:],count_A1=False)
 
         assert np.array_equal(pheno.iid[400:500],predicted_score.iid), "for plots to make sense, the iids must be in the order"
         if do_plot:
@@ -158,7 +158,7 @@ class TestFastLMM(unittest.TestCase):
         G0_test = self.snpreader_whole[test_idx,:]
         covariate_test = self.covariate_whole[test_idx,:]
 
-        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, X=covariate_test)
+        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, X=covariate_test,count_A1=False)
 
         output_file = self.file_name("one")
         Dat.write(output_file,predicted_pheno)
@@ -178,7 +178,7 @@ class TestFastLMM(unittest.TestCase):
         covariate_train = None
         pheno_train = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
 
-        fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=G0_train, X=covariate_train, y=pheno_train)
+        fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=G0_train, X=covariate_train, y=pheno_train,count_A1=False)
         filename = self.tempout_dir + "/model_str.flm.p"
         pstutil.create_directory_if_necessary(filename)
 
@@ -189,7 +189,7 @@ class TestFastLMM(unittest.TestCase):
         G0_test = G0_train
         covariate_test = covariate_train
 
-        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, X=covariate_test)
+        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, X=covariate_test,count_A1=False)
 
         output_file = self.file_name("str")
         Dat.write(output_file,predicted_pheno)
@@ -222,7 +222,7 @@ class TestFastLMM(unittest.TestCase):
 
 
         #Predict with model (test on train)
-        predicted_pheno, covariance = fastlmm3.predict(K0_whole_test=KernelIdentity(pheno_train3.iid), X=covariate_train3) #test on train
+        predicted_pheno, covariance = fastlmm3.predict(K0_whole_test=KernelIdentity(pheno_train3.iid), X=covariate_train3,count_A1=False) #test on train
         output_file = self.file_name("lr_no_k0")
         Dat.write(output_file,predicted_pheno)
 
@@ -309,7 +309,7 @@ class TestFastLMM(unittest.TestCase):
                 do_test_on_train = True
                 if do_test_on_train:
                     #Predict with model (test on train)
-                    predicted_pheno, covar = fastlmm.predict(K0_whole_test=covariate_train, X=None) #test on train
+                    predicted_pheno, covar = fastlmm.predict(K0_whole_test=covariate_train, X=None,count_A1=False) #test on train
                     output_file = self.file_name("lr_as_lmma_")
                     Dat.write(output_file,predicted_pheno)
                     covar2 = SnpData(iid=covar.row,sid=covar.col[:,1],val=covar.val) #kludge to write kernel to text format
@@ -334,7 +334,7 @@ class TestFastLMM(unittest.TestCase):
                 ###############################################################
 
                 #Predict with model (test on test)
-                predicted_pheno, covar  = fastlmm.predict(K0_whole_test=covariate_test, X=None) #test on train
+                predicted_pheno, covar  = fastlmm.predict(K0_whole_test=covariate_test, X=None,count_A1=False) #test on train
                 output_file = self.file_name("lr_as_lmmb_")
                 Dat.write(output_file,predicted_pheno)
                 covar2 = SnpData(iid=covar.row,sid=covar.col[:,1],val=covar.val) #kludge to write kernel to text format
@@ -433,7 +433,7 @@ class TestFastLMM(unittest.TestCase):
             do_test_on_train = True
             if do_test_on_train:
                 #Predict with model (test on train)
-                predicted_pheno, covar = fastlmm.predict(K0_whole_test=K0_train, X=covariate_train) #test on train
+                predicted_pheno, covar = fastlmm.predict(K0_whole_test=K0_train, X=covariate_train,count_A1=False) #test on train
                 output_file = self.file_name("lr2a_"+name)
                 Dat.write(output_file,predicted_pheno)
                 covar2 = SnpData(iid=covar.row,sid=covar.col[:,1],val=covar.val) #kludge to write kernel to text format
@@ -454,7 +454,7 @@ class TestFastLMM(unittest.TestCase):
                 self.compare_files(covar2,"lr2a.cov_"+first_name)
 
             #Predict with model (test on test)
-            predicted_pheno, covar  = fastlmm.predict(K0_whole_test=K0_whole_test, X=covariate_test) #test on train
+            predicted_pheno, covar  = fastlmm.predict(K0_whole_test=K0_whole_test, X=covariate_test,count_A1=False) #test on train
             output_file = self.file_name("lr2b_"+name)
             Dat.write(output_file,predicted_pheno)
             covar2 = SnpData(iid=covar.row,sid=covar.col[:,1],val=covar.val) #kludge to write kernel to text format
@@ -506,7 +506,7 @@ class TestFastLMM(unittest.TestCase):
         G0_test = self.snpreader_whole[test_idx,:]
         covariate_test = self.covariate_whole[test_idx,:]
 
-        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=whole_kernel[:,test_idx].read(order='A',view_ok=True), X=covariate_test)
+        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=whole_kernel[:,test_idx].read(order='A',view_ok=True), X=covariate_test,count_A1=False)
 
         output_file = self.file_name("str2")
         Dat.write(output_file,predicted_pheno)
@@ -558,7 +558,7 @@ class TestFastLMM(unittest.TestCase):
         G1_test = SnpData(iid=G0_test.iid,sid=[item+"_1" for item in G0_test.sid],val=G0_test.read().val,pos=G0_test.pos,name="Different SNP names for {0}".format(G0_test))
         covariate_test = self.covariate_whole[test_idx,:]
 
-        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, K1_whole_test=G1_test, X=covariate_test)
+        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, K1_whole_test=G1_test, X=covariate_test,count_A1=False)
 
         output_file = self.file_name("fasttwoK"+("_force_low" if force_low_rank else "")+("GB{0}".format(GB_goal) if GB_goal is not None else ""))
         Dat.write(output_file,predicted_pheno)
@@ -586,8 +586,8 @@ class TestFastLMM(unittest.TestCase):
         pheno_whole.val *= 100
         pheno_whole.val += 1000
 
-        mean_low, covar_low =   FastLMM(force_low_rank=True,GB_goal=2).fit(K0_train=G0_train, y=pheno_whole[train_idx,:], X=self.covariate_whole[train_idx,:]). predict(K0_whole_test=G0_test,X=self.covariate_whole[test_idx,:])
-        mean_full, covar_full = FastLMM(force_full_rank=True,GB_goal=2).fit(K0_train=G0_train, y=pheno_whole[train_idx,:], X=self.covariate_whole[train_idx,:]).predict(K0_whole_test=G0_test,X=self.covariate_whole[test_idx,:])
+        mean_low, covar_low =   FastLMM(force_low_rank=True,GB_goal=2).fit(K0_train=G0_train, y=pheno_whole[train_idx,:], X=self.covariate_whole[train_idx,:]). predict(K0_whole_test=G0_test,X=self.covariate_whole[test_idx,:],count_A1=False)
+        mean_full, covar_full = FastLMM(force_full_rank=True,GB_goal=2).fit(K0_train=G0_train, y=pheno_whole[train_idx,:], X=self.covariate_whole[train_idx,:]).predict(K0_whole_test=G0_test,X=self.covariate_whole[test_idx,:],count_A1=False)
 
         np.testing.assert_allclose(mean_low.val, mean_full.val)
         np.testing.assert_allclose(covar_low.val,covar_full.val)
@@ -615,7 +615,7 @@ class TestFastLMM(unittest.TestCase):
         G0_test = self.snpreader_whole[test_idx,:]
         covariate_test = self.covariate_whole[test_idx,:]
 
-        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, K1_whole_test=G0_test, X=covariate_test)
+        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, K1_whole_test=G0_test, X=covariate_test,count_A1=False)
 
         output_file = self.file_name("one")
         Dat.write(output_file,predicted_pheno)
@@ -659,7 +659,7 @@ class TestFastLMM(unittest.TestCase):
 
 
             #Predict with model (test on train)
-            predicted_pheno, covar = fastlmm3.predict(K0_whole_test=G0_train, X=covariate_train3) #test on train
+            predicted_pheno, covar = fastlmm3.predict(K0_whole_test=G0_train, X=covariate_train3,count_A1=False) #test on train
             output_file = self.file_name("lr")
             Dat.write(output_file,predicted_pheno)
 
@@ -794,7 +794,7 @@ class TestFastLMM(unittest.TestCase):
                 do_test_on_train = True
                 if do_test_on_train:
                     #Predict with model (test on train)
-                    predicted_pheno, covar_pheno = fastlmm.predict(K0_whole_test=K0_train, X=covariate_train) #test on train
+                    predicted_pheno, covar_pheno = fastlmm.predict(K0_whole_test=K0_train, X=covariate_train,count_A1=False) #test on train
                     output_file = self.file_name("lmma_"+name)
                     Dat.write(output_file,predicted_pheno)
                     covar2 = SnpData(iid=covar_pheno.row,sid=covar_pheno.col[:,1],val=covar_pheno.val) #kludge to write kernel to text format
@@ -814,13 +814,13 @@ class TestFastLMM(unittest.TestCase):
                     self.compare_files(predicted_pheno,"lmma_"+name)
                     self.compare_files(covar2,"lmma.cov_"+name)
 
-                    predicted_pheno0, covar_pheno0 = fastlmm.predict(K0_whole_test=K0_train[:,0], X=covariate_train[0,:]) #test on train #0
+                    predicted_pheno0, covar_pheno0 = fastlmm.predict(K0_whole_test=K0_train[:,0], X=covariate_train[0,:],count_A1=False) #test on train #0
                     assert np.abs(predicted_pheno0.val[0,0] - predicted_pheno.val[0,0]) < 1e-6, "Expect a single case to get the same prediction as a set of cases"
                     assert np.abs(covar_pheno0.val[0,0] - covar_pheno.val[0,0]) < 1e-6, "Expect a single case to get the same prediction as a set of cases"
 
 
                 #Predict with model (test on test)
-                predicted_phenoB, covar_phenoB  = fastlmm.predict(K0_whole_test=K0_whole_test, X=covariate_test) #test on test
+                predicted_phenoB, covar_phenoB  = fastlmm.predict(K0_whole_test=K0_whole_test, X=covariate_test,count_A1=False) #test on test
                 output_file = self.file_name("lmmb_"+name)
                 Dat.write(output_file,predicted_phenoB)
                 covar2 = SnpData(iid=covar_phenoB.row,sid=covar_phenoB.col[:,1],val=covar_phenoB.val) #kludge to write kernel to text format
@@ -839,7 +839,7 @@ class TestFastLMM(unittest.TestCase):
                 self.compare_files(predicted_phenoB,"lmmb_"+name)
                 self.compare_files(covar2,"lmmb.cov_"+name)
 
-                predicted_phenoB0, covar_phenoB0  = fastlmm.predict(K0_whole_test=K0_whole_test[:,0], X=covariate_test[0,:]) #test on a single test case
+                predicted_phenoB0, covar_phenoB0  = fastlmm.predict(K0_whole_test=K0_whole_test[:,0], X=covariate_test[0,:],count_A1=False) #test on a single test case
                 assert np.abs(predicted_phenoB0.val[0,0] - predicted_phenoB.val[0,0]) < 1e-6, "Expect a single case to get the same prediction as a set of cases"
                 assert np.abs(covar_phenoB0.val[0,0] - covar_phenoB.val[0,0]) < 1e-6, "Expect a single case to get the same prediction as a set of cases"
 
@@ -849,7 +849,7 @@ class TestFastLMM(unittest.TestCase):
                 some_idx.remove(test_idx[0])
                 covariate_some = covar[some_idx,:]
                 K0_whole_some = K0[:,some_idx]
-                predicted_phenoC, covar_phenoC  = fastlmm.predict(K0_whole_test=K0_whole_some, X=covariate_some)
+                predicted_phenoC, covar_phenoC  = fastlmm.predict(K0_whole_test=K0_whole_some, X=covariate_some,count_A1=False)
                 for idxC, iidC in enumerate(predicted_phenoC.iid):
                     meanC = predicted_phenoC.val[idxC]
                     varC = covar_phenoC.val[idxC,idxC]
@@ -891,7 +891,7 @@ class TestFastLMM(unittest.TestCase):
 
 
         #Predict with model (test on train)
-        predicted_pheno, covar = fastlmm3.predict(K0_whole_test=G0_train, X=covariate_train3) #test on train
+        predicted_pheno, covar = fastlmm3.predict(K0_whole_test=G0_train, X=covariate_train3,count_A1=False) #test on train
         output_file = self.file_name("snps")
         Dat.write(output_file,predicted_pheno)
 
@@ -933,7 +933,7 @@ class TestFastLMM(unittest.TestCase):
 
 
         #Predict with model (test on train)
-        predicted_pheno, covar = fastlmm3.predict(K0_whole_test=K0_train, X=covariate_train3) #test on train
+        predicted_pheno, covar = fastlmm3.predict(K0_whole_test=K0_train, X=covariate_train3,count_A1=False) #test on train
         output_file = self.file_name("kernel")
         Dat.write(output_file,predicted_pheno)
 
@@ -972,7 +972,7 @@ class TestFastLMM(unittest.TestCase):
         G0_test = self.snpreader_whole[test_idx,:]
         covariate_test = self.covariate_whole[test_idx,:]
 
-        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, X=covariate_test)
+        predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, X=covariate_test,count_A1=False)
 
         output_file = self.file_name("kernel_one")
         Dat.write(output_file,predicted_pheno)
