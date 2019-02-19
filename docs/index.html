@@ -1,4 +1,4 @@
-!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
@@ -7,7 +7,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>fastlmm API Documentation &mdash; fastlmm 0.0.1 documentation</title>
-   
+    
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -17,7 +17,7 @@
         VERSION:     '0.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-       HAS_SOURCE:  true
+        HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -46,7 +46,7 @@
 <p>FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
 This release contains the improvements described in Widmer <em>et al.</em>, <em>Scientific Reports</em> 2014, and tests for epistasis.</p>
-<p>The FaST-LMM GitHub site is:
+<p>The FaST-LMM GitHub site:
 <a class="reference external" href="https://github.com/MicrosoftGenomics/FaST-LMM/">https://github.com/MicrosoftGenomics/FaST-LMM/</a></p>
 <p>Our main documentation (including live examples) is also available as ipython notebook:
 <a class="reference external" href="https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb</a></p>
@@ -191,7 +191,7 @@ If not given, the function is run locally.</li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chrom5_snps</span> <span class="o">=</span> <span class="n">snps</span><span class="p">[:,</span><span class="n">snps</span><span class="o">.</span><span class="n">pos</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">5</span><span class="p">]</span> <span class="c1"># Test on only chrom5</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_all_plus_select</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">chrom5_snps</span><span class="p">,</span><span class="n">G</span><span class="o">=</span><span class="n">snps</span><span class="p">,</span><span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span><span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">runner</span><span class="o">=</span><span class="n">LocalMultiProc</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="n">mkl_num_threads</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span> <span class="c1">#Run multiproc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
-<span class="go">null_9800 0.0793397 4</span>
+<span class="go">null_9800 0.0793385 4</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -384,7 +384,7 @@ If not given, the function is run locally.</li>
 <h2><code class="xref py py-mod docutils literal"><span class="pre">snp_set</span></code><a class="headerlink" href="#snp-set" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.snp_set">
-<code class="descclassname">fastlmm.association.</code><code class="descname">snp_set</code><span class="sig-paren">(</span><em>test_snps</em>, <em>set_list</em>, <em>pheno</em>, <em>covar=None</em>, <em>output_file_name=None</em>, <em>G0=None</em>, <em>test='lrt'</em>, <em>write_lrtperm=False</em>, <em>nperm=10</em>, <em>npermabs=None</em>, <em>mpheno=1</em>, <em>G0_fit='qq'</em>, <em>qmax=0.1</em>, <em>seed=None</em>, <em>minsetsize=None</em>, <em>maxsetsize=None</em>, <em>mindist=0</em>, <em>idist=1</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.snp_set" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">fastlmm.association.</code><code class="descname">snp_set</code><span class="sig-paren">(</span><em>test_snps</em>, <em>set_list</em>, <em>pheno</em>, <em>covar=None</em>, <em>output_file_name=None</em>, <em>G0=None</em>, <em>test='lrt'</em>, <em>write_lrtperm=False</em>, <em>nperm=10</em>, <em>npermabs=None</em>, <em>mpheno=1</em>, <em>G0_fit='qq'</em>, <em>qmax=0.1</em>, <em>seed=None</em>, <em>minsetsize=None</em>, <em>maxsetsize=None</em>, <em>mindist=0</em>, <em>idist=1</em>, <em>show_pvalue_5050=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.snp_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing GWAS on sets of snps</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -411,6 +411,8 @@ If not given, the function is run locally.</li>
 <li><strong>idist</strong> (<em>number</em>) &#8211; (default: 1) the type of position to use with mindist
 1, genomic distance
 2, base-pair distance</li>
+<li><strong>show_pvalue_5050</strong> (<em>Boolean</em>) &#8211; (default: False) show a conservative P-value arising from an assumed null distribution that is a 50-50 mixture distribution of 0 and 1 dof chi squares [Molenberghs and Verbeke, 2003].
+Provided for backwards compatibility.</li>
 </ul>
 </td>
 </tr>
@@ -428,7 +430,7 @@ If not given, the function is run locally.</li>
 <span class="gp">... </span>    <span class="n">test_snps</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/all_chr.maf0.001.N300&#39;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">set_list</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/set_input.23.txt&#39;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">pheno</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/phenSynthFrom22.23.N300.txt&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">result_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SetId</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">result_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;P-value_adjusted&#39;</span><span class="p">],</span><span class="mi">15</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">result_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SetId</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">result_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;P-value&#39;</span><span class="p">],</span><span class="mi">15</span><span class="p">)</span>
 <span class="go">set23 0.0</span>
 </pre></div>
 </div>
