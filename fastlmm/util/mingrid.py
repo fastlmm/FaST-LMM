@@ -90,7 +90,14 @@ def evalgrid1D(f, evalgrid = None, nGrid=10, minval=0.0, maxval = 0.99999, dimF=
         resultgrid = SP.ones(evalgrid.shape[0])*9999999999999.0
     for i in xrange(evalgrid.shape[0]):        
         fevalgrid = f(evalgrid[i])
-        assert SP.isreal(fevalgrid).all(),"function returned imaginary value"
+
+        is_real=False
+        try:
+            is_real = SP.isreal(fevalgrid).all()
+        except:
+            is_real = SP.isreal(fevalgrid)
+        assert is_real,"function returned imaginary value"
+
         resultgrid[i] = fevalgrid
     return (evalgrid,resultgrid)
 

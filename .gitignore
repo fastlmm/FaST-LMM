@@ -334,3 +334,4 @@ tests/tmp_extract_sim.txt
 /tests/datasets/script2.py
 /tests/datasets/script1.py
 /tests/temp_test
+/fastlmm/util/stats/quadform/qfc_src
