@@ -168,7 +168,7 @@ if __name__ == '__main__':
                                     ])
 
     
-    if True: #Standard test run
+    if False: #Standard test run #!!!cmk
         r = unittest.TextTestRunner(failfast=False)
         r.run(suites)
     else: #Cluster test run
@@ -178,25 +178,9 @@ if __name__ == '__main__':
 
         #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first.
 
-        #!!! The HPC runner doesn't seem to be returning failed tests even when they are there
-        runner = HPC(task_count, 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                                    remote_python_parent=remote_python_parent,
-                                                    unit='node', #core, socket, node
-                                                    update_remote_python_parent=True,
-                                                    template="Preemptable",
-                                                    priority="Lowest",
-                                                    nodegroups="Preemptable",
-                                                    #excluded_nodes=['gcrcn0231'],
-                                                    runtime="0:11:0", # day:hour:min
-                                                    max = 100
-                                                    )
-
-
         #runner = Local()
-        k
         runner = LocalMultiProc(taskcount=12,mkl_num_threads=5,just_one_process=False)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
-        #runner = Hadoop2(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
         runner.run(distributable_test)
 

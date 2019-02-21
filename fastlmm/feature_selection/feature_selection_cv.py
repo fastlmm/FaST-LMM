@@ -485,11 +485,11 @@ class FeatureSelectionStrategy(object):
                     pylab.xlabel("k")
                     pylab.grid(True)
                     #pylab.show()
+                    xval_fn = output_prefix + "_xval_%s.pdf" % label
+                    util.create_directory_if_necessary(xval_fn)
+                    pylab.savefig(xval_fn)
                 except:
                     pass
-                xval_fn = output_prefix + "_xval_%s.pdf" % label
-                util.create_directory_if_necessary(xval_fn)
-                pylab.savefig(xval_fn)
         elif strategy == "insample_cv":
             best_k_idx = average_loss.argmin()
             best_k = k_values[best_k_idx]
