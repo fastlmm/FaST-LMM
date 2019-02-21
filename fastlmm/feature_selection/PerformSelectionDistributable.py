@@ -37,7 +37,7 @@ from pysnptools.snpreader import Bed
 
 class PerformSelectionDistributable(object) : #implements IDistributable
 
-    def __init__(self, feature_selection_strategy, k_values, delta_values, strategy, output_prefix=None, select_by_ll=False,penalty=0.0):
+    def __init__(self, feature_selection_strategy, k_values, delta_values, strategy, output_prefix=None, select_by_ll=False,penalty=0.0,create_pdf=True):
         self.feature_selection_strategy = feature_selection_strategy
         self.k_values = k_values
         self.delta_values = delta_values
@@ -47,6 +47,7 @@ class PerformSelectionDistributable(object) : #implements IDistributable
         self.penalty=penalty
         self.num_steps_k = len(self.k_values)
         self.num_steps_delta = len(self.delta_values)
+        self.create_pdf = create_pdf
 
     def copyinputs(self, copier):
         copier.input(self.feature_selection_strategy)
@@ -61,8 +62,9 @@ class PerformSelectionDistributable(object) : #implements IDistributable
                 for label in ['mse', 'll']:
                     out_fn = self.output_prefix + "_" + label  + ".csv"
                     copier.output(out_fn)
-                    xval_fn = self.output_prefix + "_xval_%s.pdf" % label
-                    copier.output(xval_fn)
+                    if self.create_pdf:
+                        xval_fn = self.output_prefix + "_xval_%s.pdf" % label
+                        copier.output(xval_fn)
                 #if (self.strategy=="lmm_full_cv") and self.feature_selection_strategy.interpolate_delta:
                 #    plot_fn=self.output_prefix+"_parabola.pdf"
                 #    copier.output(plot_fn)
@@ -117,9 +119,9 @@ class PerformSelectionDistributable(object) : #implements IDistributable
 
         # find best parameters
         if mse_cv is not None:
-            best_k_mse, best_delta_mse, best_mse, best_delta_mse_interp, best_mse_interp = self.feature_selection_strategy.reduce_result(mse_cv, self.k_values, self.delta_values, self.strategy, self.output_prefix, best_delta_for_k, label="mse")
+            best_k_mse, best_delta_mse, best_mse, best_delta_mse_interp, best_mse_interp = self.feature_selection_strategy.reduce_result(mse_cv, self.k_values, self.delta_values, self.strategy, self.output_prefix, best_delta_for_k, label="mse",create_pdf=self.create_pdf)
         if ll_cv is not None:
-            best_k_ll, best_delta_ll, best_ll, best_delta_ll_interp, best_ll_interp = self.feature_selection_strategy.reduce_result(ll_cv, self.k_values, self.delta_values, self.strategy, self.output_prefix, best_delta_for_k, label="ll")
+            best_k_ll, best_delta_ll, best_ll, best_delta_ll_interp, best_ll_interp = self.feature_selection_strategy.reduce_result(ll_cv, self.k_values, self.delta_values, self.strategy, self.output_prefix, best_delta_for_k, label="ll",create_pdf=self.create_pdf)
 
         if self.select_by_ll:
             best_k, best_delta, best_obj, best_delta_interp, best_obj_interp = best_k_ll, best_delta_ll, best_ll, best_delta_ll_interp, best_ll_interp

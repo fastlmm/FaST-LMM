@@ -330,7 +330,7 @@ class FeatureSelectionStrategy(object):
 
 
     #TODO: once the functionality is fixed refactor
-    def perform_selection(self, k_values, delta_values, strategy="lmm_full_cv", output_prefix=None, select_by_ll=False, runner=Local(),penalty=0.0):
+    def perform_selection(self, k_values, delta_values, strategy="lmm_full_cv", output_prefix=None, select_by_ll=False, runner=Local(),penalty=0.0,create_pdf=True):
         """Perform feature selection
 
         k_values : array-like, shape = [n_steps_k]
@@ -376,7 +376,7 @@ class FeatureSelectionStrategy(object):
             logging.warn("strategies other than lmm_full_cv and insample_cv are experimental!")
             raise Exception("strategies other than lmm_full_cv and insample_cv are experimental!")
 
-        perform_selection_distributable = psd.PerformSelectionDistributable(self, k_values, delta_values, strategy, output_prefix, select_by_ll, penalty=penalty)
+        perform_selection_distributable = psd.PerformSelectionDistributable(self, k_values, delta_values, strategy, output_prefix, select_by_ll, penalty=penalty,create_pdf=create_pdf)
         result = runner.run(perform_selection_distributable)
         return result
 
@@ -452,12 +452,12 @@ class FeatureSelectionStrategy(object):
             # save cv scores
             if create_pdf and (output_prefix != None):
                 # visualize results
+                import matplotlib
+                matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
+                import pylab
+                pylab.figure()
+                ax = pylab.subplot(111)
                 try:
-                    import matplotlib
-                    matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
-                    import pylab
-                    pylab.figure()
-                    ax = pylab.subplot(111)
                     for delta_idx, delta in enumerate(delta_values):
                         ln_delta = sp.log(delta)
                         ax.semilogx(k_values, average_loss[:,delta_idx], "-x", label="ln_d=%.1f" % (ln_delta))
@@ -485,11 +485,11 @@ class FeatureSelectionStrategy(object):
                     pylab.xlabel("k")
                     pylab.grid(True)
                     #pylab.show()
-                    xval_fn = output_prefix + "_xval_%s.pdf" % label
-                    util.create_directory_if_necessary(xval_fn)
-                    pylab.savefig(xval_fn)
                 except:
                     pass
+                xval_fn = output_prefix + "_xval_%s.pdf" % label
+                util.create_directory_if_necessary(xval_fn)
+                pylab.savefig(xval_fn)
         elif strategy == "insample_cv":
             best_k_idx = average_loss.argmin()
             best_k = k_values[best_k_idx]

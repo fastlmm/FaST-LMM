@@ -192,7 +192,7 @@ class TestFeatureSelection(unittest.TestCase):
 
         # select by LL
         fss = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, random_state=random_state, cov_fn=cov_fn, num_pcs=num_pcs, interpolate_delta=True,count_A1=False)
-        best_k, best_delta, best_obj, best_snps = fss.perform_selection(k_values, delta_values, strategy, output_prefix=output_prefix, select_by_ll=True)
+        best_k, best_delta, best_obj, best_snps = fss.perform_selection(k_values, delta_values, strategy, output_prefix=output_prefix, select_by_ll=True,create_pdf=False)
         
         self.assertEqual(best_k, answers[0])
         self.assertAlmostEqual(best_delta, answers[1], delta)
@@ -200,7 +200,7 @@ class TestFeatureSelection(unittest.TestCase):
 
         # select by MSE
         fss = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, random_state=random_state, cov_fn=cov_fn, num_pcs=num_pcs, interpolate_delta=True,count_A1=False)
-        best_k, best_delta, best_obj, best_snps = fss.perform_selection(k_values, delta_values, strategy, output_prefix=output_prefix, select_by_ll=False)
+        best_k, best_delta, best_obj, best_snps = fss.perform_selection(k_values, delta_values, strategy, output_prefix=output_prefix, select_by_ll=False,create_pdf=False)
         
         self.assertEqual(best_k, answers[0])
         self.assertAlmostEqual(best_delta, answers[1], delta)
@@ -328,11 +328,11 @@ class TestFeatureSelection(unittest.TestCase):
 
         # case 1
         fss_1 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000,count_A1=False)
-        best_k_1, best_delta_1, best_obj_1, best_snps_1 = fss_1.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
+        best_k_1, best_delta_1, best_obj_1, best_snps_1 = fss_1.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         #some misc testing
         import PerformSelectionDistributable as psd
-        perform_selection_distributable = psd.PerformSelectionDistributable(fss_1, k_values, delta_values, strategy, output_prefix, select_by_ll=True, penalty=0.0)
+        perform_selection_distributable = psd.PerformSelectionDistributable(fss_1, k_values, delta_values, strategy, output_prefix, select_by_ll=True, penalty=0.0,create_pdf=False)
         self.assertEqual(perform_selection_distributable.work_count, 3)
         s = perform_selection_distributable.tempdirectory
         s = str(perform_selection_distributable)
@@ -345,23 +345,23 @@ class TestFeatureSelection(unittest.TestCase):
 
         # case 2
         fss_2 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=5000,count_A1=False)
-        best_k_2, best_delta_2, best_obj_2, best_snps_2 = fss_2.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
+        best_k_2, best_delta_2, best_obj_2, best_snps_2 = fss_2.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         # case 3
         fss_3 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=600,count_A1=False)
-        best_k_3, best_delta_3, best_obj_3, best_snps_3 = fss_3.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
+        best_k_3, best_delta_3, best_obj_3, best_snps_3 = fss_3.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         # case 4
         fss_4 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000,count_A1=False)
-        best_k_4, best_delta_4, best_obj_4, best_snps_4 = fss_4.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
+        best_k_4, best_delta_4, best_obj_4, best_snps_4 = fss_4.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         # case 5
         fss_5 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=5000,count_A1=False)
-        best_k_5, best_delta_5, best_obj_5, best_snps_5 = fss_5.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
+        best_k_5, best_delta_5, best_obj_5, best_snps_5 = fss_5.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         # case 6
         fss_6 = FeatureSelectionStrategy(snpreader, self.pheno_shuffleplus_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=600,count_A1=False)
-        best_k_6, best_delta_6, best_obj_6, best_snps_6 = fss_6.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy)
+        best_k_6, best_delta_6, best_obj_6, best_snps_6 = fss_6.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         self.assertEqual(int(best_k_1), int(best_k_2))
         self.assertEqual(int(best_k_1), int(best_k_3))
