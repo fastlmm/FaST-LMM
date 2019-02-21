@@ -452,12 +452,12 @@ class FeatureSelectionStrategy(object):
             # save cv scores
             if create_pdf and (output_prefix != None):
                 # visualize results
-                import matplotlib
-                matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
-                import pylab
-                pylab.figure()
-                ax = pylab.subplot(111)
                 try:
+                    import matplotlib
+                    matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
+                    import pylab
+                    pylab.figure()
+                    ax = pylab.subplot(111)
                     for delta_idx, delta in enumerate(delta_values):
                         ln_delta = sp.log(delta)
                         ax.semilogx(k_values, average_loss[:,delta_idx], "-x", label="ln_d=%.1f" % (ln_delta))
