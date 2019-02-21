@@ -111,7 +111,7 @@ class LinearRegression(object):
                                 val=np.c_[X.val,np.ones((X.iid_count,1))])
 
 
-        lsqSol = np.linalg.lstsq(X.val, y.val[:,0],rcond=None)
+        lsqSol = np.linalg.lstsq(X.val, y.val[:,0],rcond=-1)
         bs=lsqSol[0] #weights
         r2=lsqSol[1] #squared residuals
         D=lsqSol[2]  #rank of design matrix

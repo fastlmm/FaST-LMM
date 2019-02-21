@@ -109,7 +109,7 @@ class scoretest_logit(scoretest):
         GY = G1.T.dot(RxY)
         squaredform=(GY*GY).sum()/(2.0*P)
         
-        RxVG,Xd =  linreg(VG, X=self.VX, Xdagger=self.pinvVX,rcond=None)
+        RxVG,Xd =  linreg(VG, X=self.VX, Xdagger=self.pinvVX,rcond=-1)
         if (G1.shape[0]<G1.shape[1]):
             GPG=RxVG.dot(RxVG.T)/(2.0*P)
         else:
@@ -342,7 +342,7 @@ class scoretest2K(scoretest):
         return resmin[0]
 
 
-def linreg(Y, X=None, Xdagger=None,rcond=None):       
+def linreg(Y, X=None, Xdagger=None,rcond=-1):       
     if Y.ndim == 1:
         P=1
     else:

@@ -269,7 +269,7 @@ class TestFastLMM(unittest.TestCase):
 
             Xtrain = np.c_[covariate_train.val,np.ones((covariate_train.iid_count,1))]
             Xtest = np.c_[covariate_test.val,np.ones((covariate_test.iid_count,1))]
-            lsqSol = np.linalg.lstsq(Xtrain, pheno_train.val[:,0],rcond=None)
+            lsqSol = np.linalg.lstsq(Xtrain, pheno_train.val[:,0],rcond=-1)
             bs=lsqSol[0] #weights
             r2=lsqSol[1] #squared residuals
             D=lsqSol[2]  #rank of design matrix
@@ -389,7 +389,7 @@ class TestFastLMM(unittest.TestCase):
 
         Xtrain = np.c_[covariate_train.val,np.ones((covariate_train.iid_count,1))]
         Xtest = np.c_[covariate_test.val,np.ones((covariate_test.iid_count,1))]
-        lsqSol = np.linalg.lstsq(Xtrain, pheno_train.val[:,0],rcond=None)
+        lsqSol = np.linalg.lstsq(Xtrain, pheno_train.val[:,0],rcond=-1)
         bs=lsqSol[0] #weights
         r2=lsqSol[1] #squared residuals
         D=lsqSol[2]  #rank of design matrix
@@ -748,7 +748,7 @@ class TestFastLMM(unittest.TestCase):
 
             Xtrain = np.c_[covariate_train.val,np.ones((covariate_train.iid_count,1))]
             Xtest = np.c_[covariate_test.val,np.ones((covariate_test.iid_count,1))]
-            lsqSol = np.linalg.lstsq(Xtrain, pheno_train.val[:,0],rcond=None)
+            lsqSol = np.linalg.lstsq(Xtrain, pheno_train.val[:,0],rcond=-1)
             bs=lsqSol[0] #weights
             r2=lsqSol[1] #squared residuals
             D=lsqSol[2]  #rank of design matrix
