@@ -84,7 +84,7 @@ def TESTBEFOREUSING_score_testfilesFromDir(phenofile, base0, pedfilesalt, covarf
         Pv[i],dofchi2,scalechi2=pv_mom(squaredform[i],expectationsqform[i],varsqform[i])
 
     ret = {
-           'filenames': SP.array(pedfilesalt,dtype = 'str'),
+           'filenames': SP.array(pedfilesalt,dtype=str),
            'squaredform':squaredform,
            'expectationsqform':expectationsqform,
            'varsqform':varsqform,
@@ -176,7 +176,7 @@ def lrt_testfilesFromDir(phenofile, base0, pedfilesalt, covarfile = None, outfil
            'lik0': lik0,
            'lik1':lik1,
            'nexclude':nexclude,
-           'filenames': SP.array(pedfilesalt,dtype = 'str')
+           'filenames': SP.array(pedfilesalt,dtype=str)
            }
     if outfile is not None:
         #TODO

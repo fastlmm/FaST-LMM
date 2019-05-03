@@ -144,7 +144,6 @@ if __name__ == '__main__':
     import fastlmm.util.test
     import tests.test
 
-
     suites = unittest.TestSuite([
                                     ##getDebugTestSuite(),\
 
@@ -178,7 +177,7 @@ if __name__ == '__main__':
 
         #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first.
 
-        #runner = Local()
+        runner = Local()
         runner = LocalMultiProc(taskcount=12,mkl_num_threads=5,just_one_process=False)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
         distributable_test = DistributableTest(suites,"temp_test")

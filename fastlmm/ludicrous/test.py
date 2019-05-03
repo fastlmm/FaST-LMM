@@ -1,0 +1,247 @@
+import doctest
+import unittest
+import numpy as np
+import pysnptools.util as pstutil
+from pysnptools.snpreader import Bed
+import logging
+from fastlmm.ludicrous.gen.snpgen import SnpGen
+import tempfile
+from fastlmm.association import single_snp
+import os
+import pandas as pd
+from fastlmm.ludicrous.single_snp_low import single_snp2
+from fastlmm.ludicrous.file_cache import LocalCache
+from fastlmm.ludicrous.distributed_bed import DistributedBed
+from fastlmm.util.runner import LocalMultiProc
+import shutil
+
+class TestOneMil(unittest.TestCase):
+    @classmethod
+
+    def test_snpgen(self):
+        seed = 0
+        snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000)
+        snpdata = snpgen[:,[0,1,200,2200,10]].read()
+        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([ 0.00253807,  0.00127877,  0.16644993,  0.00131406,  0.00529101]),rtol=1e-5)
+
+        snpdata2 = snpgen[:,[0,1,200,2200,10]].read()
+        np.testing.assert_equal(snpdata.val,snpdata2.val)
+        snpdata3 = snpgen[::10,[0,1,200,2200,10]].read()
+        np.testing.assert_equal(snpdata3.val,snpdata2.val[::10,:])
+
+    def test_snpgen_cache(self):
+        cache_file = tempfile.gettempdir() + "/test_snpgen_cache.snpgen.npz"
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+        snpgen = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file)
+        assert os.path.exists(cache_file)
+        snpgen2 = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file)
+        os.remove(cache_file)
+        snpdata = snpgen2[:,[0,1,200,2200,10]].read()
+        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([ 0.00253807,  0.00127877,  0.16644993,  0.00131406,  0.00529101]),rtol=1e-5)
+
+    @classmethod
+    def setUpClass(self):
+        from fastlmm.util.util import create_directory_if_necessary
+        import fastlmm as fastlmm
+        create_directory_if_necessary(self.tempout_dir, isfile=False)
+        self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(fastlmm.__file__)),".."))
+        self.bed = Bed(os.path.join(self.pythonpath, 'tests/datasets/synth/all'),count_A1=True)[:,::10]
+        self.phen_fn = os.path.join(self.pythonpath, 'tests/datasets/synth/pheno_10_causals.txt')
+        self.cov_fn = os.path.join(self.pythonpath,  'tests/datasets/synth/cov.txt')
+
+    tempout_dir = "tempout/ludicrious"
+
+    def test_old(self):
+        logging.info("test_old")
+
+        output_file = self.file_name("old")
+        results_df = single_snp(self.bed,  self.phen_fn , covar=self.cov_fn, count_A1=True,
+                                  output_file_name=output_file
+                                  )
+        self.compare_files(results_df,"old")
+
+    @staticmethod
+    def _cache_dict(top, clear_cache):
+        storage = top.join("intermediate")
+        if clear_cache:
+            storage.rmtree()
+        cache_dict={chrom:storage for chrom in xrange(23)}
+        return cache_dict
+        
+    def test_low(self):
+        logging.info("test_low")
+
+        output_file = self.file_name("low")
+
+        storage = LocalCache("local_cache/low")
+        for clear_cache in (True, False):
+            results_df = single_snp2(cache_dict=self._cache_dict(storage,clear_cache), test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,
+                                     output_file_name=output_file,
+                                      )
+            self.compare_files(results_df,"old")
+
+    def test_local_distribute(self):
+        logging.info("test_local_distribute")
+        force_python_only = False
+
+        output_file = self.file_name("local_distribute")
+
+        storage = LocalCache("local_cache/local_distribute")
+        test_storage = storage.join('test_snps')
+        test_storage.rmtree('')
+        test_snps = DistributedBed.write(test_storage, self.bed, piece_per_chrom_count=2)
+
+        results_df = single_snp2(cache_dict=self._cache_dict(storage,clear_cache=True), test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,
+                                    output_file_name=output_file, force_python_only=force_python_only
+                                    )
+
+        self.compare_files(results_df,"old")
+
+        results_df = single_snp2(cache_dict=self._cache_dict(storage,clear_cache=False), test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,
+                                    output_file_name=output_file
+                                    )
+        self.compare_files(results_df,"old")
+
+    def test_runner(self):
+        logging.info("test_runner")
+
+        output_file = self.file_name("runner")
+
+        storage = LocalCache("local_cache/runner")
+        runner = LocalMultiProc(taskcount=4,just_one_process=True)
+        results_df = single_snp2(cache_dict=self._cache_dict(storage,clear_cache=True), test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,
+                                    output_file_name=output_file,runner=runner,
+                                    )
+        self.compare_files(results_df,"old")
+
+
+
+    def test_old_one(self):
+        logging.info("test_old_one")
+
+        output_file = self.file_name("old_one")
+
+        test_snps3 = self.bed[:,self.bed.pos[:,0]==3] # Test only on chromosome 3
+        results_df = single_snp(test_snps=test_snps3, K0=self.bed,  pheno=self.phen_fn , covar=self.cov_fn, count_A1=True,
+                                  output_file_name=output_file,
+                                  )
+        self.compare_files(results_df,"old_one")
+
+
+    def test_one_fast(self):
+        logging.info("test_one_fast")
+
+        output_file = self.file_name("one_fast")
+
+        storage = LocalCache("local_cache")
+        test_storage = storage.join('one_fast')
+        test_storage.rmtree()
+        test_snps3 = self.bed[:,self.bed.pos[:,0]==3] # Test only on chromosome 3
+        test_snps3_dist = DistributedBed.write(test_storage,test_snps3,piece_per_chrom_count=2)
+
+        storageL = LocalCache("local_cache/one_fast")
+        results_df = single_snp2(cache_dict=self._cache_dict(storageL,clear_cache=True), test_snps=test_snps3_dist, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed, output_file_name=output_file)
+        self.compare_files(results_df,"old_one")
+    
+    def test_net_use(self):
+        logging.info("test_net_use")
+        from fastlmm.ludicrous.file_cache import FileShare
+        FileShare._net_use(r"\\localhost\scratch")
+        print "done"
+
+    def test_one_chrom(self):
+        logging.info("test_one_chrom")
+
+        output_file = self.file_name("one_chrom")
+
+        storage = LocalCache("local_cache/one_chrom")
+        test_storage = storage.join('test_snps')
+        test_storage.rmtree('')
+        test_snps3 = self.bed[:,self.bed.pos[:,0]==3] # Test only on chromosome 3
+        test_snps3_dist = DistributedBed.write(test_storage,test_snps3,piece_per_chrom_count=2)
+
+
+        for test_snps, ref, clear_cache, name in (
+                                                    (test_snps3, "old_one", True, "Run with just chrom3"),
+                                                    (test_snps3_dist, "old_one", True, "Run with distributed test SNPs"),
+                                                    (test_snps3, "old_one", False, "Run with just chrom3 (use cache)"),
+                                                    (test_snps3_dist, "old_one", False, "Run with distributed test SNPs (use cache)"),
+                                                    ):
+            logging.info("=========== " + name + " ===========")
+            results_df = single_snp2(cache_dict=self._cache_dict(storage,clear_cache=clear_cache), test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,
+                                     output_file_name=output_file,
+                                      )
+            self.compare_files(results_df,ref)
+
+
+
+
+    def file_name(self,testcase_name):
+        temp_fn = os.path.join(self.tempout_dir,testcase_name+".txt")
+        if os.path.exists(temp_fn):
+            os.remove(temp_fn)
+        return temp_fn
+
+    def compare_files(self,frame,ref_base):
+        reffile = self.reference_file("ludicrous/"+ref_base+".txt")
+
+        reference=pd.read_csv(reffile,delimiter='\s',comment=None,engine='python')
+        assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
+        for _, row in reference.iterrows():
+            sid = row.SNP
+            pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
+            assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
+
+    @staticmethod
+    def reference_file(outfile):
+        #!!similar code elsewhere
+        import platform;
+        os_string=platform.platform()
+
+        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","tests")
+        windows_fn = file_path + '/expected-Windows/'+outfile
+        assert os.path.exists(windows_fn), "Can't find file '{0}'".format(windows_fn)
+        debian_fn = file_path + '/expected-debian/'+outfile
+        if not os.path.exists(debian_fn): #If reference file is not in debian folder, look in windows folder
+            debian_fn = windows_fn
+
+        if "debian" in os_string or "Linux" in os_string:
+            if "Linux" in os_string:
+                logging.warning("comparing to Debian output even though found: %s" % os_string)
+            return debian_fn
+        else:
+            if "Windows" not in os_string:
+                logging.warning("comparing to Windows output even though found: %s" % os_string)
+            return windows_fn 
+
+        
+
+def getTestSuite():
+    """
+    set up composite test suite
+    """
+    test_suite = unittest.TestSuite([])
+    test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestOneMil))   #Tests Ludicrous Speed GWAS
+    return test_suite
+
+
+if __name__ == '__main__':
+    #from fastlmm.ludicrous.test import getTestSuite, TestOneMil
+    logging.basicConfig(level=logging.INFO)
+    suites = getTestSuite()
+
+
+    if True:
+        r = unittest.TextTestRunner(failfast=True)
+        r.run(suites)
+    else: #runner test run
+        logging.basicConfig(level=logging.INFO)
+
+        from fastlmm.util.distributabletest import DistributableTest
+        runner = LocalMultiProc(taskcount=22,mkl_num_threads=5,just_one_process=False)
+        distributable_test = DistributableTest(suites,"temp_test")
+        print runner.run(distributable_test)
+
+
+    logging.info("done")

@@ -19,6 +19,10 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "inference", "inference\infe
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "feature_selection", "feature_selection\feature_selection.pyproj", "{DB93DE74-8125-420F-A2C5-2145E80D6245}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "ludicrous", "ludicrous\ludicrous.pyproj", "{09D0E26F-6749-413B-9523-6D108100BC8E}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "pysnptools", "..\..\pysnptools\pysnptools\pysnptools.pyproj", "{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,10 @@ Global
 		{6D8DCDF9-3776-4E1B-A713-E9B6F2A49865}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB93DE74-8125-420F-A2C5-2145E80D6245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DB93DE74-8125-420F-A2C5-2145E80D6245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09D0E26F-6749-413B-9523-6D108100BC8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09D0E26F-6749-413B-9523-6D108100BC8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

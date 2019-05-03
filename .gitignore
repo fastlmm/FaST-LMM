@@ -336,3 +336,12 @@ tests/tmp_extract_sim.txt
 /tests/temp_test
 /fastlmm/util/stats/quadform/qfc_src
 /fastlmm/inference/tests/tempout/fastlmm
+/fastlmm/local_cache
+/fastlmm/ludicrous/local_cache/local_distribute
+/fastlmm/runs
+/fastlmm/tempout
+/fastlmm/ludicrous/Externals/Intel/MKL
+/fastlmm/ludicrous/mmultfilex.pyd
+/fastlmm/ludicrous/cample.pyd
+/fastlmm/ludicrous/cample.cpp
+/fastlmm/.vs/fastlmm/v15
