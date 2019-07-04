@@ -6,8 +6,8 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>epistasis.py</StartupFile>
-    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
+    <StartupFile>tests\test_single_snp.py</StartupFile>
+    <SearchPath>..\..\..\pysnptools;..\..\..\fastlmmEpi</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
