@@ -8,7 +8,7 @@ import time
 
 import pysnptools.util as pstutil
 from fastlmm.inference import FastLMM
-from fastlmm.util.mapreduce import map_reduce
+from pysnptools.util.mapreduce1.mapreduce import map_reduce
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
 from fastlmm.association.single_snp import _K_per_chrom
 from pysnptools.standardizer import Unit
@@ -17,9 +17,9 @@ from pysnptools.kernelreader import KernelReader
 from pysnptools.kernelreader import KernelData
 from fastlmm.association import single_snp_linreg
 
-from fastlmm.util.mapreduce import map_reduce
+from pysnptools.util.mapreduce1.mapreduce import map_reduce
 from fastlmm.association.single_snp_all_plus_select import _kfold
-from fastlmm.util.runner import Local
+from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.kernelreader import Identity as KernelIdentity
 
 

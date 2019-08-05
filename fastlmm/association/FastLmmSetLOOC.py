@@ -1,6 +1,6 @@
 from fastlmm.association.FastLmmSet import *
-#from fastlmm.util.distributable import *
-from fastlmm.util.runner import *
+#from pysnptools.util.mapreduce1.distributable import *
+from pysnptools.util.mapreduce1.runner import *
 import os
 import sys
 import time

@@ -9,7 +9,7 @@ from fastlmm.association import single_snp
 from fastlmm.association import single_snp_linreg
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from fastlmm.util.runner import Local, HPC, LocalMultiProc
+from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
 from pysnptools.kernelreader import  Identity as KernelIdentity
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -20,7 +20,7 @@ class TestSingleSnpLinReg(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        from fastlmm.util.util import create_directory_if_necessary
+        from pysnptools.util import create_directory_if_necessary
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
         self.bedbase = os.path.join(self.pythonpath, 'tests/datasets/all_chr.maf0.001.N300')
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     else: #Cluster test run
         logging.basicConfig(level=logging.INFO)
 
-        from fastlmm.util.distributabletest import DistributableTest
+        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
         runner = Local()
         #runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs

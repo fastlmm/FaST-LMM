@@ -12,7 +12,7 @@ from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_all_plus_select,single_snp
 from fastlmm.feature_selection.test import TestFeatureSelection
 
-from fastlmm.util.runner import Local, Hadoop2, HPC, LocalMultiProc, LocalInParts, LocalMultiThread
+from pysnptools.util.mapreduce1.runner import Local, Hadoop2, HPC, LocalMultiProc, LocalInParts, LocalMultiThread
 def mf_to_runner_function(mf):
     excluded_nodes=[]#'GCRCM07B20','GCRCM11B05','GCRCM10B06','GCRCM02B07']#'GCRCM02B11','GCRCM03B07'] #'GCRCM22B06','GCRCN0383','GCRCM02B07','GCRCN0179','GCRCM37B13','GCRCN0376','GCRCN0456']#'gcrcn0231']#"MSR-HDP-DN0316","MSR-HDP-DN0321","MSR-HDP-DN0336","MSR-HDP-DN0377","MSR-HDP-DN0378","MSR-HDP-DN0314","MSR-HDP-DN0335","MSRQC073","MSRQC002","MSRQC015"]
     remote_python_parent=r"\\GCR\Scratch\RR1\escience\carlk\data\carlk\pythonpath10262016"
@@ -208,7 +208,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        from fastlmm.util.util import create_directory_if_necessary
+        from pysnptools.util import create_directory_if_necessary
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
         self.bedbase = os.path.join(self.pythonpath, 'tests/datasets/all_chr.maf0.001.N300')
@@ -246,7 +246,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"notebook")
 
     def test_one(self):
-        from fastlmm.util.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
 
         logging.info("TestSingleSnpAllPlusSelect test_one")
         snps = self.bedbase
@@ -268,7 +268,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"one")
 
     def test_three(self): #!!! rather a big test case
-        from fastlmm.util.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_three")
 
         bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
@@ -295,7 +295,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"three")
 
     def test_two(self): #!!! rather a big test case
-        from fastlmm.util.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_two")
         do_plot = False
 
@@ -436,26 +436,21 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([getTestSuite()])
 
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=False)
+        r = unittest.TextTestRunner(failfast=True)
         r.run(suites)
     else: #Cluster test run
 
 
 
-        from fastlmm.util.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
         logging.basicConfig(level=logging.INFO)
 
-        from fastlmm.util.distributabletest import DistributableTest
+        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
 
-        #runner = HPC(10, 'RR1-N13-09-H44',r'\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond',
-        #                remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
-        #                update_remote_python_parent=True,
-        #                priority="AboveNormal",mkl_num_threads=1)
         runner = Local()
         #runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
-        #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
         print runner.run(distributable_test)
 

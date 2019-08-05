@@ -13,10 +13,14 @@
     <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
     <Name>pyplink</Name>
     <RootNamespace>pyplink</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccProvider>SAK</SccProvider>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
+    <SccProjectName>
+    </SccProjectName>
+    <SccProvider>
+    </SccProvider>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <CommandLineArguments>-v</CommandLineArguments>
     <InterpreterPath />

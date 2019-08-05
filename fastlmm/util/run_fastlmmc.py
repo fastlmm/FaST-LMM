@@ -180,7 +180,11 @@ def run(bfile=None,pheno=None,bfileSim=None,sim=None,linreg=None,covar=None,out=
         cmd += ' -topKbyLinReg %d'%topKbyLinReg
     logging.info(cmd)
     
-    output = subprocess.check_output(cmd,shell=True,stderr=subprocess.STDOUT)
+    output = ""
+    try:
+        output = subprocess.check_output(cmd,shell=True,stderr=subprocess.STDOUT)
+    except Exception, e:
+        print(e)
     print output
     #LG.info(output)
     #return output

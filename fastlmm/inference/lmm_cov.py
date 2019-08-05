@@ -6,7 +6,7 @@ import scipy.special as ss
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
 import time
-
+from fastlmm.util.matrix.bigsvd import big_sdd
 
 class LMM(object):
     '''
@@ -100,32 +100,18 @@ class LMM(object):
         compute the spectral decomposition from design matrix G for linear kernel
                 (allows low rank computations, if G has more rows than columns) 
         """
-        k = self.G.shape[1]
         N = self.G.shape[0]
+        k = self.G.shape[1]
         if k:
             if ((not self.forcefullrank) and (k < N)):
-                #it is faster using the eigen decomposition of G.T*G but this is more
-                #accurate
                 PxG = self.linreg.regress(Y=self.G)
-                try:
-                    [self.U,self.S,V] = la.svd(PxG,False,True)
-                    # SVD is defined to be all positive in S, so the following will always be true (unless the SVD is buggy). 
-                    # if np.any(self.S < -0.1):
-                    #    logging.warning("kernel contains a negative Eigenvalue")
-                    inonzero = self.S > 1E-10
-                    self.S = self.S[inonzero]
-                    self.S = self.S * self.S
-                    self.U = self.U[:,inonzero]
-                    
-                except la.LinAlgError:  # revert to Eigenvalue decomposition
-                    print "Got SVD exception, trying eigenvalue decomposition of square of G. Note that this is a little bit less accurate"
-                    [S,V] = la.eigh(PxG.T.dot(PxG))
-                    if np.any(S < -0.1):
-                        logging.warning("kernel contains a negative Eigenvalue")
-                    inonzero = (S > 1E-10)
-                    self.S = S[inonzero]
-                    #self.S*=(N/self.S.sum())
-                    self.U = self.G.dot(V[:,inonzero] / np.sqrt(self.S))
+                #was [self.U,self.S,V] = la.svd(PxG,full_matrices=False,compute_uv=True), N x min, min, min x k
+                [self.U,self.S,V] = big_sdd(PxG) #destroys PxG, returns NxN, min, kxk
+                inonzero = np.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
+                self.S = self.S[inonzero]
+                self.U = self.U[:,inonzero]
+                #V = V[inonzero,:] #If we cared about V, this is what we would do.
+                self.S = self.S * self.S
             else:
                 K = self.G.dot(self.G.T)
                 self.setK(K=K)
@@ -930,7 +916,7 @@ if 0:
     S_x = linreg.regress(sp.eye(N))
     S_x = linreg.regress(S_x.T)
     K_ = X_K_.dot(X_K_.T) + S_x
-    [u,s,v] = la.svd(X_K_)
+    [u,s,v] = la.svd(X_K_) #Use big_svd
     inonz = s > 1e-10
     s = s[inonz] * s[inonz] + 1
 

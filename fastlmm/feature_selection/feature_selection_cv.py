@@ -39,7 +39,7 @@ import fastlmm.util.preprocess as up
 import fastlmm.inference as inference
 import fastlmm.inference.linear_regression as lin_reg
 import PerformSelectionDistributable as psd
-from fastlmm.util.runner import *
+from pysnptools.util.mapreduce1.runner import *
 from pysnptools.standardizer import Unit
 import pysnptools.snpreader as sr
 
@@ -414,7 +414,7 @@ class FeatureSelectionStrategy(object):
                 out_fn = output_prefix + "_" + label  + ".csv"
                 cols = pd.MultiIndex.from_arrays([split_idx, k_values*(self.num_folds+1)], names=['split_id','k_value'])
                 df = pd.DataFrame(stacked_result, columns=delta_values, index=cols)
-                util.create_directory_if_necessary(out_fn)
+                pstutil.create_directory_if_necessary(out_fn)
                 df.to_csv(out_fn)
             
             # make sure delta is not at the boundary for any k
@@ -446,7 +446,7 @@ class FeatureSelectionStrategy(object):
                     #if output_prefix != None:
                         #create a size-zero file so that the cluster will aways have something to copy
                         #plot_fn=output_prefix+"_parabola.pdf"
-                        #util.create_directory_if_necessary(plot_fn)
+                        #pstutil.create_directory_if_necessary(plot_fn)
                         #open(plot_fn, "w").close()
 
             # save cv scores
@@ -488,7 +488,7 @@ class FeatureSelectionStrategy(object):
                 except:
                     pass
                 xval_fn = output_prefix + "_xval_%s.pdf" % label
-                util.create_directory_if_necessary(xval_fn)
+                pstutil.create_directory_if_necessary(xval_fn)
                 pylab.savefig(xval_fn)
         elif strategy == "insample_cv":
             best_k_idx = average_loss.argmin()
@@ -516,7 +516,7 @@ class FeatureSelectionStrategy(object):
                 cols = pd.MultiIndex.from_arrays([split_idx, k_values*(self.num_folds+1)], names=['split_id','k_value'])
                 print "Christoph: bug, this is a quick fix that runs but may write out wrong results"
                 df = pd.DataFrame(stacked_result.flatten()[:, None], columns=[label], index=cols)
-                util.create_directory_if_necessary(out_fn)
+                pstutil.create_directory_if_necessary(out_fn)
                 df.to_csv(out_fn)
             if create_pdf and (output_prefix != None):
                 # visualize results
@@ -550,7 +550,7 @@ class FeatureSelectionStrategy(object):
                 except:
                     pass
                 plot_fn = output_prefix + "_xval_%s.pdf"%label
-                util.create_directory_if_necessary(plot_fn)
+                pstutil.create_directory_if_necessary(plot_fn)
                 pylab.savefig(plot_fn)
         else:
             raise NotImplementedError(strategy)
@@ -636,7 +636,7 @@ class FeatureSelectionStrategy(object):
         #    pylab.plot(xfit, yfit, '-')
         #    pylab.grid(True)
         #    plot_fn = output_prefix + "_parabola.pdf"
-        #    util.create_directory_if_necessary(plot_fn)
+        #    pstutil.create_directory_if_necessary(plot_fn)
         #    pylab.savefig(plot_fn)
 
         return best_delta, best_obj

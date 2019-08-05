@@ -15,6 +15,7 @@ from scipy import stats
 import pylab
 import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
+import pysnptools.util as pstutil
 import fastlmm.util.util as util 
 import fastlmm.util.standardizer as stdizer
 from fastlmm.util.pickle_io import load, save
@@ -106,7 +107,7 @@ class PrecomputeLocoPcs(object) : #implements IDistributable
         '''
         for i, pcs in result_sequence:
             out_fn = self.create_out_fn(self.cache_prefix, i)
-            util.create_directory_if_necessary(out_fn)
+            pstutil.create_directory_if_necessary(out_fn)
             save(out_fn, pcs)
         return None
 

@@ -12,7 +12,7 @@ import pysnptools.util as pstutil
 
 from fastlmm.inference import FastLMM
 from fastlmm.inference.fastlmm_predictor import _SnpWholeTest
-from fastlmm.util.runner import Local, HPC, LocalMultiProc
+from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
 from pysnptools.standardizer import Unit, Standardizer
@@ -28,7 +28,7 @@ from sklearn.externals import joblib
 class TestFastLMM(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        from fastlmm.util.util import create_directory_if_necessary
+        from pysnptools.util import create_directory_if_necessary
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
 
@@ -1020,7 +1020,7 @@ if __name__ == '__main__':
         r = unittest.TextTestRunner(failfast=False)
         r.run(suites)
     else: #Cluster test run
-        from fastlmm.util.distributabletest import DistributableTest
+        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
         runner = HPC(10, 'RR1-N13-09-H44',r'\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond',
                      remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",

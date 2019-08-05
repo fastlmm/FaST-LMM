@@ -5,17 +5,21 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9144f8b5-632b-4a72-bd8e-01d453affb5a}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>test.py</StartupFile>
+    <StartupFile>matrix\bigsvd.py</StartupFile>
     <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>
     </WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>util</Name>
     <RootNamespace>util</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccProvider>SAK</SccProvider>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
+    <SccProjectName>
+    </SccProjectName>
+    <SccProvider>
+    </SccProvider>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <CommandLineArguments>
     </CommandLineArguments>
@@ -41,72 +45,44 @@
     <Compile Include="compute_auto_pcs.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="distributable.py" />
-    <Compile Include="distributabletest.py" />
-    <Compile Include="distributed_map.py" />
     <Compile Include="est_h2.py" />
+    <Compile Include="file_cache.py" />
     <Compile Include="genphen.py" />
     <Compile Include="gensnp.py" />
-    <Compile Include="indirectdistributable.py" />
-    <Compile Include="MetaDistributable.py" />
+    <Compile Include="matrix\bigsvd.py" />
+    <Compile Include="matrix\mmultfile.py" />
+    <Compile Include="matrix\__init__.py" />
     <Compile Include="mingrid.py" />
     <Compile Include="NearBronze.py" />
     <Compile Include="pickle_io.py" />
     <Compile Include="preprocess.py" />
-    <Compile Include="runner\AzureBatch.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="runner\azurehelper.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="runner\blobxfer.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="runner\delme.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="runner\examples.py" />
-    <Compile Include="runner\Hadoop.py" />
-    <Compile Include="runner\Hadoop2.py" />
-    <Compile Include="runner\HPC.py" />
-    <Compile Include="runner\localfromranges.py" />
-    <Compile Include="runner\LocalMultiThread.py" />
-    <Compile Include="runner\LocalReducer.py" />
-    <Compile Include="runner\LocalMapper.py" />
-    <Compile Include="runner\LocalMultiProc.py" />
-    <Compile Include="runner\LocalInParts.py" />
-    <Compile Include="runner\Local.py" />
-    <Compile Include="runner\__init__.py" />
     <Compile Include="run_fastlmmc.py" />
-    <Compile Include="SamplePi.py" />
     <Compile Include="standardizer\Beta.py" />
     <Compile Include="standardizer\Unit.py" />
     <Compile Include="standardizer\__init__.py" />
     <Compile Include="stats\chi2mixture.py" />
-    <Compile Include="mapreduce.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="stats\plotp.py" />
     <Compile Include="stats\quadform\qfc_src\__init__.py" />
     <Compile Include="stats\quadform\__init__.py" />
     <Compile Include="stats\__init__.py" />
     <Compile Include="test.py" />
-    <Compile Include="testdistributable.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="util.py" />
     <Compile Include="VertexCut.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="runner\" />
+    <Folder Include="matrix\" />
     <Folder Include="standardizer\" />
     <Folder Include="stats\" />
     <Folder Include="stats\quadform\" />
     <Folder Include="stats\quadform\qfc_src\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="runner\PythonInstall.bat" />
+    <Content Include="matrix\cample.cpp" />
+    <Content Include="matrix\cample.pyx" />
+    <Content Include="matrix\mmultfile.cpp" />
+    <Content Include="matrix\mmultfilex.cpp" />
+    <Content Include="matrix\mmultfilex.pyx" />
     <Content Include="stats\quadform\qfc_src\QFC.cpp" />
     <Content Include="stats\quadform\qfc_src\QFC.h" />
     <Content Include="stats\quadform\qfc_src\wrap_qfc.cpp" />

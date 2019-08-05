@@ -6,24 +6,30 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>epistasis.py</StartupFile>
+    <StartupFile>tests\test_single_snp.py</StartupFile>
     <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
     <RootNamespace>varcomptest</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccProvider>SAK</SccProvider>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
+    <SccProjectName>
+    </SccProjectName>
+    <SccProvider>
+    </SccProvider>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <CommandLineArguments>
     </CommandLineArguments>
     <InterpreterPath />
-    <InterpreterArguments />
+    <InterpreterArguments>
+    </InterpreterArguments>
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
+    <Environment>TEMP=m:\</Environment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,6 +58,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="single_snp_linreg.py" />
+    <Compile Include="single_snp_scale.py" />
     <Compile Include="single_snp_select.py" />
     <Compile Include="single_snp_all_plus_select.py">
       <SubType>Code</SubType>
@@ -74,6 +81,7 @@
     <Compile Include="snp_set.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="tests\test_single_snp_scale.py" />
     <Compile Include="tests\testepistasis.py">
       <SubType>Code</SubType>
     </Compile>

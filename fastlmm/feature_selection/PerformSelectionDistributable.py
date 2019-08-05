@@ -27,6 +27,7 @@ from sklearn.decomposition import PCA
 
 # project
 import fastlmm.pyplink.plink as plink
+import pysnptools.util as pstutil
 import fastlmm.util.util as util 
 import fastlmm.util.preprocess as up
 import fastlmm.inference as fastlmm
@@ -143,7 +144,7 @@ class PerformSelectionDistributable(object) : #implements IDistributable
                 report += "\nbest ln_delta_interp=%.1e\nbest objective_interp=%.2f" % (sp.log(best_delta_interp), best_obj_interp)
             
             report_fn = self.output_prefix + "_report.txt"
-            util.create_directory_if_necessary(report_fn)
+            pstutil.create_directory_if_necessary(report_fn)
             report_file = open(report_fn, "w")
             report_file.write(report)
             report_file.close()

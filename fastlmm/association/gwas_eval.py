@@ -42,7 +42,7 @@ def cut_snps_close_to_causals(p_values, pos, causal_idx, mindist, plot=False):
     # keep causals and far away snps
     i_keepers = np.bitwise_or(i_causal_all, ~close_to_causals_mask)
         
-    print "keeping %i/%i SNPs (mindist=%f)" % (sum(i_keepers), len(i_keepers), mindist)
+    print("keeping %i/%i SNPs (mindist=%f)" % (sum(i_keepers), len(i_keepers), mindist))
 
     pv = p_values[i_keepers]
     #pv_lin = p_values_lin[i_keepers]
@@ -423,8 +423,8 @@ def merge_results(results_dir, fn_filter_list, mindist):
         if fn_idx == 0:
             plot_power_noshow(p_values_lin, i_causal, label="lin")
 
-        print p_values
-        print i_causal
+        print(p_values)
+        print(i_causal)
 
 
     pylab.show()
@@ -437,4 +437,4 @@ if __name__ == "__main__":
     
     t0 = time.time()
     compute_power_data(pv, i_causal)
-    print "time taken:", time.time() - t0
+    print("time taken:", time.time() - t0)

@@ -8,7 +8,7 @@ import time
 
 import pysnptools.util as pstutil
 from fastlmm.inference import FastLMM
-from fastlmm.util.mapreduce import map_reduce
+from pysnptools.util.mapreduce1.mapreduce import map_reduce
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
 from fastlmm.association.single_snp import _K_per_chrom
 from pysnptools.standardizer import Unit
@@ -16,7 +16,7 @@ from pysnptools.standardizer import Unit
 from pysnptools.kernelreader import KernelReader
 from pysnptools.kernelreader import KernelData
 from fastlmm.association import single_snp_linreg
-from fastlmm.util.mapreduce import map_reduce
+from pysnptools.util.mapreduce1.mapreduce import map_reduce
 
 #!!!move this
 class _SnpWholeWithTrain(KernelReader):
@@ -229,7 +229,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_all_plus_select
     >>> from pysnptools.snpreader import Bed
-    >>> from fastlmm.util.runner import LocalMultiProc
+    >>> from pysnptools.util.mapreduce1.runner import LocalMultiProc
     >>> logging.basicConfig(level=logging.INFO)
     >>> pheno_fn = "../feature_selection/examples/toydata.phe"
     >>> snps = Bed("../feature_selection/examples/toydata.5chrom.bed",count_A1=False)[:,::100] #To make example faster, run on only 1/100th of the data

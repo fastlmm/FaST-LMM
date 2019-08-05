@@ -13,13 +13,12 @@ import subprocess
 import fastlmm.inference.tests.test
 import fastlmm.feature_selection.test
 import pysnptools.test
-import fastlmm.util.testdistributable
 import shutil
 import logging
 import fastlmm.util.util as ut
 import fastlmm.pyplink.plink as plink
-from fastlmm.util.distributabletest import DistributableTest
-from fastlmm.util.runner import Local, Hadoop, Hadoop2, HPC, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.distributabletest import DistributableTest
+from pysnptools.util.mapreduce1.runner import Local, Hadoop, Hadoop2, HPC, LocalMultiProc, LocalInParts
 
 tolerance = 1e-4
 
@@ -102,10 +101,10 @@ class WidgetTestCase(unittest.TestCase):
     def __str__(self):
         return self._infile
 
-##for debugging
+##for debuggingk
 #def getDebugTestSuite():
 #    suite = unittest.TestSuite()
-#    suite.addTest(WidgetTestCase("sc_mom_two_kernel_linear_qqfit.N300.py"))
+#    suite.addTest(WidgetTestCase('sc_davies_two_kernel_linear_qqfit.N300.needsReorder.py'))
 #    return suite
 
 def getTestSuite():
@@ -137,19 +136,19 @@ if __name__ == '__main__':
     import fastlmm.association.tests.test_snp_set
     import fastlmm.association.tests.test_gwas
     import fastlmm.association.tests.test_heritability_spatial_correction
+    import fastlmm.association.tests.test_single_snp_scale
     import fastlmm.inference.tests.test_fastlmm_predictor
     import fastlmm.inference.tests.test_linear_regression
     import fastlmm.inference.tests.test
-    import fastlmm.util.testdistributable
     import fastlmm.util.test
     import tests.test
 
-
     suites = unittest.TestSuite([
-                                    ##getDebugTestSuite(),\
+                                    #getDebugTestSuite(),
 
-                                    fastlmm.util.test.getTestSuite(),
                                     tests.test.getTestSuite(),
+                                    fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
+                                    fastlmm.util.test.getTestSuite(),
                                     fastlmm.inference.tests.test.getTestSuite(),
                                     fastlmm.association.tests.test_single_snp.getTestSuite(),
                                     fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
@@ -158,9 +157,7 @@ if __name__ == '__main__':
                                     fastlmm.association.tests.testepistasis.getTestSuite(),
                                     fastlmm.association.tests.test_snp_set.getTestSuite(),
                                     fastlmm.inference.tests.test.getTestSuite(),
-
-                                    fastlmm.association.tests.test_gwas.getTestSuite(),
-                                    fastlmm.util.testdistributable.getTestSuite(),
+                                    fastlmm.association.tests.test_gwas.getTestSuite(),                                    
                                     fastlmm.feature_selection.test.getTestSuite(),
                                     fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
                                     fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
@@ -169,17 +166,13 @@ if __name__ == '__main__':
 
     
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=False)
+        r = unittest.TextTestRunner(failfast=False)#!!!cmkFalse
         r.run(suites)
     else: #Cluster test run
-        task_count = 150
-        remote_python_parent = r"\\GCR\Scratch\RR1\escience\carlk\data\carlk\pythonpath10262016"
+        #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first in the PYTHONPATH
 
-
-        #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first.
-
-        #runner = Local()
-        runner = LocalMultiProc(taskcount=12,mkl_num_threads=5,just_one_process=False)
+        runner = Local()
+        runner = LocalMultiProc(taskcount=6,mkl_num_threads=5,just_one_process=False)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
         distributable_test = DistributableTest(suites,"temp_test")
         runner.run(distributable_test)

@@ -1,4 +1,4 @@
-from fastlmm.util.runner import *
+from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
 from pysnptools.snpreader import Pheno
@@ -22,7 +22,7 @@ from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData
 from pysnptools.kernelreader import SnpKernel
 from pysnptools.kernelreader import KernelNpz
-from fastlmm.util.mapreduce import map_reduce
+from pysnptools.util.mapreduce1.mapreduce import map_reduce
 from pysnptools.util import create_directory_if_necessary
 from pysnptools.snpreader import wrap_matrix_subset
 from pysnptools.util.intrangeset import IntRangeSet

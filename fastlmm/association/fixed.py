@@ -3,7 +3,7 @@ import fastlmm.association.lrt as lrt
 import numpy as np
 import scipy.linalg as la
 
-class lrt_fixed(lrt.lrt):
+class lrt_fixed(lrt.lrt): #!!!what is this for?
 
     def __init__(self, Y, X=None, model0 = None, appendbias=False, forcefullrank = False, G0 = None, nullModel = None):
         lrt.lrt.__init__(self,Y=Y, X=X, model0 = model0, appendbias=appendbias, forcefullrank = forcefullrank, G0 = G0, nullModel = nullModel)
@@ -11,7 +11,7 @@ class lrt_fixed(lrt.lrt):
     def testG(self, G1, type=None, altModel=None, dof = 100000000, meanG=False):
         #compute the alternative likelihood
         if dof<G1.shape[1]:
-            [u,s,v] = la.svd(G1)
+            [u,s,v] = la.svd(G1) #!!!use big_svd?
             G1 = u[:,0:dof]
         elif meanG:
             G1 = G1.mean(1)[:,np.newaxis]

@@ -22,14 +22,6 @@ class TestDocStrings(unittest.TestCase):
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 
-    def test_sample_pi(self):
-        import fastlmm.util.SamplePi
-        old_dir = os.getcwd()
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
-        result = doctest.testmod(fastlmm.util.SamplePi)
-        os.chdir(old_dir)
-        assert result.failed == 0, "failed doc test: " + __file__
-
     def test_sample_util(self):
         import fastlmm.util.util
         old_dir = os.getcwd()

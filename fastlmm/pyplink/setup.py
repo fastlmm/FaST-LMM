@@ -78,7 +78,6 @@ setup(
         "fastlmm/pyplink/snpreader",
         "fastlmm/pyplink/snpset",
         "fastlmm/pyplink",
-        "fastlmm/util/runner",
         "fastlmm/util/stats/quadform",
         "fastlmm/util/stats",
         "fastlmm/util",

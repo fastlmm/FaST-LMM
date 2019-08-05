@@ -154,7 +154,7 @@ class LMM(object):
             if ((not self.forcefullrank) and (k<N)):
                 #it is faster using the eigen decomposition of G.T*G but this is more accurate
                 try:
-                    [U,S,V] = LA.svd(self.G,full_matrices = False)
+                    [U,S,V] = LA.svd(self.G,full_matrices = False) #!!!use big_svd?
                     if np.any(S < -0.1):
                         logging.warning("kernel contains a negative Eigenvalue")
                     self.U = U

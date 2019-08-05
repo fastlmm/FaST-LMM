@@ -9,8 +9,8 @@ import sklearn.feature_selection as SKFS
 import sklearn.model_selection as SKCV 
 import sklearn.metrics as SKM
 
-from fastlmm.util.distributable import *
-from fastlmm.util.runner import *
+from pysnptools.util.mapreduce1.distributable import *
+from pysnptools.util.mapreduce1.runner import *
 import fastlmm.pyplink.plink as plink
 import fastlmm.pyplink.Bed as Bed
 import fastlmm.pyplink.snpset.PositionRange as PositionRange

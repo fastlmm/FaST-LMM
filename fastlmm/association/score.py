@@ -162,7 +162,7 @@ class scoretest2K(scoretest):
             self.S=self.S[D:N]-1.0
         else:
             PxG,self.Xdagger = linreg(Y=self.G0, X=self.X, Xdagger=self.Xdagger)
-            [self.U,self.S,V] = LA.svd(PxG,False,True)
+            [self.U,self.S,V] = LA.svd(PxG,False,True) #!!!use big_svd?
             inonzero = self.S>1E-10
             self.S=self.S[inonzero]*self.S[inonzero]
             self.U=self.U[:,inonzero]

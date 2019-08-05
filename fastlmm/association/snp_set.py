@@ -1,4 +1,4 @@
-from fastlmm.util.runner import *
+from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
 import fastlmm.util.util as flutil

@@ -7,9 +7,10 @@ from pysnptools.util.pheno import *
 from fastlmm.pyplink.altset_list import *
 import subprocess, sys, os.path
 import fastlmm.util.stats.chi2mixture as c2
-from fastlmm.util.distributable import *
-from fastlmm.util.runner import *
+from pysnptools.util.mapreduce1.distributable import *
+from pysnptools.util.mapreduce1.runner import *
 import pdb
+import pysnptools.util as pstutil
 import fastlmm.util.util as utilx
 import fastlmm.util.stats as ss
 import time
@@ -24,6 +25,7 @@ import logging
 import warnings
 from tempfile import TemporaryFile
 import fastlmm.util.preprocess as util
+import os
 
 class FastLmmSet: # implements IDistributable
     '''
@@ -34,7 +36,7 @@ class FastLmmSet: # implements IDistributable
     def addpostifx_to_outfile(self):
         if self.datestamp is not None:
             if self.datestamp=="auto":
-                self.datestamp=utilx.datestamp()
+                self.datestamp=pstutil.datestamp()
             self.outfile=utilx.appendtofilename(self.outfile,self.datestamp,"_")
 
     def __init__(self, **entries):
@@ -152,7 +154,7 @@ class FastLmmSet: # implements IDistributable
         #if self.test not in allowed_tests: raise Exception("test must be one of " + str(allowed_tests) +", but found " + self.test)
 
     # =================================================================
-    # BEGIN Implementation of the IDistributable interface described in fastlmm.util.distributable
+    # BEGIN Implementation of the IDistributable interface described in pysnptools.util.mapreduce1.distributable
     # =================================================================
 
     def hasNonNoneAttr(self, attr):
@@ -294,7 +296,7 @@ class FastLmmSet: # implements IDistributable
         if self.datestamp=="auto": self.outfile=utilx.appendtofilename(self.outfile,"tab")
 
         try:
-            utilx.create_directory_if_necessary(infofile)
+            pstutil.create_directory_if_necessary(infofile)
         except:
             logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(infofile))
 
@@ -375,7 +377,7 @@ class FastLmmSet: # implements IDistributable
         
     def getRandSnpSignal(self, nSnp, nInd,genphen,newseed):
         from numpy.random import RandomState
-        import fastlmm.util.gensnp as gp
+        import pysnptools.util.gensnp as gp
         randomstate = RandomState(newseed) 
         nSnp=genphen["numBackSnps"]
         #randsnps=self.alt_snpreader.read(RandomSnpSet(nSnp,newseed))     #this appears to be VERY slow
@@ -425,7 +427,7 @@ class FastLmmSet: # implements IDistributable
     def _saveArray(self, appendNameFile, header, values):
         outfile = utilx.appendtofilename(self.outfile, appendNameFile)
         try:
-            utilx.create_directory_if_necessary(outfile)
+            pstutil.create_directory_if_necessary(outfile)
         except:
             logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(outfile))
 
@@ -494,7 +496,7 @@ class FastLmmSet: # implements IDistributable
             copier.output(self._synthphenfile)
 
     # =================================================================
-    # END Implementation the IDistributable interface described in fastlmm.util.distributable
+    # END Implementation the IDistributable interface described in pysnptools.util.mapreduce1.distributable
     # =================================================================
 
     def _check_entries(self, entries):
@@ -809,6 +811,7 @@ class FastLmmSet: # implements IDistributable
             #call C++ version of FaST-LMM select to determine background Covariance matrix of the LMM
             osname = sys.platform
             dir = os.path.split(__file__)[0] #__file__ is the pathname of the file from which the module
+            os.environ["FastLmmUseAnyMklLib"] = "1"
             if (osname.find("win") >= 0):    #         was loaded, if it was loaded from a file
                 fastlmmpath = os.path.join(dir,"Fastlmm_autoselect", "fastlmmc.exe")
             elif (osname.find("linux") >= 0):

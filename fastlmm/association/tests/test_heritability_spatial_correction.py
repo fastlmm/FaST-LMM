@@ -9,7 +9,7 @@ import doctest
 import pandas as pd
 import fastlmm.util.util as ut
 from fastlmm.association.heritability_spatial_correction import heritability_spatial_correction
-from fastlmm.util.runner import Local, HPC, LocalMultiProc
+from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
 
@@ -20,7 +20,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        from fastlmm.util.util import create_directory_if_necessary
+        from pysnptools.util import create_directory_if_necessary
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
         self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)

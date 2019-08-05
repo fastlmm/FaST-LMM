@@ -7,7 +7,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.2.33'
+version = '0.2.33' #!!!cmk update
 
 
 def readme():
@@ -32,8 +32,9 @@ class CleanCommand(Clean):
             for filename in filenames:
                 if (   filename.endswith('.so')
                     or filename.endswith('.pyd')
-                    #or filename.find("wrap_qfc.cpp") != -1 # remove automatically generated source file
-                    #or filename.endswith('.dll')
+                    or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
+                    or (use_cython and filename.find("cample.cpp") != -1) # remove automatically generated source file
+                    or (use_cython and filename.find("mmultfilex.cpp") != -1) # remove automatically generated source file
                     or filename.endswith('.pyc')
                                 ):
                     tmp_fn = os.path.join(dirpath, filename)
@@ -43,10 +44,27 @@ class CleanCommand(Clean):
 # set up macro
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
+    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
+    mp5lib = 'iomp5'
+    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
+    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
 elif "win" in platform.system().lower():
     macros = [("_WIN32", "1")]
+    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
+    mp5lib = 'libiomp5md'
+    extra_compile_args0 = ['/EHsc']
+    extra_compile_args1 = ['/DMKL_ILP64']
+    extra_compile_args2 = ['/EHsc', '/openmp', '/DMKL_LP64']
 else:
     macros = [("_UNIX", "1")]
+    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
+    mp5lib = 'iomp5'
+    extra_compile_args0 = []
+    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
+    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
+
+mkl_library_list = [intel_root+"/mkl/lib/intel64",intel_root+"/compiler/lib/intel64"]
+mkl_include_list = [intel_root+"/mkl/include"]
 
 #see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
 if use_cython:
@@ -54,14 +72,50 @@ if use_cython:
                              language="c++",
                              sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
                              include_dirs=[numpy.get_include()],
-                             define_macros=macros)]
+                             extra_compile_args = extra_compile_args0,
+                             define_macros=macros),
+                   Extension(name="fastlmm.util.matrix.cample",
+                            language="c++",
+                            sources=["fastlmm/util/matrix/cample.pyx"],
+                            libraries = ['mkl_intel_ilp64', 'mkl_core', 'mkl_intel_thread', mp5lib],
+                            library_dirs = mkl_library_list,
+                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            extra_compile_args = extra_compile_args1,
+                            define_macros=macros),
+                    Extension(name="fastlmm.util.matrix.mmultfilex",
+                            language="c++",
+                            sources=["fastlmm/util/matrix/mmultfilex.pyx","fastlmm/util/matrix/mmultfile.cpp"],
+                            libraries = ['mkl_intel_lp64', 'mkl_core', 'mkl_intel_thread', mp5lib],
+                            library_dirs = mkl_library_list,
+                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            extra_compile_args = extra_compile_args2,
+                            define_macros=macros)
+                     ]
     cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
 else:
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
                              language="c++",
                              sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.cpp", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
                              include_dirs=[numpy.get_include()],
-                             define_macros=macros)]
+                             extra_compile_args = extra_compile_args0,
+                             define_macros=macros),
+                   Extension(name="fastlmm.util.matrix.cample",
+                            language="c++",
+                            sources=["fastlmm/util/matrix/cample.cpp"],
+                            libraries = ['mkl_intel_ilp64', 'mkl_core', 'mkl_intel_thread', mp5lib],
+                            library_dirs = mkl_library_list,
+                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            extra_compile_args = extra_compile_args1,
+                            define_macros=macros),
+                    Extension(name="fastlmm.util.matrix.mmultfilex",
+                            language="c++",
+                            sources=["fastlmm/util/matrix/mmultfilex.cpp","fastlmm/util/matrix/mmultfile.cpp"],
+                            libraries = ['mkl_intel_lp64', 'mkl_core', 'mkl_intel_thread', mp5lib],
+                            library_dirs = mkl_library_list,
+                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            extra_compile_args = extra_compile_args2,
+                            define_macros=macros) 
+                    ]
     cmdclass = {}
 
 #python setup.py sdist bdist_wininst upload
@@ -76,7 +130,7 @@ setup(
     author_email='fastlmm@microsoft.com',
     license='Apache 2.0',
     packages=[
-        "fastlmm/association/tests",
+        "fastlmm/association/tests", #!!!cmk update
         "fastlmm/association",
         "fastlmm/external/util",
         "fastlmm/external",
@@ -94,7 +148,7 @@ setup(
         "fastlmm/util",
         "fastlmm",
     ],
-    package_data={"fastlmm/association" : [
+    package_data={"fastlmm/association" : [ #!!!cmk update
                        "Fastlmm_autoselect/FastLmmC.exe",
                        "Fastlmm_autoselect/libiomp5md.dll",
                        "Fastlmm_autoselect/fastlmmc",
@@ -122,7 +176,7 @@ setup(
                        "examples/toydataTrain.phe"
                        ]
                  },
-    install_requires = ['scipy>=1.1.0', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1', 'scikit-learn>=0.19.1', 'pysnptools>=0.3.14', 'dill>=0.2.9'],
+    install_requires = ['scipy>=0.15.1', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1', 'scikit-learn>=0.19.1', 'pysnptools>=0.3.14', 'dill>=0.2.9'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
   )

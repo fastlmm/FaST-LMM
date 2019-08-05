@@ -12,14 +12,14 @@ from fastlmm.association.epistasis import write
 import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from fastlmm.util.runner import Local, Hadoop, Hadoop2, HPC, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.runner import Local, Hadoop, Hadoop2, HPC, LocalMultiProc, LocalInParts
 
 class TestEpistasis(unittest.TestCase):
 
 
     @classmethod
     def setUpClass(self):
-        from fastlmm.util.util import create_directory_if_necessary
+        from pysnptools.util import create_directory_if_necessary
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
         self.bedbase = os.path.join(self.pythonpath, 'tests/datasets/all_chr.maf0.001.N300')
@@ -392,7 +392,7 @@ if __name__ == '__main__':
         r = unittest.TextTestRunner(failfast=False)
         r.run(suites)
     else: #Cluster test run
-        from fastlmm.util.distributabletest import DistributableTest
+        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
 
         runner = HPC(10, 'RR1-N13-09-H44',r'\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond',

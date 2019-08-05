@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.168
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29102.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6B22A3AA-CF04-48DF-87DA-EEF401891E85}"
 EndProject
@@ -18,6 +18,10 @@ EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "inference", "inference\inference.pyproj", "{6D8DCDF9-3776-4E1B-A713-E9B6F2A49865}"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "feature_selection", "feature_selection\feature_selection.pyproj", "{DB93DE74-8125-420F-A2C5-2145E80D6245}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "pysnptools", "..\..\pysnptools\pysnptools\pysnptools.pyproj", "{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "ludicrous2", "ludicrous2\ludicrous2.pyproj", "{09D0E26F-6749-413B-9523-6D108100BC8E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,10 @@ Global
 		{6D8DCDF9-3776-4E1B-A713-E9B6F2A49865}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB93DE74-8125-420F-A2C5-2145E80D6245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DB93DE74-8125-420F-A2C5-2145E80D6245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09D0E26F-6749-413B-9523-6D108100BC8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09D0E26F-6749-413B-9523-6D108100BC8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

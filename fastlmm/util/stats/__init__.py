@@ -53,7 +53,7 @@ def TESTBEFOREUSING_pca_covariates(bedfile,npc,outfile=None):
     
     t0=time.time()   
     print "computing svd..."
-    [U,S,V] = la.svd(K,full_matrices = False)
+    [U,S,V] = la.svd(K,full_matrices = False) #!!!use big_svd?
     t1=time.time()   
     print ("Elapsed time %.2f seconds" % (t1-t0))  
     

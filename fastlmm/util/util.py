@@ -3,6 +3,7 @@ import warnings
 import logging
 import sys
 import time
+import pysnptools.util as pstutil
 
 def thin_results_file(myfile,dup_postfix="v2"):
     '''
@@ -282,13 +283,7 @@ def appendtofilename(filename,midfix,sep="."):
         return infofilename
 
 def datestamp(appendrandom=False):
-    import datetime
-    now = datetime.datetime.now()
-    s = str(now)[:19].replace(" ","_").replace(":","_")
-    if appendrandom:
-        import random
-        s += "_" + str(random.random())[2:]
-    return s
+    return pstutil.datestamp(appendrandom=appendrandom)
            
 
 
@@ -304,38 +299,6 @@ def datestamp(appendrandom=False):
 #        index += 1
 #        yield item, index
 
-def create_directory_if_necessary(name, isfile=True, robust=False):
-    import os
-    if isfile:
-        directory_name = os.path.dirname(name)
-    else:
-        directory_name = name
-
-    if directory_name != "":
-        if not robust:
-            try:
-                os.makedirs(directory_name)
-            except OSError, e:
-                if not os.path.isdir(directory_name):
-                    raise Exception("not valid path: '{0}'. (Working directory is '{1}'".format(directory_name,os.getcwd()))
-        else:
-            is_ok = False
-            time_to_sleep = 10.0
-            for i in xrange(25):
-                try:
-                    os.makedirs(directory_name)
-                    is_ok = True
-                    break
-                except OSError, e:
-                    if not os.path.isdir(directory_name):
-                        time_to_sleep *= 1.1
-                        warnings.warn("creating directory robust=True, try#{0},time={3} error: not valid path: '{1}'. (Working directory is '{2}'".format(i, directory_name,os.getcwd(),int(time_to_sleep)))
-                        time.sleep(int(time_to_sleep)) ; #make random?
-                    else:
-                        is_ok = True
-                        break
-            if not is_ok:
-                raise Exception("not valid path: '{0}'. (Working directory is '{1}'".format(directory_name,os.getcwd()))
 
 
 def which(vec):
