@@ -309,8 +309,8 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
                 # 1M x 3 x 25K -> 3 x 25K
                 #   should be able to do this in place
                 #=============================================================
-                G0_data_piece.val -= X.dot(beta_G) #mem x 2
-                G0_data_memmap.snp_data.val[:,start:stop] = G0_data_piece.val
+                G0_data_piece.val-=X.dot(beta_G)#mem x 2
+                G0_data_memmap.val[:,start:stop] = G0_data_piece.val
             t1=time.time()    
             logging.info("G0 work took {0}".format(_format_delta(t1-t0)))
             logging.info("About to get name of file to np.savez ss_per_snp")
@@ -649,11 +649,11 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                 #=============================================================
                 # 25K x 1M x 1 -> 25K x 1
                 #=============================================================
-                UY = U_snp_mem_map.snp_data.val.T.dot(RxY)  #Note: This could be pushed into the 'map' step, with each step returning a UYi that would all be summed together.
+                UY = U_snp_mem_map.val.T.dot(RxY)  #Note: This could be pushed into the 'map' step, with each step returning a UYi that would all be summed together.
                 #=============================================================
                 # 1M x 25K x 1 -> 1M x 1
                 #=============================================================
-                UUY = RxY - U_snp_mem_map.snp_data.val.dot(UY) #This is can't be pushed into the 'map' step because it depends on all of UY
+                UUY = RxY - U_snp_mem_map.val.dot(UY) #This is can't be pushed into the 'map' step because it depends on all of UY
 
                 U_snp_mem_map.flush()
 
