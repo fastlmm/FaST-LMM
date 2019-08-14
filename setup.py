@@ -7,7 +7,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.2.33' #!!!cmk update
+version = '0.3.00'
 
 
 def readme():
@@ -164,7 +164,7 @@ setup(
                        "examples/toydata.bed",
                        "examples/toydata.bim",
                        "examples/toydata.cov",
-                       "examples/toydata.dat",
+                       "examples/toydata.dat", #!!!cmk should these files be in fastlmm or pysnptools or both?
                        "examples/toydata.fam",
                        "examples/toydata.iidmajor.hdf5",
                        "examples/toydata.map",
@@ -176,7 +176,7 @@ setup(
                        "examples/toydataTrain.phe"
                        ]
                  },
-    install_requires = ['scipy>=0.15.1', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1', 'scikit-learn>=0.19.1', 'pysnptools>=0.3.14', 'dill>=0.2.9'],
+    install_requires = ['scipy>=0.15.1', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1', 'scikit-learn>=0.19.1', 'pysnptools>=0.4.0', 'dill>=0.2.9'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
   )

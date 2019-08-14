@@ -1,16 +1,12 @@
 import os
 import logging
-#!!!cmk clean up unused imports
-#logging.basicConfig(level=logging.INFO) #!!!cmk make sure INFO level isn't turned on on whole file
 import numpy as np
 import datetime
 from fastlmm.util.matrix.mmultfilex import mmultfile_b_less_aatbx, mmultfile_atax #May need to install "Microsoft Visual C++ 2008 SP1 Redistributable Package (x64)"
 import multiprocessing
 from pysnptools.util.mapreduce1.mapreduce import map_reduce
-#from pysnptools.util.mapreduce1.runner import Local, Hadoop, Hadoop2, HPC, LocalMultiProc, LocalInParts
 from pysnptools.kernelreader import KernelData, KernelNpz
 import time
-#from pysnptools.util.intrangeset import IntRangeSet
 from pysnptools.util import _format_delta
 from pysnptools.snpreader import SnpMemMap
 
@@ -32,8 +28,8 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
         memmap = memmap_lambda()
         piece_index0 = work_index
         piece_index1 = piece_count-work_index-1
-        gtg_piece0 = mmultfile_ata_piece(memmap._filename,piece_index0,piece_count,log_frequency=log_frequency,force_python_only=force_python_only)
-        gtg_piece1 = mmultfile_ata_piece(memmap._filename,piece_index1,piece_count,log_frequency=log_frequency,force_python_only=force_python_only)
+        gtg_piece0 = mmultfile_ata_piece(memmap.filename,memmap.offset,piece_index0,piece_count,log_frequency=log_frequency,force_python_only=force_python_only)
+        gtg_piece1 = mmultfile_ata_piece(memmap.filename,memmap.offset,piece_index1,piece_count,log_frequency=log_frequency,force_python_only=force_python_only)
         return [[piece_index0, gtg_piece0],[piece_index1, gtg_piece1]]
 
     def reducer_closure(result_result_sequence):
@@ -61,7 +57,7 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
                output_files=[]
                )
 
-def mmultfile_ata_piece(a_filename, work_index=0, work_count=1,log_frequency=-1, force_python_only=False):
+def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequency=-1, force_python_only=False):
     t0_gtg = time.time()
     if log_frequency > 0:
         logging.info("ata_piece: Working on piece {0} of {1}.".format(work_index, work_count))
@@ -76,8 +72,8 @@ def mmultfile_ata_piece(a_filename, work_index=0, work_count=1,log_frequency=-1,
     ata_piece = np.zeros((a.sid_count-start,stop-start),order='C')
 
     if force_python_only:
-        with open(a._filename,"rb") as fp:
-            fp.seek(start*a.iid_count*8)
+        with open(a.filename,"rb") as fp:
+            fp.seek(a.offset+start*a.iid_count*8)
             slice = np.fromfile(fp, dtype=np.float64, count=a.iid_count*(stop-start)).reshape(a.iid_count,stop-start,order="F")
             for i in xrange(work_index,work_count):
                 starti = debatch_closure(i)
@@ -90,7 +86,7 @@ def mmultfile_ata_piece(a_filename, work_index=0, work_count=1,log_frequency=-1,
                     logging.info("{0}/{1}".format(i,work_count))
                 ata_piece[starti-start:stopi-start,:] = np.dot(slicei.T,slice)
     else:
-        mmultfile_atax(a_filename,a.iid_count,a.sid_count,
+        mmultfile_atax(a_filename,a.offset,a.iid_count,a.sid_count,
                         work_index,work_count,
                         ata_piece,
                         num_threads = get_num_threads(),
@@ -100,29 +96,29 @@ def mmultfile_ata_piece(a_filename, work_index=0, work_count=1,log_frequency=-1,
         logging.info("ata_piece {0} of {1}: clocktime {2}".format(work_index, work_count,_format_delta(time.time()-t0_gtg)))
     return ata_piece
 
-def mmultfile_b_less_aatb(a_filename, b, log_frequency=-1, force_python_only=False):
-    a = SnpMemMap(a_filename)
+def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=False):
     if force_python_only:
-        aTb = np.zeros((a.sid_count,b.shape[1])) #b can be destroyed. Is everything is in best order, i.e. F vs C
+        aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1])) #b can be destroyed. Is everything is in best order, i.e. F vs C
         aaTb = b.copy()
         b_mem = np.array(b,order="F") #!!! if we want this in "F" how about just creating that way instead of copying it
         with open(a_filename,"rb") as U_fp:
-            for i in xrange(a.sid_count):
-                a_mem = np.fromfile(U_fp, dtype=np.float64, count=a.iid_count)
+            U_fp.seek(a_snp_mem_map.offset)
+            for i in xrange(a_snp_mem_map.sid_count):
+                a_mem = np.fromfile(U_fp, dtype=np.float64, count=a_snp_mem_map.iid_count)
                 if i%log_frequency == 0 and log_frequency > 0:
-                    logging.info("{0}/{1}".format(i,a.sid_count))
+                    logging.info("{0}/{1}".format(i,a_snp_mem_map.sid_count))
                 aTb[i,:] = np.dot(a_mem,b_mem)
                 aaTb -= np.dot(a_mem.reshape(-1,1),aTb[i:i+1,:])
         return aTb, aaTb
     else:
-        a = SnpMemMap(a_filename)
         b1 = np.array(b,order="F")
-        aTb = np.zeros((a.sid_count,b.shape[1]))
+        aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1]))
         aaTb = np.array(b1,order="F")
         mmultfile_b_less_aatbx(
-                        a_filename,
-                        a.iid_count, #row count
-                        a.sid_count, #col count
+                        a_snp_mem_map.filename,
+                        a_snp_mem_map.offset,
+                        a_snp_mem_map.iid_count, #row count
+                        a_snp_mem_map.sid_count, #col count
                         b.shape[1], #col count
                         b1,   #B copy 1 in "F" order
                         aaTb, #B copy 2 in "F" order
@@ -147,13 +143,13 @@ if __name__ == '__main__':
 
     if test_postsvd:
         if do_fast:
-            filename = r"D:\deldir\test\_Storage\very_small_0.8\G0_data.dat"
+            filename = r"D:\deldir\test\_Storage\very_small_0.8\G0_data.memmap"
         elif do_medium:
-            filename = r"D:\deldir\test\_Storage\mid_0.8\G0_data.dat"
+            filename = r"D:\deldir\test\_Storage\mid_0.8\G0_data.memmap"
         elif do_mid16:
-            filename = r"D:\deldir\test\_Storage\mid_1.6\G0_data.dat"
+            filename = r"D:\deldir\test\_Storage\mid_1.6\G0_data.memmap"
         else:
-            filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.dat"
+            filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.memmap"
         
 
         do_original = False
@@ -173,7 +169,7 @@ if __name__ == '__main__':
             SVinv3 = np.zeros((sum(idx),sum(idx)))
             np.fill_diagonal(SVinv3,val=1)
         logging.info("Done Generating random")
-        local_fn_U = r"d:\deldir\local_fn_U.dat"
+        local_fn_U = r"d:\deldir\local_fn_U.memmap"
         t0 = time.time()
         U_memmap = post_svd(local_fn_U, G0_memmap, idx, SVinv3, inonzero, memory_factor, runner, do_original=do_original,force_python_only=force_python_only,log_frequency=log_frequency)
         print U_memmap.val
@@ -184,9 +180,9 @@ if __name__ == '__main__':
 
     elif test_ata:
         if do_fast:
-            filename = r"D:\deldir\test\_Storage\very_small_0.8\G0_data.dat"
+            filename = r"D:\deldir\test\_Storage\very_small_0.8\G0_data.memmap"
         else:
-            filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.dat"
+            filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.memmap"
 
         work_count = 3
         force_python_only = False
@@ -206,11 +202,11 @@ if __name__ == '__main__':
 
     else:
         if do_fast:
-            u1_filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fcvery_small_5\U1.dat"
+            u1_filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fcvery_small_5\U1.memmap"
             test_snps_count = 100
             log_frequency=100
         else:
-            u1_filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.dat"
+            u1_filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.memmap"
             test_snps_count = 1000
             log_frequency=10
         a = SnpMemMap(u1_filename)

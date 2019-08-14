@@ -81,6 +81,7 @@
     <Content Include="matrix\cample.cpp" />
     <Content Include="matrix\cample.pyx" />
     <Content Include="matrix\mmultfile.cpp" />
+    <Content Include="matrix\mmultfile.h" />
     <Content Include="matrix\mmultfilex.cpp" />
     <Content Include="matrix\mmultfilex.pyx" />
     <Content Include="stats\quadform\qfc_src\QFC.cpp" />

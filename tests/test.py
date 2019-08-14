@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=False)#!!!cmkFalse
+        r = unittest.TextTestRunner(failfast=False)
         r.run(suites)
     else: #Cluster test run
         #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first in the PYTHONPATH

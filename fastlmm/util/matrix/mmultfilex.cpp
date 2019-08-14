@@ -1575,6 +1575,9 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_enum__NPY_TYPES(enum NPY_TYPES value);
 
 /* CIntFromPy.proto */
+static CYTHON_INLINE PY_LONG_LONG __Pyx_PyInt_As_PY_LONG_LONG(PyObject *);
+
+/* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
 /* CIntToPy.proto */
@@ -1655,6 +1658,7 @@ static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_import[] = "__import__";
+static const char __pyx_k_offset[] = "offset";
 static const char __pyx_k_ata_piece[] = "ata_piece";
 static const char __pyx_k_col_count[] = "col_count";
 static const char __pyx_k_row_count[] = "row_count";
@@ -1711,14 +1715,15 @@ static PyObject *__pyx_n_s_num_threads;
 static PyObject *__pyx_n_s_numpy;
 static PyObject *__pyx_kp_s_numpy_core_multiarray_failed_to;
 static PyObject *__pyx_kp_s_numpy_core_umath_failed_to_impor;
+static PyObject *__pyx_n_s_offset;
 static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_row_count;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_work_count;
 static PyObject *__pyx_n_s_work_index;
-static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_aatbx(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, int __pyx_v_row_count, int __pyx_v_a_col_count, int __pyx_v_b_col_count, PyArrayObject *__pyx_v_b1, PyArrayObject *__pyx_v_aaTb, PyArrayObject *__pyx_v_aTb, int __pyx_v_num_threads, int __pyx_v_log_frequency); /* proto */
-static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_2mmultfile_atax(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, int __pyx_v_row_count, int __pyx_v_col_count, int __pyx_v_work_index, int __pyx_v_work_count, PyArrayObject *__pyx_v_ata_piece, int __pyx_v_num_threads, int __pyx_v_log_frequency); /* proto */
+static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_aatbx(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, PY_LONG_LONG __pyx_v_offset, int __pyx_v_row_count, int __pyx_v_a_col_count, int __pyx_v_b_col_count, PyArrayObject *__pyx_v_b1, PyArrayObject *__pyx_v_aaTb, PyArrayObject *__pyx_v_aTb, int __pyx_v_num_threads, int __pyx_v_log_frequency); /* proto */
+static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_2mmultfile_atax(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, PY_LONG_LONG __pyx_v_offset, int __pyx_v_row_count, int __pyx_v_col_count, int __pyx_v_work_index, int __pyx_v_work_count, PyArrayObject *__pyx_v_ata_piece, int __pyx_v_num_threads, int __pyx_v_log_frequency); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
 static PyObject *__pyx_tuple_;
@@ -1737,8 +1742,8 @@ static PyObject *__pyx_codeobj__11;
 /* "fastlmm/util/matrix/mmultfilex.pyx":10
  * 
  * 
- * def mmultfile_b_less_aatbx(a_filename, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ * def mmultfile_b_less_aatbx(a_filename, long long offset, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
  */
 
@@ -1747,6 +1752,7 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_
 static PyMethodDef __pyx_mdef_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_aatbx = {"mmultfile_b_less_aatbx", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_aatbx, METH_VARARGS|METH_KEYWORDS, 0};
 static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_aatbx(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_a_filename = 0;
+  PY_LONG_LONG __pyx_v_offset;
   int __pyx_v_row_count;
   int __pyx_v_a_col_count;
   int __pyx_v_b_col_count;
@@ -1759,12 +1765,14 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("mmultfile_b_less_aatbx (wrapper)", 0);
   {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_a_filename,&__pyx_n_s_row_count,&__pyx_n_s_a_col_count,&__pyx_n_s_b_col_count,&__pyx_n_s_b1,&__pyx_n_s_aaTb,&__pyx_n_s_aTb,&__pyx_n_s_num_threads,&__pyx_n_s_log_frequency,0};
-    PyObject* values[9] = {0,0,0,0,0,0,0,0,0};
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_a_filename,&__pyx_n_s_offset,&__pyx_n_s_row_count,&__pyx_n_s_a_col_count,&__pyx_n_s_b_col_count,&__pyx_n_s_b1,&__pyx_n_s_aaTb,&__pyx_n_s_aTb,&__pyx_n_s_num_threads,&__pyx_n_s_log_frequency,0};
+    PyObject* values[10] = {0,0,0,0,0,0,0,0,0,0};
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
       const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
       switch (pos_args) {
+        case 10: values[9] = PyTuple_GET_ITEM(__pyx_args, 9);
+        CYTHON_FALLTHROUGH;
         case  9: values[8] = PyTuple_GET_ITEM(__pyx_args, 8);
         CYTHON_FALLTHROUGH;
         case  8: values[7] = PyTuple_GET_ITEM(__pyx_args, 7);
@@ -1793,57 +1801,63 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_row_count)) != 0)) kw_args--;
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_offset)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 1); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 1); __PYX_ERR(0, 10, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_a_col_count)) != 0)) kw_args--;
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_row_count)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 2); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 2); __PYX_ERR(0, 10, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
-        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_b_col_count)) != 0)) kw_args--;
+        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_a_col_count)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 3); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 3); __PYX_ERR(0, 10, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
-        if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_b1)) != 0)) kw_args--;
+        if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_b_col_count)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 4); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 4); __PYX_ERR(0, 10, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
-        if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_aaTb)) != 0)) kw_args--;
+        if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_b1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 5); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 5); __PYX_ERR(0, 10, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  6:
-        if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_aTb)) != 0)) kw_args--;
+        if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_aaTb)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 6); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 6); __PYX_ERR(0, 10, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  7:
-        if (likely((values[7] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_threads)) != 0)) kw_args--;
+        if (likely((values[7] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_aTb)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 7); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 7); __PYX_ERR(0, 10, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  8:
-        if (likely((values[8] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_log_frequency)) != 0)) kw_args--;
+        if (likely((values[8] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_threads)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, 8); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 8); __PYX_ERR(0, 10, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  9:
+        if (likely((values[9] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_log_frequency)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, 9); __PYX_ERR(0, 10, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "mmultfile_b_less_aatbx") < 0)) __PYX_ERR(0, 10, __pyx_L3_error)
       }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 9) {
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 10) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
@@ -1855,20 +1869,22 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_
       values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
       values[7] = PyTuple_GET_ITEM(__pyx_args, 7);
       values[8] = PyTuple_GET_ITEM(__pyx_args, 8);
+      values[9] = PyTuple_GET_ITEM(__pyx_args, 9);
     }
     __pyx_v_a_filename = values[0];
-    __pyx_v_row_count = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_row_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
-    __pyx_v_a_col_count = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_a_col_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
-    __pyx_v_b_col_count = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_b_col_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
-    __pyx_v_b1 = ((PyArrayObject *)values[4]);
-    __pyx_v_aaTb = ((PyArrayObject *)values[5]);
-    __pyx_v_aTb = ((PyArrayObject *)values[6]);
-    __pyx_v_num_threads = __Pyx_PyInt_As_int(values[7]); if (unlikely((__pyx_v_num_threads == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
-    __pyx_v_log_frequency = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_log_frequency == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
+    __pyx_v_offset = __Pyx_PyInt_As_PY_LONG_LONG(values[1]); if (unlikely((__pyx_v_offset == (PY_LONG_LONG)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
+    __pyx_v_row_count = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_row_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
+    __pyx_v_a_col_count = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_a_col_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
+    __pyx_v_b_col_count = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_b_col_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
+    __pyx_v_b1 = ((PyArrayObject *)values[5]);
+    __pyx_v_aaTb = ((PyArrayObject *)values[6]);
+    __pyx_v_aTb = ((PyArrayObject *)values[7]);
+    __pyx_v_num_threads = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_num_threads == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
+    __pyx_v_log_frequency = __Pyx_PyInt_As_int(values[9]); if (unlikely((__pyx_v_log_frequency == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 9, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 10, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("mmultfile_b_less_aatbx", 1, 10, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 10, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("fastlmm.util.matrix.mmultfilex.mmultfile_b_less_aatbx", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -1877,7 +1893,7 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_b1), __pyx_ptype_5numpy_ndarray, 1, "b1", 0))) __PYX_ERR(0, 10, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_aaTb), __pyx_ptype_5numpy_ndarray, 1, "aaTb", 0))) __PYX_ERR(0, 10, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_aTb), __pyx_ptype_5numpy_ndarray, 1, "aTb", 0))) __PYX_ERR(0, 10, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_aatbx(__pyx_self, __pyx_v_a_filename, __pyx_v_row_count, __pyx_v_a_col_count, __pyx_v_b_col_count, __pyx_v_b1, __pyx_v_aaTb, __pyx_v_aTb, __pyx_v_num_threads, __pyx_v_log_frequency);
+  __pyx_r = __pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_aatbx(__pyx_self, __pyx_v_a_filename, __pyx_v_offset, __pyx_v_row_count, __pyx_v_a_col_count, __pyx_v_b_col_count, __pyx_v_b1, __pyx_v_aaTb, __pyx_v_aTb, __pyx_v_num_threads, __pyx_v_log_frequency);
 
   /* function exit code */
   goto __pyx_L0;
@@ -1888,7 +1904,7 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_aatbx(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, int __pyx_v_row_count, int __pyx_v_a_col_count, int __pyx_v_b_col_count, PyArrayObject *__pyx_v_b1, PyArrayObject *__pyx_v_aaTb, PyArrayObject *__pyx_v_aTb, int __pyx_v_num_threads, int __pyx_v_log_frequency) {
+static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_aatbx(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, PY_LONG_LONG __pyx_v_offset, int __pyx_v_row_count, int __pyx_v_a_col_count, int __pyx_v_b_col_count, PyArrayObject *__pyx_v_b1, PyArrayObject *__pyx_v_aaTb, PyArrayObject *__pyx_v_aTb, int __pyx_v_num_threads, int __pyx_v_log_frequency) {
   __Pyx_LocalBuf_ND __pyx_pybuffernd_aTb;
   __Pyx_Buffer __pyx_pybuffer_aTb;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_aaTb;
@@ -1929,19 +1945,19 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_a
 
   /* "fastlmm/util/matrix/mmultfilex.pyx":11
  * 
- * def mmultfile_b_less_aatbx(a_filename, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)             # <<<<<<<<<<<<<<
+ * def mmultfile_b_less_aatbx(a_filename, long long offset, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)             # <<<<<<<<<<<<<<
  * 
- * def mmultfile_atax(a_filename, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):
+ * def mmultfile_atax(a_filename, long long offset, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):
  */
   __pyx_t_1 = __Pyx_PyObject_AsWritableString(__pyx_v_a_filename); if (unlikely((!__pyx_t_1) && PyErr_Occurred())) __PYX_ERR(0, 11, __pyx_L1_error)
-  (void)(mmultfile_b_less_aatbx(__pyx_t_1, __pyx_v_row_count, __pyx_v_a_col_count, __pyx_v_b_col_count, ((double *)__pyx_v_b1->data), ((double *)__pyx_v_aaTb->data), ((double *)__pyx_v_aTb->data), __pyx_v_num_threads, __pyx_v_log_frequency));
+  (void)(mmultfile_b_less_aatbx(__pyx_t_1, __pyx_v_offset, __pyx_v_row_count, __pyx_v_a_col_count, __pyx_v_b_col_count, ((double *)__pyx_v_b1->data), ((double *)__pyx_v_aaTb->data), ((double *)__pyx_v_aTb->data), __pyx_v_num_threads, __pyx_v_log_frequency));
 
   /* "fastlmm/util/matrix/mmultfilex.pyx":10
  * 
  * 
- * def mmultfile_b_less_aatbx(a_filename, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ * def mmultfile_b_less_aatbx(a_filename, long long offset, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
  */
 
@@ -1971,10 +1987,10 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_mmultfile_b_less_a
 }
 
 /* "fastlmm/util/matrix/mmultfilex.pyx":13
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
- * def mmultfile_atax(a_filename, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_atax(a_filename, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
+ * def mmultfile_atax(a_filename, long long offset, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_atax(a_filename, offset, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
  */
 
 /* Python wrapper */
@@ -1982,6 +1998,7 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax(Py
 static PyMethodDef __pyx_mdef_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax = {"mmultfile_atax", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax, METH_VARARGS|METH_KEYWORDS, 0};
 static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_a_filename = 0;
+  PY_LONG_LONG __pyx_v_offset;
   int __pyx_v_row_count;
   int __pyx_v_col_count;
   int __pyx_v_work_index;
@@ -1993,12 +2010,14 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax(Py
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("mmultfile_atax (wrapper)", 0);
   {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_a_filename,&__pyx_n_s_row_count,&__pyx_n_s_col_count,&__pyx_n_s_work_index,&__pyx_n_s_work_count,&__pyx_n_s_ata_piece,&__pyx_n_s_num_threads,&__pyx_n_s_log_frequency,0};
-    PyObject* values[8] = {0,0,0,0,0,0,0,0};
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_a_filename,&__pyx_n_s_offset,&__pyx_n_s_row_count,&__pyx_n_s_col_count,&__pyx_n_s_work_index,&__pyx_n_s_work_count,&__pyx_n_s_ata_piece,&__pyx_n_s_num_threads,&__pyx_n_s_log_frequency,0};
+    PyObject* values[9] = {0,0,0,0,0,0,0,0,0};
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
       const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
       switch (pos_args) {
+        case  9: values[8] = PyTuple_GET_ITEM(__pyx_args, 8);
+        CYTHON_FALLTHROUGH;
         case  8: values[7] = PyTuple_GET_ITEM(__pyx_args, 7);
         CYTHON_FALLTHROUGH;
         case  7: values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
@@ -2025,51 +2044,57 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax(Py
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_row_count)) != 0)) kw_args--;
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_offset)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, 1); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 1); __PYX_ERR(0, 13, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_col_count)) != 0)) kw_args--;
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_row_count)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, 2); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 2); __PYX_ERR(0, 13, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
-        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_work_index)) != 0)) kw_args--;
+        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_col_count)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, 3); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 3); __PYX_ERR(0, 13, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
-        if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_work_count)) != 0)) kw_args--;
+        if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_work_index)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, 4); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 4); __PYX_ERR(0, 13, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
-        if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_ata_piece)) != 0)) kw_args--;
+        if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_work_count)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, 5); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 5); __PYX_ERR(0, 13, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  6:
-        if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_threads)) != 0)) kw_args--;
+        if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_ata_piece)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, 6); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 6); __PYX_ERR(0, 13, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  7:
-        if (likely((values[7] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_log_frequency)) != 0)) kw_args--;
+        if (likely((values[7] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_threads)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, 7); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 7); __PYX_ERR(0, 13, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  8:
+        if (likely((values[8] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_log_frequency)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, 8); __PYX_ERR(0, 13, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "mmultfile_atax") < 0)) __PYX_ERR(0, 13, __pyx_L3_error)
       }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 8) {
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 9) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
@@ -2080,26 +2105,28 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax(Py
       values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
       values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
       values[7] = PyTuple_GET_ITEM(__pyx_args, 7);
+      values[8] = PyTuple_GET_ITEM(__pyx_args, 8);
     }
     __pyx_v_a_filename = values[0];
-    __pyx_v_row_count = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_row_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
-    __pyx_v_col_count = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_col_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
-    __pyx_v_work_index = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_work_index == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
-    __pyx_v_work_count = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_work_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
-    __pyx_v_ata_piece = ((PyArrayObject *)values[5]);
-    __pyx_v_num_threads = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_num_threads == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
-    __pyx_v_log_frequency = __Pyx_PyInt_As_int(values[7]); if (unlikely((__pyx_v_log_frequency == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_offset = __Pyx_PyInt_As_PY_LONG_LONG(values[1]); if (unlikely((__pyx_v_offset == (PY_LONG_LONG)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_row_count = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_row_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_col_count = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_col_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_work_index = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_work_index == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_work_count = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_work_count == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_ata_piece = ((PyArrayObject *)values[6]);
+    __pyx_v_num_threads = __Pyx_PyInt_As_int(values[7]); if (unlikely((__pyx_v_num_threads == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_log_frequency = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_log_frequency == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 8, 8, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 13, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("mmultfile_atax", 1, 9, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 13, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("fastlmm.util.matrix.mmultfilex.mmultfile_atax", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ata_piece), __pyx_ptype_5numpy_ndarray, 1, "ata_piece", 0))) __PYX_ERR(0, 13, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_2mmultfile_atax(__pyx_self, __pyx_v_a_filename, __pyx_v_row_count, __pyx_v_col_count, __pyx_v_work_index, __pyx_v_work_count, __pyx_v_ata_piece, __pyx_v_num_threads, __pyx_v_log_frequency);
+  __pyx_r = __pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_2mmultfile_atax(__pyx_self, __pyx_v_a_filename, __pyx_v_offset, __pyx_v_row_count, __pyx_v_col_count, __pyx_v_work_index, __pyx_v_work_count, __pyx_v_ata_piece, __pyx_v_num_threads, __pyx_v_log_frequency);
 
   /* function exit code */
   goto __pyx_L0;
@@ -2110,7 +2137,7 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax(Py
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_2mmultfile_atax(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, int __pyx_v_row_count, int __pyx_v_col_count, int __pyx_v_work_index, int __pyx_v_work_count, PyArrayObject *__pyx_v_ata_piece, int __pyx_v_num_threads, int __pyx_v_log_frequency) {
+static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_2mmultfile_atax(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_a_filename, PY_LONG_LONG __pyx_v_offset, int __pyx_v_row_count, int __pyx_v_col_count, int __pyx_v_work_index, int __pyx_v_work_count, PyArrayObject *__pyx_v_ata_piece, int __pyx_v_num_threads, int __pyx_v_log_frequency) {
   __Pyx_LocalBuf_ND __pyx_pybuffernd_ata_piece;
   __Pyx_Buffer __pyx_pybuffer_ata_piece;
   PyObject *__pyx_r = NULL;
@@ -2129,17 +2156,17 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_10mmultfilex_2mmultfile_atax(CY
 
   /* "fastlmm/util/matrix/mmultfilex.pyx":14
  * 
- * def mmultfile_atax(a_filename, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):
- *    _mmultfile_atax(a_filename, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)             # <<<<<<<<<<<<<<
+ * def mmultfile_atax(a_filename, long long offset, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):
+ *    _mmultfile_atax(a_filename, offset, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)             # <<<<<<<<<<<<<<
  */
   __pyx_t_1 = __Pyx_PyObject_AsWritableString(__pyx_v_a_filename); if (unlikely((!__pyx_t_1) && PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L1_error)
-  (void)(mmultfile_atax(__pyx_t_1, __pyx_v_row_count, __pyx_v_col_count, __pyx_v_work_index, __pyx_v_work_count, ((double *)__pyx_v_ata_piece->data), __pyx_v_num_threads, __pyx_v_log_frequency));
+  (void)(mmultfile_atax(__pyx_t_1, __pyx_v_offset, __pyx_v_row_count, __pyx_v_col_count, __pyx_v_work_index, __pyx_v_work_count, ((double *)__pyx_v_ata_piece->data), __pyx_v_num_threads, __pyx_v_log_frequency));
 
   /* "fastlmm/util/matrix/mmultfilex.pyx":13
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
- * def mmultfile_atax(a_filename, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_atax(a_filename, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
+ * def mmultfile_atax(a_filename, long long offset, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_atax(a_filename, offset, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
  */
 
   /* function exit code */
@@ -4657,6 +4684,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
   {&__pyx_kp_s_numpy_core_multiarray_failed_to, __pyx_k_numpy_core_multiarray_failed_to, sizeof(__pyx_k_numpy_core_multiarray_failed_to), 0, 0, 1, 0},
   {&__pyx_kp_s_numpy_core_umath_failed_to_impor, __pyx_k_numpy_core_umath_failed_to_impor, sizeof(__pyx_k_numpy_core_umath_failed_to_impor), 0, 0, 1, 0},
+  {&__pyx_n_s_offset, __pyx_k_offset, sizeof(__pyx_k_offset), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
   {&__pyx_n_s_row_count, __pyx_k_row_count, sizeof(__pyx_k_row_count), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
@@ -4759,25 +4787,25 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "fastlmm/util/matrix/mmultfilex.pyx":10
  * 
  * 
- * def mmultfile_b_less_aatbx(a_filename, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ * def mmultfile_b_less_aatbx(a_filename, long long offset, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
  */
-  __pyx_tuple__8 = PyTuple_Pack(9, __pyx_n_s_a_filename, __pyx_n_s_row_count, __pyx_n_s_a_col_count, __pyx_n_s_b_col_count, __pyx_n_s_b1, __pyx_n_s_aaTb, __pyx_n_s_aTb, __pyx_n_s_num_threads, __pyx_n_s_log_frequency); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_tuple__8 = PyTuple_Pack(10, __pyx_n_s_a_filename, __pyx_n_s_offset, __pyx_n_s_row_count, __pyx_n_s_a_col_count, __pyx_n_s_b_col_count, __pyx_n_s_b1, __pyx_n_s_aaTb, __pyx_n_s_aTb, __pyx_n_s_num_threads, __pyx_n_s_log_frequency); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
-  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(9, 0, 9, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__8, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_fastlmm_util_matrix_mmultfilex_p, __pyx_n_s_mmultfile_b_less_aatbx, 10, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(10, 0, 10, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__8, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_fastlmm_util_matrix_mmultfilex_p, __pyx_n_s_mmultfile_b_less_aatbx, 10, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) __PYX_ERR(0, 10, __pyx_L1_error)
 
   /* "fastlmm/util/matrix/mmultfilex.pyx":13
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
- * def mmultfile_atax(a_filename, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_atax(a_filename, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
+ * def mmultfile_atax(a_filename, long long offset, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_atax(a_filename, offset, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
  */
-  __pyx_tuple__10 = PyTuple_Pack(8, __pyx_n_s_a_filename, __pyx_n_s_row_count, __pyx_n_s_col_count, __pyx_n_s_work_index, __pyx_n_s_work_count, __pyx_n_s_ata_piece, __pyx_n_s_num_threads, __pyx_n_s_log_frequency); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 13, __pyx_L1_error)
+  __pyx_tuple__10 = PyTuple_Pack(9, __pyx_n_s_a_filename, __pyx_n_s_offset, __pyx_n_s_row_count, __pyx_n_s_col_count, __pyx_n_s_work_index, __pyx_n_s_work_count, __pyx_n_s_ata_piece, __pyx_n_s_num_threads, __pyx_n_s_log_frequency); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
-  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(8, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_fastlmm_util_matrix_mmultfilex_p, __pyx_n_s_mmultfile_atax, 13, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 13, __pyx_L1_error)
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(9, 0, 9, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_fastlmm_util_matrix_mmultfilex_p, __pyx_n_s_mmultfile_atax, 13, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -5097,8 +5125,8 @@ if (!__Pyx_RefNanny) {
   /* "fastlmm/util/matrix/mmultfilex.pyx":10
  * 
  * 
- * def mmultfile_b_less_aatbx(a_filename, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ * def mmultfile_b_less_aatbx(a_filename, long long offset, int row_count, int a_col_count, int b_col_count, np.ndarray[np.float64_t, ndim=2] b1, np.ndarray[np.float64_t, ndim=2] aaTb, np.ndarray[np.float64_t, ndim=2] aTb, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7fastlmm_4util_6matrix_10mmultfilex_1mmultfile_b_less_aatbx, NULL, __pyx_n_s_fastlmm_util_matrix_mmultfilex); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
@@ -5107,10 +5135,10 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "fastlmm/util/matrix/mmultfilex.pyx":13
- *    _mmultfile_b_less_aatbx(a_filename, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
+ *    _mmultfile_b_less_aatbx(a_filename, offset, row_count, a_col_count, b_col_count, <double*>b1.data, <double*> aaTb.data, <double*> aTb.data, num_threads, log_frequency)
  * 
- * def mmultfile_atax(a_filename, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
- *    _mmultfile_atax(a_filename, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
+ * def mmultfile_atax(a_filename, long long offset, int row_count, int col_count, int work_index, int work_count, np.ndarray[np.float64_t, ndim=2] ata_piece, int num_threads, int log_frequency):             # <<<<<<<<<<<<<<
+ *    _mmultfile_atax(a_filename, offset, row_count, col_count, work_index, work_count, <double*>ata_piece.data, num_threads, log_frequency)
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7fastlmm_4util_6matrix_10mmultfilex_3mmultfile_atax, NULL, __pyx_n_s_fastlmm_util_matrix_mmultfilex); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -7316,6 +7344,195 @@ static void __Pyx_ReleaseBuffer(Py_buffer *view) {
         return _PyLong_FromByteArray(bytes, sizeof(enum NPY_TYPES),
                                      little, !is_unsigned);
     }
+}
+
+/* CIntFromPy */
+  static CYTHON_INLINE PY_LONG_LONG __Pyx_PyInt_As_PY_LONG_LONG(PyObject *x) {
+    const PY_LONG_LONG neg_one = (PY_LONG_LONG) ((PY_LONG_LONG) 0 - (PY_LONG_LONG) 1), const_zero = (PY_LONG_LONG) 0;
+    const int is_unsigned = neg_one > const_zero;
+#if PY_MAJOR_VERSION < 3
+    if (likely(PyInt_Check(x))) {
+        if (sizeof(PY_LONG_LONG) < sizeof(long)) {
+            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, long, PyInt_AS_LONG(x))
+        } else {
+            long val = PyInt_AS_LONG(x);
+            if (is_unsigned && unlikely(val < 0)) {
+                goto raise_neg_overflow;
+            }
+            return (PY_LONG_LONG) val;
+        }
+    } else
+#endif
+    if (likely(PyLong_Check(x))) {
+        if (is_unsigned) {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (PY_LONG_LONG) 0;
+                case  1: __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, digit, digits[0])
+                case 2:
+                    if (8 * sizeof(PY_LONG_LONG) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) >= 2 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) (((((PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0]));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(PY_LONG_LONG) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) >= 3 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) (((((((PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0]));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(PY_LONG_LONG) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) >= 4 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) (((((((((PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0]));
+                        }
+                    }
+                    break;
+            }
+#endif
+#if CYTHON_COMPILING_IN_CPYTHON
+            if (unlikely(Py_SIZE(x) < 0)) {
+                goto raise_neg_overflow;
+            }
+#else
+            {
+                int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
+                if (unlikely(result < 0))
+                    return (PY_LONG_LONG) -1;
+                if (unlikely(result == 1))
+                    goto raise_neg_overflow;
+            }
+#endif
+            if (sizeof(PY_LONG_LONG) <= sizeof(unsigned long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(PY_LONG_LONG, unsigned long, PyLong_AsUnsignedLong(x))
+#ifdef HAVE_LONG_LONG
+            } else if (sizeof(PY_LONG_LONG) <= sizeof(unsigned PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(PY_LONG_LONG, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
+#endif
+            }
+        } else {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (PY_LONG_LONG) 0;
+                case -1: __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, sdigit, (sdigit) (-(sdigit)digits[0]))
+                case  1: __PYX_VERIFY_RETURN_INT(PY_LONG_LONG,  digit, +digits[0])
+                case -2:
+                    if (8 * sizeof(PY_LONG_LONG) - 1 > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) (((PY_LONG_LONG)-1)*(((((PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0])));
+                        }
+                    }
+                    break;
+                case 2:
+                    if (8 * sizeof(PY_LONG_LONG) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) ((((((PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0])));
+                        }
+                    }
+                    break;
+                case -3:
+                    if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) (((PY_LONG_LONG)-1)*(((((((PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0])));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(PY_LONG_LONG) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) ((((((((PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0])));
+                        }
+                    }
+                    break;
+                case -4:
+                    if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) (((PY_LONG_LONG)-1)*(((((((((PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0])));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(PY_LONG_LONG) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(PY_LONG_LONG, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
+                            return (PY_LONG_LONG) ((((((((((PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (PY_LONG_LONG)digits[0])));
+                        }
+                    }
+                    break;
+            }
+#endif
+            if (sizeof(PY_LONG_LONG) <= sizeof(long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(PY_LONG_LONG, long, PyLong_AsLong(x))
+#ifdef HAVE_LONG_LONG
+            } else if (sizeof(PY_LONG_LONG) <= sizeof(PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(PY_LONG_LONG, PY_LONG_LONG, PyLong_AsLongLong(x))
+#endif
+            }
+        }
+        {
+#if CYTHON_COMPILING_IN_PYPY && !defined(_PyLong_AsByteArray)
+            PyErr_SetString(PyExc_RuntimeError,
+                            "_PyLong_AsByteArray() not available in PyPy, cannot convert large numbers");
+#else
+            PY_LONG_LONG val;
+            PyObject *v = __Pyx_PyNumber_IntOrLong(x);
+ #if PY_MAJOR_VERSION < 3
+            if (likely(v) && !PyLong_Check(v)) {
+                PyObject *tmp = v;
+                v = PyNumber_Long(tmp);
+                Py_DECREF(tmp);
+            }
+ #endif
+            if (likely(v)) {
+                int one = 1; int is_little = (int)*(unsigned char *)&one;
+                unsigned char *bytes = (unsigned char *)&val;
+                int ret = _PyLong_AsByteArray((PyLongObject *)v,
+                                              bytes, sizeof(val),
+                                              is_little, !is_unsigned);
+                Py_DECREF(v);
+                if (likely(!ret))
+                    return val;
+            }
+#endif
+            return (PY_LONG_LONG) -1;
+        }
+    } else {
+        PY_LONG_LONG val;
+        PyObject *tmp = __Pyx_PyNumber_IntOrLong(x);
+        if (!tmp) return (PY_LONG_LONG) -1;
+        val = __Pyx_PyInt_As_PY_LONG_LONG(tmp);
+        Py_DECREF(tmp);
+        return val;
+    }
+raise_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "value too large to convert to PY_LONG_LONG");
+    return (PY_LONG_LONG) -1;
+raise_neg_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "can't convert negative value to PY_LONG_LONG");
+    return (PY_LONG_LONG) -1;
 }
 
 /* CIntFromPy */

@@ -549,7 +549,7 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([getTestSuite()])
 
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=True) #!!!cmk
+        r = unittest.TextTestRunner(failfast=False)
         r.run(suites)
     else: #Cluster test run
         logging.basicConfig(level=logging.INFO)

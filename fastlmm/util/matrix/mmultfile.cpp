@@ -13,7 +13,7 @@
 using namespace std;
 
 // could add code so that if the two blocks are the same, then only do half the *'s in the dot product
-int mmultfile_atax(char* a_filename, long long iid_count, long long sid_count, long long work_index, long long work_count, double* ata_piece, int num_threads, long long log_frequency)
+int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long long sid_count, long long work_index, long long work_count, double* ata_piece, int num_threads, long long log_frequency)//!!!cmk add offset here and everywhere that calls it
 {
 	omp_set_num_threads(num_threads);
 	long long start = sid_count * work_index / work_count;
@@ -35,11 +35,11 @@ int mmultfile_atax(char* a_filename, long long iid_count, long long sid_count, l
 	
 	if (
 #ifdef _WIN32
-		_fseeki64(pFile, start*iid_count * sizeof(double), SEEK_SET)
+		_fseeki64(pFile, offset + start*iid_count*sizeof(double), SEEK_SET)
 #elif __APPLE__
-		fseeko(pFile, start*iid_count * sizeof(double), SEEK_SET)
+		fseeko(pFile, offset + start*iid_count*sizeof(double), SEEK_SET)
 #else
-		fseeko64(pFile, start*iid_count * sizeof(double), SEEK_SET)
+		fseeko64(pFile, offset + start*iid_count*sizeof(double), SEEK_SET)
 #endif
 		!= 0)
 	{
@@ -122,7 +122,7 @@ int mmultfile_atax(char* a_filename, long long iid_count, long long sid_count, l
 	return 0;
 }
 
-int mmultfile_b_less_aatbx(char* a_filename, long long iid_count, long long train_sid_count, long long test_sid_count, double* b1, double* aaTb, double* aTb, int num_threads, long long log_frequency)
+int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_count, long long train_sid_count, long long test_sid_count, double* b1, double* aaTb, double* aTb, int num_threads, long long log_frequency)
 {
 	//speed idea: compile for release (and optimize)
 	//use MKL to multiply???
@@ -132,6 +132,7 @@ int mmultfile_b_less_aatbx(char* a_filename, long long iid_count, long long trai
 	//would bigger snp blocks be better
 	std::fstream fs;
 	fs.open(a_filename, std::fstream::in | std::fstream::binary);
+	fs.seekg(offset, ios::beg);
 
 	//We double buffer
 	std::vector<double> buffer0(iid_count);

@@ -252,18 +252,14 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
     will be uploaded into a file_cache (e.g. some shared cluster storage). The actual return value from this function is a lambda that when called will download G0 (if needed) and open it
     up as a memory-mapped numpy array.
     """
-    fn_G0_memmap = "G0_data.dat"
-    fn_g0_npz = SnpReader._name_of_other_file(fn_G0_memmap,"dat","npz")
+    fn_G0_memmap = "G0_data.memmap"
     fn_ss = "ss_per_snp.npz"
 
-    assert file_cache.file_exists(fn_G0_memmap) == file_cache.file_exists(fn_g0_npz), "expect '{0}' and '{1}' to either both exist or neither".format(fn_G0_memmap, fn_g0_npz)
-    assert file_cache.file_exists(fn_g0_npz) == file_cache.file_exists(fn_ss), "expect '{0}' and '{1}' to either both exist or neither".format(fn_g0_npz, fn_ss)
+    assert file_cache.file_exists(fn_G0_memmap) == file_cache.file_exists(fn_ss), "expect '{0}' and '{1}' to either both exist or neither".format(fn_G0_memmap, fn_ss)
 
     def G0_memmap_lambda():
         with file_cache.open_read(fn_G0_memmap) as local_G0_memmap:
-            with file_cache.open_read(fn_g0_npz) as handle_fn_g0_npz: #This file gets filled in indirectly when gets contents
-                G0_memmap = SnpMemMap(local_G0_memmap)
-            #!!!not fully closing the read here because SnpMemMap has the local file open, but at least we know usage has started
+            G0_memmap = SnpMemMap(local_G0_memmap)
         #!!!not fully closing the read here because SnpMemMap has the local file open, but at least we know usage has started
         return G0_memmap
 
@@ -278,64 +274,62 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
     def debatch_closure2(work_index2):
         return G0.sid_count * work_index2 // work_count2
 
-    logging.info("About to allocate memmap of G0_data")
+    logging.info("About to allocate memmap of G0_data.memmap")
 
-    with progress_reporter("G0_data.dat upload", size=0, updater=None) as updater2:
+    with progress_reporter("G0_data.memmap upload", size=0, updater=None) as updater2: #!!!cmk replace all *.dat related memory map with .memmap
         with file_cache.open_write(fn_G0_memmap,size=8*G0.iid_count*G0.sid_count,updater=updater2) as G0_memmap_storage_file_name:
-            with file_cache.open_write(fn_g0_npz) as fn_g0_npz_local_file_name:
+            G0_data_memmap = SnpMemMap.empty(iid=G0.iid,sid=G0.sid,filename=G0_memmap_storage_file_name,pos=G0.pos,order='F') #!!!is this the best order? dtype default ok?
+            logging.info("Finished with allocation of memmap of G0_data.memmap")
+            ss_per_snp = np.empty([G0.sid_count])
+            t0 = time.time()
+            for work_index in xrange(work_count2):
+                if work_count2 > 1: logging.info("get_G0_data_memmap: Working on part {0} of {1}".format(work_index,work_count2))
+                start = debatch_closure2(work_index)
+                stop = debatch_closure2(work_index+1)
+    
+                ##############################################################
+                ############# BIG ############################################
+                ##############################################################
+                # 1M x 25K -> 1M x 25K
+                # Read all SNPs and Unit standardize
+                #    Can be clustered by SNP, although output is 200 GB
+                #            (Just remember unit trained and apply later?
+                #   Use memory mapped files? SPARK? would be nice if could run on carlk4
+                #===========================================================
+                G0_data_piece = G0[:,start:stop].read().standardize(Unit())
+                ss_per_snp[start:stop] = np.einsum('i...,i...',G0_data_piece.val,G0_data_piece.val) #Find the (G0_data.val**2).sum(0) without memory allocation
+                #!!!Might be slightly better if this code and the original FaSTLMM code standardized the diagonal AFTER regressing away the covariants
+    
+                ##=============================================================
+                ## 3 x 1M x 25K -> 3 x 25K
+                ##=============================================================
+                beta_G = Xdagger.dot(G0_data_piece.val)
+    
+                ##=============================================================
+                # 1M x 3 x 25K -> 3 x 25K
+                #   should be able to do this in place
+                #=============================================================
+                G0_data_piece.val -= X.dot(beta_G) #mem x 2
+                G0_data_memmap.snp_data.val[:,start:stop] = G0_data_piece.val
+            t1=time.time()    
+            logging.info("G0 work took {0}".format(_format_delta(t1-t0)))
+            logging.info("About to get name of file to np.savez ss_per_snp")
+            with file_cache.open_write(fn_ss) as ss_storage:
+                logging.info("About to np.savez ss_per_snp in '{0}'".format(ss_storage))
+                np.savez(ss_storage, ss_per_snp)
+                logging.info("About to close ss_per_snp")
+            t2=time.time()
+            logging.info("done with ss_per_snp in {0}".format(_format_delta(t2-t1)))
 
-                G0_data = SnpMemMap.snp_data(iid=G0.iid,sid=G0.sid,filename=G0_memmap_storage_file_name,pos=G0.pos,order='F') #!!!is this the best order? dtype default ok?
-                logging.info("Finished with allocation of memmap of G0_data")
-                ss_per_snp = np.empty([G0.sid_count])
-                t0 = time.time()
-                for work_index in xrange(work_count2):
-                    if work_count2 > 1: logging.info("get_G0_data: Working on part {0} of {1}".format(work_index,work_count2))
-                    start = debatch_closure2(work_index)
-                    stop = debatch_closure2(work_index+1)
-    
-                    ##############################################################
-                    ############# BIG ############################################
-                    ##############################################################
-                    # 1M x 25K -> 1M x 25K
-                    # Read all SNPs and Unit standardize
-                    #    Can be clustered by SNP, although output is 200 GB
-                    #            (Just remember unit trained and apply later?
-                    #   Use memory mapped files? SPARK? would be nice if could run on carlk4
-                    #===========================================================
-                    G0_data_piece = G0[:,start:stop].read().standardize(Unit())
-                    ss_per_snp[start:stop] = np.einsum('i...,i...',G0_data_piece.val,G0_data_piece.val) #Find the (G0_data.val**2).sum(0) without memory allocation
-                    #!!!Might be slightly better if this code and the original FaSTLMM code standardized the diagonal AFTER regressing away the covariants
-    
-                    ##=============================================================
-                    ## 3 x 1M x 25K -> 3 x 25K
-                    ##=============================================================
-                    beta_G = Xdagger.dot(G0_data_piece.val)
-    
-                    ##=============================================================
-                    # 1M x 3 x 25K -> 3 x 25K
-                    #   should be able to do this in place
-                    #=============================================================
-                    G0_data_piece.val -= X.dot(beta_G) #mem x 2
-                    G0_data.val[:,start:stop] = G0_data_piece.val
-                t1=time.time()    
-                logging.info("G0 work took {0}".format(_format_delta(t1-t0)))
-                logging.info("About to get name of file to np.savez ss_per_snp")
-                with file_cache.open_write(fn_ss) as ss_storage:
-                    logging.info("About to np.savez ss_per_snp in '{0}'".format(ss_storage))
-                    np.savez(ss_storage, ss_per_snp)
-                    logging.info("About to close ss_per_snp")
-                t2=time.time()
-                logging.info("done with ss_per_snp in {0}".format(_format_delta(t2-t1)))
+            logging.info("About to SnpMemMap.close G0_data_memmap in '{0}'".format(G0_memmap_storage_file_name))
 
-                logging.info("About to SnpMemMap.write G0_data in '{0}'".format(G0_memmap_storage_file_name))
-                _ = SnpMemMap.write(G0_memmap_storage_file_name,G0_data)
-                del G0_data.val #Close the memory mapped file so that we can later set the file modified time and it will stick.
-                t3=time.time()
-                logging.info("done with SnpMemMap.write G0_data in {0}".format(_format_delta(t3-t2)))
-                logging.info("About to close g0.npz and g0.dat")
+            G0_data_memmap.flush()
+            t3=time.time()
+            logging.info("done with SnpMemMap.close G0_data_memmap in {0}".format(_format_delta(t3-t2)))
+            logging.info("About to close g0.npz and g0.memmap")
 
     t4=time.time()
-    logging.info("Done with g0.npz and g0.dat in {0}".format(_format_delta(t4-t3)))
+    logging.info("Done with g0.npz and g0.memmap in {0}".format(_format_delta(t4-t3)))
 
     return G0_memmap_lambda, ss_per_snp
 
@@ -383,11 +377,9 @@ def get_gtg(common_cache, G0_iid_count, G0_sid, G0_memmap_lambda, memory_factor,
 def get_U(chrom, chrom_cache):
     chrom = int(chrom)
 
-    fn_U = "U{0}.dat".format(chrom)
-    fn_Unpz = SnpReader._name_of_other_file(fn_U,"dat","npz")
+    fn_U = "U{0}.memmap".format(chrom)
     fn_UUYetc = "UUYetc{0}.npz".format(chrom)
 
-    assert chrom_cache.file_exists(fn_U) == chrom_cache.file_exists(fn_Unpz), "expect '{0}' and '{1}' to either both exist or neither".format(fn_U, fn_Unpz)
     assert chrom_cache.file_exists(fn_U) == chrom_cache.file_exists(fn_UUYetc), "expect '{0}' and '{1}' to either both exist or neither".format(fn_U, fn_UUYetc)
     assert chrom_cache.file_exists(fn_U), "expect '{0}'".format(fn_U)
 
@@ -398,8 +390,7 @@ def get_U(chrom, chrom_cache):
             UUY  = data['UUY']
 
     with chrom_cache.open_read(fn_U) as local_fn_U:
-        with chrom_cache.open_read(fn_Unpz) as handle_fn_Unpz: #This file filled in indirectly
-            U_memmap = SnpMemMap(local_fn_U)
+        U_memmap = SnpMemMap(local_fn_U)
 
     return S, U_memmap, UY, UUY
 
@@ -523,11 +514,11 @@ def postsvd_piece(start_iid_index, stop_iid_index, G0_memmap, idx_array, SVinv3b
     logging.info("About to read")
     t0_piece = time.time()
     piece = np.zeros((stop_iid_index-start_iid_index,SVinv3b.shape[0]),order='F')
-    with open(G0_memmap._filename,"rb") as fp:
+    with open(G0_memmap.filename,"rb") as fp:
         so_far_idx = 0
         for start_idx,stop_idx in idx_array:
             start_idx,stop_idx = int(start_idx),int(stop_idx) #We convert from numpy.int32 to python ints so that their product will be a python long instead of a (overflowed) numpy.int32
-            fp.seek(start_idx*G0_memmap.iid_count*8) #Skip sids that are not of interest
+            fp.seek(G0_memmap.offset+start_idx*G0_memmap.iid_count*8) #Skip sids that are not of interest
             for sid_index in xrange(so_far_idx,so_far_idx+stop_idx-start_idx):
                 if log_frequency > 0 and sid_index % log_frequency == 0:
                     logging.info("on sid_index {0} of {1}".format(sid_index,SVinv3b.shape[0]))
@@ -564,11 +555,9 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
         chrom = int(chrom)
         chrom_storage = cache_dict[chrom]
 
-        fn_U = "U{0}.dat".format(int(chrom))
-        fn_Unpz = SnpReader._name_of_other_file(fn_U,"dat","npz")
+        fn_U = "U{0}.memmap".format(int(chrom))
         fn_UUYetc = "UUYetc{0}.npz".format(int(chrom))
         #!!!needed ?assert not chrom_storage.file_exists(fn_U), "if already done, don't call this"
-        assert chrom_storage.file_exists(fn_U) == chrom_storage.file_exists(fn_Unpz), "expect '{0}' and '{1}' to either both exist or neither".format(fn_U, fn_Unpz)
         assert chrom_storage.file_exists(fn_U) == chrom_storage.file_exists(fn_UUYetc), "expect '{0}' and '{1}' to either both exist or neither".format(fn_U, fn_UUYetc)
 
         work_count = -(G0_iid_count // -int(G0_sid_count*memory_factor)) #Find the work count based on batch size (rounding up)
@@ -591,7 +580,6 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
 
             sid = ["sid{0}".format(i) for i in xrange(SVinv3b.shape[1])]
             idx_intrangeset = IntRangeSet(i for i,keep in enumerate(idx) if keep) #IntRangeSet('285:1000')
-            G0_filename = G0_memmap._filename
             idx_array = np.array(list(idx_intrangeset.ranges()))
 
 
@@ -603,7 +591,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             start_iid_index = debatch_closure(work_index)
             stop_iid_index = debatch_closure(work_index+1)
 
-            fn_U_piece = "U{0}_pieces/{1}_{2}.dat".format(chrom,work_index,work_count)
+            fn_U_piece = "U{0}_pieces/{1}_{2}.memmap".format(chrom,work_index,work_count)
             if cache_dict[chrom].file_exists(fn_U_piece):  #!!!This skips work if the U file is already in storage. Do we want that?
                 logging.info("Piece '{0}' already exists, so skipping work".format(fn_U_piece))
             else:
@@ -630,46 +618,44 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             logging.info("File downloads took {0}. Next putting U together".format(_format_delta(t0_download-t0_start)))
 
             with chrom_storage.open_write(fn_U) as handle_fn_U_file_name:
-                with chrom_storage.open_write(fn_Unpz) as handle_fn_Unpz_file_name: #This doesn't get used directly, but this file gets contents when handle_fn_U_file_name is used.
-                    fp_list = [] #!!! would be nice to have a try_catch to be sure all these get closed
-                    file_name_list = []
-                    for piece_index, (fn_U_piece, start_iid_index, stop_iid_index, _, _) in enumerate(fn_U_piece_list):
-                        with chrom_storage.open_read(fn_U_piece) as handle_local: #The local file is used after this is closed. Not nice, but OK in this case.
-                            logging.info("About to open piece {0} of {1}".format(piece_index,len(fn_U_piece_list)))
-                            fp_list.append(open(handle_local,"rb"))
-                    with open(handle_fn_U_file_name,"wb") as fp_U:
-                        with log_in_place("Creating U file", logging.INFO) as log_writer:
-                            for sid_index in xrange(sid_count):
-                                if sid_index % 100 == 0: #!!!use something like log_freq instead of '100'
-                                    log_writer("On sid {0} of {1}".format(sid_index,sid_count))
-                                prev_stop = 0
-                                for piece_index, (fn_U_piece, start_iid_index, stop_iid_index, _, _) in enumerate(fn_U_piece_list):
-                                    assert start_iid_index == prev_stop, "real assert"
-                                    prev_stop = stop_iid_index
-                                    fp = fp_list[piece_index]
-                                    buf2 = np.fromfile(fp, dtype=np.float64, count=stop_iid_index-start_iid_index)
-                                    buf2.tofile(fp_U)
-                                assert stop_iid_index == G0_iid_count, "real assert"
-                    for fp in fp_list:
-                        fp.close()
+                sid = ["sid{0}".format(i) for i in xrange(sid_count)]    
+                U_snp_mem_map = SnpMemMap.empty(iid=G0_iid,sid=sid,filename=handle_fn_U_file_name,dtype=np.float64, order='F')
+                fp_list = [] #!!! would be nice to have a try_catch to be sure all these get closed
+                file_name_list = []
+                for piece_index, (fn_U_piece, start_iid_index, stop_iid_index, _, _) in enumerate(fn_U_piece_list):
+                    with chrom_storage.open_read(fn_U_piece) as handle_local: #The local file is used after this is closed. Not nice, but OK in this case.
+                        logging.info("About to open piece {0} of {1}".format(piece_index,len(fn_U_piece_list)))
+                        fp_list.append(open(handle_local,"rb"))
+                with open(U_snp_mem_map.filename,"r+b") as fp_U:
+                    fp_U.seek(U_snp_mem_map.offset)
+                    with log_in_place("Creating U file", logging.INFO) as log_writer:
+                        for sid_index in xrange(sid_count):
+                            if sid_index % 100 == 0: #!!!cmkuse something like log_freq instead of '100'
+                                log_writer("On sid {0} of {1}".format(sid_index,sid_count))
+                            prev_stop = 0
+                            for piece_index, (fn_U_piece, start_iid_index, stop_iid_index, _, _) in enumerate(fn_U_piece_list):
+                                assert start_iid_index == prev_stop, "real assert"
+                                prev_stop = stop_iid_index
+                                fp = fp_list[piece_index]
+                                buf2 = np.fromfile(fp, dtype=np.float64, count=stop_iid_index-start_iid_index)
+                                buf2.tofile(fp_U)
+                            assert stop_iid_index == G0_iid_count, "real assert"
+                for fp in fp_list:
+                    fp.close()
 
-                    t0_U = time.time()
-                    logging.info("Putting U together took {0}. Next creating UY & UUY files".format(_format_delta(t0_U - t0_download)))
+                t0_U = time.time()
+                logging.info("Putting U together took {0}. Next creating UY & UUY files".format(_format_delta(t0_U - t0_download)))
             
-                    sid = ["sid{0}".format(i) for i in xrange(sid_count)]    
-                    U_data = SnpData(iid=G0_iid,sid=sid,val=np.memmap(handle_fn_U_file_name,dtype=np.float64, mode="r", order='F', shape=(G0_iid_count,sid_count)))
-                    SnpMemMap.write(handle_fn_U_file_name,U_data)
-                    #=============================================================
-                    # 25K x 1M x 1 -> 25K x 1
-                    #=============================================================
-                    UY = U_data.val.T.dot(RxY)  #Note: This could be pushed into the 'map' step, with each step returning a UYi that would all be summed together.
-                    #=============================================================
-                    # 1M x 25K x 1 -> 1M x 1
-                    #=============================================================
-                    UUY = RxY - U_data.val.dot(UY) #This is can't be pushed into the 'map' step because it depends on all of UY
+                #=============================================================
+                # 25K x 1M x 1 -> 25K x 1
+                #=============================================================
+                UY = U_snp_mem_map.snp_data.val.T.dot(RxY)  #Note: This could be pushed into the 'map' step, with each step returning a UYi that would all be summed together.
+                #=============================================================
+                # 1M x 25K x 1 -> 1M x 1
+                #=============================================================
+                UUY = RxY - U_snp_mem_map.snp_data.val.dot(UY) #This is can't be pushed into the 'map' step because it depends on all of UY
 
-                    U_memmap = SnpMemMap.write(handle_fn_U_file_name, U_data)
-                    del U_data.val #Close memory mapped file so can later set file modified time to what we want.
+                U_snp_mem_map.flush()
 
 
             with chrom_storage.open_write(fn_UUYetc) as local_fn_UUYetc:
@@ -769,10 +755,10 @@ def __del__(test_snps):
 
 
 def is_good(node,file,chrom):
-    #Only use the file if it 1. exists and 2. It's *.dat is over 150000000000L in bytes in size
+    #Only use the file if it 1. exists and 2. It's *.memmap is over 150000000000L in bytes in size
     if not os.path.exists(file):
         return False
-    big = pattern2.format(node,".U{0}.0.dat".format(int(chrom)))
+    big = pattern2.format(node,".U{0}.0.memmap".format(int(chrom)))
     if not os.path.exists(big) or os.path.getsize(big) <  150000000000L:
         return False
     mid = pattern2.format(node,".U{0}.0.npz".format(int(chrom)))
@@ -865,7 +851,7 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             #U_data = U_memmap.read(order='K',view_ok=True) #in the work loop so it can be run on cluster
             #UUsnps = Rxsnps - U_data.val.dot(Usnps)
 
-            Usnps, UUsnps = mmultfile_b_less_aatb(U_memmap._filename, Rxsnps, log_frequency=10 if logging.getLogger().level <= logging.INFO else -1)
+            Usnps, UUsnps = mmultfile_b_less_aatb(U_memmap, Rxsnps, log_frequency=10 if logging.getLogger().level <= logging.INFO else -1)
             logging.debug("U_data {0}x{1}. Usnps {2}x{3}. time={4}".format(U_memmap.iid_count,U_memmap.sid_count,Usnps.shape[0],Usnps.shape[1],datetime.now().strftime("%Y-%m-%d %H:%M")))
             logging.debug("UUsnps = Rxsnps - U_data.val.dot(Usnps)")
     
@@ -954,7 +940,7 @@ def clear_cache_dict(start_stage,cache_dict,chrom_num_list):
 def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer):
     if start_stage == "all":
         _clear_cache_dict_internal("gtg",cache_dict,chrom_num_list,log_writer) #Recursion
-        for file_name in ["G0_data.dat","G0_data.npz","ss_per_snp.npz"]:
+        for file_name in ["G0_data.memmap","ss_per_snp.npz"]:
             if cache_dict[0].file_exists(file_name):
                 cache_dict[0].remove(file_name,log_writer=log_writer)
     elif start_stage == "gtg":
@@ -975,7 +961,7 @@ def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer)
             cache_dict[chrom].remove_from_cloud_storage(log_writer=log_writer)
         _clear_cache_dict_internal("testsnps",cache_dict,chrom_num_list,log_writer) #Recursion
     elif start_stage == "testsnps":
-        for file_name in ["G0_data.dat","G0_data.npz","ss_per_snp.npz"]:
+        for file_name in ["G0_data.memmap","ss_per_snp.npz"]: #!!!cmk remove memmap2
             log_writer("cloud storage only '{0}'".format(file_name))
             if cache_dict[0].file_exists(file_name):
                 cache_dict[0].cloud_storage_only(file_name,log_writer=log_writer)

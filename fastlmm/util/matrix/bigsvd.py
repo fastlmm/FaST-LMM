@@ -70,7 +70,7 @@ def lapack_svd(a):
                             -1)
     assert info==0
     work = np.zeros(int(work[0]),order='F') #!!! empty faster than zero? (and also for the next items)
-    info = cample.dgesvd(  "A", #!!!cmk why twice????
+    info = cample.dgesvd(  "A", #Called twice. Once to get size and once to do the work.
                             "A",
                             a.shape[0], #row count
                             a.shape[1], #col count
