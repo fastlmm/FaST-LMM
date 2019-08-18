@@ -46,7 +46,19 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="est_h2.py" />
-    <Compile Include="file_cache.py" />
+    <Compile Include="filecache\distributedbed.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="filecache\filecache.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="filecache\fileshare.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="filecache\localcache.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="filecache\__init__.py" />
     <Compile Include="genphen.py" />
     <Compile Include="gensnp.py" />
     <Compile Include="matrix\bigsvd.py" />
@@ -72,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="matrix\" />
+    <Folder Include="filecache\" />
     <Folder Include="standardizer\" />
     <Folder Include="stats\" />
     <Folder Include="stats\quadform\" />

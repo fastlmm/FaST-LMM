@@ -23,7 +23,7 @@ from pysnptools.snpreader import SnpMemMap
 from pysnptools.standardizer import Unit
 from pysnptools.util.gen.snpgen import SnpGen
 import collections
-from fastlmm.util.file_cache import LocalCache, FileCache
+from fastlmm.util.filecache import LocalCache, FileCache
 import tempfile
 
 def snp_fn(data_folder,file_index):
@@ -738,7 +738,7 @@ def __del__(test_snps):
     from pysnptools.snpreader._subset import _SnpSubset
     from pysnptools.snpreader import SnpData
     from pysnptools.pstreader import _MergeRows, _MergeCols
-    from pysnptools.snpreader.distributed_bed import _Distributed1Bed, DistributedBed
+    from fastlmm.util.filecache.distributedbed import _Distributed1Bed, DistributedBed
     if isinstance(test_snps, Bed) or isinstance(test_snps, _Distributed1Bed):
         test_snps.__del__()
     elif isinstance(test_snps, SnpGen) or isinstance(test_snps, SnpData):

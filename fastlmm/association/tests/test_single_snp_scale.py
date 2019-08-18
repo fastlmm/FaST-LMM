@@ -10,8 +10,8 @@ from fastlmm.association import single_snp
 import os
 import pandas as pd
 from fastlmm.association import single_snp_scale
-from fastlmm.util.file_cache import LocalCache
-from pysnptools.snpreader import DistributedBed
+from fastlmm.util.filecache import LocalCache
+from fastlmm.util.filecache import DistributedBed
 from pysnptools.util.mapreduce1.runner import LocalMultiProc
 import shutil
 
@@ -141,7 +141,7 @@ class TestSingleSnpScale(unittest.TestCase):
     
     def test_net_use(self):
         logging.info("test_net_use")
-        from fastlmm.util.file_cache import FileShare
+        from fastlmm.util.filecache import FileShare
         FileShare._net_use(r"\\localhost\scratch")
         print "done"
 

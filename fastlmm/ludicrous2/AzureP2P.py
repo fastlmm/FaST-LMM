@@ -6,7 +6,7 @@ import tempfile
 import logging
 import unittest
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalMultiThread
-from onemil.file_cache import AzureStorage,FileShare,FileCache,LocalCache,path_join
+from onemil.file_cache import AzureStorage,FileShare,FileCache,LocalCache
 import time
 from onemil.file_cache import DibLib
 from contextlib import contextmanager
@@ -26,6 +26,10 @@ if azure_ok:
     import azure.batch.batch_auth as batchauth 
     from onemil.blobxfer import run_command_string as blobxfer #https://pypi.io/project/blobxfer/
     from onemil.blobxfer import compute_md5_for_file_asbase64
+
+def path_join(*p):
+    result = os.path.normpath("/".join(p)).replace('\\','/')
+    return result
 
 
 def ip_address():
