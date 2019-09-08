@@ -52,7 +52,6 @@
     <Compile Include="snpset\SnpsFromFile.py" />
     <Compile Include="snpset\__init__.py" />
     <Compile Include="altset_list\MinMaxSetSize.py" />
-    <Compile Include="altset_list\NucRangeSet.py" />
     <Compile Include="altset_list\SnpAndSetNameCollection.py" />
     <Compile Include="altset_list\Subset.py" />
     <Compile Include="altset_list\__init__.py" />

@@ -36,7 +36,7 @@ class FastLmmSet: # implements IDistributable
     def addpostifx_to_outfile(self):
         if self.datestamp is not None:
             if self.datestamp=="auto":
-                self.datestamp=pstutil.datestamp()
+                self.datestamp=pstutil._datestamp()
             self.outfile=utilx.appendtofilename(self.outfile,self.datestamp,"_")
 
     def __init__(self, **entries):
@@ -377,7 +377,7 @@ class FastLmmSet: # implements IDistributable
         
     def getRandSnpSignal(self, nSnp, nInd,genphen,newseed):
         from numpy.random import RandomState
-        import pysnptools.util.gensnp as gp
+        import pysnptools.util.gensnp as gp #!!!cmk does this work?
         randomstate = RandomState(newseed) 
         nSnp=genphen["numBackSnps"]
         #randsnps=self.alt_snpreader.read(RandomSnpSet(nSnp,newseed))     #this appears to be VERY slow
@@ -569,7 +569,7 @@ class FastLmmSet: # implements IDistributable
                     break;
                 checkpoint=checkpoint*2
             
-            permutationIndex = utilx.generatePermutation(y.shape[0],randomstate)
+            permutationIndex = utilx.generate_permutation(y.shape[0],randomstate)
             yperm=y[permutationIndex]           
             Xperm=self.__X[permutationIndex]                
                                                                    
@@ -657,7 +657,7 @@ class FastLmmSet: # implements IDistributable
 
 
         if self.permute is not None: #permute the data to test for type I error
-                permutationIndex = utilx.generatePermutation(SNPs1['snps'].shape[0],self.mainseed ^ self.permute)      
+                permutationIndex = utilx.generate_permutation(SNPs1['snps'].shape[0],self.mainseed ^ self.permute)      
         if iperm >= 0 :  #permute the data to create Null-only P-values for lrt null fitting
             eachseed=utilx.combineseeds(self.calseed,iperm)            
             newseed = self.mainseed ^ eachseed  
@@ -666,7 +666,7 @@ class FastLmmSet: # implements IDistributable
                 #Add a left shift so that iperm=1 and self.permute=2 gives a different newseed than 
                 #iperm=2 and self.permute=1
                 newseed = (newseed << 1) ^ self.permute
-            permutationIndex = utilx.generatePermutation(SNPs1['snps'].shape[0], newseed)
+            permutationIndex = utilx.generate_permutation(SNPs1['snps'].shape[0], newseed)
         if varcomp_test is None or not self.cache_from_perm:
             #need to make this caching smarter for when background kernel changes in every test (e.g. interactions)
             if (self.permute is not None) or (iperm >=0):
@@ -760,7 +760,7 @@ class FastLmmSet: # implements IDistributable
         logging.info(" (" + str(result.setsize) + " SNPs)")
 
         if self.permute >= 0 :
-            permutationIndex = utilx.generatePermutation(SNPs1['snps'].shape[0],self.rseed ^ self.permute)
+            permutationIndex = utilx.generate_permutation(SNPs1['snps'].shape[0],self.rseed ^ self.permute)
             G1=G1[permutationIndex]
 
         if iperm >= 0 :
@@ -768,7 +768,7 @@ class FastLmmSet: # implements IDistributable
             if self.permute >= 0 :
                 #Add a left shift so that iperm=1 and self.permute=2 gives a different newseed than iperm=2 and self.permute=1
                 newseed = (newseed << 1) ^ self.permute
-            permutationIndex = utilx.generatePermutation(SNPs1['snps'].shape[0], newseed)
+            permutationIndex = utilx.generate_permutation(SNPs1['snps'].shape[0], newseed)
             #permute the data to create Null-only P-values
             G1=G1[permutationIndex]
 

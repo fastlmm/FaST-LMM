@@ -24,7 +24,7 @@ class RandomSnpSetPlusBed(object): # implements ISnpSetPlusBed
         self.randomseed=randomseed
         self.bed = bed
         #very inefficient extraction of a few random SNP indexes:        
-        self.snpindlist = utilx.generatePermutation(sp.arange(0,bed.snp_count),randomseed)[0:numsnps]
+        self.snpindlist = utilx.generate_permutation(sp.arange(0,bed.snp_count),randomseed)[0:numsnps]
         self.snpindlist.sort()        
 
     def __str__(self):

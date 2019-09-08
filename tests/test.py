@@ -18,7 +18,7 @@ import logging
 import fastlmm.util.util as ut
 import fastlmm.pyplink.plink as plink
 from pysnptools.util.mapreduce1.distributabletest import DistributableTest
-from pysnptools.util.mapreduce1.runner import Local, Hadoop, Hadoop2, HPC, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
 
 tolerance = 1e-4
 

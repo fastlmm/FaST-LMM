@@ -12,7 +12,7 @@ from fastlmm.association.epistasis import write
 import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.util.mapreduce1.runner import Local, Hadoop, Hadoop2, HPC, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.runner import Local,LocalMultiProc, LocalInParts
 
 class TestEpistasis(unittest.TestCase):
 

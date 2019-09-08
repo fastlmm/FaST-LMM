@@ -3,7 +3,6 @@ import logging
 import fastlmm.pyplink.plink as plink
 from pysnptools.snpreader import Pheno
 import pysnptools.util as pstutil
-import fastlmm.util.util as flutil
 import numpy as np
 import scipy.stats as stats
 from pysnptools.snpreader import Bed
@@ -22,7 +21,7 @@ from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData
 from pysnptools.kernelreader import SnpKernel
 from pysnptools.kernelreader import KernelNpz
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
+from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util import create_directory_if_necessary
 from pysnptools.snpreader import wrap_matrix_subset
 from pysnptools.util.intrangeset import IntRangeSet

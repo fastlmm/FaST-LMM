@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
 
 
-        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.basicConfig(level=logging.INFO)
 
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest

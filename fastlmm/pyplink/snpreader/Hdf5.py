@@ -5,7 +5,6 @@ except:
 
 import logging
 import scipy as sp
-import fastlmm.util.preprocess as util
 from fastlmm.pyplink.snpset import *
 from fastlmm.pyplink.altset_list import *
 

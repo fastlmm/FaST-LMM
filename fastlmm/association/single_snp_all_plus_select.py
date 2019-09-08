@@ -7,16 +7,15 @@ import os
 import time
 
 import pysnptools.util as pstutil
-from fastlmm.inference import FastLMM
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
-from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
-from fastlmm.association.single_snp import _K_per_chrom
 from pysnptools.standardizer import Unit
-
 from pysnptools.kernelreader import KernelReader
 from pysnptools.kernelreader import KernelData
+from pysnptools.util.mapreduce1 import map_reduce
+
+from fastlmm.inference import FastLMM
+from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
+from fastlmm.association.single_snp import _K_per_chrom
 from fastlmm.association import single_snp_linreg
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
 
 #!!!move this
 class _SnpWholeWithTrain(KernelReader):

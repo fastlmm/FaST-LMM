@@ -1,26 +1,24 @@
 import numpy as np
 import logging
-from fastlmm.association import single_snp
 from sklearn.model_selection import KFold
 import pandas as pd
 import os
 import time
 
 import pysnptools.util as pstutil
-from fastlmm.inference import FastLMM
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
-from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
-from fastlmm.association.single_snp import _K_per_chrom
+from pysnptools.util.mapreduce1 import map_reduce
+from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.standardizer import Unit
-
 from pysnptools.kernelreader import KernelReader
 from pysnptools.kernelreader import KernelData
-from fastlmm.association import single_snp_linreg
-
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
-from fastlmm.association.single_snp_all_plus_select import _kfold
-from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.kernelreader import Identity as KernelIdentity
+
+from fastlmm.association import single_snp
+from fastlmm.inference import FastLMM
+from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
+from fastlmm.association.single_snp import _K_per_chrom
+from fastlmm.association import single_snp_linreg
+from fastlmm.association.single_snp_all_plus_select import _kfold
 
 
 def _fixup(test_snps, G, pheno, covar,count_A1=None):

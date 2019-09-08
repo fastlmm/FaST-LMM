@@ -4,10 +4,10 @@ import numpy as np
 import datetime
 from fastlmm.util.matrix.mmultfilex import mmultfile_b_less_aatbx, mmultfile_atax #May need to install "Microsoft Visual C++ 2008 SP1 Redistributable Package (x64)"
 import multiprocessing
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
+from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.kernelreader import KernelData, KernelNpz
 import time
-from pysnptools.util import _format_delta
+from pysnptools.util import format_delta
 from pysnptools.snpreader import SnpMemMap
 
 def get_num_threads():
@@ -93,7 +93,7 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
                         log_frequency=log_frequency)
 
     if log_frequency > 0:
-        logging.info("ata_piece {0} of {1}: clocktime {2}".format(work_index, work_count,_format_delta(time.time()-t0_gtg)))
+        logging.info("ata_piece {0} of {1}: clocktime {2}".format(work_index, work_count,format_delta(time.time()-t0_gtg)))
     return ata_piece
 
 def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=False):
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         t0 = time.time()
         U_memmap = post_svd(local_fn_U, G0_memmap, idx, SVinv3, inonzero, memory_factor, runner, do_original=do_original,force_python_only=force_python_only,log_frequency=log_frequency)
         print U_memmap.val
-        logging.info("clocktime {0}".format(_format_delta(time.time()-t0)))
+        logging.info("clocktime {0}".format(format_delta(time.time()-t0)))
         print "done"
         
 

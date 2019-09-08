@@ -6,7 +6,7 @@ import time
 from fastlmm.external.pca import PCA
 from pysnptools.snpreader import Bed
 
-
+#!!!cmk add to docs
 def compute_auto_pcs(snpreader, cutoff=.1, k_values=np.arange(11), output_file_name=None,count_A1=None):
     """
     Function automatically finds the best principle components (PCs)

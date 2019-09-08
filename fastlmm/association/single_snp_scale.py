@@ -1,30 +1,31 @@
-import logging
-from pysnptools.snpreader import Bed, Pheno, SnpData, SnpReader, SnpNpz
-from pysnptools.kernelreader import KernelData, KernelNpz
 import os
+import logging
+import collections
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
-import pysnptools.util as pstutil
 import numpy.linalg as la
-from fastlmm.util.mingrid import minimize1D
 import time
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
-from pysnptools.util.mapreduce1.mapreducex import map_reduceX
-from fastlmm.util.matrix.bigsvd import big_sdd
+import tempfile
 from datetime import datetime
-from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
+import pysnptools.util as pstutil
+from pysnptools.snpreader import Bed, Pheno, SnpData, SnpReader, SnpNpz
+from pysnptools.kernelreader import KernelData, KernelNpz
+from pysnptools.util.mapreduce1 import map_reduce
+from pysnptools.util.mapreduce1.mapreduce import _identity, _dyn_vars
+from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.util.intrangeset import IntRangeSet
 from pysnptools.util import log_in_place
-from pysnptools.util import _format_delta #!!!should not import things that start with _
-from pysnptools.util import progress_reporter
+from pysnptools.util import format_delta
+from pysnptools.util import _progress_reporter
 from pysnptools.snpreader import SnpMemMap
 from pysnptools.standardizer import Unit
-from pysnptools.util.gen.snpgen import SnpGen
-import collections
+from pysnptools.snpreader import SnpGen
 from fastlmm.util.filecache import LocalCache, FileCache
-import tempfile
+from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
+from fastlmm.util.mingrid import minimize1D
+from fastlmm.util.matrix.bigsvd import big_sdd
+from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
 
 def snp_fn(data_folder,file_index):
     return data_folder + "/{0}.bed".format(file_index)
@@ -276,7 +277,7 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
 
     logging.info("About to allocate memmap of G0_data.memmap")
 
-    with progress_reporter("G0_data.memmap upload", size=0, updater=None) as updater2: #!!!cmk replace all *.dat related memory map with .memmap
+    with _progress_reporter("G0_data.memmap upload", size=0, updater=None) as updater2:
         with file_cache.open_write(fn_G0_memmap,size=8*G0.iid_count*G0.sid_count,updater=updater2) as G0_memmap_storage_file_name:
             G0_data_memmap = SnpMemMap.empty(iid=G0.iid,sid=G0.sid,filename=G0_memmap_storage_file_name,pos=G0.pos,order='F') #!!!is this the best order? dtype default ok?
             logging.info("Finished with allocation of memmap of G0_data.memmap")
@@ -312,24 +313,24 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
                 G0_data_piece.val-=X.dot(beta_G)#mem x 2
                 G0_data_memmap.val[:,start:stop] = G0_data_piece.val
             t1=time.time()    
-            logging.info("G0 work took {0}".format(_format_delta(t1-t0)))
+            logging.info("G0 work took {0}".format(format_delta(t1-t0)))
             logging.info("About to get name of file to np.savez ss_per_snp")
             with file_cache.open_write(fn_ss) as ss_storage:
                 logging.info("About to np.savez ss_per_snp in '{0}'".format(ss_storage))
                 np.savez(ss_storage, ss_per_snp)
                 logging.info("About to close ss_per_snp")
             t2=time.time()
-            logging.info("done with ss_per_snp in {0}".format(_format_delta(t2-t1)))
+            logging.info("done with ss_per_snp in {0}".format(format_delta(t2-t1)))
 
             logging.info("About to SnpMemMap.close G0_data_memmap in '{0}'".format(G0_memmap_storage_file_name))
 
             G0_data_memmap.flush()
             t3=time.time()
-            logging.info("done with SnpMemMap.close G0_data_memmap in {0}".format(_format_delta(t3-t2)))
+            logging.info("done with SnpMemMap.close G0_data_memmap in {0}".format(format_delta(t3-t2)))
             logging.info("About to close g0.npz and g0.memmap")
 
     t4=time.time()
-    logging.info("Done with g0.npz and g0.memmap in {0}".format(_format_delta(t4-t3)))
+    logging.info("Done with g0.npz and g0.memmap in {0}".format(format_delta(t4-t3)))
 
     return G0_memmap_lambda, ss_per_snp
 
@@ -369,7 +370,7 @@ def get_gtg(common_cache, G0_iid_count, G0_sid, G0_memmap_lambda, memory_factor,
     t0_gtg = time.time()
     name="{0}.get_gtg".format(os.path.basename(common_cache.name)) #!!! little bug: if tree_cache.name ends with "/" or "\" doesn't work
     mmultfile_ata(G0_memmap_lambda,writer_closure,G0_sid,work_count,name,runner=runner,force_python_only=force_python_only)
-    logging.info("gtg: clocktime {0}".format(_format_delta(time.time()-t0_gtg)))
+    logging.info("gtg: clocktime {0}".format(format_delta(time.time()-t0_gtg)))
 
     return reader_closure
 
@@ -469,10 +470,10 @@ def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache, G0_iid_count, G
         # 25K x 25K x 25K -> 25K x 25K
         #=============================================================
         num_threads = get_num_threads()
-        logging.info("About to svd on square {0}. Expected time ({2} procs)={1}".format(ata.iid_count,_format_delta((ata.iid_count*.000707)**3*20.0/num_threads),num_threads))
+        logging.info("About to svd on square {0}. Expected time ({2} procs)={1}".format(ata.iid_count,format_delta((ata.iid_count*.000707)**3*20.0/num_threads),num_threads))
         t0 = time.time()
         [Uata3,Sata3,_] = big_sdd(ata.val) #wrecks ata.val
-        logging.info("Actual time for svd on square={0}".format(_format_delta(time.time()-t0)))
+        logging.info("Actual time for svd on square={0}".format(format_delta(time.time()-t0)))
         Sata3 *= (factor / factor_tall_skinny) #make the results match one_step_svd
         S3 = Sata3**.5
         V3 = Uata3.T
@@ -532,7 +533,7 @@ def postsvd_piece(start_iid_index, stop_iid_index, G0_memmap, idx_array, SVinv3b
     product = np.array(np.dot(piece,SVinv3b),order='F')
     logging.info("About to save")   
     product.flatten(order='K').tofile(fn_U_piece,'')
-    logging.info("post svd piece: clocktime {0}".format(_format_delta(time.time()-t0_piece)))
+    logging.info("post svd piece: clocktime {0}".format(format_delta(time.time()-t0_piece)))
 
 def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, min_work_count, log_frequency=-1):
     """
@@ -615,7 +616,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                     pass
                 
             t0_download = time.time()
-            logging.info("File downloads took {0}. Next putting U together".format(_format_delta(t0_download-t0_start)))
+            logging.info("File downloads took {0}. Next putting U together".format(format_delta(t0_download-t0_start)))
 
             with chrom_storage.open_write(fn_U) as handle_fn_U_file_name:
                 sid = ["sid{0}".format(i) for i in xrange(sid_count)]    
@@ -644,7 +645,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                     fp.close()
 
                 t0_U = time.time()
-                logging.info("Putting U together took {0}. Next creating UY & UUY files".format(_format_delta(t0_U - t0_download)))
+                logging.info("Putting U together took {0}. Next creating UY & UUY files".format(format_delta(t0_U - t0_download)))
             
                 #=============================================================
                 # 25K x 1M x 1 -> 25K x 1
@@ -672,7 +673,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             h2 = find_h2(k, N, UUYUUYsum0, UYUY, S, chrom) #!!!y: h2 depends on y
 
             t0_etc = time.time()
-            logging.info("Creating related files took {0}. Next uploading files.".format(_format_delta(t0_etc-t0_U)))
+            logging.info("Creating related files took {0}. Next uploading files.".format(format_delta(t0_etc-t0_U)))
 
 
             fn_h2 = "h2_{0}.npz".format(int(chrom)) #!!!const
@@ -683,13 +684,13 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                 chrom_storage.cloud_storage_only()
 
             t0_up = time.time()
-            logging.info("Uploading took {0}.".format(_format_delta(t0_up - t0_etc)))
+            logging.info("Uploading took {0}.".format(format_delta(t0_up - t0_etc)))
 
             logging.info("Postsvd Reduce Summary: Down {0}, Calc {1}, Up {2}, Total {3}".format(
-                _format_delta(t0_download-t0_start),
-                _format_delta(t0_etc - t0_download),
-                _format_delta(t0_up - t0_etc),
-                _format_delta(t0_up - t0_start)
+                format_delta(t0_download-t0_start),
+                format_delta(t0_etc - t0_download),
+                format_delta(t0_up - t0_etc),
+                format_delta(t0_up - t0_start)
                 ))
 
         return map_reduce(xrange(work_count),
@@ -815,7 +816,7 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             logging.debug("A:chrom={0},work_index+1={1},end={2}".format(chrom,work_index+1,stop))
             t0_gen = time.time()
             snps_read = test_snps_chrom[:,start:stop].read().standardize()
-            logging.info("test snp reader {0} of {1}, clocktime {2}".format(work_index,work_count,_format_delta(time.time()-t0_gen)))
+            logging.info("test snp reader {0} of {1}, clocktime {2}".format(work_index,work_count,format_delta(time.time()-t0_gen)))
             logging.debug("Xdagger {0}x{1}. snp_read {2}x{3}".format(Xdagger.shape[0],Xdagger.shape[1],snps_read.iid_count,snps_read.sid_count))
     
             #=============================================================
@@ -961,7 +962,7 @@ def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer)
             cache_dict[chrom].remove_from_cloud_storage(log_writer=log_writer)
         _clear_cache_dict_internal("testsnps",cache_dict,chrom_num_list,log_writer) #Recursion
     elif start_stage == "testsnps":
-        for file_name in ["G0_data.memmap","ss_per_snp.npz"]: #!!!cmk remove memmap2
+        for file_name in ["G0_data.memmap","ss_per_snp.npz"]:
             log_writer("cloud storage only '{0}'".format(file_name))
             if cache_dict[0].file_exists(file_name):
                 cache_dict[0].cloud_storage_only(file_name,log_writer=log_writer)
@@ -1112,6 +1113,49 @@ def _fixup_cache_value(cache_value):
     if isinstance(cache_value,str):
         return LocalCache(cache_value)
     raise Exception("Do not know how to make a FileCache from '{0}'".format(cache_value))
+
+#!!!if is useful, move near pysnptools's mapreduce.py (with better name)
+def map_reduceX(input_seq, mapper=_identity, reducer=list, runner=None,name=None):
+    '''
+    Function for running a function on sequence of inputs and running a second function on the results. Can be nested and clusterized.
+    For each top-level input, a separate job will be created.
+
+
+    :param input_seq: a sequence of inputs. The sequence must support the len function and be indexable. e.g. a list, xrange(100)
+    :type input_seq: a sequence
+
+    :param mapper: A function to apply to each set of inputs (optional). Defaults to the identity function. (Also see 'mapper')
+    :type mapper: a function
+
+    :param reducer: A function to turn the results from the mapper to a single value (optional). Defaults to creating a list of the results.
+    :type reducer: a function that takes a sequence
+
+    :param name: A name to be displayed if this work is done on a cluster.
+    :type name: a string
+
+    :param runner: a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+        If not given, the function is run locally.
+    :type runner: a runner.
+
+    :rtype: The results from the reducer.
+
+    '''
+    if runner is None:
+        runner = Local()
+
+    if name==None:
+        name = str(distributable_list[0]) or ""
+        if len(distributable_list) > 1:
+            name += "-etc"
+
+    with _dyn_vars(is_in_nested=True):
+        distributable_list = [mapper(input) for input in input_seq]
+    if hasattr(runner,"run_list"):
+        return runner.run_list(distributable_list,reducer=reducer,name=name)
+    else:
+        result_list = [runner.run(distributable) for distributable in distributable_list]
+        top_level_result = reducer(result_list)
+        return top_level_result
 
 
 if __name__ == "__main__":

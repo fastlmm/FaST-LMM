@@ -1,7 +1,6 @@
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
-import fastlmm.util.util as flutil
 import numpy as np
 from fastlmm.inference.lmm_cov import LMM as fastLMM
 import scipy.stats as stats

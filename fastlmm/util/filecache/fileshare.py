@@ -103,9 +103,9 @@ class FileShare(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all 
                     dir_path.save(copy_name,local_path)
                     delta_sec = max((datetime.datetime.now()-then).total_seconds(),1.)
                     try: #The 'try' stops this logging message from getting a div by zero error some times
-                        logging.info("Copy time is {0}. Copy speed is {1} Mbps".format(_format_delta(delta_sec), 8.0*float(file_size)/1e6/delta_sec))
+                        logging.info("Copy time is {0}. Copy speed is {1} Mbps".format(_mbps(file_size, delta_sec)))
                     except:
-                        logging.info("Copy time is {0}. Copy speed can't be calculated Mbps".format(_format_delta(delta_sec)))
+                        logging.info("Copy time is {0}. Copy speed can't be calculated Mbps".format(format_delta(delta_sec)))
                     break
                 except Exception, e:
                     if os.path.exists(local_path):

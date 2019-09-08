@@ -15,6 +15,7 @@ import os
 import gc
 import subprocess
 import sys
+import logging
 
 # common modules
 import scipy as sp

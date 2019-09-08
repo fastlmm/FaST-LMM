@@ -12,7 +12,7 @@ from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_all_plus_select,single_snp
 from fastlmm.feature_selection.test import TestFeatureSelection
 
-from pysnptools.util.mapreduce1.runner import Local, Hadoop2, HPC, LocalMultiProc, LocalInParts, LocalMultiThread
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts, LocalMultiThread
 def mf_to_runner_function(mf):
     excluded_nodes=[]#'GCRCM07B20','GCRCM11B05','GCRCM10B06','GCRCM02B07']#'GCRCM02B11','GCRCM03B07'] #'GCRCM22B06','GCRCN0383','GCRCM02B07','GCRCN0179','GCRCM37B13','GCRCN0376','GCRCN0456']#'gcrcn0231']#"MSR-HDP-DN0316","MSR-HDP-DN0321","MSR-HDP-DN0336","MSR-HDP-DN0377","MSR-HDP-DN0378","MSR-HDP-DN0314","MSR-HDP-DN0335","MSRQC073","MSRQC002","MSRQC015"]
     remote_python_parent=r"\\GCR\Scratch\RR1\escience\carlk\data\carlk\pythonpath10262016"
@@ -246,7 +246,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"notebook")
 
     def test_one(self):
-        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 
         logging.info("TestSingleSnpAllPlusSelect test_one")
         snps = self.bedbase
@@ -268,7 +268,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"one")
 
     def test_three(self): #!!! rather a big test case
-        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_three")
 
         bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
@@ -295,7 +295,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"three")
 
     def test_two(self): #!!! rather a big test case
-        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_two")
         do_plot = False
 
@@ -442,7 +442,7 @@ if __name__ == '__main__':
 
 
 
-        from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.basicConfig(level=logging.INFO)
 
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest

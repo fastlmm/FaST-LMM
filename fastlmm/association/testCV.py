@@ -32,7 +32,7 @@ class testCV(association.varcomp_test):
         self.altModel = altModel
 
         if data_permutation is None:
-            data_permutation = util.generatePermutation(self.Y.shape[0],93828231) #permute with an arbitrary seed
+            data_permutation = util.generate_permutation(self.Y.shape[0],93828231) #permute with an arbitrary seed
         self.data_permutation = data_permutation
 
         if 'param_grid' in nullModel:

@@ -8,7 +8,7 @@ import pysnptools.util as pstutil
 from sklearn.externals import joblib
 
 from fastlmm.inference import LinearRegression
-from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
 from pysnptools.standardizer import Unit, Standardizer

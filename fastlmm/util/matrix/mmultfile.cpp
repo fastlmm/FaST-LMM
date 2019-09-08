@@ -13,7 +13,7 @@
 using namespace std;
 
 // could add code so that if the two blocks are the same, then only do half the *'s in the dot product
-int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long long sid_count, long long work_index, long long work_count, double* ata_piece, int num_threads, long long log_frequency)//!!!cmk add offset here and everywhere that calls it
+int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long long sid_count, long long work_index, long long work_count, double* ata_piece, int num_threads, long long log_frequency)
 {
 	omp_set_num_threads(num_threads);
 	long long start = sid_count * work_index / work_count;

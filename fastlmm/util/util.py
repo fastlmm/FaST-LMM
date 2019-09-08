@@ -283,7 +283,7 @@ def appendtofilename(filename,midfix,sep="."):
         return infofilename
 
 def datestamp(appendrandom=False):
-    return pstutil.datestamp(appendrandom=appendrandom)
+    return pstutil._datestamp(appendrandom=appendrandom)
            
 
 
@@ -334,8 +334,8 @@ def which_opposite(vec):
             return(i)
     return(-1)
 
-
-def generatePermutation(numbersamples,randomSeedOrState):
+#!!!cmk promote and document and rename
+def generate_permutation(numbersamples,randomSeedOrState):
     from numpy.random import RandomState
 
     if isinstance(randomSeedOrState,RandomState):
@@ -430,6 +430,7 @@ def _color_list(chr_list,rle):
     result = [index_to_color[chr_to_index[chr]%len(index_to_color)] for chr in chr_list]
     return result
 
+#!!!cmk add to docs
 def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vline_significant=False,marker="o", chromosome_starts=None, xaxis_unit_bp=True, alpha=0.5):
     """
     Function to create a Manhattan plot.  See http://en.wikipedia.org/wiki/Manhattan_plot.

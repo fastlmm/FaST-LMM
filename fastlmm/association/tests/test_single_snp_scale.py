@@ -4,7 +4,7 @@ import numpy as np
 import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed
 import logging
-from pysnptools.util.gen.snpgen import SnpGen
+from pysnptools.snpreader import SnpGen
 import tempfile
 from fastlmm.association import single_snp
 import os

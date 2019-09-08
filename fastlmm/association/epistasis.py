@@ -3,7 +3,6 @@ import logging
 import fastlmm.pyplink.plink as plink
 import pysnptools.util as pstutil
 import pysnptools.util.pheno as pstpheno
-import fastlmm.util.util as flutil
 import numpy as np
 from fastlmm.inference import LMM
 import scipy.stats as stats
@@ -433,7 +432,7 @@ class _Epistasis(object) : #implements IDistributable
             G0_standardized = self.G0.read().standardize()
             lmm.setG(G0_standardized.val, self.G1val_or_none, a2=self.mixing)
             logging.info("Saving precomputation to {0}".format(self.cache_file))
-            util.create_directory_if_necessary(self.cache_file)
+            pstutil.create_directory_if_necessary(self.cache_file)
             np.savez(self.cache_file, lmm.U,lmm.S) #using np.savez instead of pickle because it seems to be faster to read and write
 
         if self.external_log_delta is None:

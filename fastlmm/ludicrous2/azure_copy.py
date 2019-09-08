@@ -5,7 +5,7 @@ import tempfile
 import logging
 import unittest
 logging.basicConfig(level=logging.INFO)
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
+from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalMultiThread
 import re
 import datetime
@@ -21,9 +21,6 @@ from onemil.AzureBatch import AzureBatch
 from pysnptools.util.mapreduce1.runner import Local
 import azure.batch.models as batchmodels
 
-def _format_delta(delta):
-    return datetime.timedelta(seconds=delta)
-
 try:
     import azure.storage.blob as azureblob
     azure_ok = True
@@ -35,79 +32,6 @@ if azure_ok:
     import azure.batch.batch_service_client as batch 
     import azure.batch.batch_auth as batchauth 
     from onemil.blobxfer import run_command_string as blobxfer #https://pypi.io/project/blobxfer/
-
-def Mbps(size, delta):
-    return size * 8 / delta / 1e6
-
-def MbpsStr(t0, size, total=0):
-    delta = time.time()-t0
-    Mbps0 = Mbps(size, delta) if delta > 0 else 0
-    percent = float(size)/total if total > 0 else 1
-    left = delta/percent*(1-percent) if total > 0 else 0
-    return "{0:0.2f}, {1:0.1f}%, left={2}".format(Mbps0,percent*100,_format_delta(left))
-
-
-#!!! move this to util file
-@contextmanager
-def log_in_place(name, level, time_lambda=time.time, show_log_diffs=False):
-    '''
-        Create an one-argument lambda to write messages to. They will appear on the same line.
-
-        Example::
-
-            with log_in_place("creating job_id_etc", logging.INFO) as log_writer:            
-                job_id_etc_list = []
-                for index,(distributable,pool_id,name_in) in enumerate(izip(distributable_list,self.pool_id_list,name_list)):
-                   log_writer(name_in)
-                   job_id_etc = self._setup_job([distributable],pool_id,name_in)[0]
-                   job_id_etc_list.append(job_id_etc)
-
-    '''
-    #!!! what if logging messages aren't suppose to go to stdout?
-    t_wait = time_lambda()
-    last_len = [0] #We have to make this an array so that the value is by reference.
-    last_message_hash = [None]
-    line_end = '\r'
-
-    def writer(message):
-        if logging.getLogger().level > level:
-            return
-        time_str = str(datetime.timedelta(seconds=time_lambda()-t_wait))
-        if '.' in time_str:
-            time_str = time_str[:time_str.index('.')+3] #Time to the 1/100th of a sec
-        s = "{0} -- time={1}, {2}".format(name,time_str,message)
-        if show_log_diffs:
-            message_hash = hash(message)
-            if message_hash !=  last_message_hash[0] and last_message_hash[0] is not None:
-                sys.stdout.write('\n')
-            last_message_hash[0] = message_hash
-        sys.stdout.write("{0}{1}\r".format(s," "*max(0,last_len[0]-len(s)))) #Pad with spaces to cover up previous message
-        last_len[0] = len(s)
-        
-
-    yield writer
-
-    if logging.getLogger().level > level:
-        return
-    sys.stdout.write("\n")                
-
-@contextmanager
-def progress_reporter(name,size=None,updater=None):
-    '''
-    If an update is given, we use that. Otherwise, we create our own.
-    '''
-    if updater is None:
-        bytes_so_far = [0] #We have to make this an array so that the value is by reference.
-        t0 = time.time()
-
-        with log_in_place(name, logging.INFO) as writer:
-            def updater2(byte_size):
-                bytes_so_far[0] += byte_size
-                writer("Mbps={0}".format(MbpsStr(t0,bytes_so_far[0],size)))
-            yield updater2
-    else:
-        yield updater
-
 
 class StorageCredential(object):
     '''
@@ -476,7 +400,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
         size = os.path.getsize(local_path)
         piece_count = self._get_piece_count(size)
 
-        with progress_reporter("upload", size, updater=updater) as updater2:
+        with _progress_reporter("upload", size, updater=updater) as updater2:
             def mapper_closure(piece_index):
                 t00 = time.time()
                 start = size * piece_index // piece_count
@@ -526,7 +450,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
         """
         Download a file from the container.
 
-                progress_reporter    : is a python context manager what is initialized with a size and that yields a updater method that can be called with a byte count as the download progresses.
+                _progress_reporter    : is a python context manager what is initialized with a size and that yields a updater method that can be called with a byte count as the download progresses.
 
         """
         #self._run_once()
@@ -553,7 +477,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
                 fp.seek(size-1)
                 fp.write("\0")
 
-        with progress_reporter("download", size, updater=updater) as updater:
+        with _progress_reporter("download", size, updater=updater) as updater:
             def mapper_closure(piece_index):
                 blobetc = blob_list[piece_index]
                 start, stop = start_stop_pairs[piece_index]
@@ -726,7 +650,7 @@ class TestAzureShardContainer(unittest.TestCase):
             self.container.remove(azure_path)
         assert not self.container.file_exists(azure_path)
 
-        with progress_reporter("test_big_file_with_message",self.big_size) as updater:
+        with _progress_reporter("test_big_file_with_message",self.big_size) as updater:
             self.container.upload(self.big_file_name,azure_path,updater=updater)
 
         self.container.remove(azure_path)
@@ -783,8 +707,8 @@ class TestAzureShardContainer(unittest.TestCase):
                 t2 = time.time()
                 with storage.open_read(next_name) as file_name:
                     pass
-                Mbps2 = Mbps(big_size, time.time()-t2)
-                logging.info("transfers Mbps={0}".format(Mbps2))
+                mbps2 = _mbps(big_size, time.time()-t2)
+                logging.info("transfers Mbps={0}".format(mbps2))
 
                 return Mbps2
             return None
@@ -835,7 +759,7 @@ class TestAzureShardContainer(unittest.TestCase):
                     if big_size > 0:
                         fp.seek(big_size)
                         fp.write("\0")
-                with progress_reporter("'{0}'".format(azure_path),big_size) as updater:
+                with _progress_reporter("'{0}'".format(azure_path),big_size) as updater:
                     self.container.upload(file_name,azure_path,updater=updater)
                 os.remove(file_name)
             return azure_path
@@ -854,11 +778,11 @@ class TestAzureShardContainer(unittest.TestCase):
                 storage.remove(short_name)
             with storage.open_write(short_name,size=big_size) as file_name:
                 logging.info("Downloading {0}".format(azure_path))
-                with progress_reporter("Downloading {0}".format(azure_path),big_size) as updater:
+                with _progress_reporter("Downloading {0}".format(azure_path),big_size) as updater:
                     t0 = time.time()
                     container.download(azure_path,file_name,updater=updater)
-                    Mbps0 = Mbps(big_size, time.time()-t0)
-            return Mbps0
+                    mbps0 = _mbps(big_size, time.time()-t0)
+            return mbps0
 
         mbps_list = map_reduce(xrange(n),
                         mapper=mapper,

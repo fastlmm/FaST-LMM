@@ -1,16 +1,17 @@
+import os
+import numpy as np
+import logging
+import unittest
 from pysnptools.snpreader import _MergeSIDs
 from pysnptools.snpreader import SnpReader, Bed
 from pysnptools.pstreader import PstReader
-from pysnptools.util import multiopen
+from pysnptools.util import _multiopen
 from pysnptools.snpreader import _snps_fixup
-import os
-import numpy as np
 from pysnptools.util import log_in_place
-import logging
-from pysnptools.util.mapreduce1.mapreduce import map_reduce
+from pysnptools.util.mapreduce1 import map_reduce
 
 
-#!!!cmk update everyting and confirm testing
+#!!!cmk update everything and confirm testing
 
 class DistributedBed(SnpReader): #!!!cmk is this tested anywhere
     #!!!cmk update
@@ -86,7 +87,7 @@ class DistributedBed(SnpReader): #!!!cmk is this tested anywhere
         return self._merge._read(iid_index_or_none, sid_index_or_none, order, dtype, force_python_only, view_ok)
 
     @staticmethod
-    def write(storage, snpreader, piece_per_chrom_count, updater=None, runner=None): #!!!might want to set pieces_per_chrom such that it is a certain size
+    def write(storage, snpreader, piece_per_chrom_count, updater=None, runner=None): #!!!cmk might want to set pieces_per_chrom such that it is a certain size
         '''
         Uploads from any BED-like data to cluster storage for efficient retrieval later.
         If some of the content already exists in storage, it skips uploading that part of the content. (To avoid this behavior,
@@ -115,12 +116,12 @@ class DistributedBed(SnpReader): #!!!cmk is this tested anywhere
         :rtype: DistributedBed
 
         '''
-        from pysnptools.util import progress_reporter
+        from pysnptools.util import _progress_reporter
 
         count_A1 = True #Make all these's the same for reading and writing so that nothing will change.
         snpreader = _snps_fixup(snpreader, count_A1=count_A1)
 
-        with progress_reporter("DistributedBed.write", size=0, updater=updater) as updater2:
+        with _progress_reporter("DistributedBed.write", size=0, updater=updater) as updater2:
             chrom_set = list(set(snpreader.pos[:,0]))
             def mapper_closure(chrom):
                 chrom_reader = snpreader[:,snpreader.pos[:,0]==chrom]
@@ -239,9 +240,18 @@ class _Distributed1Bed(SnpReader):
     @staticmethod
     def write(path, storage, snpdata,count_A1=True,updater=None):
         file_list = [SnpReader._name_of_other_file(path,remove_suffix="bed", add_suffix=new_suffix) for new_suffix in ["bim","fam","bed"]] #'bed' should be last
-        with multiopen(lambda file_name:storage.open_write(file_name,updater=updater),file_list) as local_file_name_list:
+        with _multiopen(lambda file_name:storage.open_write(file_name,updater=updater),file_list) as local_file_name_list:
             Bed.write(local_file_name_list[-1],snpdata,count_A1=count_A1)
 
         return _Distributed1Bed(path,storage)
 
 
+    #!!!cmk get this working and running as part of main tests
+class TestDistributedBedDocStrings(unittest.TestCase):
+    def test_distributed_bed(self):
+        import pysnptools.snpreader.snpdata
+        old_dir = os.getcwd()
+        os.chdir(os.path.dirname(os.path.realpath(__file__))+"/snpreader")
+        result = doctest.testmod(pysnptools.snpreader.distributed_bed)
+        os.chdir(old_dir)
+        assert result.failed == 0, "failed doc test: " + __file__

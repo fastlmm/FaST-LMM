@@ -4,7 +4,6 @@ from itertools import *
 from fastlmm.pyplink.snpset import *
 from fastlmm.pyplink.altset_list import *
 import pandas as pd
-import fastlmm.util.preprocess as util
 import logging
 
 class Dat(object):

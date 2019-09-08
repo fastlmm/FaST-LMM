@@ -3,7 +3,6 @@ import logging
 import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
 import pysnptools.util as pstutil
-import fastlmm.util.util as flutil
 import numpy as np
 import scipy.stats as stats
 from pysnptools.snpreader import Bed

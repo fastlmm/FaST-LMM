@@ -9,7 +9,7 @@ from fastlmm.association import single_snp
 from fastlmm.association import single_snp_linreg
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 from pysnptools.kernelreader import  Identity as KernelIdentity
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -541,7 +541,7 @@ def getTestSuite():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    from pysnptools.util.mapreduce1.runner import Local, HPC, LocalMultiProc, LocalInParts
+    from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
 
 
     # this import is needed for the runner

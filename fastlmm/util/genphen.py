@@ -34,7 +34,7 @@ def genphen(y_G0,G1,covDat,options,nInd,K1=None,fracCausal=None,randseed=None):
         nSnp=G1.shape[1]        
         if fracCausal !=1.0:
             nSnpNew=sp.ceil(fracCausal*nSnp)            
-            permutationIndex = utilx.generatePermutation(sp.arange(0,nSnp),randseed)[0:nSnpNew]            
+            permutationIndex = utilx.generate_permutation(sp.arange(0,nSnp),randseed)[0:nSnpNew]            
             G1new=G1[:,permutationIndex]
         else:     
             nSnpNew=nSnp       
