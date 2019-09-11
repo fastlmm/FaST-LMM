@@ -20,6 +20,12 @@ https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipy
 .. autofunction:: fastlmm.association.single_snp
 
 **************************************************
+:mod:`single_snp_scale`
+**************************************************
+
+.. autofunction:: fastlmm.association.single_snp_scale
+
+**************************************************
 :mod:`single_snp_all_plus_select`
 **************************************************
 
@@ -52,7 +58,6 @@ https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipy
 .. autofunction:: fastlmm.association.snp_set
 
 
-
 **************************************************
 :class:`FastLMM`
 **************************************************
@@ -77,10 +82,64 @@ https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipy
 .. autofunction:: fastlmm.association.heritability_spatial_correction
 
 
-**************************************************
-:mod:`compute_auto_pcs`
-**************************************************
+***********************
+:mod:`util` Module
+***********************
+
+
+:mod:`util.compute_auto_pcs`
+++++++++++++++++++++++++++++++++++++++++++++++++++
 .. autofunction:: fastlmm.util.compute_auto_pcs
+
+:mod:`util.manhattan_plot`
+++++++++++++++++++++++++++++++++++++++++++++++++++
+.. autofunction:: fastlmm.util.manhattan_plot
+
+*******************************************
+:mod:`util.filecache` Module
+*******************************************
+.. automodule:: fastlmm.util.filecache
+    :members:
+    :undoc-members:
+	:show-inheritance:
+	:special-members:
+
+:class:`util.filecache.FileCache`
+++++++++++++++++++++++++++++++++++++++++++++++++++
+.. autoclass:: fastlmm.util.filecache.FileCache
+    :members:
+    :undoc-members:
+	:show-inheritance:
+	:special-members:
+    :exclude-members:
+
+:class:`util.filecache.LocalCache`
+++++++++++++++++++++++++++++++++++++++++++++++++++
+.. autoclass:: fastlmm.util.filecache.LocalCache
+    :members:
+    :undoc-members:
+	:show-inheritance:
+	:special-members:
+    :exclude-members:
+
+:class:`util.filecache.PeerToPeer`
+++++++++++++++++++++++++++++++++++++++++++++++++++
+.. autoclass:: fastlmm.util.filecache.PeerToPeer
+    :members:
+    :undoc-members:
+	:show-inheritance:
+	:special-members:
+    :exclude-members:
+
+:class:`util.filecache.DistributedBed`
+++++++++++++++++++++++++++++++++++++++++++++++++++
+.. autoclass:: fastlmm.util.filecache.DistributedBed
+    :members:
+    :undoc-members:
+	:show-inheritance:
+	:special-members:
+    :exclude-members:
+
  
 .. only:: html 
 

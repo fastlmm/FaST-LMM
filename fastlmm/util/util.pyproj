@@ -52,7 +52,7 @@
     <Compile Include="filecache\filecache.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="filecache\fileshare.py">
+    <Compile Include="filecache\peertopeer.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="filecache\localcache.py">

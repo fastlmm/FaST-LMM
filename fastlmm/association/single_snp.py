@@ -68,10 +68,9 @@ def single_snp(test_snps, pheno, K0=None,
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
            (Warning: setting False can cause proximal contamination.)
-    :type leave_out_one_chrom: boolean
-    
+    :type leave_out_one_chrom: boolean    
 
-    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.
+    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
     :type output_file_name: file name
 
     :param h2: A parameter to LMM learning, optional

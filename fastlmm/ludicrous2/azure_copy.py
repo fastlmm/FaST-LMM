@@ -658,9 +658,9 @@ class TestAzureShardContainer(unittest.TestCase):
     def zzztest_big_files_fileshare(self): #!!!needs to be updated
         logging.info("test_big_files_fileshare")
         from onemil.AzureP2P import AzureP2P, ip_address_local
-        from onemil.file_cache import AzureStorage, FileShare
+        from onemil.file_cache import AzureStorage, PeerToPeer
         directory = AzureStorage(folder="testazureshardcontainer/fileshare2",local_lambda=ip_address_local,prefix="AzureDirectory",storage_account=self.storage_account, storage_key=self.storage_key)
-        storage = FileShare(directory=directory,local_lambda=ip_address_local)
+        storage = PeerToPeer(directory=directory,local_lambda=ip_address_local)
 
         big_size = int(4e9)
         update_python_path = "once"

@@ -6,7 +6,7 @@ import tempfile
 import logging
 import unittest
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalMultiThread
-from onemil.file_cache import AzureStorage,FileShare,FileCache,LocalCache
+from onemil.file_cache import AzureStorage,PeerToPeer,FileCache,LocalCache
 import time
 from onemil.file_cache import DibLib
 from contextlib import contextmanager
@@ -30,12 +30,6 @@ if azure_ok:
 def path_join(*p):
     result = os.path.normpath("/".join(p)).replace('\\','/')
     return result
-
-
-def ip_address():
-    import socket
-    #see http://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
-    return ([l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1],[[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]) 
 
 def ip_address_local():
     '''
@@ -95,7 +89,7 @@ class AzureP2P(FileCache):
             unique_name, root = self.local_lambda()
             return unique_name, root + path_join(self.azure_root,"storage",subpath)
         azure_directory = AzureStorage(path_join(self.azure_root,"directory",subpath),local_lambda=self.local_lambda,storage_credential=self.storage_credential)
-        self.file_share = FileShare(directory=azure_directory,local_lambda=storage_lambda, leave_space=self.leave_space)
+        self.file_share = PeerToPeer(directory=azure_directory,local_lambda=storage_lambda, leave_space=self.leave_space)
 
     def _simple_join(self,path):
         assert not self.azure_storage.file_exists(path), "Can't treat an existing file as a directory"
@@ -117,7 +111,7 @@ class AzureP2P(FileCache):
         subhandle_as_file_name = subhandle_as.__enter__()
 
         if self.file_share._simple_file_exists(simple_file_name):
-            logging.warn("The AzureStorage doesn't already have the file that is being written, but the FileShare does, so removing it from the FileShare. {0},'{1}'".format(self.file_share,simple_file_name))
+            logging.warn("The AzureStorage doesn't already have the file that is being written, but the PeerToPeer does, so removing it from the PeerToPeer. {0},'{1}'".format(self.file_share,simple_file_name))
             self.file_share._simple_remove(simple_file_name)
         subhandle_fs = self.file_share.open_write(simple_file_name,size=size,updater=updater)
         subhandle_fs_file_name = subhandle_fs.__enter__()
@@ -148,11 +142,11 @@ class AzureP2P(FileCache):
             subhandle1.__exit__(None,None,None)
             return
 
-        #We are now in a situation in which multiple readers have failed to find the file in the FileShare. We would like one of them to
-        #download from AzureStorage, while the others wait. When that one has finished, the others can then get it from FileShare.
+        #We are now in a situation in which multiple readers have failed to find the file in the PeerToPeer. We would like one of them to
+        #download from AzureStorage, while the others wait. When that one has finished, the others can then get it from PeerToPeer.
 
         #Dib the file and see if you are 1st.
-        # If so, double check that FileShare isn't there now ((in case someone fixed everything already) if it is, use it) otherwise download and share.
+        # If so, double check that PeerToPeer isn't there now ((in case someone fixed everything already) if it is, use it) otherwise download and share.
         # If not wait until the first dib is gone, then clear your dib and use the file share.
 
         unique_name = self.local_lambda()[0]
@@ -162,7 +156,7 @@ class AzureP2P(FileCache):
         status = dib_lib.wait_for_turn()
         logging.info("status is '{0}'".format(status))
         if status == 'fixed':
-            logging.info("After waiting for someone else to fix the problem, can now read the file with FileShare")
+            logging.info("After waiting for someone else to fix the problem, can now read the file with PeerToPeer")
             read_handle = self.file_share._simple_open_read(simple_file_name) #!!!should file share be self-repairing. If the "main" is gone, pick one of the others
             yield read_handle.__enter__()
             read_handle.__exit__(None,None,None)
@@ -176,7 +170,7 @@ class AzureP2P(FileCache):
                 file_name2 = read_handle.__enter__()
                 is_ok = True
             except Exception, e:
-                logging.info("2nd try of reading from fileshare failed with message '{0}'".format(e.message))
+                logging.info("2nd try of reading from PeerToPeer failed with message '{0}'".format(e.message))
             if is_ok:
                 yield file_name2
                 read_handle.__exit__(None,None,None)
@@ -279,7 +273,7 @@ class TestAzureP2P(unittest.TestCase):
             def local_lambda():
                 unique_name, root = "{0}.{1}".format(os.environ['COMPUTERNAME'],count), temp_dir+"/storage"
                 return unique_name, root
-            storage = FileShare(directory=directory,local_lambda=local_lambda)
+            storage = PeerToPeer(directory=directory,local_lambda=local_lambda)
             return storage
 
         self._write_and_read(storage_closure())
@@ -307,7 +301,7 @@ class TestAzureP2P(unittest.TestCase):
             def local_lambda():
                 unique_name, root = "{0}.{1}".format(os.environ['COMPUTERNAME'],count), temp_dir+"/storage"
                 return unique_name, root
-            storage = FileShare(directory=AzureStorage("/flstor/testazurep2p/fileshare/directory",local_lambda=lambda:(None,directory)),local_lambda=local_lambda)
+            storage = PeerToPeer(directory=AzureStorage("/flstor/testazurep2p/fileshare/directory",local_lambda=lambda:(None,directory)),local_lambda=local_lambda)
             return storage
 
         self._write_and_read(storage_closure())
@@ -373,7 +367,7 @@ class TestAzureP2P(unittest.TestCase):
 
         storage = AzureP2P("/flstor/testazurep2p/multiproc",local_lambda=ip_address_pid_local)
         #storage = AzureStorage("test/multiproc",default_shared_dir_lambda=closure)
-        #storage = FileShare(directory=AzureStorage("test/multiproc/directory",default_shared_dir_lambda=lambda:closure()+"/azure"),
+        #storage = PeerToPeer(directory=AzureStorage("test/multiproc/directory",default_shared_dir_lambda=lambda:closure()+"/azure"),
         #                    storage_lambda=lambda:closure()+"/storage",unique_name=lambda:"{0}.{1}".format(os.environ['COMPUTERNAME'],os.getpid()))
         storage.rmtree()
         storage.save("a/b/c.txt","Hello")

@@ -51,7 +51,7 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
             If you give no sid_list_1, all sids in test_snps will be used.
     :type sid_list_1: list of strings
 
-    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.
+    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
     :type output_file_name: file name
 
     :param log_delta: A parameter to LMM learning, optional

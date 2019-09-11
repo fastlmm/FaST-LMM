@@ -78,7 +78,7 @@ class TestSingleSnpScale(unittest.TestCase):
         for clear_cache in (True, False):
             if clear_cache:
                 storage.rmtree()
-            results_df = single_snp_scale(test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, cache_dict=storage, output_file_name=output_file)
+            results_df = single_snp_scale(test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, cache=storage, output_file_name=output_file)
             self.compare_files(results_df,"old")
 
     def test_local_distribute(self):
@@ -92,13 +92,13 @@ class TestSingleSnpScale(unittest.TestCase):
         test_storage.rmtree('')
         test_snps = DistributedBed.write(test_storage, self.bed, piece_per_chrom_count=2)
 
-        results_df = single_snp_scale(test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,cache_dict=self._cache_dict(storage,clear_cache=True),
+        results_df = single_snp_scale(test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,cache=self._cache_dict(storage,clear_cache=True),
                                     output_file_name=output_file, force_python_only=force_python_only
                                     )
 
         self.compare_files(results_df,"old")
 
-        results_df = single_snp_scale(test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,cache_dict=self._cache_dict(storage,clear_cache=False), 
+        results_df = single_snp_scale(test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed,cache=self._cache_dict(storage,clear_cache=False), 
                                     output_file_name=output_file
                                     )
         self.compare_files(results_df,"old")
@@ -139,10 +139,10 @@ class TestSingleSnpScale(unittest.TestCase):
         results_df = single_snp_scale(test_snps=test_snps3_dist, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed, output_file_name=output_file)
         self.compare_files(results_df,"old_one")
     
-    def test_net_use(self):
+    def test_net_use(self):#!!!cmk make sure this gets run
         logging.info("test_net_use")
-        from fastlmm.util.filecache import FileShare
-        FileShare._net_use(r"\\localhost\scratch")
+        from fastlmm.util.filecache import PeerToPeer
+        FileShare._net_use(r"\\localhost\scratch") #!!!cmk will this run on linux?
         print "done"
 
     def test_one_chrom(self):
@@ -164,7 +164,7 @@ class TestSingleSnpScale(unittest.TestCase):
                                                     (test_snps3_dist, "old_one", False, "Run with distributed test SNPs (use cache)"),
                                                     ):
             logging.info("=========== " + name + " ===========")
-            results_df = single_snp_scale(test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, K0=self.bed,cache_dict=self._cache_dict(storage,clear_cache=clear_cache), 
+            results_df = single_snp_scale(test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, K0=self.bed,cache=self._cache_dict(storage,clear_cache=clear_cache), 
                                      output_file_name=output_file,
                                       )
             self.compare_files(results_df,ref)

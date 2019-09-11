@@ -25,6 +25,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
@@ -74,7 +77,7 @@ If you give a string, it should be the file name of a PLINK phenotype-formatted 
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
 <li><strong>leave_out_one_chrom</strong> (<em>boolean</em>) – Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
 (Warning: setting False can cause proximal contamination.)</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
 <li><strong>h2</strong> (<em>number</em>) – A parameter to LMM learning, optional
 If not given will search for best value.
 If mixing is unspecified, then h2 must also be unspecified.</li>
@@ -117,6 +120,89 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
 <span class="go">null_576 1e-07 10000</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="single-snp-scale">
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_scale</span></code><a class="headerlink" href="#single-snp-scale" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="fastlmm.association.single_snp_scale">
+<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_scale</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G0=None</em>, <em>covar=None</em>, <em>cache=None</em>, <em>memory_factor=1</em>, <em>output_file_name=None</em>, <em>K0=None</em>, <em>runner=None</em>, <em>min_work_count=1</em>, <em>gtg_runner=None</em>, <em>gtg_min_work_count=None</em>, <em>svd_runner=None</em>, <em>postsvd_runner=None</em>, <em>postsvd_min_work_count=None</em>, <em>test_snps_runner=None</em>, <em>test_snps_min_work_count=None</em>, <em>count_A1=True</em>, <em>clear_local_lambda=None</em>, <em>force_python_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function performing single SNP GWAS using REML and cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
+It gives the same results as <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
+runs require appropriate modules for parameters <code class="docutils literal notranslate"><span class="pre">cache</span></code> and <code class="docutils literal notranslate"><span class="pre">runner</span></code>.)</p>
+<p>It always:</p>
+<ul class="simple">
+<li>does cross validation of chromosomes (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">leave_out_one_chrom=True</span></code>)</li>
+<li>creates a low-rank iid_count x sid_count kernel (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">force_low_rank=True</span></code>)</li>
+<li>uses exactly one kernel constructed from SNPs</li>
+<li>searches for the best <code class="docutils literal notranslate"><span class="pre">h2</span></code>. (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">h2=None</span></code>)</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_snps</strong> – SNPs to test. Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
+<li><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno">Pheno</a>, or <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+If you give a string, it should be the file name of a PLINK phenotype-formatted file.
+Any IIDs with missing values will be removed.</p>
+</li>
+<li><strong>G0</strong> – <p>SNPs from which to create a similarity matrix. Defaults to <code class="docutils literal notranslate"><span class="pre">test_snps</span></code>.
+Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
+If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p>
+</li>
+<li><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno">Pheno</a>, or <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>,.
+If you give a string, it should be the file name of a PLINK phenotype-formatted file.</p>
+</li>
+<li><strong>cache</strong> (None or string or <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a> or dictionary from number to a <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>.) – Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
+By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set, Python places the temp directory under it.)
+A string can be given and will be interpreted as the path of a local directory to use as a cache. (The local
+directory will <strong>not</strong> be automatically erased and so must be user managed.) A <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a> instance can be given, which provides a
+method to specify a cluster-distributed cache. (<a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>’s will <strong>not</strong> be automatically erased and must be user managed.)
+Finally, a dictionary from 0 to 22 (inclusive) to <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a> (or None or string)
+can be given. The dictionary specifies a cache for general work (0) and for every chromosome (1 to 22, inclusive).</li>
+<li><strong>memory_factor</strong> (<em>number</em>) – How much memory to use proportional to <code class="docutils literal notranslate"><span class="pre">G0</span></code>, optional.
+If not given, will assume that it can use memory about the same size as one copy of <code class="docutils literal notranslate"><span class="pre">G0</span></code>.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
+<li><strong>runner</strong> – a <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
+If not given, the function is run locally.</li>
+<li><strong>min_work_count</strong> (<em>integer</em>) – When running the work on a cluster, the <strong>minimum</strong> number of pieces in which to divide the work. Defaults to 1, which is usually fine.</li>
+<li><strong>gtg_runner</strong> (<em>a runner.</em>) – the runner to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the GtG stage of work. #!!!cmk need to tell the stages (see powerpoint)</li>
+<li><strong>gtg_min_work_count</strong> (<em>integer</em>) – the min_work_count to use instead of <code class="docutils literal notranslate"><span class="pre">min_work_count</span></code> on the GtG stage of work.</li>
+<li><strong>svd_runner</strong> (<em>a runner.</em>) – the runner to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the SVD stage of work.</li>
+<li><strong>postsvd_runner</strong> – <p>the <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a> to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the PostSVD stage of work.</p>
+</li>
+<li><strong>postsvd_min_work_count</strong> (<em>integer</em>) – the min_work_count to use instead of <code class="docutils literal notranslate"><span class="pre">min_work_count</span></code> on the PostSVD stage of work.</li>
+<li><strong>test_snps_runner</strong> – <p>the <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a> to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the TestSNPS stage of work.</p>
+</li>
+<li><strong>test_snps_min_work_count</strong> (<em>integer</em>) – the min_work_count to use instead of <code class="docutils literal notranslate"><span class="pre">min_work_count</span></code> on the TestSNPS stage of work.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
+<li><strong>clear_local_lambda</strong> (<em>function</em><em> or </em><em>lambda</em>) – A function to run at in the middle of the PostSVD stage, typically to clear unneeded large files from the local file cache.</li>
+<li><strong>force_python_only</strong> – (Default: False) Skip faster C++ code.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s1">&#39;../../tests/datasets/synth/all&#39;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:,::</span><span class="mi">10</span><span class="p">]</span> <span class="c1">#use every 10th SNP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/synth/pheno_10_causals.txt&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/synth/cov.txt&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_scale</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
+<span class="go">snp1200_m0_.37m1_.36 0.0 500</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -212,7 +298,7 @@ Any IIDs with missing values will be removed.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
 <li><strong>max_output_len</strong> (<em>number</em>) – Maximum number of Pvalues to return. Default to None, which means ‘Return all’.</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
 <li><strong>GB_goal</strong> (<em>number</em>) – gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks of size iid_count,
 which is memory efficient with little overhead on computation time.</li>
 <li><strong>runner</strong> (<em>a runner.</em>) – a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
@@ -335,7 +421,7 @@ If you give no sid_list_0, all sids in test_snps will be used.</li>
 <li><strong>sid_list_1</strong> (<em>list of strings</em>) – list of sids, optional:
 All unique pairs from sid_list_0 x sid_list_1 will be evaluated.
 If you give no sid_list_1, all sids in test_snps will be used.</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
 <li><strong>log_delta</strong> (<em>number</em>) – A parameter to LMM learning, optional
 If not given will search for best value.</li>
 <li><strong>min_log_delta</strong> (<em>number</em>) – (default:-5)
@@ -774,8 +860,10 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </dd></dl>
 
 </div>
-<div class="section" id="compute-auto-pcs">
-<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">compute_auto_pcs</span></code><a class="headerlink" href="#compute-auto-pcs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="util-module">
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">util</span></code> Module<a class="headerlink" href="#util-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="util-compute-auto-pcs">
+<h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.compute_auto_pcs</span></code><a class="headerlink" href="#util-compute-auto-pcs" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="fastlmm.util.compute_auto_pcs">
 <code class="descclassname">fastlmm.util.</code><code class="descname">compute_auto_pcs</code><span class="sig-paren">(</span><em>snpreader</em>, <em>cutoff=0.1</em>, <em>k_values=array([ 0</em>, <em>1</em>, <em>2</em>, <em>3</em>, <em>4</em>, <em>5</em>, <em>6</em>, <em>7</em>, <em>8</em>, <em>9</em>, <em>10])</em>, <em>output_file_name=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.compute_auto_pcs" title="Permalink to this definition">¶</a></dt>
@@ -814,6 +902,562 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </dd></dl>
 
 </div>
+<div class="section" id="util-manhattan-plot">
+<h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.manhattan_plot</span></code><a class="headerlink" href="#util-manhattan-plot" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="fastlmm.util.manhattan_plot">
+<code class="descclassname">fastlmm.util.</code><code class="descname">manhattan_plot</code><span class="sig-paren">(</span><em>chr_pos_pvalue_array</em>, <em>pvalue_line=None</em>, <em>plot_threshold=1.0</em>, <em>vline_significant=False</em>, <em>marker='o'</em>, <em>chromosome_starts=None</em>, <em>xaxis_unit_bp=True</em>, <em>alpha=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.manhattan_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to create a Manhattan plot.  See <a class="reference external" href="http://en.wikipedia.org/wiki/Manhattan_plot">http://en.wikipedia.org/wiki/Manhattan_plot</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>chr_pos_pvalue_array</strong> (<em>numpy array</em>) – an n x 3 numpy array. The three columns are the chrom number 
+(as a number), the position, and pvalue.</li>
+<li><strong>pvalue_line</strong> (<em>number</em>) – (Default: None). If given, draws a line at that PValue.</li>
+<li><strong>plot_threshold</strong> – plot only SNPs that achieve a P-value smaller than pvalue_threshold
+to speed up plotting</li>
+<li><strong>vline_significant</strong> (<em>Boolean</em>) – Draw a vertical line at each significant Pvalue? (Default: False)</li>
+<li><strong>marker</strong> (<em>string</em>) – marker for the scatter plot. default: “o”</li>
+<li><strong>chromosome_starts</strong> (<em>[</em><em>Nchrom x 3</em><em>] </em><em>ndarray:</em>) – chromosome, cumulative start position, cumulative stop position
+cumulative chromosome starts, for plotting. If None (default), this is estimated from data</li>
+<li><strong>xaxis_unit_bp</strong> (<em>Boolean</em>) – plot cumulative position in basepair units on x axis? If False, only 
+use rank of SNP positions. (default: True)</li>
+<li><strong>alpha</strong> (<em>number</em>) – alpha (opaqueness) for P-value markers in scatterplot (default 0.5)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">chromosome_starts       [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
+cumulative chromosome starts used in plotting.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">fastlmm.util</span> <span class="k">as</span> <span class="nn">flutil</span> <span class="c1">#!!!cmk be sure this is run</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">h2</span><span class="o">=.</span><span class="mi">2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chromosome_starts</span> <span class="o">=</span> <span class="n">flutil</span><span class="o">.</span><span class="n">manhattan_plot</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">[[</span><span class="s2">&quot;Chr&quot;</span><span class="p">,</span> <span class="s2">&quot;ChrPos&quot;</span><span class="p">,</span> <span class="s2">&quot;PValue&quot;</span><span class="p">]],</span><span class="n">pvalue_line</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#plt.show()</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-fastlmm.util.filecache">
+<span id="util-filecache-module"></span><h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.filecache</span></code> Module<a class="headerlink" href="#module-fastlmm.util.filecache" title="Permalink to this headline">¶</a></h2>
+<p>Tools for reading and writing files, locally or across clusters.</p>
+<dl class="function">
+<dt id="fastlmm.util.filecache.ip_address">
+<code class="descclassname">fastlmm.util.filecache.</code><code class="descname">ip_address</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.ip_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>!!!cmk doc</p>
+</dd></dl>
+
+<div class="section" id="util-filecache-filecache">
+<h3><code class="xref py py-class docutils literal notranslate"><span class="pre">util.filecache.FileCache</span></code><a class="headerlink" href="#util-filecache-filecache" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="fastlmm.util.filecache.FileCache">
+<em class="property">class </em><code class="descclassname">fastlmm.util.filecache.</code><code class="descname">FileCache</code><a class="headerlink" href="#fastlmm.util.filecache.FileCache" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>A FileCache is class such as <a class="reference internal" href="#fastlmm.util.filecache.LocalCache" title="fastlmm.util.filecache.LocalCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalCache</span></code></a> or <a class="reference internal" href="#fastlmm.util.filecache.PeerToPeer" title="fastlmm.util.filecache.PeerToPeer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PeerToPeer</span></code></a> that</dt>
+<dd><ul class="first last simple">
+<li>Copies a (possibly remote) file to a local disk for reading. (If the local file already exists 
+and is up-to-date, retrieval is typically skipped.)</li>
+<li>Copies a newly-written local file to (possibly remote) storage.</li>
+<li>Provides an assortment of file- and directory-related commands.</li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first">#!!!cmk be sure these are all read</p>
+<ul class="simple">
+<li>Peer-to-peer storage - Suppose all machines in a cluster can read &amp; write the storage at ‘peertopeer1/common’.
+Also, suppose that ‘peertopeer1/192.168.1.105’ is readable by all but stored locally
+on machine 192.168.1.105 (and so on for all the machines and their IPs).</li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.filecache</span> <span class="k">import</span> <span class="n">PeerToPeer</span><span class="p">,</span> <span class="n">ip_address</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">id_and_path_function</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="n">ip</span> <span class="o">=</span> <span class="n">ip_address</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">ip</span><span class="p">,</span> <span class="s1">&#39;peertopeer1/</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span> <span class="o">=</span> <span class="n">PeerToPeer</span><span class="p">(</span><span class="n">common_directory</span><span class="o">=</span><span class="s1">&#39;peertopeer1/common&#39;</span><span class="p">,</span><span class="n">id_and_path_function</span><span class="o">=</span><span class="n">id_and_path_function</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span>
+<span class="go">PeerToPeer(&#39;peertopeer1/common&#39;,id_and_path_function=...&#39;)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Remove anything already in remote storage</li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">rmtree</span><span class="p">()</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Create a random SNP file and store it remotely</li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">SnpGen</span><span class="p">,</span> <span class="n">Dense</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">snp_gen</span> <span class="o">=</span> <span class="n">SnpGen</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">123</span><span class="p">,</span><span class="n">iid_count</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span><span class="n">sid_count</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">file_cache</span><span class="o">.</span><span class="n">open_write</span><span class="p">(</span><span class="s1">&#39;r123.1000x5000.dense.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">local_filename</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Dense</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">local_filename</span><span class="p">,</span><span class="n">snp_gen</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">file_cache</span><span class="o">.</span><span class="n">walk</span><span class="p">())</span>
+<span class="go">[&#39;r123.1000x5000.dense.txt&#39;]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Copy back from remote storage (if needed) and then read SNP data from local file.</li>
+</ul>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">file_cache</span><span class="o">.</span><span class="n">open_read</span><span class="p">(</span><span class="s1">&#39;r123.1000x5000.dense.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">local_filename</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">dense</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">local_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">dense</span><span class="p">[:</span><span class="mi">3</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">val</span> <span class="c1">#Read 1st 3 individuals and SNPs</span>
+<span class="go">[[ 0.  0. nan]</span>
+<span class="go"> [ 0.  0.  0.]</span>
+<span class="go"> [ 0.  0.  0.]]</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Given the appropriate module, FileCache library provides a simple, unified way work to work with any remote storage scheme. It differs from
+virtual file systems, such as CIFS VFS, because:</p>
+<blockquote>
+<div><ul class="simple">
+<li>FileCache works with all operating systems and requires no operating system changes.</li>
+<li>FileCache can take advantage of the highest performance file retrieval methods (e.g. kernel space, peer-to-peer, tree copies, etc).</li>
+<li>FileCache can take advantage of the highest performance local read and write storage (e.g. SSDs)</li>
+<li>FileCache can work on top of CIFS VFS and any other remote storage system with an appropriate module.</li>
+</ul>
+<p>The downside of FileCache is that:</p>
+<ul class="simple">
+<li>It generally requires two write-related statements (e.g. ‘open_write’,’Dense.write’) instead of just one. Likewise,
+it generally requires to read-related statements (e.g. ‘open_read’, ‘dense[:3,:3].read()’ instead of just one.</li>
+</ul>
+</div></blockquote>
+<p>Methods &amp; Properties:</p>
+<blockquote>
+<div><p>Every FileCache, such as <a class="reference internal" href="#fastlmm.util.filecache.LocalCache" title="fastlmm.util.filecache.LocalCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalCache</span></code></a> and <a class="reference internal" href="#fastlmm.util.filecache.PeerToPeer" title="fastlmm.util.filecache.PeerToPeer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PeerToPeer</span></code></a>, has this property:
+<a class="reference internal" href="#fastlmm.util.filecache.FileCache.name" title="fastlmm.util.filecache.FileCache.name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">name</span></code></a>, 
+and these methods:
+<a class="reference internal" href="#fastlmm.util.filecache.FileCache.file_exists" title="fastlmm.util.filecache.FileCache.file_exists"><code class="xref py py-meth docutils literal notranslate"><span class="pre">file_exists()</span></code></a>, <a class="reference internal" href="#fastlmm.util.filecache.FileCache.getmtime" title="fastlmm.util.filecache.FileCache.getmtime"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getmtime()</span></code></a>, <a class="reference internal" href="#fastlmm.util.filecache.FileCache.join" title="fastlmm.util.filecache.FileCache.join"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join()</span></code></a>, <a class="reference internal" href="#fastlmm.util.filecache.FileCache.load" title="fastlmm.util.filecache.FileCache.load"><code class="xref py py-meth docutils literal notranslate"><span class="pre">load()</span></code></a>, <a class="reference internal" href="#fastlmm.util.filecache.FileCache.open_read" title="fastlmm.util.filecache.FileCache.open_read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">open_read()</span></code></a>, <a class="reference internal" href="#fastlmm.util.filecache.FileCache.open_write" title="fastlmm.util.filecache.FileCache.open_write"><code class="xref py py-meth docutils literal notranslate"><span class="pre">open_write()</span></code></a>, <a class="reference internal" href="#fastlmm.util.filecache.FileCache.remove" title="fastlmm.util.filecache.FileCache.remove"><code class="xref py py-meth docutils literal notranslate"><span class="pre">remove()</span></code></a>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">rmtree',</span>
+<span class="pre">:meth:`save()</span></code>, and <a class="reference internal" href="#fastlmm.util.filecache.FileCache.walk" title="fastlmm.util.filecache.FileCache.walk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">walk()</span></code></a>. See below for details.</p>
+<p>Details of Methods &amp; Properties:</p>
+</div></blockquote>
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.file_exists">
+<code class="descname">file_exists</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.file_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tells if there a file with this name. (A directory with the name doesn’t count.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_name</strong> (<em>string</em>) – The name of the file to look for</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.filecache</span> <span class="k">import</span> <span class="n">LocalCache</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span> <span class="o">=</span> <span class="n">LocalCache</span><span class="p">(</span><span class="s1">&#39;localcache1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">rmtree</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="s1">&#39;sub1/file1.txt&#39;</span><span class="p">)</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;sub1/file1.txt&#39;</span><span class="p">,</span><span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="s1">&#39;sub1/file1.txt&#39;</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.getmtime">
+<code class="descname">getmtime</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.getmtime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the modified date of the file in storage.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_name</strong> (<em>string</em>) – The name of the (possibly remote) file of interest</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">number, the number of seconds since the epoch</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.join">
+<code class="descname">join</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a> created by appending a path to the current <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> (<em>string</em>) – path to join to current <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>file_name</em>, <em>updater=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the contents of a file in storage as a string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>file_name</strong> (<em>string</em>) – The name of the (possibly remote) file to read</li>
+<li><strong>updater</strong> (<em>function</em><em> or </em><em>lambda</em>) – (Default, None). Optional function to which status messages may be written. For example, 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#module-pysnptools.util">log_in_place</a>. !!!cmk good example?</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">string - what was written in the file.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.filecache</span> <span class="k">import</span> <span class="n">LocalCache</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span> <span class="o">=</span> <span class="n">LocalCache</span><span class="p">(</span><span class="s1">&#39;localcache1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">rmtree</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">,</span><span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">)</span>
+<span class="go">&#39;Hello&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fastlmm.util.filecache.FileCache.name">
+<code class="descname">name</code><a class="headerlink" href="#fastlmm.util.filecache.FileCache.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A nice name of this FileCache.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.open_read">
+<code class="descname">open_read</code><span class="sig-paren">(</span><em>file_name</em>, <em>updater=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.open_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used with a ‘with’ statement to produce a local copy of a (possibly remote) file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>file_name</strong> (<em>string</em>) – The name of the (possibly remote) file to read</li>
+<li><strong>updater</strong> (<em>function</em><em> or </em><em>lambda</em>) – <p>(Default, None). Optional function to which status messages may be written. For example, 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#module-pysnptools.util">log_in_place</a>. !!!cmk good example?</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">a local filename to read.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.filecache</span> <span class="k">import</span> <span class="n">LocalCache</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span> <span class="o">=</span> <span class="n">LocalCache</span><span class="p">(</span><span class="s1">&#39;localcache1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">rmtree</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">,</span><span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">file_cache</span><span class="o">.</span><span class="n">open_read</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">local_filename</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_filename</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">line</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line</span>
+<span class="go">&#39;Hello&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.open_write">
+<code class="descname">open_write</code><span class="sig-paren">(</span><em>file_name</em>, <em>size=0</em>, <em>updater=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.open_write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used with a ‘with’ statement to produce a local file name that will be copied to remote storage
+when the ‘with’ statement is exited.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>file_name</strong> (<em>string</em>) – The name of the (possibly remote) file to which to write.</li>
+<li><strong>size</strong> (<em>number</em>) – (default 0) if given, an error will be thrown immediately if local storage doesn’t
+have room for that many bytes.</li>
+<li><strong>updater</strong> (<em>function</em><em> or </em><em>lambda</em>) – <p>(Default, None). Optional function to which status messages may be written. For example, 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#module-pysnptools.util">log_in_place</a>. !!!cmk good example?</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">a local filename to read.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.filecache</span> <span class="k">import</span> <span class="n">LocalCache</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span> <span class="o">=</span> <span class="n">LocalCache</span><span class="p">(</span><span class="s1">&#39;localcache1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">rmtree</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">file_cache</span><span class="o">.</span><span class="n">open_write</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">local_filename</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_filename</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">)</span>
+<span class="go">&#39;Hello&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.remove">
+<code class="descname">remove</code><span class="sig-paren">(</span><em>file_name</em>, <em>log_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a file from storage. It is an error to remove a directory this way.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>file_name</strong> (<em>string</em>) – The name of the (possibly remote) file to remove.</li>
+<li><strong>log_writer</strong> (<em>function</em><em> or </em><em>lambda</em>) – <p>(Default, None). Optional function to which status messages may be written. For example, 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#module-pysnptools.util">log_in_place</a>.</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.rmtree">
+<code class="descname">rmtree</code><span class="sig-paren">(</span><em>path=None</em>, <em>log_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.rmtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all files this under this <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>. It is OK if there are no files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> (<em>string</em>) – (Default, None, the current <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>). Optional a path (subdirectory, not file) to start in.</li>
+<li><strong>log_writer</strong> (<em>function</em><em> or </em><em>lambda</em>) – <p>(Default, None). Optional function to which status messages may be written. For example, 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#module-pysnptools.util">log_in_place</a>.</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>file_name</em>, <em>contents</em>, <em>size=0</em>, <em>updater=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a string to a file in storage.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>file_name</strong> (<em>string</em>) – The name of the (possibly remote) file to which to write.</li>
+<li><strong>contents</strong> (<em>string</em>) – What to write to the file.</li>
+<li><strong>size</strong> (<em>number</em>) – (default 0) if given, an error will be thrown immediately if local storage doesn’t
+have room for that many bytes.</li>
+<li><strong>updater</strong> (<em>function</em><em> or </em><em>lambda</em>) – <p>(Default, None). Optional function to which status messages may be written. For example, 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#module-pysnptools.util">log_in_place</a>. !!!cmk good example?</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.filecache</span> <span class="k">import</span> <span class="n">LocalCache</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span> <span class="o">=</span> <span class="n">LocalCache</span><span class="p">(</span><span class="s1">&#39;localcache1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">rmtree</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">,</span><span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">)</span>
+<span class="go">&#39;Hello&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.FileCache.walk">
+<code class="descname">walk</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.FileCache.walk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates the relative paths of the files in the <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>. It is OK if there are no files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> (<em>string</em>) – (Default, None, the current <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>). Optional path (subdirectory, not file) to start in.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">a generator of strings</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.filecache</span> <span class="k">import</span> <span class="n">LocalCache</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span> <span class="o">=</span> <span class="n">LocalCache</span><span class="p">(</span><span class="s1">&#39;localcache1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">rmtree</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">file_cache</span><span class="o">.</span><span class="n">walk</span><span class="p">())</span>
+<span class="go">[]</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_cache</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;file1.txt&#39;</span><span class="p">,</span><span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">file_cache</span><span class="o">.</span><span class="n">walk</span><span class="p">())</span>
+<span class="go">[&#39;file1.txt&#39;]</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">file_cache</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="s1">&#39;no_such_sub_path&#39;</span><span class="p">))</span>
+<span class="go">[]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="util-filecache-localcache">
+<h3><code class="xref py py-class docutils literal notranslate"><span class="pre">util.filecache.LocalCache</span></code><a class="headerlink" href="#util-filecache-localcache" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="fastlmm.util.filecache.LocalCache">
+<em class="property">class </em><code class="descclassname">fastlmm.util.filecache.</code><code class="descname">LocalCache</code><span class="sig-paren">(</span><em>directory='local_cache'</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.LocalCache" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="fastlmm.util.filecache.LocalCache.name">
+<code class="descname">name</code><a class="headerlink" href="#fastlmm.util.filecache.LocalCache.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="util-filecache-peertopeer">
+<h3><code class="xref py py-class docutils literal notranslate"><span class="pre">util.filecache.PeerToPeer</span></code><a class="headerlink" href="#util-filecache-peertopeer" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="fastlmm.util.filecache.PeerToPeer">
+<em class="property">class </em><code class="descclassname">fastlmm.util.filecache.</code><code class="descname">PeerToPeer</code><span class="sig-paren">(</span><em>common_directory</em>, <em>id_and_path_function</em>, <em>leave_space=0</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.PeerToPeer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="fastlmm.util.filecache.PeerToPeer.copy_main_pattern">
+<code class="descname">copy_main_pattern</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#fastlmm.util.filecache.PeerToPeer.copy_main_pattern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fastlmm.util.filecache.PeerToPeer.copy_pattern">
+<code class="descname">copy_pattern</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#fastlmm.util.filecache.PeerToPeer.copy_pattern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.PeerToPeer.copy_time_stamp">
+<code class="descname">copy_time_stamp</code><span class="sig-paren">(</span><em>storage_path</em>, <em>local_path</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.PeerToPeer.copy_time_stamp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fastlmm.util.filecache.PeerToPeer.name">
+<code class="descname">name</code><a class="headerlink" href="#fastlmm.util.filecache.PeerToPeer.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="util-filecache-distributedbed">
+<h3><code class="xref py py-class docutils literal notranslate"><span class="pre">util.filecache.DistributedBed</span></code><a class="headerlink" href="#util-filecache-distributedbed" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="fastlmm.util.filecache.DistributedBed">
+<em class="property">class </em><code class="descclassname">fastlmm.util.filecache.</code><code class="descname">DistributedBed</code><span class="sig-paren">(</span><em>storage</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.DistributedBed" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class that implements the <code class="xref py py-class docutils literal notranslate"><span class="pre">SnpReader</span></code> interface. It stores BED-like data in pieces on storage. When requested, it retrieves requested parts of the data.</p>
+<dl class="docutils">
+<dt><strong>Constructor:</strong></dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>storage</strong> (<em>FileCache</em>) – The <a class="reference internal" href="#fastlmm.util.filecache.LocalCache" title="fastlmm.util.filecache.LocalCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalCache</span></code></a> or other <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a> where the data should or is stored.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="fastlmm.util.filecache.DistributedBed.col">
+<code class="descname">col</code><a class="headerlink" href="#fastlmm.util.filecache.DistributedBed.col" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>same as</em> <code class="xref py py-attr docutils literal notranslate"><span class="pre">sid</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fastlmm.util.filecache.DistributedBed.col_property">
+<code class="descname">col_property</code><a class="headerlink" href="#fastlmm.util.filecache.DistributedBed.col_property" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>same as</em> <code class="xref py py-attr docutils literal notranslate"><span class="pre">pos</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fastlmm.util.filecache.DistributedBed.copyinputs">
+<code class="descname">copyinputs</code><span class="sig-paren">(</span><em>copier</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.DistributedBed.copyinputs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fastlmm.util.filecache.DistributedBed.row">
+<code class="descname">row</code><a class="headerlink" href="#fastlmm.util.filecache.DistributedBed.row" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>same as</em> <code class="xref py py-attr docutils literal notranslate"><span class="pre">iid</span></code></p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fastlmm.util.filecache.DistributedBed.write">
+<em class="property">static </em><code class="descname">write</code><span class="sig-paren">(</span><em>storage</em>, <em>snpreader</em>, <em>piece_per_chrom_count</em>, <em>updater=None</em>, <em>runner=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.filecache.DistributedBed.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uploads from any BED-like data to cluster storage for efficient retrieval later.
+If some of the content already exists in storage, it skips uploading that part of the content. (To avoid this behavior,
+clear the storage.)</p>
+<p>Additional data formats can be supported by creating new readers that follow that <code class="xref py py-class docutils literal notranslate"><span class="pre">SnpReader</span></code> interface.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>storage</strong> (<a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a>) – A <a class="reference internal" href="#fastlmm.util.filecache.LocalCache" title="fastlmm.util.filecache.LocalCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalCache</span></code></a> or other <a class="reference internal" href="#fastlmm.util.filecache.FileCache" title="fastlmm.util.filecache.FileCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileCache</span></code></a> to upload to.</li>
+<li><strong>snpreader</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">SnpReader</span></code>) – A <code class="xref py py-class docutils literal notranslate"><span class="pre">Bed</span></code> or other <code class="xref py py-class docutils literal notranslate"><span class="pre">SnpReader</span></code> that with values of 0,1,2, or missing.</li>
+<li><strong>piece_per_chrom_count</strong> (<em>A number</em>) – The number of pieces in which to store the data from each chromosome. Data is split across
+SNPs. If set to 100 and 22 chromosomes are uploaded, then data will be stored in 2200 pieces. Later, when data is requested
+only the pieces necessary for the request will be downloaded.</li>
+<li><strong>updater</strong> (A lambda such as created by <code class="xref py py-func docutils literal notranslate"><span class="pre">log_in_place()</span></code>) – A single argument function to write logging message to.</li>
+<li><strong>runner</strong> (<em>a runner.</em>) – a runner, optional: Tells how to run locally or multi-processor are good options.
+If not given, the function is run locally.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#fastlmm.util.filecache.DistributedBed" title="fastlmm.util.filecache.DistributedBed">DistributedBed</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
 <div class="section" id="indices-and-tables">
 <h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
 <blockquote>
@@ -836,6 +1480,7 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
   <ul>
 <li><a class="reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation</a><ul>
 <li><a class="reference internal" href="#single-snp"><code class="docutils literal notranslate"><span class="pre">single_snp</span></code></a></li>
+<li><a class="reference internal" href="#single-snp-scale"><code class="docutils literal notranslate"><span class="pre">single_snp_scale</span></code></a></li>
 <li><a class="reference internal" href="#single-snp-all-plus-select"><code class="docutils literal notranslate"><span class="pre">single_snp_all_plus_select</span></code></a></li>
 <li><a class="reference internal" href="#single-snp-linreg"><code class="docutils literal notranslate"><span class="pre">single_snp_linreg</span></code></a></li>
 <li><a class="reference internal" href="#single-snp-select"><code class="docutils literal notranslate"><span class="pre">single_snp_select</span></code></a></li>
@@ -844,7 +1489,18 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <li><a class="reference internal" href="#fastlmm"><code class="docutils literal notranslate"><span class="pre">FastLMM</span></code></a></li>
 <li><a class="reference internal" href="#linearregression"><code class="docutils literal notranslate"><span class="pre">LinearRegression</span></code></a></li>
 <li><a class="reference internal" href="#heritability-spatial-correction"><code class="docutils literal notranslate"><span class="pre">heritability_spatial_correction</span></code></a></li>
-<li><a class="reference internal" href="#compute-auto-pcs"><code class="docutils literal notranslate"><span class="pre">compute_auto_pcs</span></code></a></li>
+<li><a class="reference internal" href="#util-module"><code class="docutils literal notranslate"><span class="pre">util</span></code> Module</a><ul>
+<li><a class="reference internal" href="#util-compute-auto-pcs"><code class="docutils literal notranslate"><span class="pre">util.compute_auto_pcs</span></code></a></li>
+<li><a class="reference internal" href="#util-manhattan-plot"><code class="docutils literal notranslate"><span class="pre">util.manhattan_plot</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-fastlmm.util.filecache"><code class="docutils literal notranslate"><span class="pre">util.filecache</span></code> Module</a><ul>
+<li><a class="reference internal" href="#util-filecache-filecache"><code class="docutils literal notranslate"><span class="pre">util.filecache.FileCache</span></code></a></li>
+<li><a class="reference internal" href="#util-filecache-localcache"><code class="docutils literal notranslate"><span class="pre">util.filecache.LocalCache</span></code></a></li>
+<li><a class="reference internal" href="#util-filecache-peertopeer"><code class="docutils literal notranslate"><span class="pre">util.filecache.PeerToPeer</span></code></a></li>
+<li><a class="reference internal" href="#util-filecache-distributedbed"><code class="docutils literal notranslate"><span class="pre">util.filecache.DistributedBed</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and Tables</a></li>
 </ul>
 </li>
@@ -879,6 +1535,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li> 
       </ul>
     </div>

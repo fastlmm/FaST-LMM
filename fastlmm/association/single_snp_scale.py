@@ -27,6 +27,147 @@ from fastlmm.util.mingrid import minimize1D
 from fastlmm.util.matrix.bigsvd import big_sdd
 from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
 
+def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor=1,
+            output_file_name=None, K0=None,
+            runner=None,min_work_count=1,
+            gtg_runner=None, gtg_min_work_count=None, svd_runner=None, postsvd_runner=None, postsvd_min_work_count=None,test_snps_runner=None, test_snps_min_work_count=None,
+            count_A1=True,    
+            clear_local_lambda=None, force_python_only=False
+            ):
+    """
+    Function performing single SNP GWAS using REML and cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
+    It gives the same results as :func:`.single_snp` but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
+    runs require appropriate modules for parameters ``cache`` and ``runner``.)
+
+    It always:
+
+    * does cross validation of chromosomes (:func:`.single_snp`'s ``leave_out_one_chrom=True``)
+    * creates a low-rank iid_count x sid_count kernel (:func:`.single_snp`'s ``force_low_rank=True``)
+    * uses exactly one kernel constructed from SNPs
+    * searches for the best ``h2``. (:func:`.single_snp`'s ``h2=None``)
+
+
+    :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+    :type test_snps: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+
+    :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
+           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
+           Any IIDs with missing values will be removed.
+    :type pheno: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+
+    :param G0: SNPs from which to create a similarity matrix. Defaults to ``test_snps``.
+           Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
+           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+    :type G0: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+
+    :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_,.
+           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
+    :type covar: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+
+    :param cache: Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
+                  By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set, Python places the temp directory under it.)
+                  A string can be given and will be interpreted as the path of a local directory to use as a cache. (The local
+                  directory will **not** be automatically erased and so must be user managed.) A :class:`.FileCache` instance can be given, which provides a
+                  method to specify a cluster-distributed cache. (:class:`.FileCache`'s will **not** be automatically erased and must be user managed.)
+                  Finally, a dictionary from 0 to 22 (inclusive) to :class:`.FileCache` (or None or string)
+                  can be given. The dictionary specifies a cache for general work (0) and for every chromosome (1 to 22, inclusive).  
+    :type cache: None or string or :class:`.FileCache` or dictionary from number to a :class:`.FileCache`.
+
+    :param memory_factor: How much memory to use proportional to ``G0``, optional.
+            If not given, will assume that it can use memory about the same size as one copy of ``G0``.
+    :type memory_factor: number
+
+    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
+    :type output_file_name: file name
+
+    :param runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
+        If not given, the function is run locally.
+    :type runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
+
+    :param min_work_count: When running the work on a cluster, the **minimum** number of pieces in which to divide the work. Defaults to 1, which is usually fine.
+    :type min_work_count: integer
+
+    :param gtg_runner: the runner to use instead of ``runner`` for the GtG stage of work. #!!!cmk need to tell the stages (see powerpoint)
+    :type gtg_runner: a runner.
+
+    :param gtg_min_work_count: the min_work_count to use instead of ``min_work_count`` on the GtG stage of work.
+    :type gtg_min_work_count: integer
+
+    :param svd_runner: the runner to use instead of ``runner`` for the SVD stage of work.
+    :type svd_runner: a runner.
+
+    :param postsvd_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the PostSVD stage of work.
+    :type postsvd_runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
+
+    :param postsvd_min_work_count: the min_work_count to use instead of ``min_work_count`` on the PostSVD stage of work.
+    :type postsvd_min_work_count: integer
+
+    :param test_snps_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the TestSNPS stage of work.
+    :type test_snps_runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
+
+    :param test_snps_min_work_count: the min_work_count to use instead of ``min_work_count`` on the TestSNPS stage of work.
+    :type test_snps_min_work_count: integer
+
+    :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+         alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
+    :type count_A1: bool
+
+    :param clear_local_lambda: A function to run at in the middle of the PostSVD stage, typically to clear unneeded large files from the local file cache.
+    :type clear_local_lambda: function or lambda
+
+    :param force_python_only: (Default: False) Skip faster C++ code.
+
+    :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
+
+    :Example:
+
+    >>> import logging
+    >>> from fastlmm.association import single_snp
+    >>> from pysnptools.snpreader import Bed
+    >>> logging.basicConfig(level=logging.INFO)
+    >>> test_snps = Bed('../../tests/datasets/synth/all',count_A1=True)[:,::10] #use every 10th SNP
+    >>> pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
+    >>> cov_fn = '../../tests/datasets/synth/cov.txt'
+    >>> results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
+    >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
+    snp1200_m0_.37m1_.36 0.0 500
+
+    """
+    #Fill in with the default runner and default min_work_count
+    gtg_runner = gtg_runner or runner
+    gtg_min_work_count = gtg_min_work_count or min_work_count
+    svd_runner = svd_runner or runner
+    postsvd_runner = postsvd_runner or runner
+    postsvd_min_work_count = postsvd_min_work_count or min_work_count
+    test_snps_runner = test_snps_runner or runner
+    test_snps_min_work_count = test_snps_min_work_count or min_work_count
+
+    #######################################
+    # all in time and space 1M x 3
+    #######################################
+    G0 = G0 or K0 or test_snps
+    chrom_list, pheno1, RxY, test_snps1, X, Xdagger, G0 = preload(covar, G0, pheno, test_snps, count_A1=count_A1) #!!!y: Rxy
+    cache_dict = _cache_dict_fixup(cache,chrom_list)
+
+    G0_memmap_lambda, ss_per_snp = get_G0_memmap(G0, cache_dict[0], X, Xdagger, memory_factor)
+
+    gtg_npz_lambda = get_gtg(cache_dict[0], G0.iid_count, G0.sid, G0_memmap_lambda, memory_factor, gtg_runner, min_work_count=gtg_min_work_count)
+
+    svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, RxY, X, svd_runner)
+
+    postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=100)
+
+    test_snps_memory_factor = memory_factor
+
+    frame = do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, test_snps_memory_factor, G0.iid_count, G0.sid_count, G0.pos, pheno1,
+                         ss_per_snp, RxY, X, Xdagger, test_snps=test_snps1, runner=test_snps_runner,
+                         output_file_name=output_file_name, min_work_count=test_snps_min_work_count)
+
+    return frame
+
+
+
+
 def snp_fn(data_folder,file_index):
     return data_folder + "/{0}.bed".format(file_index)
 def pheno_fn(data_folder,file_index):
@@ -973,131 +1114,8 @@ def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer)
         raise Exception("Don't know start_stage='{0}'".format(start_stage))
 
 
-def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache_dict=None,memory_factor=1,
-            output_file_name=None, K0=None,
-            runner=None,min_work_count=1,
-            gtg_runner=None, gtg_min_work_count=None, svd_runner=None, postsvd_runner=None, postsvd_min_work_count=None,test_snps_runner=None, test_snps_min_work_count=None, count_A1=True,    
-            clear_local_lambda=None, force_python_only=False
-            ):
-    """
-    !!!cmk update
-    Function performing single SNP GWAS using cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
-
-    :param cache_dict: For each chromosome tells where to store intermediate results.
-    :type cache_dict: A dictionary from integer chromosome numbers to :class:`.LocalCache` or other :class:`.FileCache`.
-
-    :param test_snps: SNPs to test. Can be any :class:`.SnpReader`. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-    :type test_snps: a :class:`.SnpReader` or a string
-
-    :param pheno: A single phenotype: Can be any :class:`.SnpReader`, for example, :class:`.Pheno` or :class:`.SnpData`.
-           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-           Any IIDs with missing values will be removed.
-    :type pheno: a :class:`.SnpReader` or a string
-
-    :param G0: SNPs from which to create a similarity matrix.
-           Can be any :class:`.SnpReader`. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-    :type G0: :class:`.SnpReader` or a string
-
-    :param covar: covariate information, optional: Can be any :class:`.SnpReader`, for example, :class:`.Pheno` or :class:`.SnpData`.
-           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-    :type covar: a :class:`.SnpReader` or a string
-
-    :param memory_factor: How much memory to use proportional to G0, optional.
-            If not given, will assume that it can use memory about the same size as 1 copy of G0.
-    :type memory_factor: number
-
-    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.
-    :type output_file_name: file name
-
-    :param runner: a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
-        If not given, the function is run locally.
-    :type runner: a runner.
-
-    :param min_work_count: When running the work on a cluster, the minimum number of pieces in which to divide the work.
-    :type min_work_count: integer
-
-    :param gtg_runner: the runner to use instead of 'runner' for the GtG stage of work.
-    :type gtg_runner: a runner.
-
-    :param gtg_min_work_count: the min_work_count to use instead of min_work_count on the GtG stage of work.
-    :type gtg_min_work_count: integer
-
-    :param svd_runner: the runner to use instead of 'runner' for the SVD stage of work.
-    :type svd_runner: a runner.
-
-    :param postsvd_runner: the runner to use instead of 'runner' for the PostSVD stage of work.
-    :type postsvd_runner: a runner.
-
-    :param postsvd_min_work_count: the min_work_count to use instead of min_work_count on the PostSVD stage of work.
-    :type postsvd_min_work_count: integer
-
-    :param test_snps_runner: the runner to use instead of 'runner' for the TestSNPS stage of work.
-    :type test_snps_runner: a runner.
-
-    :param test_snps_min_work_count: the min_work_count to use instead of min_work_count on the TestSNPS stage of work.
-    :type test_snps_min_work_count: integer
-
-    :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
-         alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
-    :type count_A1: bool
-
-    :param clear_local_lambda: A function to run at the start of the PostSVD reducer task, typically to clear unneeded large files from the local file cache.
-    :type clear_local_lambda: function or lambda
-
-
-    :Example:
-
-    >>> import logging
-    >>> from fastlmm.association import single_snp
-    >>> from pysnptools.snpreader import Bed
-    >>> logging.basicConfig(level=logging.INFO)
-    >>> test_snps = Bed('../../tests/datasets/synth/all',count_A1=True)[:,::10] #use every 10th SNP
-    >>> pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
-    >>> cov_fn = '../../tests/datasets/synth/cov.txt'
-    >>> results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
-    >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
-    snp1200_m0_.37m1_.36 0.0 500
-
-
-    """
-
-
-
-
-    #Fill in with the default runner and default min_work_count
-    gtg_runner = gtg_runner or runner
-    gtg_min_work_count = gtg_min_work_count or min_work_count
-    svd_runner = svd_runner or runner
-    postsvd_runner = postsvd_runner or runner
-    postsvd_min_work_count = postsvd_min_work_count or min_work_count
-    test_snps_runner = test_snps_runner or runner
-    test_snps_min_work_count = test_snps_min_work_count or min_work_count
-
-    #######################################
-    # all in time and space 1M x 3
-    #######################################
-    G0 = G0 or K0 or test_snps
-    chrom_list, pheno1, RxY, test_snps1, X, Xdagger, G0 = preload(covar, G0, pheno, test_snps, count_A1=count_A1) #!!!y: Rxy
-    cache_dict = _cache_dict_fixup(cache_dict,chrom_list)
-
-    G0_memmap_lambda, ss_per_snp = get_G0_memmap(G0, cache_dict[0], X, Xdagger, memory_factor)
-
-    gtg_npz_lambda = get_gtg(cache_dict[0], G0.iid_count, G0.sid, G0_memmap_lambda, memory_factor, gtg_runner, min_work_count=gtg_min_work_count)
-
-    svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, RxY, X, svd_runner)
-
-    postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=100)
-
-    test_snps_memory_factor = memory_factor
-
-    frame = do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, test_snps_memory_factor, G0.iid_count, G0.sid_count, G0.pos, pheno1,
-                         ss_per_snp, RxY, X, Xdagger, test_snps=test_snps1, runner=test_snps_runner,
-                         output_file_name=output_file_name, min_work_count=test_snps_min_work_count)
-
-    return frame
-
 def _cache_dict_fixup(cache_dict,chrom_list):
-    #If a dictionary, then fix up the values. Else, fix up the value and create a dictonary.
+    #If a dictionary, then fix up the values. Else, fix up the value and create a dictionary.
     if isinstance(cache_dict, collections.Mapping):
         return {k:_fixup_cache_value(v) for k,v in cache_dict.iteritems()}
     else:

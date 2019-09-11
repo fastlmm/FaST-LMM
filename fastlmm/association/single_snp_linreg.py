@@ -52,7 +52,7 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
     :param max_output_len: Maximum number of Pvalues to return. Default to None, which means 'Return all'.
     :type max_output_len: number
     
-    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.
+    :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
     :type output_file_name: file name
 
     :param GB_goal: gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks of size iid_count,

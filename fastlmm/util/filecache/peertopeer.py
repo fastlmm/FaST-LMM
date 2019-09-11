@@ -1,34 +1,44 @@
 import re
+import os
+import psutil
+import logging
 from contextlib import contextmanager
 import subprocess
 from fastlmm.util.filecache import FileCache
+import pysnptools.util as pstutil #don't confuse pstutil (pysnptools) with psutil (process)
 
 #!!!cmk update everyting and confirm testing
+#!!!cmk str of PeerToPeer should not show LocalCache unless necessary.
+#!!!cmk local_lambda should be simple in simiple cases
 
-class FileShare(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all these classes in their own file)
+class PeerToPeer(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all these classes in their own file)
     #Later features:
     #   Limit the amount of copying for a given file
     #   Work even when multiple tasks on same node ask for the same file
     #   Get open_read,close to work with python With statement
     #   Have a way to clean up lost files
-    def __init__(self,directory,local_lambda,leave_space=0):
-        super(FileShare, self).__init__()
-        if isinstance(directory,str):
-            directory = LocalCache(directory)
-        self.directory = directory
-        self.local_lambda = local_lambda
+    def __init__(self,common_directory,id_and_path_function,leave_space=0):
+        from fastlmm.util.filecache import LocalCache
+        super(PeerToPeer, self).__init__()
+        shared_directory_str = str(common_directory)
+        if isinstance(common_directory,str):
+            common_directory = LocalCache(common_directory)
+        self.common_directory = common_directory
+        self.id_and_path_function = id_and_path_function
         self.leave_space = leave_space
-        assert not self.directory._simple_file_exists("main.txt"), "A directory cannot exist where a file already exists."
-
+        assert not self.common_directory._simple_file_exists("main.txt"), "A common_directory cannot exist where a file already exists."
+        self._str = "{0}('{1}',id_and_path_function=...{2}')".format(self.__class__.__name__,shared_directory_str,'' if self.leave_space==0 else ',leave_space={0}'.format(leave_space))
+        #!!!cmk test  if self.leave_space==0
+        #!!!cmk test on one machine and multiple processes
     def __repr__(self): 
-        return "{0}('{1}','{2}')".format(self.__class__.__name__,self.directory,self.leave_space)
+        return self._str
 
     @property
     def name(self):
-        return self.directory
+        return self.common_directory
 
     def _simple_file_exists(self,simple_file_name):
-        return self.directory.file_exists(simple_file_name+"/main.txt")
+        return self.common_directory.file_exists(simple_file_name+"/main.txt")
 
     def _far_file_sequence(self,dir_path):
         storage_list = [f for f in dir_path.walk() if self.copy_main_pattern.match(f)]
@@ -59,8 +69,8 @@ class FileShare(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all 
         #Ask origin for randomized list of copies (the last one will be the origin, but not all have to be included)
         #Try getting each copy. If all fail, then fail
         #Register local copy with the origin
-        dir_path=self.directory.join(simple_file_name)
-        unique_name, root = self.local_lambda()
+        dir_path=self.common_directory.join(simple_file_name)
+        unique_name, root = self.id_and_path_function()
         local_path = root + "/" + simple_file_name
         pstutil.create_directory_if_necessary(local_path,isfile=True)
         copy_name = "copy_{0}.txt".format(unique_name)
@@ -165,7 +175,7 @@ class FileShare(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all 
 
     def _remove_local_if_any(self,path):
         if path is None:
-            unique_name, root = self.local_lambda()
+            unique_name, root = self.id_and_path_function()
             if os.path.exists(root):
                 shutil.rmtree(root)   
         else:
@@ -181,10 +191,10 @@ class FileShare(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all 
                 
         logging.info("open_write('{0}',size={1})".format(simple_file_name,size))
         #Register the file name in the directory
-        dir_path=self.directory.join(simple_file_name)
+        dir_path=self.common_directory.join(simple_file_name)
         assert not dir_path._simple_file_exists("main.txt"), "Can't open a file for write if it already exists."
         assert not self._at_least_one(dir_path._simple_walk()), "Can't open a file for write if a directory with files already has the same name ({0},{1})".format(self,simple_file_name)
-        unique_name, root = self.local_lambda()
+        unique_name, root = self.id_and_path_function()
         local_path = root + "/" + simple_file_name
         #Anything in storage (file or directory) can be cleaned up.
         self._create_directory(local_path)
@@ -203,18 +213,18 @@ class FileShare(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all 
 
 
     def _remove_internal(self, path):
-        for storage_item in self.directory.walk(path):
-            storage_path = self.directory.load(storage_item)
+        for storage_item in self.common_directory.walk(path):
+            storage_path = self.common_directory.load(storage_item)
             if storage_path != "":  #Dibs files don't point anywhere, so we don't need to delete the file they point to.
                 try:
                     logging.debug("/tos.remove('{0}')".format(storage_path))
                     os.remove(storage_path) #In storage, we remove the files, but not the folder
                 except:
                     logging.debug("Can't remove (because it's not there): '{0}'".format(storage_path))
-        self.directory.rmtree(path)
+        self.common_directory.rmtree(path)
 
     def _simple_rmtree(self,log_writer=None):
-        logging.info("rmtree -- {0}".format(self.directory))
+        logging.info("rmtree -- {0}".format(self.common_directory))
         self._remove_internal(None)
 
     def _simple_remove(self,simple_file_name,log_writer=None):
@@ -222,17 +232,17 @@ class FileShare(FileCache): #!!!cmk rename FileShare to PeerToPeer (and put all 
         self._remove_internal(simple_file_name)
 
     def _simple_getmtime(self,simple_file_name):
-        return self.directory._simple_getmtime(simple_file_name + "/main.txt")
+        return self.common_directory._simple_getmtime(simple_file_name + "/main.txt")
 
     def _simple_join(self,path):
         def closure():
-            unique_name, root = self.local_lambda()
+            unique_name, root = self.id_and_path_function()
             return unique_name, root+"/"+path
-        fs = FileShare(self.directory._simple_join(path), local_lambda=closure,leave_space=self.leave_space)
+        fs = PeerToPeer(self.common_directory._simple_join(path), local_lambda=closure,leave_space=self.leave_space)
         return fs
 
     def _simple_walk(self):
-        for storage_item in self.directory._simple_walk():
+        for storage_item in self.common_directory._simple_walk():
             head, tail = os.path.split(storage_item)
             if tail == "main.txt":
                 yield head

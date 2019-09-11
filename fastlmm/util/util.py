@@ -435,37 +435,40 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
     """
     Function to create a Manhattan plot.  See http://en.wikipedia.org/wiki/Manhattan_plot.
 
-    Args:
-        chr_pos_pvalue_array:   an n x 3 numpy array. The three columns are the chrom number 
+    :param chr_pos_pvalue_array: an n x 3 numpy array. The three columns are the chrom number 
                                 (as a number), the position, and pvalue.
-                                :type chr_pos_pvalue_array: numpy array
-        pvalue_line:            (Default: None). If given, draws a line at that PValue.
-                                :type pvalue_line: a 'pheno dictionary' or a string
-        plot_threshold:         plot only SNPs that achieve a P-value smaller than pvalue_threshold
+    :type chr_pos_pvalue_array: numpy array
+    :param pvalue_line:         (Default: None). If given, draws a line at that PValue.
+    :type pvalue_line: a 'pheno dictionary' or a string
+    :param plot_threshold:      plot only SNPs that achieve a P-value smaller than pvalue_threshold
                                 to speed up plotting
-        vline_significant:      boolean. Draw a vertical line at each significant Pvalue?
-                                :rtype: none, but changes the global current figure.
-        marker:                 marker for the scatter plot. default: "o"
-        chromosome_starts:      [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
+    :type pvalue_line:          number
+    :param vline_significant:   Draw a vertical line at each significant Pvalue? (Default: False)
+    :type vline_significant:    Boolean
+    :param marker:              marker for the scatter plot. default: "o"
+    :type marker:               string
+    :param chromosome_starts:   chromosome, cumulative start position, cumulative stop position
                                 cumulative chromosome starts, for plotting. If None (default), this is estimated from data
-        xaxis_unit_bp:          plot cumulative position in basepair units on x axis? If False, only 
+    :type chromosome_starts:    [Nchrom x 3] ndarray: 
+    :param xaxis_unit_bp:       plot cumulative position in basepair units on x axis? If False, only 
                                 use rank of SNP positions. (default: True)
-        alpha:                  alpha (opaquness) for P-value markers in scatterplot (default 0.5)
+    :type xaxis_unit_bp:        Boolean
+    :param alpha:               alpha (opaqueness) for P-value markers in scatterplot (default 0.5)
+    :type alpha:                number
 
-    Returns:
-        chromosome_starts       [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
+    :rtype:                     chromosome_starts       [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
                                 cumulative chromosome starts used in plotting.
 
     :Example:
 
-    >>> from fastlmm.association import single_snp
-    >>> from pysnptools.snpreader import Bed
-    >>> import matplotlib.pyplot as plt
-    >>> import fastlmm.util.util as flutil
-    >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-    >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, h2=.2, count_A1=False)
-    >>> #chromosome_starts = flutil.manhattan_plot(results_dataframe[["Chr", "ChrPos", "PValue"]],pvalue_line=1e-7)
-    >>> #plt.show()
+        >>> from fastlmm.association import single_snp
+        >>> from pysnptools.snpreader import Bed
+        >>> import matplotlib.pyplot as plt
+        >>> import fastlmm.util as flutil #!!!cmk be sure this is run
+        >>> pheno_fn = "../feature_selection/examples/toydata.phe"
+        >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, h2=.2, count_A1=False)
+        >>> chromosome_starts = flutil.manhattan_plot(results_dataframe[["Chr", "ChrPos", "PValue"]],pvalue_line=1e-7)
+        >>> #plt.show()
 
     """
     import matplotlib

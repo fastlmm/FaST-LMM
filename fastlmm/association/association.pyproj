@@ -6,7 +6,7 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test_single_snp_scale.py</StartupFile>
+    <StartupFile>single_snp_scale.py</StartupFile>
     <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
