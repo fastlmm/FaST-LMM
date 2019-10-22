@@ -37,34 +37,42 @@ def single_snp(test_snps, pheno, K0=None,
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
     (For backwards compatibility, you may use 'leave_out_one_chrom=False' to skip cross validation, but that is not recommended.)
 
-    :param test_snps: SNPs to test. Can be any :class:`.SnpReader`. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+    :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. 
+           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type test_snps: a :class:`.SnpReader` or a string
+    :type test_snps: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param pheno: A single phenotype: Can be any :class:`.SnpReader`, for example, :class:`.Pheno` or :class:`.SnpData`.
+    :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
+           `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            Any IIDs with missing values will be removed.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type pheno: a :class:`.SnpReader` or a string
+    :type pheno: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param K0: SNPs from which to create a similarity matrix. If not given, will use test_snps.
-           Can be any :class:`.SnpReader`. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-           (When leave_out_one_chrom is False, can be a :class:`.KernelReader` or a :class:`.KernelNpz`-formated file name.)
-    :type K0: :class:`.SnpReader` or a string (or :class:`.KernelReader`)
+           Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. 
+           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+           (When leave_out_one_chrom is False, can be a `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+           or a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
+    :type K0: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+           (or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
     :param K1: SNPs from which to create a second similarity matrix, optional. (Also, see 'mixing').
-           Can be any :class:`.SnpReader`. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-           (When leave_out_one_chrom is False, can be a :class:`.KernelReader` or a :class:`.KernelNpz`-formated file name.)
-    :type K1: :class:`.SnpReader` or a string (or :class:`.KernelReader`)
+           Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
+           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+           (When leave_out_one_chrom is False, can be a `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+           or a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
+    :type K1: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+           (or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
     :param mixing: Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1 relative to K0.
             If you give no mixing number and a K1 is given, the best weight will be learned.
     :type mixing: number
 
-    :param covar: covariate information, optional: Can be any :class:`.SnpReader`, for example, :class:`.Pheno` or :class:`.SnpData`.
+    :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type covar: a :class:`.SnpReader` or a string
+    :type covar: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
            (Warning: setting False can cause proximal contamination.)
@@ -105,14 +113,14 @@ def single_snp(test_snps, pheno, K0=None,
     :type force_low_rank: Boolean
 
     :param G0: Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.
-    :type G0: :class:`.SnpReader` or a string (or :class:`.KernelReader`)
+    :type G0: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
     :param G1: Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.
-    :type G1: :class:`.SnpReader` or a string (or :class:`.KernelReader`)
+    :type G1: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
-    :param runner: a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+    :param runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
         If not given, the function is run locally.
-    :type runner: a runner.
+    :type runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
     :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
@@ -407,7 +415,7 @@ class _Mixer(object):
         else:
             mixer.do_g = False
             if sid_count_0 > 0: #!!!but what if we have SNP data but still need to remember the standardizer?
-                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=True,return_trained=True)
+                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=True,return_trained=True)#!!!pass in a new argument, the kernel_standardizer(???)
 
             if sid_count_1 > 0:
                 K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=True,return_trained=True)
@@ -553,6 +561,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         if mixer.do_g:
             lmm = lmm_cov(X=covar, Y=y, K=None, G=K.snpreader.val, inplace=True)
         else:
+            #print(covar.sum(),y.sum(),K.val.sum(),covar[0],y[0],K.val[0,0])
             lmm = lmm_cov(X=covar, Y=y, K=K.val, G=None, inplace=True)
 
         if h2 is None:
@@ -724,6 +733,19 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+
+    #import os
+    #os.chdir(r'D:\OneDrive\programs\fastlmm\fastlmm\association')
+
+    #import logging
+    #logging.basicConfig(level=logging.DEBUG)
+
+    #from fastlmm.association import single_snp
+    #from pysnptools.snpreader import Bed
+    #logging.basicConfig(level=logging.INFO)
+    #pheno_fn = "../feature_selection/examples/toydata.phe"
+    #results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
+    #print results_dataframe
 
     import doctest
     doctest.testmod()

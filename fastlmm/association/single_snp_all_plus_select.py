@@ -157,24 +157,24 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     All work is done via 'leave_out_one_chrom', that one chromosome is tested and the kernels are constructed from the other chromosomes.
     Will reorder and intersect IIDs as needed.
 
-    :param test_snps: SNPs to test. Can be any :class:`.SnpReader`. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+    :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type test_snps: a :class:`.SnpReader` or a string
+    :type test_snps: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param pheno: A single phenotype: Can be any :class:`.SnpReader`, for example, :class:`.Pheno` or :class:`.SnpData`.
+    :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            Any IIDs with missing values will be removed.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type pheno: a :class:`.SnpReader` or a string
+    :type pheno: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param G: SNPs from which to create a similarity matrix of the top *k* SNPs. If not given, will use test_snps.
-           Can be any :class:`.SnpReader`. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-    :type G: :class:`.SnpReader` or a string
+           Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+    :type G: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param covar: covariate information, optional: Can be any :class:`.SnpReader`, for example, :class:`.Pheno` or :class:`.SnpData`.
+    :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type covar: a :class:`.SnpReader` or a string
+    :type covar: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param k_list: Values of *k* (in addition to 0) to test. Default to [1,2,4,8,...8192].
     :type k_list: list of numbers
@@ -210,9 +210,9 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     :type do_plot: boolean
 
 
-    :param runner: a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+    :param runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
         If not given, the function is run locally.
-    :type runner: a runner.
+    :type runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
     :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.

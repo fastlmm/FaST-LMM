@@ -375,17 +375,17 @@ class FastLmmSet: # implements IDistributable
         logging_handler.close()
         return self.outfile
         
-    def getRandSnpSignal(self, nSnp, nInd,genphen,newseed):
-        from numpy.random import RandomState
-        import pysnptools.util.gensnp as gp #!!!cmk does this work?
-        randomstate = RandomState(newseed) 
-        nSnp=genphen["numBackSnps"]
-        #randsnps=self.alt_snpreader.read(RandomSnpSet(nSnp,newseed))     #this appears to be VERY slow
-        #snps=randsnps['snps']         
-        snps=gp.gensnps(nInd,nSnp)                        
-        randG = snps/sp.sqrt(nSnp) #pre-process for kernel
-        y_randG=sp.sqrt(genphen["varBack"])*randG.dot(randomstate.rand(nSnp,1))            
-        return y_randG
+    #def getRandSnpSignal(self, nSnp, nInd,genphen,newseed):
+    #    from numpy.random import RandomState
+    #    import pysnptools.util.gensnp as gp #!!! does this work?
+    #    randomstate = RandomState(newseed) 
+    #    nSnp=genphen["numBackSnps"]
+    #    #randsnps=self.alt_snpreader.read(RandomSnpSet(nSnp,newseed))     #this appears to be VERY slow
+    #    #snps=randsnps['snps']         
+    #    snps=gp.gensnps(nInd,nSnp)                        
+    #    randG = snps/sp.sqrt(nSnp) #pre-process for kernel
+    #    y_randG=sp.sqrt(genphen["varBack"])*randG.dot(randomstate.rand(nSnp,1))            
+    #    return y_randG
 
     def TESTBEFOREUSINGKfromAltSnps(self, N, SNPsalt=None):        
        

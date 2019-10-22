@@ -52,7 +52,7 @@ class TestEpistasis(unittest.TestCase):
         referenceOutfile = TestFeatureSelection.reference_file("epistasis/topsnps.pairs.txt")
 
         import pandas as pd
-        table = pd.read_table(referenceOutfile,sep="\t") # We've manually remove all comments and blank lines from this file
+        table = pd.read_csv(referenceOutfile,sep="\t") # We've manually remove all comments and blank lines from this file
         assert len(pvalue_list) == len(table)
         for row in table.iterrows():
             snp0cpp,snp1cpp,pvaluecpp,i1,i2 = row[1]

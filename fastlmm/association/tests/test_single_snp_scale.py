@@ -1,19 +1,20 @@
 import doctest
 import unittest
 import numpy as np
-import pysnptools.util as pstutil
-from pysnptools.snpreader import Bed
 import logging
-from pysnptools.snpreader import SnpGen
-import tempfile
-from fastlmm.association import single_snp
 import os
 import pandas as pd
-from fastlmm.association import single_snp_scale
-from fastlmm.util.filecache import LocalCache
-from fastlmm.util.filecache import DistributedBed
-from pysnptools.util.mapreduce1.runner import LocalMultiProc
+import tempfile
 import shutil
+
+import pysnptools.util as pstutil
+from pysnptools.snpreader import Bed, DistributedBed
+from pysnptools.util.filecache import LocalCache
+from pysnptools.snpreader import SnpGen
+
+from fastlmm.association import single_snp
+from fastlmm.association import single_snp_scale
+from pysnptools.util.mapreduce1.runner import LocalMultiProc
 
 class TestSingleSnpScale(unittest.TestCase):
     @classmethod
@@ -139,12 +140,6 @@ class TestSingleSnpScale(unittest.TestCase):
         results_df = single_snp_scale(test_snps=test_snps3_dist, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed, output_file_name=output_file)
         self.compare_files(results_df,"old_one")
     
-    def test_net_use(self):#!!!cmk make sure this gets run
-        logging.info("test_net_use")
-        from fastlmm.util.filecache import PeerToPeer
-        FileShare._net_use(r"\\localhost\scratch") #!!!cmk will this run on linux?
-        print "done"
-
     def test_one_chrom(self):
         logging.info("test_one_chrom")
 

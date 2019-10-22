@@ -5,7 +5,6 @@ import fastlmm.util.mingrid as mingrid
 import pdb
 import logging
 
-#!!!cmk doc stats
 class chi2mixture(object):
     '''
     mixture here denotes the weight on the non-zero dof compnent

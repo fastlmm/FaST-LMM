@@ -400,7 +400,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
         size = os.path.getsize(local_path)
         piece_count = self._get_piece_count(size)
 
-        with _progress_reporter("upload", size, updater=updater) as updater2:
+        with _file_transfer_reporter("upload", size, updater=updater) as updater2:
             def mapper_closure(piece_index):
                 t00 = time.time()
                 start = size * piece_index // piece_count
@@ -450,7 +450,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
         """
         Download a file from the container.
 
-                _progress_reporter    : is a python context manager what is initialized with a size and that yields a updater method that can be called with a byte count as the download progresses.
+                _file_transfer_reporter    : is a python context manager what is initialized with a size and that yields a updater method that can be called with a byte count as the download progresses.
 
         """
         #self._run_once()
@@ -477,7 +477,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
                 fp.seek(size-1)
                 fp.write("\0")
 
-        with _progress_reporter("download", size, updater=updater) as updater:
+        with _file_transfer_reporter("download", size, updater=updater) as updater:
             def mapper_closure(piece_index):
                 blobetc = blob_list[piece_index]
                 start, stop = start_stop_pairs[piece_index]
@@ -650,7 +650,7 @@ class TestAzureShardContainer(unittest.TestCase):
             self.container.remove(azure_path)
         assert not self.container.file_exists(azure_path)
 
-        with _progress_reporter("test_big_file_with_message",self.big_size) as updater:
+        with _file_transfer_reporter("test_big_file_with_message",self.big_size) as updater:
             self.container.upload(self.big_file_name,azure_path,updater=updater)
 
         self.container.remove(azure_path)
@@ -759,7 +759,7 @@ class TestAzureShardContainer(unittest.TestCase):
                     if big_size > 0:
                         fp.seek(big_size)
                         fp.write("\0")
-                with _progress_reporter("'{0}'".format(azure_path),big_size) as updater:
+                with _file_transfer_reporter("'{0}'".format(azure_path),big_size) as updater:
                     self.container.upload(file_name,azure_path,updater=updater)
                 os.remove(file_name)
             return azure_path
@@ -778,7 +778,7 @@ class TestAzureShardContainer(unittest.TestCase):
                 storage.remove(short_name)
             with storage.open_write(short_name,size=big_size) as file_name:
                 logging.info("Downloading {0}".format(azure_path))
-                with _progress_reporter("Downloading {0}".format(azure_path),big_size) as updater:
+                with _file_transfer_reporter("Downloading {0}".format(azure_path),big_size) as updater:
                     t0 = time.time()
                     container.download(azure_path,file_name,updater=updater)
                     mbps0 = _mbps(big_size, time.time()-t0)

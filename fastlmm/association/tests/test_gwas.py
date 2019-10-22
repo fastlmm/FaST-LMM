@@ -450,7 +450,7 @@ class GwasTest(object):
 
         import pandas as pd
         
-        table = pd.read_table(self.out_file)
+        table = pd.read_csv(self.out_file,sep='\t')
         self.sorted_p_values = table["Pvalue"].tolist()
         self.sorted_snps = table["SNP"].tolist()
         

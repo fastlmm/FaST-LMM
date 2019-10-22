@@ -51,7 +51,7 @@ class TestSingleSnp(unittest.TestCase):
             frame_log_delta = single_snp(test_snps=snps[:,test_idx], pheno=pheno, G0=G0,G1=G1, covar=covar,log_delta=0,leave_out_one_chrom=False,count_A1=False)
             for frame in [frame_h2, frame_log_delta]:
                 referenceOutfile = TestFeatureSelection.reference_file("single_snp/topsnps.single.txt")
-                reference = pd.read_table(referenceOutfile,sep="\t") # We've manually remove all comments and blank lines from this file
+                reference = pd.read_csv(referenceOutfile,sep="\t") # We've manually remove all comments and blank lines from this file
                 assert len(frame) == len(reference)
                 for _, row in reference.iterrows():
                     sid = row.SNP

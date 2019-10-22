@@ -95,51 +95,6 @@ https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipy
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 .. autofunction:: fastlmm.util.manhattan_plot
 
-*******************************************
-:mod:`util.filecache` Module
-*******************************************
-.. automodule:: fastlmm.util.filecache
-    :members:
-    :undoc-members:
-	:show-inheritance:
-	:special-members:
-
-:class:`util.filecache.FileCache`
-++++++++++++++++++++++++++++++++++++++++++++++++++
-.. autoclass:: fastlmm.util.filecache.FileCache
-    :members:
-    :undoc-members:
-	:show-inheritance:
-	:special-members:
-    :exclude-members:
-
-:class:`util.filecache.LocalCache`
-++++++++++++++++++++++++++++++++++++++++++++++++++
-.. autoclass:: fastlmm.util.filecache.LocalCache
-    :members:
-    :undoc-members:
-	:show-inheritance:
-	:special-members:
-    :exclude-members:
-
-:class:`util.filecache.PeerToPeer`
-++++++++++++++++++++++++++++++++++++++++++++++++++
-.. autoclass:: fastlmm.util.filecache.PeerToPeer
-    :members:
-    :undoc-members:
-	:show-inheritance:
-	:special-members:
-    :exclude-members:
-
-:class:`util.filecache.DistributedBed`
-++++++++++++++++++++++++++++++++++++++++++++++++++
-.. autoclass:: fastlmm.util.filecache.DistributedBed
-    :members:
-    :undoc-members:
-	:show-inheritance:
-	:special-members:
-    :exclude-members:
-
  
 .. only:: html 
 

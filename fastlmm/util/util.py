@@ -334,7 +334,6 @@ def which_opposite(vec):
             return(i)
     return(-1)
 
-#!!!cmk promote and document and rename
 def generate_permutation(numbersamples,randomSeedOrState):
     from numpy.random import RandomState
 
@@ -430,7 +429,6 @@ def _color_list(chr_list,rle):
     result = [index_to_color[chr_to_index[chr]%len(index_to_color)] for chr in chr_list]
     return result
 
-#!!!cmk add to docs
 def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vline_significant=False,marker="o", chromosome_starts=None, xaxis_unit_bp=True, alpha=0.5):
     """
     Function to create a Manhattan plot.  See http://en.wikipedia.org/wiki/Manhattan_plot.
@@ -439,18 +437,18 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
                                 (as a number), the position, and pvalue.
     :type chr_pos_pvalue_array: numpy array
     :param pvalue_line:         (Default: None). If given, draws a line at that PValue.
-    :type pvalue_line: a 'pheno dictionary' or a string
-    :param plot_threshold:      plot only SNPs that achieve a P-value smaller than pvalue_threshold
-                                to speed up plotting
     :type pvalue_line:          number
-    :param vline_significant:   Draw a vertical line at each significant Pvalue? (Default: False)
+    :param plot_threshold:      (Default: 1) Plot only SNPs that achieve a P-value smaller than pvalue_threshold
+                                to speed up plotting
+    :type plot_threshold:       number
+    :param vline_significant:   If true, draw a vertical line at each significant Pvalue (Default: False)
     :type vline_significant:    Boolean
     :param marker:              marker for the scatter plot. default: "o"
     :type marker:               string
     :param chromosome_starts:   chromosome, cumulative start position, cumulative stop position
                                 cumulative chromosome starts, for plotting. If None (default), this is estimated from data
-    :type chromosome_starts:    [Nchrom x 3] ndarray: 
-    :param xaxis_unit_bp:       plot cumulative position in basepair units on x axis? If False, only 
+    :type chromosome_starts:    [Nchrom x 3] ndarray
+    :param xaxis_unit_bp:       If true, plot cumulative position in basepair units on x axis. If False, only 
                                 use rank of SNP positions. (default: True)
     :type xaxis_unit_bp:        Boolean
     :param alpha:               alpha (opaqueness) for P-value markers in scatterplot (default 0.5)
@@ -464,7 +462,7 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
         >>> from fastlmm.association import single_snp
         >>> from pysnptools.snpreader import Bed
         >>> import matplotlib.pyplot as plt
-        >>> import fastlmm.util as flutil #!!!cmk be sure this is run
+        >>> import fastlmm.util as flutil
         >>> pheno_fn = "../feature_selection/examples/toydata.phe"
         >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, h2=.2, count_A1=False)
         >>> chromosome_starts = flutil.manhattan_plot(results_dataframe[["Chr", "ChrPos", "PValue"]],pvalue_line=1e-7)
@@ -472,8 +470,9 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
 
     """
     import matplotlib
-    matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
+    matplotlib.use('agg',warn=False) #This lets it work even on machines without graphics displays
     import matplotlib.pyplot as plt
+    plt.switch_backend('agg')
 
     # create a copy of the data and sort it by chrom and then position
     array = np.array(chr_pos_pvalue_array)

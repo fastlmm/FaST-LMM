@@ -6,7 +6,6 @@ import pandas as pd
 import scipy.stats as stats
 import numpy.linalg as la
 import time
-import tempfile
 from datetime import datetime
 import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed, Pheno, SnpData, SnpReader, SnpNpz
@@ -17,11 +16,11 @@ from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.util.intrangeset import IntRangeSet
 from pysnptools.util import log_in_place
 from pysnptools.util import format_delta
-from pysnptools.util import _progress_reporter
+from pysnptools.util import _file_transfer_reporter
 from pysnptools.snpreader import SnpMemMap
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpGen
-from fastlmm.util.filecache import LocalCache, FileCache
+from pysnptools.util.filecache import LocalCache, FileCache
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
 from fastlmm.util.mingrid import minimize1D
 from fastlmm.util.matrix.bigsvd import big_sdd
@@ -46,11 +45,11 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     * uses exactly one kernel constructed from SNPs
     * searches for the best ``h2``. (:func:`.single_snp`'s ``h2=None``)
 
-
     :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
     :type test_snps: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
+    :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
+           `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            Any IIDs with missing values will be removed.
     :type pheno: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
@@ -60,18 +59,20 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
     :type G0: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_,.
+    :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_,
+           or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_,.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
     :type covar: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param cache: Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
                   By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set, Python places the temp directory under it.)
                   A string can be given and will be interpreted as the path of a local directory to use as a cache. (The local
-                  directory will **not** be automatically erased and so must be user managed.) A :class:`.FileCache` instance can be given, which provides a
-                  method to specify a cluster-distributed cache. (:class:`.FileCache`'s will **not** be automatically erased and must be user managed.)
-                  Finally, a dictionary from 0 to 22 (inclusive) to :class:`.FileCache` (or None or string)
+                  directory will **not** be automatically erased and so must be user managed.) A `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_
+                  instance can be given, which provides a
+                  method to specify a cluster-distributed cache. (`FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_'s will **not** be automatically erased and must be user managed.)
+                  Finally, a dictionary from 0 to 22 (inclusive) to `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_ (or None or string)
                   can be given. The dictionary specifies a cache for general work (0) and for every chromosome (1 to 22, inclusive).  
-    :type cache: None or string or :class:`.FileCache` or dictionary from number to a :class:`.FileCache`.
+    :type cache: None or string or `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_ or dictionary from number to a `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_.
 
     :param memory_factor: How much memory to use proportional to ``G0``, optional.
             If not given, will assume that it can use memory about the same size as one copy of ``G0``.
@@ -87,17 +88,18 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     :param min_work_count: When running the work on a cluster, the **minimum** number of pieces in which to divide the work. Defaults to 1, which is usually fine.
     :type min_work_count: integer
 
-    :param gtg_runner: the runner to use instead of ``runner`` for the GtG stage of work. #!!!cmk need to tell the stages (see powerpoint)
-    :type gtg_runner: a runner.
+    :param gtg_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the GtG stage of work.
+        For an overview of the stages, see below.
+    :type gtg_runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
     :param gtg_min_work_count: the min_work_count to use instead of ``min_work_count`` on the GtG stage of work.
     :type gtg_min_work_count: integer
 
-    :param svd_runner: the runner to use instead of ``runner`` for the SVD stage of work.
-    :type svd_runner: a runner.
+    :param svd_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the SVD stage of work.
+    :type svd_runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
     :param postsvd_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the PostSVD stage of work.
-    :type postsvd_runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
+    :type postsvd_runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
 
     :param postsvd_min_work_count: the min_work_count to use instead of ``min_work_count`` on the PostSVD stage of work.
     :type postsvd_min_work_count: integer
@@ -131,6 +133,17 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     >>> results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
     >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
     snp1200_m0_.37m1_.36 0.0 500
+
+    The stages of processing are:
+
+    * 0: G - Read G0 the selected SNPs, standardize, regress out covariates, output G
+    * 1: GtG - Compute GtG = G.T x G
+    * 2: SVD - For each chromosome in the TestSNPs, extract the GtG for the chromosome, compute the singular value decomposition (SVD) on that GtG
+    * 3: PostSVD - Transform the 22 GtG SVD into 22 G SVD results called U1 .. U22. Find h2, the importance of person-to-person similarity.
+    * 4: TestSNPs - For each SNP, read its data, regress out covariates, use the appropriate U and compute the Pvalue.
+
+    All stages, except the last, can cache intermediate results. If the results of a stage found in the cache, that stage will be skipped.
+
 
     """
     #Fill in with the default runner and default min_work_count
@@ -387,7 +400,6 @@ def get_clear_local(file_cache):
 
     return clear_local_lambda
                 
-#!!!cmk make these start with _ to hide them a bit
 def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
     """
     Create a version of the selected SNPs that is unit standardized. It will also be 'DiagKToN' standardization ready (see PySnpTools for info on 'DiagKToN'). The result
@@ -418,7 +430,7 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
 
     logging.info("About to allocate memmap of G0_data.memmap")
 
-    with _progress_reporter("G0_data.memmap upload", size=0, updater=None) as updater2:
+    with _file_transfer_reporter("G0_data.memmap upload", size=0, updater=None) as updater2:
         with file_cache.open_write(fn_G0_memmap,size=8*G0.iid_count*G0.sid_count,updater=updater2) as G0_memmap_storage_file_name:
             G0_data_memmap = SnpMemMap.empty(iid=G0.iid,sid=G0.sid,filename=G0_memmap_storage_file_name,pos=G0.pos,order='F') #!!!is this the best order? dtype default ok?
             logging.info("Finished with allocation of memmap of G0_data.memmap")
@@ -772,7 +784,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                     fp_U.seek(U_snp_mem_map.offset)
                     with log_in_place("Creating U file", logging.INFO) as log_writer:
                         for sid_index in xrange(sid_count):
-                            if sid_index % 100 == 0: #!!!cmkuse something like log_freq instead of '100'
+                            if sid_index % 100 == 0: #!!!use something like log_freq instead of '100'
                                 log_writer("On sid {0} of {1}".format(sid_index,sid_count))
                             prev_stop = 0
                             for piece_index, (fn_U_piece, start_iid_index, stop_iid_index, _, _) in enumerate(fn_U_piece_list):
@@ -878,9 +890,9 @@ def __del__(test_snps):
     Close any open Bed files
     '''
     from pysnptools.snpreader._subset import _SnpSubset
-    from pysnptools.snpreader import SnpData
+    from pysnptools.snpreader import SnpData, _Distributed1Bed, DistributedBed
     from pysnptools.pstreader import _MergeRows, _MergeCols
-    from fastlmm.util.filecache.distributedbed import _Distributed1Bed, DistributedBed
+
     if isinstance(test_snps, Bed) or isinstance(test_snps, _Distributed1Bed):
         test_snps.__del__()
     elif isinstance(test_snps, SnpGen) or isinstance(test_snps, SnpData):
@@ -1117,20 +1129,11 @@ def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer)
 def _cache_dict_fixup(cache_dict,chrom_list):
     #If a dictionary, then fix up the values. Else, fix up the value and create a dictionary.
     if isinstance(cache_dict, collections.Mapping):
-        return {k:_fixup_cache_value(v) for k,v in cache_dict.iteritems()}
+        return {k:FileCache._fixup(v) for k,v in cache_dict.iteritems()}
     else:
-        cache_value = _fixup_cache_value(cache_dict)
+        cache_value = FileCache._fixup(cache_dict)
         return {chrom:cache_value for chrom in [0]+chrom_list}
 
-def _fixup_cache_value(cache_value):
-    if isinstance(cache_value,FileCache):
-        return cache_value
-    if cache_value is None:
-        dirpath = tempfile.mkdtemp()
-        return _fixup_cache_value(dirpath)
-    if isinstance(cache_value,str):
-        return LocalCache(cache_value)
-    raise Exception("Do not know how to make a FileCache from '{0}'".format(cache_value))
 
 #!!!if is useful, move near pysnptools's mapreduce.py (with better name)
 def map_reduceX(input_seq, mapper=_identity, reducer=list, runner=None,name=None):

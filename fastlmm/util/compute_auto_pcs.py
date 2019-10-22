@@ -6,14 +6,13 @@ import time
 from fastlmm.external.pca import PCA
 from pysnptools.snpreader import Bed
 
-#!!!cmk add to docs
 def compute_auto_pcs(snpreader, cutoff=.1, k_values=np.arange(11), output_file_name=None,count_A1=None):
     """
     Function automatically finds the best principle components (PCs)
 
     :param snpreader: SNPs for which to find the best PCs
           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-    :type snpreader: a :class:`.SnpReader` or a string
+    :type snpreader: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param cutoff: (default: .1) The degree of relatedness to remove before finding the best number of PCs.
         Relatedness is measured with a RRM (realized relationship matrix) so 0 is no relation, .5 is a sibling or parent, and 1 is self or twin.

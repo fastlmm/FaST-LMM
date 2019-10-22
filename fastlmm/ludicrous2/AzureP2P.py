@@ -41,7 +41,7 @@ def ip_address_local():
     root = r"\\{0}\scratch".format(unique_name)
     return unique_name, root
 
-def ip_address_pid_local():
+def ip_address_pid_local(): #!!! compare with ip_address_pid
     '''
     A function the returns 1. the ip address of the machine on which it is run and 2. a Windows file share on that machine called 'scratch\\\<pid>',
     where <pid> is the current process id.
