@@ -1,9 +1,11 @@
 FaST-LMM
 =================================
 
-FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.  This release contains the improvements described in Widmer _et al._, _Scientific Reports_ 2014, and tests for epistasis.
+FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both single-SNP and SNP-set
+genome-wide association studies (GWAS) on extremely large data sets.  This release contains the improvements described in Widmer _et al._, _Scientific Reports_ 2014,
+and tests for epistasis.
 
-Our documentation (including live examples) is also available as ipython notebooks:
+Our documentation (including live examples) is also available as IPython notebooks:
 
 * Main Functions: https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
 * Heritability with Spatial Correction (described in Heckerman _et al._, _PNAS_ 2016): https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb
@@ -45,7 +47,7 @@ Packages:
 We highly recommend using a python distribution such as 
 Anaconda (https://store.continuum.io/cshop/anaconda/) 
 or Enthought (https://www.enthought.com/products/epd/free/).
-Both these distributions can be used on linux and Windows, are free 
+Both these distributions can be used on Linux and Windows, are free 
 for non-commercial use, and optionally include an MKL-compiled distribution
 for optimal speed. This is the easiest way to get all the required package
 dependencies.
@@ -56,7 +58,7 @@ dependencies.
 
 Go to the directory where you copied the source code for fastlmm.
 
-On linux:
+On Linux:
 
 At the shell, type: 
 

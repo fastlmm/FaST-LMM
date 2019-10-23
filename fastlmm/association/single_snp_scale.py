@@ -38,30 +38,31 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     It gives the same results as :func:`.single_snp` but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
     runs require appropriate modules for parameters ``cache`` and ``runner``.)
 
-    It always:
+    Compared to :func:`.single_snp`, :func:`.single_snp_scale` always:
 
     * does cross validation of chromosomes (:func:`.single_snp`'s ``leave_out_one_chrom=True``)
     * creates a low-rank iid_count x sid_count kernel (:func:`.single_snp`'s ``force_low_rank=True``)
     * uses exactly one kernel constructed from SNPs
     * searches for the best ``h2``. (:func:`.single_snp`'s ``h2=None``)
 
-    :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+    :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
+          If you give a string, it should be the name of a `Bed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
     :type test_snps: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
            `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
-           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-           Any IIDs with missing values will be removed.
+           If you give a string, it should be the name of a `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_-formatted file.
+           Any individual with missing phenotype data will be removed from processing.
     :type pheno: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param G0: SNPs from which to create a similarity matrix. Defaults to ``test_snps``.
            Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
-           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+           If you give a string, it should be the name of a `Bed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
     :type G0: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_,
            or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_,.
-           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
+           If you give a string, it should be the name of a `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_-formatted file.
     :type covar: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param cache: Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
@@ -114,10 +115,10 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
     :type count_A1: bool
 
-    :param clear_local_lambda: A function to run at in the middle of the PostSVD stage, typically to clear unneeded large files from the local file cache.
+    :param clear_local_lambda: A function to run in the middle of the PostSVD stage, typically to clear unneeded large files from the local file cache.
     :type clear_local_lambda: function or lambda
 
-    :param force_python_only: (Default: False) Skip faster C++ code.
+    :param force_python_only: (Default: False) Skip faster C++ code. Used for debugging and testing.
 
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
 
@@ -136,13 +137,13 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     The stages of processing are:
 
-    * 0: G - Read G0 the selected SNPs, standardize, regress out covariates, output G
+    * 0: G - Read G0 (the selected SNPs), standardize, regress out covariates, output G
     * 1: GtG - Compute GtG = G.T x G
     * 2: SVD - For each chromosome in the TestSNPs, extract the GtG for the chromosome, compute the singular value decomposition (SVD) on that GtG
     * 3: PostSVD - Transform the 22 GtG SVD into 22 G SVD results called U1 .. U22. Find h2, the importance of person-to-person similarity.
-    * 4: TestSNPs - For each SNP, read its data, regress out covariates, use the appropriate U and compute the Pvalue.
+    * 4: TestSNPs - For each test SNP, read its data, regress out covariates, use the appropriate U and compute a Pvalue.
 
-    All stages, except the last, can cache intermediate results. If the results of a stage found in the cache, that stage will be skipped.
+    All stages, except the last, can cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.
 
 
     """

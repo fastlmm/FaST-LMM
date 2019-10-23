@@ -7,7 +7,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.3.00'
+version = '0.3.0'
 
 
 def readme():
@@ -41,7 +41,7 @@ class CleanCommand(Clean):
                     print "removing", tmp_fn
                     os.unlink(tmp_fn)
 
-# set up macro
+# set up macros
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
@@ -129,26 +129,28 @@ setup(
     author='MSR',
     author_email='fastlmm@microsoft.com',
     license='Apache 2.0',
-    packages=[
-        "fastlmm/association/tests", #!!!cmk update
+    packages=[ #basically, everything with a __init__.py
+        "fastlmm",
         "fastlmm/association",
-        "fastlmm/external/util",
+        "fastlmm/association/altset_list",
+        "fastlmm/association/tests",
         "fastlmm/external",
+        "fastlmm/external/util",
         "fastlmm/feature_selection",
         "fastlmm/inference",
+        "fastlmm/inference/tests",
+        "fastlmm/pyplink", #old snpreader
         "fastlmm/pyplink/altset_list", #old snpreader
         "fastlmm/pyplink/snpreader", #old snpreader
         "fastlmm/pyplink/snpset", #old snpreader
-        "fastlmm/pyplink", #old snpreader
-        "fastlmm/util/runner",
+        "fastlmm/util",
+        "fastlmm/util/stats",
+        "fastlmm/util/stats/matrix",
         "fastlmm/util/stats/quadform",
         "fastlmm/util/stats/quadform/qfc_src",
         "fastlmm/util/standardizer",
-        "fastlmm/util/stats",
-        "fastlmm/util",
-        "fastlmm",
     ],
-    package_data={"fastlmm/association" : [ #!!!cmk update
+    package_data={"fastlmm/association" : [
                        "Fastlmm_autoselect/FastLmmC.exe",
                        "Fastlmm_autoselect/libiomp5md.dll",
                        "Fastlmm_autoselect/fastlmmc",
@@ -164,7 +166,7 @@ setup(
                        "examples/toydata.bed",
                        "examples/toydata.bim",
                        "examples/toydata.cov",
-                       "examples/toydata.dat", #!!!cmk should these files be in fastlmm or pysnptools or both?
+                       "examples/toydata.dat",
                        "examples/toydata.fam",
                        "examples/toydata.iidmajor.hdf5",
                        "examples/toydata.map",
