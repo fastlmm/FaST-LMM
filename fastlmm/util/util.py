@@ -472,7 +472,7 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
     import matplotlib
     matplotlib.use('agg',warn=False) #This lets it work even on machines without graphics displays
     import matplotlib.pyplot as plt
-    plt.switch_backend('agg')
+    #plt.switch_backend('agg')
 
     # create a copy of the data and sort it by chrom and then position
     array = np.array(chr_pos_pvalue_array)
@@ -536,8 +536,10 @@ def _compute_x_positions_snps(positions, chromosome_starts):
     return cumulative_pos
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    plt.switch_backend('agg') #Needed so can test manhanttan_plot on machine with no DISPLAY
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
 
     import doctest
     doctest.testmod()

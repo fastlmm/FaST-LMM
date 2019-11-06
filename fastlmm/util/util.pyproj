@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9144f8b5-632b-4a72-bd8e-01d453affb5a}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>matrix\bigsvd.py</StartupFile>
+    <StartupFile>util.py</StartupFile>
     <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>
     </WorkingDirectory>

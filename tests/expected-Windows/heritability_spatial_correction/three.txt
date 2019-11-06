@@ -1,0 +1,2 @@
+phenotype	h2uncorr	SE (h2uncorr)	h2corr	SE (h2corr)	P (diff=0)	e2	SE (e2)	P(e2=0)	alpha	alpha_gxe2	gxe2	SE (gxe2)	P(gxe2=0)
+pheno0	0.99999		0.99999			0.0			100	100	0.99999		

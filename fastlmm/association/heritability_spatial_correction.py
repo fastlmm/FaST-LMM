@@ -203,6 +203,7 @@ def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power,  
     logging.info("run_line: {0}".format(ret))
     return ret
 
+#!!!cmk is this in the docs?
 def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_list, alpha_power, pheno, 
                      map_function = map, cache_folder=None, 
                      jackknife_count=500, permute_plus_count=10000, permute_times_count=10000, seed=0,
@@ -266,7 +267,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
     :type count_A1: bool
 
-    :rtype: Pandas dataframe with one row per phenotyper. Columns include "h2uncorr", "h2corr", etc.
+    :rtype: Pandas dataframe with one row per phenotype. Columns include "h2uncorr", "h2corr", etc.
 
     """
 
@@ -372,25 +373,30 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
     for delcol in ["a2","e2","h2corr","h2uncorr","nLLcorr","nLLuncorr","diff","permute_plus_count","permute_plus_index","permute_plus_seed","permute_times_count","permute_times_index","permute_times_seed","jackknife_count","jackknife_seed"]:
         del results_gxe2[delcol]
 
-    #Use a pivottable to compute the jackknifed SE's
-    corr_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][0] for phen in jackknife_table.phen])
-    jk_table_corr = pd.pivot_table(jackknife_table[corr_rows], values=['h2uncorr','h2corr','diff','e2'], index=['phen'], columns=[], aggfunc=np.std)
-    jk_table_corr["h2uncorr SE"] = jk_table_corr["h2uncorr"] * np.sqrt(jackknife_count_actual-1)
-    jk_table_corr["h2corr SE"] = jk_table_corr["h2corr"] * np.sqrt(jackknife_count_actual-1)
-    jk_table_corr["diff SE"] = jk_table_corr["diff"] * np.sqrt(jackknife_count_actual-1)
-    jk_table_corr["e2 SE"] = jk_table_corr["e2"] * np.sqrt(jackknife_count_actual-1)
-    del jk_table_corr["h2uncorr"]
-    del jk_table_corr["h2corr"]
-    del jk_table_corr["diff"]
-    del jk_table_corr["e2"]
-    gxe2_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][1] for phen in jackknife_table.phen])
-    jk_table_gxe2 = pd.pivot_table(jackknife_table[gxe2_rows], values=['gxe2'], index=['phen'], columns=[], aggfunc=np.std)
-    jk_table_gxe2["gxe2 SE"] = jk_table_gxe2["gxe2"] * np.sqrt(jackknife_count_actual-1)
-    del jk_table_gxe2["gxe2"]
+    if jackknife_count_actual > 0:
+        #Use a pivottable to compute the jackknifed SE's
+        corr_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][0] for phen in jackknife_table.phen])
+        jk_table_corr = pd.pivot_table(jackknife_table[corr_rows], values=['h2uncorr','h2corr','diff','e2'], index=['phen'], columns=[], aggfunc=np.std)
+        jk_table_corr["h2uncorr SE"] = jk_table_corr["h2uncorr"] * np.sqrt(jackknife_count_actual-1)
+        jk_table_corr["h2corr SE"] = jk_table_corr["h2corr"] * np.sqrt(jackknife_count_actual-1)
+        jk_table_corr["diff SE"] = jk_table_corr["diff"] * np.sqrt(jackknife_count_actual-1)
+        jk_table_corr["e2 SE"] = jk_table_corr["e2"] * np.sqrt(jackknife_count_actual-1)
+        del jk_table_corr["h2uncorr"]
+        del jk_table_corr["h2corr"]
+        del jk_table_corr["diff"]
+        del jk_table_corr["e2"]
+        gxe2_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][1] for phen in jackknife_table.phen])
+        jk_table_gxe2 = pd.pivot_table(jackknife_table[gxe2_rows], values=['gxe2'], index=['phen'], columns=[], aggfunc=np.std)
+        jk_table_gxe2["gxe2 SE"] = jk_table_gxe2["gxe2"] * np.sqrt(jackknife_count_actual-1)
+        del jk_table_gxe2["gxe2"]
 
-    #Join the SE's to the main results table
-    results_corr = results_corr.join(jk_table_corr, on='phen')
-    results_gxe2 = results_gxe2.join(jk_table_gxe2, on='phen')
+        #Join the SE's to the main results table
+        results_corr = results_corr.join(jk_table_corr, on='phen')
+        results_gxe2 = results_gxe2.join(jk_table_gxe2, on='phen')
+    else:
+        for col in ['h2uncorr SE','h2corr SE','diff SE','e2 SE']:
+            results_corr[col] = np.NaN
+        results_gxe2['gxe2 SE'] = np.NaN
 
     #compute pValue columns
     results_corr["P (diff=0)"] = stats.t.sf(results_corr["diff"]/results_corr["diff SE"],df=jackknife_count_actual-1)*2 #two sided
@@ -493,7 +499,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
         perm_table = permtimes_table[permtimes_table.permute_times_index!=-1]
         resultx = perm_table.join(real_result_permtimes, on='phen')
         resultx['P(gxe2)'] = [1.0 if b else 0.0 for b in resultx.nLL_gxe2 <= resultx.nLL_gxe2_real] # create a column showing where the perm is better (or as good) as the real
-        # Use pivottable to find the fraction of of times when permutation is better
+        # Use pivottable to find the fraction of times when permutation is better
         pivot_table_times = pd.pivot_table(resultx, values=['P(gxe2)'], index=['phen'], columns=[], aggfunc=np.mean)
         if cache_folder is not None:
             _write_csv(pivot_table_times,True,summary_permtimes_table_fn)
@@ -514,10 +520,14 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
 
     #Rename some columns and join results
     pivot_table_plus.rename(columns={"P(e2)":"P(e2=0)"}, inplace=True)
-    final1 = final0.join(pivot_table_plus, on='phen')
+    if len(pivot_table_plus)>0:
+        final1 = final0.join(pivot_table_plus, on='phen')
+    else:
+        final1 = final0.copy()
+        final1['P(e2=0)'] = np.NaN
 
     #Rename some columns and join results
-    if permtimes_table_list: #not empty
+    if permtimes_table_list and len(pivot_table_times)>0: #not empty
         pivot_table_times.rename(columns={"P(gxe2)":"P(gxe2=0)"}, inplace=True)
         final2 = final1.join(pivot_table_times, on='phen')
     else:
@@ -538,3 +548,184 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
         _write_csv(final3,False,summary_final_table_fn)
     
     return final3
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    do_plot = False
+    from pysnptools.util.generate import snp_gen
+    from pysnptools.standardizer import Unit
+
+    seed = 0
+    N = 5000
+
+    #Generate SNPs
+    snpdata = snp_gen(fst=.1, dfr=0, iid_count=N, sid_count=1000, chr_count=10, label_with_pop=True,seed=seed)
+    K_causal = snpdata.read_kernel(Unit()).standardize()
+
+    if do_plot:
+        pylab.suptitle("$K_{causal}$")
+        pylab.imshow(K_causal.val, cmap=pylab.gray(), vmin=0, vmax=1)
+        pylab.show()
+
+    import numpy as np
+    from pysnptools.snpreader import SnpData
+
+    distance_between_centers = 2500000
+    x0 = distance_between_centers * 0.5
+    x1 = distance_between_centers * 1.5
+    y0 = distance_between_centers
+    y1 = distance_between_centers
+    sd = distance_between_centers/4.
+
+    spatial_iid = snpdata.iid
+    center_dict = {"0": (x0,y0), "1": (x1,y1)}
+    centers = np.array([center_dict[iid_item[0]] for iid_item in spatial_iid])
+    np.random.seed(seed)
+    logging.info("Generating positions for seed {0}".format(seed))
+    spatial_coor_gen_original = SnpData(iid=snpdata.iid,sid=["x","y"],val=centers+np.random.multivariate_normal([0,0],[[1,0],[0,1]],size=len(centers))*sd,parent_string="'spatial_coor_gen_original'")
+
+    if do_plot:
+        import matplotlib.pyplot as plt
+        color_dict = {"0": "r", "1": "b", "2": "g"}
+        colors = [color_dict[iid_item] for iid_item in snpdata.iid[:,0]]
+        plt.axis('equal')
+        plt.scatter(spatial_coor_gen_original.val[:,0], spatial_coor_gen_original.val[:,1], c=colors)
+        plt.show()
+
+    from fastlmm.association.heritability_spatial_correction import spatial_similarity
+    from pysnptools.kernelreader import KernelData
+
+    alpha = distance_between_centers
+    spatial_val = spatial_similarity(spatial_coor_gen_original.val, alpha, power=2)
+    K_loc = KernelData(iid=snpdata.iid,val=spatial_val).standardize()
+
+    if do_plot:
+        pylab.suptitle("$K_{loc}$")
+        pylab.imshow(K_loc.val, cmap=pylab.gray(), vmin=0, vmax=1)
+        pylab.show()
+
+    from pysnptools.snpreader import SnpData
+
+    iid = K_causal.iid
+    iid_count = K_causal.iid_count
+    np.random.seed(seed)
+    pheno_causal = SnpData(iid=iid,sid=["causal"],val=np.random.multivariate_normal(np.zeros(iid_count),K_causal.val).reshape(-1,1),parent_string="causal")
+    np.random.seed(seed^998372)
+    pheno_noise = SnpData(iid=iid,sid=["noise"],val=np.random.normal(size=iid_count).reshape(-1,1),parent_string="noise")
+    np.random.seed(seed^12230302)
+    pheno_loc_original = SnpData(iid=iid,sid=["loc_original"],val=np.random.multivariate_normal(np.zeros(iid_count),K_loc.val).reshape(-1,1),parent_string="loc_original")
+
+    do_shuffle = False
+    if do_shuffle:
+        idx = np.arange(iid_count)
+        np.random.seed(seed)
+        np.random.shuffle(idx)
+        pheno_loc = pheno_loc_original.read(view_ok=True) #don't need to copy, because the next line will be fresh memory
+        pheno_loc.val = pheno_loc.val[idx,:]
+    else:
+        pheno_loc = pheno_loc_original
+                       
+    pheno = SnpData(iid=iid,sid=["pheno_all"],val=pheno_causal.val+pheno_noise.val+pheno_loc.val)
+
+    is_pop0 = snpdata.iid[:,0]=="0"
+    is_pop1 = snpdata.iid[:,0]=="1"
+    print "pop0 mean={0}. pop1 mean={1}".format(pheno.val[is_pop0].mean(),pheno.val[is_pop1].mean())
+
+    if do_plot:
+        pylab.suptitle("Phenotype $y$")
+        plt.plot(range(sum(is_pop0)),pheno.val[is_pop0],"r.",range(sum(is_pop1)),pheno.val[is_pop1],"b.")
+        plt.show()
+
+    from pysnptools.util.generate import snp_gen, generate_phenotype
+    from pysnptools.standardizer import Unit
+    import numpy as np
+    from fastlmm.association.heritability_spatial_correction import spatial_similarity
+    from pysnptools.kernelreader import KernelData
+    from pysnptools.snpreader import SnpData
+    from fastlmm.association import heritability_spatial_correction
+
+    def generate_and_analyze(seed, N, do_shuffle, just_testing=True, map_function=None, cache_folder=None):
+
+        #Generate SNPs
+        snpdata = snp_gen(fst=.1, dfr=0, iid_count=N, sid_count=1000, chr_count=10, label_with_pop=True,seed=seed)
+        K_causal = snpdata.read_kernel(Unit()).standardize()
+
+        #Generate geo-spatial locations and K_loc
+        distance_between_centers = 2500000
+        x0 = distance_between_centers * 0.5
+        x1 = distance_between_centers * 1.5
+        y0 = distance_between_centers
+        y1 = distance_between_centers
+        sd = distance_between_centers/4.
+
+        spatial_iid = snpdata.iid
+        center_dict = {"0": (x0,y0), "1": (x1,y1)}
+        centers = np.array([center_dict[iid_item[0]] for iid_item in spatial_iid])
+        np.random.seed(seed)
+        logging.info("Generating positions for seed {0}".format(seed))
+        spatial_coor = SnpData(iid=snpdata.iid,sid=["x","y"],val=centers+np.random.multivariate_normal([0,0],[[1,0],[0,1]],size=len(centers))*sd,parent_string="'spatial_coor_gen_original'")
+        alpha = distance_between_centers
+        spatial_val = spatial_similarity(spatial_coor.val, alpha, power=2)
+        K_loc = KernelData(iid=snpdata.iid,val=spatial_val).standardize()
+
+        #Generate phenotype
+        iid = K_causal.iid
+        iid_count = K_causal.iid_count
+        np.random.seed(seed)
+        pheno_causal = SnpData(iid=iid,sid=["causal"],val=np.random.multivariate_normal(np.zeros(iid_count),K_causal.val).reshape(-1,1),parent_string="causal")
+        np.random.seed(seed^998372)
+        pheno_noise = SnpData(iid=iid,sid=["noise"],val=np.random.normal(size=iid_count).reshape(-1,1),parent_string="noise")
+        np.random.seed(seed^12230302)
+        pheno_loc_original = SnpData(iid=iid,sid=["loc_original"],val=np.random.multivariate_normal(np.zeros(iid_count),K_loc.val).reshape(-1,1),parent_string="loc_original")
+
+        if do_shuffle:
+            idx = np.arange(iid_count)
+            np.random.seed(seed)
+            np.random.shuffle(idx)
+            pheno_loc = pheno_loc_original.read(view_ok=True) #don't need to copy, because the next line will be fresh memory
+            pheno_loc.val = pheno_loc.val[idx,:]
+        else:
+            pheno_loc = pheno_loc_original
+
+        pheno = SnpData(iid=iid,sid=["pheno_all"],val=pheno_causal.val+pheno_noise.val+pheno_loc.val)
+
+        #Analyze data
+        alpha_list = [int(v) for v in np.logspace(np.log10(100),np.log10(1e10), 100)]
+        dataframe = heritability_spatial_correction(
+            snpdata,
+            spatial_coor.val,spatial_iid,
+            alpha_list=[alpha] if just_testing else alpha_list,pheno=pheno, alpha_power=2,
+            jackknife_count=0,permute_plus_count=0,permute_times_count=0,just_testing=just_testing,
+            map_function=map_function,cache_folder=cache_folder)
+
+        logging.info(dataframe)
+        return dataframe
+
+    def loop_generate_and_analyze(N, seed_count, do_shuffle, just_testing, map_function, cache_folder=None):
+        '''
+        run generate_and_analyze on different seeds
+        '''
+        df_list = []
+        for seed in xrange(seed_count):
+            if cache_folder is not None:
+                cache_folder_per_seed = cache_folder.format(seed)
+            else:
+                cache_folder_per_seed = None
+            df = generate_and_analyze(seed=seed,N=N,do_shuffle=do_shuffle,
+                               just_testing=just_testing, map_function=map_function, cache_folder=cache_folder_per_seed)
+            df_list.append(df)
+        
+        #format the output dataframe            
+        df2 = pd.concat(df_list)
+        df2["seed"] = range(seed_count)
+        df2["N"]=N
+        df2["do_shuffle"]=do_shuffle
+        df3 = df2[["seed","N","do_shuffle", "alpha","h2corr","e2","h2uncorr"]]
+        df3.set_index(["seed"],inplace=True)
+        return df3
+
+    df = loop_generate_and_analyze(N=100,seed_count=7,do_shuffle=True,just_testing=True,map_function=map)
+    df = loop_generate_and_analyze(N=50,seed_count=1,do_shuffle=False,just_testing=False,map_function=map)
+    df = loop_generate_and_analyze(N=50,seed_count=1,do_shuffle=True,just_testing=False,map_function=map)
+    df
