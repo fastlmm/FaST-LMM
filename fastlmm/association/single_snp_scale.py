@@ -30,7 +30,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
             output_file_name=None, K0=None,
             runner=None,min_work_count=1,
             gtg_runner=None, gtg_min_work_count=None, svd_runner=None, postsvd_runner=None, postsvd_min_work_count=None,test_snps_runner=None, test_snps_min_work_count=None,
-            count_A1=True,    
+            count_A1=False,    
             clear_local_lambda=None, force_python_only=False
             ):
     """
@@ -143,7 +143,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     * 3: PostSVD - Transform the 22 GtG SVD into 22 G SVD results called U1 .. U22. Find h2, the importance of person-to-person similarity.
     * 4: TestSNPs - For each test SNP, read its data, regress out covariates, use the appropriate U and compute a Pvalue.
 
-    All stages, except the last, can cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.
+    All stages cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.
 
 
     """
@@ -190,8 +190,8 @@ def covar_fn(data_folder,file_index):
     return data_folder + "/covar.{0}.txt".format(file_index)
 
 def generate(data_folder,iid_count,file_count,sid_count,seed=0):
-    from GWAS_benchmark.snp_gen import snp_gen
-    from GWAS_benchmark.semisynth_simulations import generate_phenotype
+    from pysnptools.util import snp_gen
+    from pysnptools.util.generate import _generate_phenotype
 
     for file_index in xrange(file_count):
         snp_filename = snp_fn(data_folder,file_index)
@@ -230,7 +230,7 @@ def generate(data_folder,iid_count,file_count,sid_count,seed=0):
             #########################
             if not os.path.exists(pheno_filename):
                 logging.info("Creating '{0}'".format(pheno_filename))
-                phenodata = SnpData(iid=some_snp_data.iid,sid=["pheno"],val=generate_phenotype(some_snp_data, 10, genetic_var=.5, noise_var=.5, seed=seed).reshape(-1,1))
+                phenodata = SnpData(iid=some_snp_data.iid,sid=["pheno"],val=_generate_phenotype(some_snp_data, 10, genetic_var=.5, noise_var=.5, seed=seed).reshape(-1,1))
                 Pheno.write(pheno_filename,phenodata)
             else:
                 phenodata = Pheno(pheno_filename).read()
@@ -401,16 +401,16 @@ def get_clear_local(file_cache):
 
     return clear_local_lambda
                 
-def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
+def get_G0_memmap(G0, file_cache_parent, X, Xdagger, memory_factor):
     """
     Create a version of the selected SNPs that is unit standardized. It will also be 'DiagKToN' standardization ready (see PySnpTools for info on 'DiagKToN'). The result
     will be uploaded into a file_cache (e.g. some shared cluster storage). The actual return value from this function is a lambda that when called will download G0 (if needed) and open it
     up as a memory-mapped numpy array.
     """
+    file_cache = file_cache_parent.join('0_G')
+    fn_done = "done.txt"
     fn_G0_memmap = "G0_data.memmap"
     fn_ss = "ss_per_snp.npz"
-
-    assert file_cache.file_exists(fn_G0_memmap) == file_cache.file_exists(fn_ss), "expect '{0}' and '{1}' to either both exist or neither".format(fn_G0_memmap, fn_ss)
 
     def G0_memmap_lambda():
         with file_cache.open_read(fn_G0_memmap) as local_G0_memmap:
@@ -418,11 +418,16 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
         #!!!not fully closing the read here because SnpMemMap has the local file open, but at least we know usage has started
         return G0_memmap
 
-    if file_cache.file_exists(fn_G0_memmap):
+    if file_cache.file_exists(fn_done):
         with file_cache.open_read(fn_ss) as ss_storage:
             with np.load(ss_storage) as data:
                 ss_per_snp = data['arr_0']
         return G0_memmap_lambda, ss_per_snp
+
+    file_cache.rmtree('')
+
+    assert file_cache.file_exists(fn_G0_memmap) == file_cache.file_exists(fn_ss), "expect '{0}' and '{1}' to either both exist or neither".format(fn_G0_memmap, fn_ss)
+
 
     work_count2 = -(G0.iid_count // -int(G0.sid_count*memory_factor)) #Find the work count based on batch size (rounding up)
     work_count2 = max(work_count2,2) #Just to test it
@@ -483,32 +488,37 @@ def get_G0_memmap(G0, file_cache, X, Xdagger, memory_factor):
             logging.info("done with SnpMemMap.close G0_data_memmap in {0}".format(format_delta(t3-t2)))
             logging.info("About to close g0.npz and g0.memmap")
 
+    file_cache.save(fn_done,'')
     t4=time.time()
     logging.info("Done with g0.npz and g0.memmap in {0}".format(format_delta(t4-t3)))
 
     return G0_memmap_lambda, ss_per_snp
 
-def get_gtg(common_cache, G0_iid_count, G0_sid, G0_memmap_lambda, memory_factor,  runner, min_work_count=1,force_python_only=False):
+def get_gtg(common_cache_parent, G0_iid_count, G0_sid, G0_memmap_lambda, memory_factor,  runner, min_work_count=1,force_python_only=False):
     """
     Compute G0.T x G0. Do the calculation in pieces with the smallest atom of work being done in multithreaded C++ code streaming the input matrix values from an file on (SSD) disk.
     The product, GtG will be stored in some cluster storage location.
     The actual return value of this function is a lambda. When that lambda is called, it retrieves GtG from storage and returns a local copy.
     """
+    common_cache = common_cache_parent.join('1_GtG')
+    fn_done = "done.txt"
     fn_gtg = "gtg.npz"
-    G0_sid_count = len(G0_sid)
 
     def reader_closure():
         with common_cache.open_read(fn_gtg) as local_fn_gtg:
             gtg_npz = KernelNpz(local_fn_gtg)
         return gtg_npz
 
+    if common_cache.file_exists(fn_done):
+        return reader_closure
+
+    common_cache.rmtree('')
+    G0_sid_count = len(G0_sid)
+
     def writer_closure(gtg_data):
         with common_cache.open_write(fn_gtg, gtg_data.iid_count**2*8) as local_gtg:
             gtg_npz = KernelNpz.write(local_gtg,gtg_data)
         return gtg_npz
-
-    if common_cache.file_exists(fn_gtg):
-        return reader_closure
 
     ##############################################################
     ############# SLOWEST#########################################
@@ -524,6 +534,7 @@ def get_gtg(common_cache, G0_iid_count, G0_sid, G0_memmap_lambda, memory_factor,
     t0_gtg = time.time()
     name="{0}.get_gtg".format(os.path.basename(common_cache.name)) #!!! little bug: if tree_cache.name ends with "/" or "\" doesn't work
     mmultfile_ata(G0_memmap_lambda,writer_closure,G0_sid,work_count,name,runner=runner,force_python_only=force_python_only)
+    common_cache.save(fn_done,'')
     logging.info("gtg: clocktime {0}".format(format_delta(time.time()-t0_gtg)))
 
     return reader_closure
@@ -532,8 +543,8 @@ def get_gtg(common_cache, G0_iid_count, G0_sid, G0_memmap_lambda, memory_factor,
 def get_U(chrom, chrom_cache):
     chrom = int(chrom)
 
-    fn_U = "U{0}.memmap".format(chrom)
-    fn_UUYetc = "UUYetc{0}.npz".format(chrom)
+    fn_U = "3_PostSVD/U{0}.memmap".format(chrom) #!!!const
+    fn_UUYetc = "3_PostSVD/UUYetc{0}.npz".format(chrom) #!!!const
 
     assert chrom_cache.file_exists(fn_U) == chrom_cache.file_exists(fn_UUYetc), "expect '{0}' and '{1}' to either both exist or neither".format(fn_U, fn_UUYetc)
     assert chrom_cache.file_exists(fn_U), "expect '{0}'".format(fn_U)
@@ -580,14 +591,14 @@ def find_h2(k, N, UUYUUYsum0, UYUY, S, chrom):
     return h2
 
 def get_h2(k, N, UUYUUYsum0, UYUY, S, chrom_cache, chrom):
-    fn_h2 = "h2_{0}.npz".format(int(chrom)) #!!!const
+    fn_h2 = "3_PostSVD/h2_{0}.npz".format(int(chrom)) #!!!const
     with chrom_cache.open_read(fn_h2) as local_fn_h2:
         with np.load(local_fn_h2) as data:
             h2    = data['arr_0'][0]
     logdetK, YKY, Sd, denom = apply_h2(h2,S,UYUY,UUYUUYsum0,N,k)
     return h2, logdetK, YKY, Sd, denom
 
-def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache, G0_iid_count, G0_pos, ss_per_snp, RxY, X, runner_svd):
+def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_count, G0_pos, ss_per_snp, RxY, X, runner_svd):
     """
     For the chromosomes listed, compute an SVD on a square matrix SNP-to-SNP matrix. Each SVD can be done on a different
     node in a cluster. The actual SVD is done with special version of the MKL/LAPACK DGESDD function.
@@ -595,7 +606,9 @@ def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache, G0_iid_count, G
     Results are stored at a known location in the cluster storage.
     """
 
-    needed_chrom_list = [chrom for chrom in chrom_list if not common_cache.file_exists("SVinv_etc{0}.npz".format(int(chrom)))]
+    common_cache = common_cache_parent.join('2_SVD')
+
+    needed_chrom_list = [chrom for chrom in chrom_list if not common_cache.file_exists('done{0}.txt'.format(int(chrom)))]
     if not needed_chrom_list:
         return []
 
@@ -651,9 +664,11 @@ def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache, G0_iid_count, G
         SVinv3b=SVinv3[:,inonzero]
 
         fn = "SVinv_etc{0}.npz".format(int(chrom)) #!!!const
+        if common_cache.file_exists(fn):
+            common_cache.remove(fn)
         with common_cache.open_write(fn) as local_file_name:
             np.savez(local_file_name, SVinv3b=SVinv3b,S=S)
-
+        common_cache.save('done{0}.txt'.format(int(chrom)),'')
         return fn
 
     SVinv_etc_fn_list = map_reduce(needed_chrom_list,
@@ -699,8 +714,10 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
 
     Save the results under a known name in the cluster storage.
     """
-
-    needed_chrom_list = [chrom for chrom in chrom_list if not cache_dict[int(chrom)].file_exists("h2_{0}.npz".format(int(chrom)))]
+    sub_dir = '3_PostSVD'
+    common_cache = cache_dict[0].join(sub_dir)
+    #cache_dict[int(chrom)].file_exists("h2_{0}.npz".format(int(chrom)))
+    needed_chrom_list = [chrom for chrom in chrom_list if not common_cache.file_exists("done{0}.txt".format(int(chrom)))]
     if not needed_chrom_list:
         return
     G0_iid_count = len(G0_iid)
@@ -708,19 +725,24 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
 
     def mapper_closure(chrom):
         chrom = int(chrom)
-        chrom_storage = cache_dict[chrom]
+        chrom_storage = cache_dict[chrom].join(sub_dir)
 
         fn_U = "U{0}.memmap".format(int(chrom))
+        if chrom_storage.file_exists(fn_U):
+            chrom_storage.remove(fn_U)
         fn_UUYetc = "UUYetc{0}.npz".format(int(chrom))
-        #!!!needed ?assert not chrom_storage.file_exists(fn_U), "if already done, don't call this"
-        assert chrom_storage.file_exists(fn_U) == chrom_storage.file_exists(fn_UUYetc), "expect '{0}' and '{1}' to either both exist or neither".format(fn_U, fn_UUYetc)
+        if chrom_storage.file_exists(fn_UUYetc):
+            chrom_storage.remove(fn_UUYetc)
+        fn_h2 = "h2_{0}.npz".format(int(chrom)) #!!!const
+        if chrom_storage.file_exists(fn_h2):
+            chrom_storage.remove(fn_h2)
 
         work_count = -(G0_iid_count // -int(G0_sid_count*memory_factor)) #Find the work count based on batch size (rounding up)
         work_count = max(work_count,min_work_count)
 
         def mapper_closure_inner(work_index):
 
-            SVinv_etc_fn = "SVinv_etc{0}.npz".format(chrom)
+            SVinv_etc_fn = "2_SVD/SVinv_etc{0}.npz".format(chrom) #!!!cmk
             with cache_dict[0].open_read(SVinv_etc_fn) as handle_local:
                 with np.load(handle_local) as data:
                     SVinv3b   = data['SVinv3b']
@@ -746,12 +768,17 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             start_iid_index = debatch_closure(work_index)
             stop_iid_index = debatch_closure(work_index+1)
 
+            fn_U_done = "U{0}_pieces/done{1}_{2}.txt".format(chrom,work_index,work_count)
             fn_U_piece = "U{0}_pieces/{1}_{2}.memmap".format(chrom,work_index,work_count)
-            if cache_dict[chrom].file_exists(fn_U_piece):  #!!!This skips work if the U file is already in storage. Do we want that?
+            chrom_cache = cache_dict[chrom].join(sub_dir)
+            if chrom_cache.file_exists(fn_U_done):
                 logging.info("Piece '{0}' already exists, so skipping work".format(fn_U_piece))
             else:
-                with cache_dict[chrom].open_write(fn_U_piece) as local_file_name:
+                if chrom_cache.file_exists(fn_U_piece):
+                    chrom_cache.remove(fn_U_piece)
+                with chrom_cache.open_write(fn_U_piece) as local_file_name:
                     postsvd_piece(start_iid_index, stop_iid_index, G0_memmap, idx_array, SVinv3b, local_file_name, log_frequency=log_frequency)
+                chrom_cache.save(fn_U_done,'')
             return fn_U_piece, start_iid_index, stop_iid_index, len(sid) if work_index==0 else None, S if work_index==0 else None
 
         def reducer_closure_inner(fn_U_piece_sequence):
@@ -829,13 +856,13 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             t0_etc = time.time()
             logging.info("Creating related files took {0}. Next uploading files.".format(format_delta(t0_etc-t0_U)))
 
-
-            fn_h2 = "h2_{0}.npz".format(int(chrom)) #!!!const
             with chrom_storage.open_write(fn_h2) as local_fn_h2:
                 np.savez(local_fn_h2, np.array([h2]))
 
             if clear_local_lambda is not None:
                 chrom_storage.cloud_storage_only()
+
+            common_cache.save("done{0}.txt".format(int(chrom)),'')
 
             t0_up = time.time()
             logging.info("Uploading took {0}.".format(format_delta(t0_up - t0_etc)))
@@ -940,6 +967,8 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
     """
     __del__(test_snps) #Close any open Bed files
 
+    results_storage = cache_dict[0].join('4_TestSNPs')
+
     def mapper_closure2(chrom):
         chrom_index = chrom_list.index(chrom)
         chrom = int(chrom)
@@ -955,6 +984,16 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
         logging.info("work_count = {0}".format(work_count))
 
         def mapper_closure(work_index):
+
+            done_file = 'done{0}.{1}of{2}.txt'.format(chrom,work_index,work_count)
+            cache_file = 'chrom{0}.{1}of{2}.tsv'.format(chrom,work_index,work_count)
+            if results_storage.file_exists(done_file):
+                with results_storage.open_read(cache_file) as local_file:
+                    dataframe = pd.read_csv(local_file,delimiter = '\t')
+                    return dataframe
+
+            if results_storage.file_exists(cache_file):
+                results_storage.remove(cache_file)
 
             def debatch_closure(work_index):
                 start = test_snps_chrom.sid_count * work_index // work_count
@@ -1031,6 +1070,12 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             #==============================================================
             assert test_snps_chrom.iid_count == U_memmap.iid_count
             dataframe = compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK, snps_read.iid_count, snps_read.sid, snps_read.pos, h2, covar_bias_count=Xdagger.shape[0])
+
+            with results_storage.open_write(cache_file) as local_file:
+                dataframe.to_csv(local_file,sep = '\t',index=False)
+
+            results_storage.save(done_file,'')
+
             return dataframe
     
         def reducer_closure(result_list):
@@ -1195,7 +1240,7 @@ if __name__ == "__main__":
          cov_fn = '../../tests/datasets/synth/cov.txt'
 
 
-         results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
+         results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False, cache=r'm:\deldir\cacheTest')
          print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
     #snp1200_m0_.37m1_.36 0.0 500
 

@@ -553,7 +553,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     do_plot = False
-    from pysnptools.util.generate import snp_gen
+    from pysnptools.util import snp_gen
     from pysnptools.standardizer import Unit
 
     seed = 0
@@ -637,7 +637,6 @@ if __name__ == "__main__":
         plt.plot(range(sum(is_pop0)),pheno.val[is_pop0],"r.",range(sum(is_pop1)),pheno.val[is_pop1],"b.")
         plt.show()
 
-    from pysnptools.util.generate import snp_gen, generate_phenotype
     from pysnptools.standardizer import Unit
     import numpy as np
     from fastlmm.association.heritability_spatial_correction import spatial_similarity
