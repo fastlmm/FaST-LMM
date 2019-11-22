@@ -47,6 +47,8 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
           If you give a string, it should be the name of a `Bed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
+          For cluster runs, this and ``G0`` should be readable from any node on the cluster, for example, by using 
+          `DistributedBed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-distributedbed>`_ format.
     :type test_snps: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
@@ -58,6 +60,8 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     :param G0: SNPs from which to create a similarity matrix. Defaults to ``test_snps``.
            Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
            If you give a string, it should be the name of a `Bed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
+           For cluster runs, this and ``test_snps`` should be readable from any node on the cluster, for example, by using 
+          `DistributedBed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-distributedbed>`_ format.
     :type G0: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_,
@@ -66,7 +70,8 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     :type covar: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param cache: Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
-                  By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set, Python places the temp directory under it.)
+                  By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set,
+                  Python places the temporary directory under it.)
                   A string can be given and will be interpreted as the path of a local directory to use as a cache. (The local
                   directory will **not** be automatically erased and so must be user managed.) A `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_
                   instance can be given, which provides a
@@ -543,8 +548,8 @@ def get_gtg(common_cache_parent, G0_iid_count, G0_sid, G0_memmap_lambda, memory_
 def get_U(chrom, chrom_cache):
     chrom = int(chrom)
 
-    fn_U = "3_PostSVD/U{0}.memmap".format(chrom) #!!!const
-    fn_UUYetc = "3_PostSVD/UUYetc{0}.npz".format(chrom) #!!!const
+    fn_U = "3_PostSVD/chrom{0}/U.memmap".format(chrom) #!!!const
+    fn_UUYetc = "3_PostSVD/chrom{0}/UUYetc.npz".format(chrom) #!!!const
 
     assert chrom_cache.file_exists(fn_U) == chrom_cache.file_exists(fn_UUYetc), "expect '{0}' and '{1}' to either both exist or neither".format(fn_U, fn_UUYetc)
     assert chrom_cache.file_exists(fn_U), "expect '{0}'".format(fn_U)
@@ -591,7 +596,7 @@ def find_h2(k, N, UUYUUYsum0, UYUY, S, chrom):
     return h2
 
 def get_h2(k, N, UUYUUYsum0, UYUY, S, chrom_cache, chrom):
-    fn_h2 = "3_PostSVD/h2_{0}.npz".format(int(chrom)) #!!!const
+    fn_h2 = "3_PostSVD/chrom{0}/h2.npz".format(int(chrom)) #!!!const
     with chrom_cache.open_read(fn_h2) as local_fn_h2:
         with np.load(local_fn_h2) as data:
             h2    = data['arr_0'][0]
@@ -717,7 +722,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
     sub_dir = '3_PostSVD'
     common_cache = cache_dict[0].join(sub_dir)
     #cache_dict[int(chrom)].file_exists("h2_{0}.npz".format(int(chrom)))
-    needed_chrom_list = [chrom for chrom in chrom_list if not common_cache.file_exists("done{0}.txt".format(int(chrom)))]
+    needed_chrom_list = [chrom for chrom in chrom_list if not common_cache.file_exists("chrom{0}/done.txt".format(int(chrom)))]
     if not needed_chrom_list:
         return
     G0_iid_count = len(G0_iid)
@@ -727,13 +732,13 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
         chrom = int(chrom)
         chrom_storage = cache_dict[chrom].join(sub_dir)
 
-        fn_U = "U{0}.memmap".format(int(chrom))
+        fn_U = "chrom{0}/U.memmap".format(int(chrom))
         if chrom_storage.file_exists(fn_U):
             chrom_storage.remove(fn_U)
-        fn_UUYetc = "UUYetc{0}.npz".format(int(chrom))
+        fn_UUYetc = "chrom{0}/UUYetc.npz".format(int(chrom))
         if chrom_storage.file_exists(fn_UUYetc):
             chrom_storage.remove(fn_UUYetc)
-        fn_h2 = "h2_{0}.npz".format(int(chrom)) #!!!const
+        fn_h2 = "chrom{0}/h2.npz".format(int(chrom)) #!!!const
         if chrom_storage.file_exists(fn_h2):
             chrom_storage.remove(fn_h2)
 
@@ -742,7 +747,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
 
         def mapper_closure_inner(work_index):
 
-            SVinv_etc_fn = "2_SVD/SVinv_etc{0}.npz".format(chrom) #!!!cmk
+            SVinv_etc_fn = "2_SVD/SVinv_etc{0}.npz".format(chrom)
             with cache_dict[0].open_read(SVinv_etc_fn) as handle_local:
                 with np.load(handle_local) as data:
                     SVinv3b   = data['SVinv3b']
@@ -768,8 +773,8 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             start_iid_index = debatch_closure(work_index)
             stop_iid_index = debatch_closure(work_index+1)
 
-            fn_U_done = "U{0}_pieces/done{1}_{2}.txt".format(chrom,work_index,work_count)
-            fn_U_piece = "U{0}_pieces/{1}_{2}.memmap".format(chrom,work_index,work_count)
+            fn_U_done = "chrom{0}/U_pieces/done{1}_{2}.txt".format(chrom,work_index,work_count)
+            fn_U_piece = "chrom{0}/U_pieces/{1}_{2}.memmap".format(chrom,work_index,work_count)
             chrom_cache = cache_dict[chrom].join(sub_dir)
             if chrom_cache.file_exists(fn_U_done):
                 logging.info("Piece '{0}' already exists, so skipping work".format(fn_U_piece))
@@ -862,7 +867,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             if clear_local_lambda is not None:
                 chrom_storage.cloud_storage_only()
 
-            common_cache.save("done{0}.txt".format(int(chrom)),'')
+            common_cache.save("chrom{0}/done.txt".format(int(chrom)),'')
 
             t0_up = time.time()
             logging.info("Uploading took {0}.".format(format_delta(t0_up - t0_etc)))
@@ -935,28 +940,28 @@ def __del__(test_snps):
     else:
         logging.warn("Don't know how to __del__ '{0}'".format(test_snps))
 
+# code: no longer used (was for debugging???)
+#def is_good(node,file,chrom):
+#    #Only use the file if it 1. exists and 2. It's *.memmap is over 150000000000L in bytes in size
+#    if not os.path.exists(file):
+#        return False
+#    big = pattern2.format(node,".U{0}.0.memmap".format(int(chrom)))
+#    if not os.path.exists(big) or os.path.getsize(big) <  150000000000L:
+#        return False
+#    mid = pattern2.format(node,".U{0}.0.npz".format(int(chrom)))
+#    if not os.path.exists(mid) or os.path.getsize(mid) <  5000000L:
+#        return False
+#    return True
 
-def is_good(node,file,chrom):
-    #Only use the file if it 1. exists and 2. It's *.memmap is over 150000000000L in bytes in size
-    if not os.path.exists(file):
-        return False
-    big = pattern2.format(node,".U{0}.0.memmap".format(int(chrom)))
-    if not os.path.exists(big) or os.path.getsize(big) <  150000000000L:
-        return False
-    mid = pattern2.format(node,".U{0}.0.npz".format(int(chrom)))
-    if not os.path.exists(mid) or os.path.getsize(mid) <  5000000L:
-        return False
-    return True
-
-def random_source(chrom,pattern,node_list):
-    part = pattern.format(int(chrom))
-    shuffled_node_list = list(node_list[int(chrom)-1])
-    random.shuffle(shuffled_node_list)
-    for node in shuffled_node_list:
-        source = pattern2.format(node,part)
-        if is_good(node,source,chrom):
-            return source
-    raise Exception("Can't find '{0}' in {1}".format(part, node_list))
+#def random_source(chrom,pattern,node_list):
+#    part = pattern.format(int(chrom))
+#    shuffled_node_list = list(node_list[int(chrom)-1])
+#    random.shuffle(shuffled_node_list)
+#    for node in shuffled_node_list:
+#        source = pattern2.format(node,part)
+#        if is_good(node,source,chrom):
+#            return source
+#    raise Exception("Can't find '{0}' in {1}".format(part, node_list))
 
 def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_count, G0_sid_count, G0_pos, pheno, ss_per_snp, RxY, X, Xdagger, test_snps, runner, output_file_name=None, min_work_count=1):
     """
@@ -985,8 +990,8 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
 
         def mapper_closure(work_index):
 
-            done_file = 'done{0}.{1}of{2}.txt'.format(chrom,work_index,work_count)
-            cache_file = 'chrom{0}.{1}of{2}.tsv'.format(chrom,work_index,work_count)
+            done_file = 'chrom{0}/done.{1}of{2}.txt'.format(chrom,work_index,work_count)
+            cache_file = 'chrom{0}/result.{1}of{2}.tsv'.format(chrom,work_index,work_count)
             if results_storage.file_exists(done_file):
                 with results_storage.open_read(cache_file) as local_file:
                     dataframe = pd.read_csv(local_file,delimiter = '\t')
@@ -1229,19 +1234,47 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     if True:
-         import logging
-         import numpy as np
-         from fastlmm.association import single_snp_scale
-         from pysnptools.snpreader import Bed
-         logging.basicConfig(level=logging.INFO)
+        import logging
+        import numpy as np
+        from fastlmm.association import single_snp_scale
+        from pysnptools.snpreader import Bed
+        from pysnptools.util.mapreduce1.runner import LocalMultiProc
+        logging.basicConfig(level=logging.INFO)
 
-         test_snps = Bed('../../tests/datasets/synth/all',count_A1=True)[:,::10] #use every 10th SNP
-         pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
-         cov_fn = '../../tests/datasets/synth/cov.txt'
+        bed_fn = '../../tests/datasets/synth/all'
+        pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
+        cov_fn = '../../tests/datasets/synth/cov.txt'
 
 
-         results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False, cache=r'm:\deldir\cacheTest')
-         print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
+        #results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False, cache=r'm:\deldir\cacheTest')
+        #print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
+
+        from pysnptools.util.filecache import PeerToPeer
+        from pysnptools.snpreader import Bed, DistributedBed
+
+        runner = LocalMultiProc(taskcount=5,just_one_process=False) #Run on 5 additional Python processes
+        #runner = None
+        cache_top = r'm:\deldir'
+
+        #Every Python process will get it's own local storage based its process id (and this computer's ipaddress)
+        def id_and_path_function():
+            from pysnptools.util.filecache import ip_address_pid
+            ip_pid = ip_address_pid()
+            return ip_pid, r'm:\deldir/peertopeer1/{0}'.format(ip_pid)
+
+        #Keep a directory of all files in "common" and copy files peer-to-peer.
+        file_cache = PeerToPeer(common_directory=cache_top+'/peertopeer1/common',id_and_path_function=id_and_path_function)
+
+        # Clear the file_cache
+        #!!!file_cache.rmtree()
+
+        #Move the SNPs information from file bed_fn into the file_cache as a set of Bed files.
+        test_snps = DistributedBed.write(file_cache.join('test_snps'), Bed(bed_fn,count_A1=False), piece_per_chrom_count=10)
+        #test_snps = DistributedBed(file_cache.join('test_snps'))
+
+
+        results_df = single_snp_scale(test_snps, pheno_fn, covar=cov_fn, count_A1=False, cache=file_cache, runner=runner)
+        results_df.head(n=10)
     #snp1200_m0_.37m1_.36 0.0 500
 
 

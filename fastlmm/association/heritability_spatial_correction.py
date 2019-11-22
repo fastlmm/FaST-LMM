@@ -203,7 +203,6 @@ def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power,  
     logging.info("run_line: {0}".format(ret))
     return ret
 
-#!!!cmk is this in the docs?
 def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_list, alpha_power, pheno, 
                      map_function = map, cache_folder=None, 
                      jackknife_count=500, permute_plus_count=10000, permute_times_count=10000, seed=0,

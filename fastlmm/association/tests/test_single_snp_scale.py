@@ -10,6 +10,7 @@ import shutil
 import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed, DistributedBed
 from pysnptools.util.filecache import LocalCache
+from pysnptools.util.filecache import PeerToPeer
 from pysnptools.snpreader import SnpGen
 
 from fastlmm.association import single_snp
@@ -165,6 +166,28 @@ class TestSingleSnpScale(unittest.TestCase):
             self.compare_files(results_df,ref)
 
 
+    def test_peertopeer(self):
+        logging.info("test_peertopeer")
+
+        output_file = self.file_name("peertopeer")
+
+        def id_and_path_function():
+             from pysnptools.util.filecache import ip_address_pid
+             ip_pid = ip_address_pid()
+             #Need to put the 'cache_top' here explicitly.
+             return ip_pid, 'peertopeer/{0}'.format(ip_pid)
+        storage = PeerToPeer(common_directory='peertopeer/common',id_and_path_function=id_and_path_function)
+        test_snps_cache = storage.join('test_snps')
+        test_snps_cache.rmtree()
+        test_snps = DistributedBed.write(test_snps_cache, self.bed, piece_per_chrom_count=2)
+
+        runner = LocalMultiProc(taskcount=5) #Run on 5 additional Python processes
+
+        for clear_cache in (True, False):
+            if clear_cache:
+                storage.join('cache').rmtree()
+            results_df = single_snp_scale(test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, cache=storage.join('cache'), output_file_name=output_file, runner=runner)
+            self.compare_files(results_df,"old")
 
 
     def file_name(self,testcase_name):

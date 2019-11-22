@@ -377,3 +377,7 @@ tests/tmp_extract_sim.txt
 /fastlmm/util/matrix/mmultfilex.so
 /fastlmm/util/matrix/cample.so
 /doc/ipynb/Untitled.ipynb
+/doc/ipynb/m/deldir
+/doc/ipynb/delmeSingleSnpScale.py
+/doc/ipynb/SingleSnpScale-checkpoint.ipynb
+/fastlmm/association/peertopeer
