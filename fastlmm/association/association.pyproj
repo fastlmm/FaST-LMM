@@ -6,7 +6,7 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test_single_snp_scale.py</StartupFile>
+    <StartupFile>tests\test_heritability_spatial_correction.py</StartupFile>
     <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools;..\..\..\fastlmmNov2015</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -120,6 +120,12 @@
     </Content>
     <Content Include="..\..\doc\ipynb\heritability_si.ipynb">
       <Link>docsource\heritability_si.ipynb</Link>
+    </Content>
+    <Content Include="..\..\doc\ipynb\MatrixWork.ipynb">
+      <Link>docsource\MatrixWork.ipynb</Link>
+    </Content>
+    <Content Include="..\..\doc\ipynb\Prediction.ipynb">
+      <Link>docsource\Prediction.ipynb</Link>
     </Content>
     <Content Include="..\..\doc\ipynb\SingleSnpScale.ipynb">
       <Link>docsource\SingleSnpScale.ipynb</Link>

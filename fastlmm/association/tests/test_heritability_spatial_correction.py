@@ -74,7 +74,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         self.assertTrue(out, "msg='{0}', ref='{1}', tmp='{2}'".format(msg, referenceOutfile, tmpOutfile))
 
     def test_three(self):
-        '''#!!!cmk are *.pickle files being regened?
+        '''
         Lock in results on arbitrary data -- because meaningful runs take too long to run.
         '''
         fn = "three.txt"

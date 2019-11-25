@@ -10,7 +10,7 @@ The FaST-LMM GitHub site:
 https://github.com/MicrosoftGenomics/FaST-LMM/
 
 Our main documentation (including live examples) is also available as ipython notebook:
-https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
+https://nbviewer.jupyter.org/github/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
 
 :new: :func:`.single_snp_scale` Does single-SNP GWAS on a cluster. (Also, scales on a single machine a little better than `single_snp`.)
 

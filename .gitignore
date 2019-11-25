@@ -381,3 +381,4 @@ tests/tmp_extract_sim.txt
 /doc/ipynb/delmeSingleSnpScale.py
 /doc/ipynb/SingleSnpScale-checkpoint.ipynb
 /fastlmm/association/peertopeer
+/tests/peertopeer
