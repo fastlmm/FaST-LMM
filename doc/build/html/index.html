@@ -42,7 +42,7 @@ This release contains the improvements described in Widmer <em>et al.</em>, <em>
 <p>The FaST-LMM GitHub site:
 <a class="reference external" href="https://github.com/MicrosoftGenomics/FaST-LMM/">https://github.com/MicrosoftGenomics/FaST-LMM/</a></p>
 <p>Our main documentation (including live examples) is also available as ipython notebook:
-<a class="reference external" href="https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb</a></p>
+<a class="reference external" href="https://nbviewer.jupyter.org/github/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">https://nbviewer.jupyter.org/github/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb</a></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -144,14 +144,14 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_scale</span></code><a class="headerlink" href="#single-snp-scale" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.single_snp_scale">
-<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_scale</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G0=None</em>, <em>covar=None</em>, <em>cache=None</em>, <em>memory_factor=1</em>, <em>output_file_name=None</em>, <em>K0=None</em>, <em>runner=None</em>, <em>min_work_count=1</em>, <em>gtg_runner=None</em>, <em>gtg_min_work_count=None</em>, <em>svd_runner=None</em>, <em>postsvd_runner=None</em>, <em>postsvd_min_work_count=None</em>, <em>test_snps_runner=None</em>, <em>test_snps_min_work_count=None</em>, <em>count_A1=True</em>, <em>clear_local_lambda=None</em>, <em>force_python_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_scale" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_scale</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G0=None</em>, <em>covar=None</em>, <em>cache=None</em>, <em>memory_factor=1</em>, <em>output_file_name=None</em>, <em>K0=None</em>, <em>runner=None</em>, <em>min_work_count=1</em>, <em>gtg_runner=None</em>, <em>gtg_min_work_count=None</em>, <em>svd_runner=None</em>, <em>postsvd_runner=None</em>, <em>postsvd_min_work_count=None</em>, <em>test_snps_runner=None</em>, <em>test_snps_min_work_count=None</em>, <em>count_A1=False</em>, <em>clear_local_lambda=None</em>, <em>force_python_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_scale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using REML and cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
 It gives the same results as <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
 runs require appropriate modules for parameters <code class="docutils literal notranslate"><span class="pre">cache</span></code> and <code class="docutils literal notranslate"><span class="pre">runner</span></code>.)</p>
 <p>Compared to <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>, <a class="reference internal" href="#fastlmm.association.single_snp_scale" title="fastlmm.association.single_snp_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp_scale()</span></code></a> always:</p>
 <ul class="simple">
 <li>does cross validation of chromosomes (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">leave_out_one_chrom=True</span></code>)</li>
-<li>creates a low-rank iid_count x sid_count kernel (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">force_low_rank=True</span></code>)</li>
+<li>use a low-rank kernel only (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">force_low_rank=True</span></code>)</li>
 <li>uses exactly one kernel constructed from SNPs</li>
 <li>searches for the best <code class="docutils literal notranslate"><span class="pre">h2</span></code>. (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">h2=None</span></code>)</li>
 </ul>
@@ -161,7 +161,9 @@ runs require appropriate modules for parameters <code class="docutils literal no
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>test_snps</strong> – <p>SNPs to test. Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
-If you give a string, it should be the name of a <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed">Bed</a>-formatted file.</p>
+If you give a string, it should be the name of a <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed">Bed</a>-formatted file.
+For cluster runs, this and <code class="docutils literal notranslate"><span class="pre">G0</span></code> should be readable from any node on the cluster, for example, by using 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-distributedbed">DistributedBed</a> format.</p>
 </li>
 <li><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example,
 <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno">Pheno</a>, or <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
@@ -170,14 +172,17 @@ Any individual with missing phenotype data will be removed from processing.</p>
 </li>
 <li><strong>G0</strong> – <p>SNPs from which to create a similarity matrix. Defaults to <code class="docutils literal notranslate"><span class="pre">test_snps</span></code>.
 Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
-If you give a string, it should be the name of a <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed">Bed</a>-formatted file.</p>
+If you give a string, it should be the name of a <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed">Bed</a>-formatted file.
+For cluster runs, this and <code class="docutils literal notranslate"><span class="pre">test_snps</span></code> should be readable from any node on the cluster, for example, by using 
+<a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-distributedbed">DistributedBed</a> format.</p>
 </li>
 <li><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno">Pheno</a>,
 or <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>,.
 If you give a string, it should be the name of a <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno">Pheno</a>-formatted file.</p>
 </li>
 <li><strong>cache</strong> – <p>Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
-By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set, Python places the temp directory under it.)
+By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set,
+Python places the temporary directory under it.)
 A string can be given and will be interpreted as the path of a local directory to use as a cache. (The local
 directory will <strong>not</strong> be automatically erased and so must be user managed.) A <a class="reference external" href="http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache">FileCache</a>
 instance can be given, which provides a
@@ -238,7 +243,7 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <li>3: PostSVD - Transform the 22 GtG SVD into 22 G SVD results called U1 .. U22. Find h2, the importance of person-to-person similarity.</li>
 <li>4: TestSNPs - For each test SNP, read its data, regress out covariates, use the appropriate U and compute a Pvalue.</li>
 </ul>
-<p>All stages, except the last, can cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.</p>
+<p>All stages cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.</p>
 </dd></dl>
 
 </div>

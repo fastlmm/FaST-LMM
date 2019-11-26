@@ -41,44 +41,44 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     Compared to :func:`.single_snp`, :func:`.single_snp_scale` always:
 
     * does cross validation of chromosomes (:func:`.single_snp`'s ``leave_out_one_chrom=True``)
-    * creates a low-rank iid_count x sid_count kernel (:func:`.single_snp`'s ``force_low_rank=True``)
+    * use a low-rank kernel only (:func:`.single_snp`'s ``force_low_rank=True``)
     * uses exactly one kernel constructed from SNPs
     * searches for the best ``h2``. (:func:`.single_snp`'s ``h2=None``)
 
-    :param test_snps: SNPs to test. Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
-          If you give a string, it should be the name of a `Bed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
+    :param test_snps: SNPs to test. Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
+          If you give a string, it should be the name of a `Bed <http://fastlmm.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
           For cluster runs, this and ``G0`` should be readable from any node on the cluster, for example, by using 
-          `DistributedBed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-distributedbed>`_ format.
-    :type test_snps: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+          `DistributedBed <http://fastlmm.github.io/PySnpTools/#snpreader-distributedbed>`_ format.
+    :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param pheno: A single phenotype: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
-           `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_.
-           If you give a string, it should be the name of a `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_-formatted file.
+    :param pheno: A single phenotype: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
+           `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_, or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
+           If you give a string, it should be the name of a `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_-formatted file.
            Any individual with missing phenotype data will be removed from processing.
-    :type pheno: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+    :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param G0: SNPs from which to create a similarity matrix. Defaults to ``test_snps``.
-           Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
-           If you give a string, it should be the name of a `Bed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
+           Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
+           If you give a string, it should be the name of a `Bed <http://fastlmm.github.io/PySnpTools/#snpreader-bed>`_-formatted file.
            For cluster runs, this and ``test_snps`` should be readable from any node on the cluster, for example, by using 
-          `DistributedBed <http://microsoftgenomics.github.io/PySnpTools/#snpreader-distributedbed>`_ format.
-    :type G0: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+           `DistributedBed <http://fastlmm.github.io/PySnpTools/#snpreader-distributedbed>`_ format.
+    :type G0: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param covar: covariate information, optional: Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_,
-           or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_,.
-           If you give a string, it should be the name of a `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_-formatted file.
-    :type covar: a `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+    :param covar: covariate information, optional: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_,
+           or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_,.
+           If you give a string, it should be the name of a `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_-formatted file.
+    :type covar: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param cache: Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
                   By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set,
                   Python places the temporary directory under it.)
                   A string can be given and will be interpreted as the path of a local directory to use as a cache. (The local
-                  directory will **not** be automatically erased and so must be user managed.) A `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_
+                  directory will **not** be automatically erased and so must be user managed.) A `FileCache <http://fastlmm.github.io/PySnpTools/#util-filecache-filecache>`_
                   instance can be given, which provides a
-                  method to specify a cluster-distributed cache. (`FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_'s will **not** be automatically erased and must be user managed.)
-                  Finally, a dictionary from 0 to 22 (inclusive) to `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_ (or None or string)
+                  method to specify a cluster-distributed cache. (`FileCache <http://fastlmm.github.io/PySnpTools/#util-filecache-filecache>`_'s will **not** be automatically erased and must be user managed.)
+                  Finally, a dictionary from 0 to 22 (inclusive) to `FileCache <http://fastlmm.github.io/PySnpTools/#util-filecache-filecache>`_ (or None or string)
                   can be given. The dictionary specifies a cache for general work (0) and for every chromosome (1 to 22, inclusive).  
-    :type cache: None or string or `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_ or dictionary from number to a `FileCache <http://microsoftgenomics.github.io/PySnpTools/#util-filecache-filecache>`_.
+    :type cache: None or string or `FileCache <http://fastlmm.github.io/PySnpTools/#util-filecache-filecache>`_ or dictionary from number to a `FileCache <http://fastlmm.github.io/PySnpTools/#util-filecache-filecache>`_.
 
     :param memory_factor: How much memory to use proportional to ``G0``, optional.
             If not given, will assume that it can use memory about the same size as one copy of ``G0``.
@@ -87,31 +87,31 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
     :type output_file_name: file name
 
-    :param runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
+    :param runner: a `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
         If not given, the function is run locally.
-    :type runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
+    :type runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
     :param min_work_count: When running the work on a cluster, the **minimum** number of pieces in which to divide the work. Defaults to 1, which is usually fine.
     :type min_work_count: integer
 
-    :param gtg_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the GtG stage of work.
+    :param gtg_runner: the `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the GtG stage of work.
         For an overview of the stages, see below.
-    :type gtg_runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
+    :type gtg_runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
     :param gtg_min_work_count: the min_work_count to use instead of ``min_work_count`` on the GtG stage of work.
     :type gtg_min_work_count: integer
 
-    :param svd_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the SVD stage of work.
-    :type svd_runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
+    :param svd_runner: the `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the SVD stage of work.
+    :type svd_runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
-    :param postsvd_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the PostSVD stage of work.
-    :type postsvd_runner: `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
+    :param postsvd_runner: the `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the PostSVD stage of work.
+    :type postsvd_runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
 
     :param postsvd_min_work_count: the min_work_count to use instead of ``min_work_count`` on the PostSVD stage of work.
     :type postsvd_min_work_count: integer
 
-    :param test_snps_runner: the `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the TestSNPS stage of work.
-    :type test_snps_runner: a `Runner <http://microsoftgenomics.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
+    :param test_snps_runner: the `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_ to use instead of ``runner`` for the TestSNPS stage of work.
+    :type test_snps_runner: a `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_.
 
     :param test_snps_min_work_count: the min_work_count to use instead of ``min_work_count`` on the TestSNPS stage of work.
     :type test_snps_min_work_count: integer

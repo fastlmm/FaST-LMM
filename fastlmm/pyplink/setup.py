@@ -60,9 +60,8 @@ setup(
     long_description=readme(),
     keywords='gwas bioinformatics LMMs MLMs',
     url='',
-    author='MSR',
+    author='FaST-LMM Team',
     author_email='...',
-    license='non-commercial (MSR-LA)',
     packages=[
         "fastlmm/association/tests",
         "fastlmm/association",

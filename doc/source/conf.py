@@ -199,7 +199,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'fastlmm.tex', u'fastlmm Documentation',
-   u'Microsoft', 'manual'),
+   u'FaST-LMM Team', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -229,7 +229,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'fastlmm', u'fastlmm Documentation',
-     [u'Microsoft'], 1)
+     [u'FaST-LMM Team'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -243,7 +243,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'fastlmm', u'fastlmm Documentation',
-   u'Microsoft', 'fastlmm', 'One line description of project.',
+   u'FaST-LMM Team', 'fastlmm', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -264,9 +264,9 @@ texinfo_documents = [
 
 # Bibliographic Dublin Core info.
 epub_title = u'fastlmm'
-epub_author = u'Microsoft'
-epub_publisher = u'Microsoft'
-epub_copyright = u'2014, Microsoft'
+epub_author = u'FaST-LMM Team'
+epub_publisher = u'FaST-LMM Team'
+epub_copyright = u'2019, FaST-LMM Team'
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'fastlmm'

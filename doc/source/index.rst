@@ -7,10 +7,10 @@ single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large
 This release contains the improvements described in Widmer *et al.*, *Scientific Reports* 2014, and tests for epistasis.
 
 The FaST-LMM GitHub site:  
-https://github.com/MicrosoftGenomics/FaST-LMM/
+https://github.com/fastlmm/FaST-LMM/
 
 Our main documentation (including live examples) is also available as ipython notebook:
-https://nbviewer.jupyter.org/github/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
+https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
 
 :new: :func:`.single_snp_scale` Does single-SNP GWAS on a cluster. (Also, scales on a single machine a little better than `single_snp`.)
 

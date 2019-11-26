@@ -125,9 +125,8 @@ setup(
     description='Fast GWAS',
     long_description=readme(),
     keywords='gwas bioinformatics LMMs MLMs',
-    url="http://research.microsoft.com/en-us/um/redmond/projects/mscompbio/fastlmm/",
-    author='MSR',
-    author_email='fastlmm@microsoft.com',
+    url="https://fastlmm.github.io/",
+    author='FaST-LMM Team',
     license='Apache 2.0',
     packages=[ #basically, everything with a __init__.py
         "fastlmm",

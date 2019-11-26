@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# original file at https://github.com/MicrosoftGenomics/FaST-LMM
+# original file at https://github.com/fastlmm/FaST-LMM
 
 # modified 2015 by Christoph Lippert
 

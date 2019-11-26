@@ -273,28 +273,28 @@ class FastLMM(object):
 
         :param X: training covariate information, optional: 
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_
-          (such as `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
 
         :param y: training phenotype:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type y: a PySnpTools `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ 
-          (such as `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
+        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ 
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
 
         :param K0_train: A similarity matrix or SNPs from which to construct such a similarity matrix.
-               Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_.
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
                If you give a string, can be the name of a PLINK-formated Bed file.
-               Can be PySnpTools `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_.
-               If you give a string it can be the name of a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
-        :type K0_train: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or
-               `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+               Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_.
+               If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
+        :type K0_train: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or
+               `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
 
         :param K1_train: A second similarity matrix or SNPs from which to construct such a second similarity matrix. (Also, see 'mixing').
-               Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
-               Can be PySnpTools `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_.
-               If you give a string it can be the name of a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
-        :type K1_train: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or
-               `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_.
+               If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
+        :type K1_train: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or
+               `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
 
         :param h2raw: A parameter to LMM learning that tells how much weight to give the K's vs. the identity matrix, optional 
                 If not given will search for best value.
@@ -408,23 +408,23 @@ class FastLMM(object):
 
         :param X: testing covariate information, optional: 
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ (such as `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
 
         :param y: testing phenotype:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type y: a PySnpTools `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ (such as `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
+        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
 
         :param K0_whole_test: A similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
-               Can be PySnpTools `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
-        :type K0_whole_test: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
+        :type K0_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
 
         :param K1_whole_test: A second similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
-               Can be PySnpTools `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
-        :type K1_whole_test: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
+        :type K1_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
 
         :param iid_if_none: Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.
         :type iid_if_none: an ndarray of two strings
@@ -479,24 +479,24 @@ class FastLMM(object):
 
         :param X: testing covariate information, optional: 
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ (such as `Pheno <http://microsoftgenomics.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_) or string.
 
         :param K0_whole_test: A similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
-               Can be PySnpTools `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
-        :type K0_whole_test: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
+        :type K0_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
 
         :param K1_whole_test: A second similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
-               Can be PySnpTools `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
-        :type K1_whole_test: `SnpReader <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://microsoftgenomics.github.io/PySnpTools/#kernelreader-kernelreader>`_
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_ file.
+        :type K1_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
 
         :param iid_if_none: Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.
         :type iid_if_none: an ndarray of two strings
 
-        :rtype: A `SnpData <http://microsoftgenomics.github.io/PySnpTools/#snpreader-snpdata>`_ of the means and a :class:`KernelData` of the covariance
+        :rtype: A `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_ of the means and a :class:`KernelData` of the covariance
         """
 
         assert self.is_fitted, "Can only predict after predictor has been fitted"
