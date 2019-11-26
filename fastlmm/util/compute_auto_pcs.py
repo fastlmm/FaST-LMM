@@ -12,7 +12,7 @@ def compute_auto_pcs(snpreader, cutoff=.1, k_values=np.arange(11), output_file_n
 
     :param snpreader: SNPs for which to find the best PCs
           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-    :type snpreader: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+    :type snpreader: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
 
     :param cutoff: (default: .1) The degree of relatedness to remove before finding the best number of PCs.
         Relatedness is measured with a RRM (realized relationship matrix) so 0 is no relation, .5 is a sibling or parent, and 1 is self or twin.

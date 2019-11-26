@@ -215,7 +215,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
     :param G_kernel: A kernel that tells the genetic similarity between all pairs of individuals. The kernel can be given 
       explicitly, for example with a :class:`.KernelData`. The kernel can also be given implicitly by providing a set of
       SNPs or the name of a BED file.
-    :type G_kernel: a `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_, `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+    :type G_kernel: a `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__, `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
 
     :param spatial_coor: The position of each individual given by two coordinates. Any units are allowed, but the two values
        must be compatible so that distance can be determined via Pythagoras' theorem. (So, longitude and latitude should
@@ -234,8 +234,8 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
     :param alpha_power: 2 (a good choice) means that similarity goes with area. 1 means with distance.
     :type alpha_list: number
 
-    :param pheno: The target values(s) to predict. It can be a file name readable via `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
-    :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or string
+    :param pheno: The target values(s) to predict. It can be a file name readable via `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__.
+    :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or string
 
     :param cache_folder: (default 'None') The name of a directory in which to save intermediate results. If 'None', then no intermediate results are saved.
     :type cache_folder: a string
