@@ -127,6 +127,7 @@ setup(
     keywords='gwas bioinformatics LMMs MLMs',
     url="https://fastlmm.github.io/",
     author='FaST-LMM Team',
+    author_email='fastlmm-dev@python.org',
     license='Apache 2.0',
     packages=[ #basically, everything with a __init__.py
         "fastlmm",
@@ -143,11 +144,11 @@ setup(
         "fastlmm/pyplink/snpreader", #old snpreader
         "fastlmm/pyplink/snpset", #old snpreader
         "fastlmm/util",
+        "fastlmm/util/matrix",
+        "fastlmm/util/standardizer",
         "fastlmm/util/stats",
-        "fastlmm/util/stats/matrix",
         "fastlmm/util/stats/quadform",
         "fastlmm/util/stats/quadform/qfc_src",
-        "fastlmm/util/standardizer",
     ],
     package_data={"fastlmm/association" : [
                        "Fastlmm_autoselect/FastLmmC.exe",
