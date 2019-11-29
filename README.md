@@ -8,7 +8,7 @@ and tests for epistasis.
 Our documentation (including live examples) is also available as IPython notebooks:
 
 * Main Functions: https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
-* Heritability with Spatial Correction (described in Heckerman _et al._, _PNAS_ 2016): https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb
+* Heritability with Spatial Correction (described in Heckerman *et al.*, *PNAS* 2016): https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb
 
 Additionally, API documentation is available at http://fastlmm.github.io/FaST-LMM/.
 
