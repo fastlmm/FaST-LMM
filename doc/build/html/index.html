@@ -39,18 +39,33 @@
 <p>FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
 This release contains the improvements described in Widmer <em>et al.</em>, <em>Scientific Reports</em> 2014, and tests for epistasis.</p>
-<p>The FaST-LMM GitHub site:
-<a class="reference external" href="https://github.com/fastlmm/FaST-LMM/">https://github.com/fastlmm/FaST-LMM/</a></p>
-<p>Our main documentation (including live examples) is also available as ipython notebook:
-<a class="reference external" href="https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb</a></p>
+<p>Our main documentation (including live examples) is a <a class="reference external" href="https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">ipython notebook</a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">new:</th><td class="field-body"><a class="reference internal" href="#fastlmm.association.single_snp_scale" title="fastlmm.association.single_snp_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp_scale()</span></code></a> Does single-SNP GWAS on a cluster. (Also, scales on a single machine a little better than <cite>single_snp</cite>.)</td>
+<tr class="field-odd field"><th class="field-name">new:</th><td class="field-body"></td>
 </tr>
 </tbody>
 </table>
+<dl class="docutils">
+<dt><a class="reference internal" href="#fastlmm.association.single_snp_scale" title="fastlmm.association.single_snp_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp_scale()</span></code></a> Does single-SNP GWAS on a cluster.</dt>
+<dd>(Also, scales on a single machine a little better than <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>.)</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Contact:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>Project Home: <a class="reference external" href="https://fastlmm.github.io/">https://fastlmm.github.io/</a> (including bibliography)</li>
+<li>For discussion and announcements, join the user list. Send an email to <a class="reference external" href="mailto:fastlmm-user-join&#37;&#52;&#48;python&#46;org?subject=Subscribe">fastlmm-user-join<span>&#64;</span>python<span>&#46;</span>org</a>.</li>
+<li>Contact the developers at <a class="reference external" href="mailto:fastlmm-dev&#37;&#52;&#48;python&#46;org">fastlmm-dev<span>&#64;</span>python<span>&#46;</span>org</a>.</li>
+<li><a class="reference external" href="https://github.com/fastlmm/FaST-LMM/issues">Open issues</a> on GitHub.</li>
+</ul>
 <div class="section" id="single-snp">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp</span></code><a class="headerlink" href="#single-snp" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
@@ -976,7 +991,7 @@ cumulative chromosome starts used in plotting.</p>
 <tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">fastlmm.util</span> <span class="k">as</span> <span class="nn">flutil</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">fastlmm.util.util</span> <span class="k">as</span> <span class="nn">flutil</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">h2</span><span class="o">=.</span><span class="mi">2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chromosome_starts</span> <span class="o">=</span> <span class="n">flutil</span><span class="o">.</span><span class="n">manhattan_plot</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">[[</span><span class="s2">&quot;Chr&quot;</span><span class="p">,</span> <span class="s2">&quot;ChrPos&quot;</span><span class="p">,</span> <span class="s2">&quot;PValue&quot;</span><span class="p">]],</span><span class="n">pvalue_line</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">)</span>

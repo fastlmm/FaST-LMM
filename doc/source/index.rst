@@ -6,13 +6,20 @@ FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, 
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
 This release contains the improvements described in Widmer *et al.*, *Scientific Reports* 2014, and tests for epistasis.
 
-The FaST-LMM GitHub site:  
-https://github.com/fastlmm/FaST-LMM/
+Our main documentation (including live examples) is a `ipython notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_.
 
-Our main documentation (including live examples) is also available as ipython notebook:
-https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
+:new:
 
-:new: :func:`.single_snp_scale` Does single-SNP GWAS on a cluster. (Also, scales on a single machine a little better than `single_snp`.)
+:func:`.single_snp_scale` Does single-SNP GWAS on a cluster.
+  (Also, scales on a single machine a little better than :func:`.single_snp`.)
+
+:Contact:
+
+* Project Home: https://fastlmm.github.io/ (including bibliography)
+* For discussion and announcements, join the user list. Send an email to `fastlmm-user-join@python.org <mailto:fastlmm-user-join@python.org?subject=Subscribe>`_.
+* Contact the developers at `fastlmm-dev@python.org <mailto:fastlmm-dev@python.org>`_.
+* `Open issues <https://github.com/fastlmm/FaST-LMM/issues>`_ on GitHub.
+
 
 **************************************************
 :mod:`single_snp`

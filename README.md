@@ -7,13 +7,14 @@ and tests for epistasis.
 
 Our documentation (including live examples) is also available as IPython notebooks:
 
-* Main Functions: https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
-* Heritability with Spatial Correction (described in Heckerman _et al._, _PNAS_ 2016): https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb
+* Main Functions: https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
+* Heritability with Spatial Correction (described in Heckerman _et al._, _PNAS_ 2016): https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb
 
-Additionally, API documentation is available:
-http://microsoftgenomics.github.io/FaST-LMM/
+Additionally, API documentation is available at http://fastlmm.github.io/FaST-LMM/.
 
-A C++ version, which is generally less functional, is available at http://research.microsoft.com/en-us/downloads/30260656-0f99-4ae0-b7ce-08157b50d4d9/
+A C++ version, which is generally less functional, is available. See http://fastlmm.github.io/.
+
+Also http://fastlmm.github.io/ for the project's home and bibliography.
 
 Quick install:
 =================================
@@ -31,13 +32,14 @@ python 2.7
 
 Packages:
 
-* numpy
 * scipy
-* matplotlib
+* numpy
 * pandas
+* matplotlib
 * scikit.learn (sklearn)
-* cython
+* dill
 * pysnptools
+* cython
 * optional: [statsmodels -- install only required for logistic-based tests, not the standard linear LRT]
 
 
