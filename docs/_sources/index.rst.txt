@@ -1,0 +1,115 @@
+################################
+:mod:`fastlmm` API Documentation
+################################
+
+FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
+single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
+This release contains the improvements described in Widmer *et al.*, *Scientific Reports* 2014, and tests for epistasis.
+
+Our main documentation (including live examples) is a `ipython notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_.
+
+:new:
+
+:func:`.single_snp_scale` Does single-SNP GWAS on a cluster.
+  (Also, scales on a single machine a little better than :func:`.single_snp`.)
+
+:Contact:
+
+* Project Home: https://fastlmm.github.io/ (including bibliography)
+* For discussion and announcements, join the user list. Send an email to `fastlmm-user-join@python.org <mailto:fastlmm-user-join@python.org?subject=Subscribe>`_.
+* Contact the developers at `fastlmm-dev@python.org <mailto:fastlmm-dev@python.org>`_.
+* `Open issues <https://github.com/fastlmm/FaST-LMM/issues>`_ on GitHub.
+
+
+**************************************************
+:mod:`single_snp`
+**************************************************
+
+.. autofunction:: fastlmm.association.single_snp
+
+**************************************************
+:mod:`single_snp_scale`
+**************************************************
+
+.. autofunction:: fastlmm.association.single_snp_scale
+
+**************************************************
+:mod:`single_snp_all_plus_select`
+**************************************************
+
+.. autofunction:: fastlmm.association.single_snp_all_plus_select
+
+
+**************************************************
+:mod:`single_snp_linreg`
+**************************************************
+
+.. autofunction:: fastlmm.association.single_snp_linreg
+
+
+**************************************************
+:mod:`single_snp_select`
+**************************************************
+
+.. autofunction:: fastlmm.association.single_snp_select
+
+
+**************************************************
+:mod:`epistasis`
+**************************************************
+.. autofunction:: fastlmm.association.epistasis
+
+
+**************************************************
+:mod:`snp_set`
+**************************************************
+.. autofunction:: fastlmm.association.snp_set
+
+
+**************************************************
+:class:`FastLMM`
+**************************************************
+.. autoclass:: fastlmm.inference.FastLMM
+    :members:
+    :undoc-members:
+	:show-inheritance:
+	:special-members:
+
+**************************************************
+:class:`LinearRegression`
+**************************************************
+.. autoclass:: fastlmm.inference.LinearRegression
+    :members:
+    :undoc-members:
+	:show-inheritance:
+	:special-members:
+
+**************************************************
+:mod:`heritability_spatial_correction`
+**************************************************
+.. autofunction:: fastlmm.association.heritability_spatial_correction
+
+
+***********************
+:mod:`util` Module
+***********************
+
+
+:mod:`util.compute_auto_pcs`
+++++++++++++++++++++++++++++++++++++++++++++++++++
+.. autofunction:: fastlmm.util.compute_auto_pcs
+
+:mod:`util.manhattan_plot`
+++++++++++++++++++++++++++++++++++++++++++++++++++
+.. autofunction:: fastlmm.util.manhattan_plot
+
+ 
+.. only:: html 
+
+***********************
+Indices and Tables
+***********************
+
+   * :ref:`genindex`
+   * :ref:`modindex`
+   * :ref:`search`

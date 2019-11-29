@@ -1,38 +1,31 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>fastlmm API Documentation &mdash; fastlmm 0.0.1 documentation</title>
-    
+    <title>fastlmm API Documentation &#8212; fastlmm 0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.0.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="fastlmm 0.0.1 documentation" href="#" /> 
-  </head>
-  <body role="document">
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -42,87 +35,119 @@
           <div class="body" role="main">
             
   <div class="section" id="fastlmm-api-documentation">
-<h1><code class="xref py py-mod docutils literal"><span class="pre">fastlmm</span></code> API Documentation<a class="headerlink" href="#fastlmm-api-documentation" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation<a class="headerlink" href="#fastlmm-api-documentation" title="Permalink to this headline">¶</a></h1>
 <p>FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
 This release contains the improvements described in Widmer <em>et al.</em>, <em>Scientific Reports</em> 2014, and tests for epistasis.</p>
-<p>The FaST-LMM GitHub site:
-<a class="reference external" href="https://github.com/MicrosoftGenomics/FaST-LMM/">https://github.com/MicrosoftGenomics/FaST-LMM/</a></p>
-<p>Our main documentation (including live examples) is also available as ipython notebook:
-<a class="reference external" href="https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">https://github.com/MicrosoftGenomics/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb</a></p>
+<p>Our main documentation (including live examples) is a <a class="reference external" href="https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">ipython notebook</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">new:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><a class="reference internal" href="#fastlmm.association.single_snp_scale" title="fastlmm.association.single_snp_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp_scale()</span></code></a> Does single-SNP GWAS on a cluster.</dt>
+<dd>(Also, scales on a single machine a little better than <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>.)</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Contact:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>Project Home: <a class="reference external" href="https://fastlmm.github.io/">https://fastlmm.github.io/</a> (including bibliography)</li>
+<li>For discussion and announcements, join the user list. Send an email to <a class="reference external" href="mailto:fastlmm-user-join&#37;&#52;&#48;python&#46;org?subject=Subscribe">fastlmm-user-join<span>&#64;</span>python<span>&#46;</span>org</a>.</li>
+<li>Contact the developers at <a class="reference external" href="mailto:fastlmm-dev&#37;&#52;&#48;python&#46;org">fastlmm-dev<span>&#64;</span>python<span>&#46;</span>org</a>.</li>
+<li><a class="reference external" href="https://github.com/fastlmm/FaST-LMM/issues">Open issues</a> on GitHub.</li>
+</ul>
 <div class="section" id="single-snp">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">single_snp</span></code><a class="headerlink" href="#single-snp" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp</span></code><a class="headerlink" href="#single-snp" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.single_snp">
 <code class="descclassname">fastlmm.association.</code><code class="descname">single_snp</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>K0=None</em>, <em>K1=None</em>, <em>mixing=None</em>, <em>covar=None</em>, <em>covar_by_chrom=None</em>, <em>leave_out_one_chrom=True</em>, <em>output_file_name=None</em>, <em>h2=None</em>, <em>log_delta=None</em>, <em>cache_file=None</em>, <em>GB_goal=None</em>, <em>interact_with_snp=None</em>, <em>force_full_rank=False</em>, <em>force_low_rank=False</em>, <em>G0=None</em>, <em>G1=None</em>, <em>runner=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
-(For backwards compatibility, you may use &#8216;leave_out_one_chrom=False&#8217; to skip cross validation, but that is not recommended.)</p>
+(For backwards compatibility, you may use ‘leave_out_one_chrom=False’ to skip cross validation, but that is not recommended.)</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>test_snps</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs to test. Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>pheno</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; A single phenotype: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
+<li><strong>test_snps</strong> – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
+If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
+<li><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example,
+<a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 Any IIDs with missing values will be removed.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>K0</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string (or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>)) &#8211; SNPs from which to create a similarity matrix. If not given, will use test_snps.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(When leave_out_one_chrom is False, can be a <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code> or a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code>-formated file name.)</li>
-<li><strong>K1</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string (or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>)) &#8211; SNPs from which to create a second similarity matrix, optional. (Also, see &#8216;mixing&#8217;).
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(When leave_out_one_chrom is False, can be a <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code> or a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code>-formated file name.)</li>
-<li><strong>mixing</strong> (<em>number</em>) &#8211; Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1 relative to K0.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
+</li>
+<li><strong>K0</strong> – <p>SNPs from which to create a similarity matrix. If not given, will use test_snps.
+Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
+If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
+or a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
+</li>
+<li><strong>K1</strong> – <p>SNPs from which to create a second similarity matrix, optional. (Also, see ‘mixing’).
+Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
+If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
+or a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
+</li>
+<li><strong>mixing</strong> (<em>number</em>) – Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1 relative to K0.
 If you give no mixing number and a K1 is given, the best weight will be learned.</li>
-<li><strong>covar</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; covariate information, optional: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
+<li><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>leave_out_one_chrom</strong> (<em>boolean</em>) &#8211; Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
+</li>
+<li><strong>leave_out_one_chrom</strong> (<em>boolean</em>) – Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
 (Warning: setting False can cause proximal contamination.)</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) &#8211; Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.</li>
-<li><strong>h2</strong> (<em>number</em>) &#8211; A parameter to LMM learning, optional
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
+<li><strong>h2</strong> (<em>number</em>) – A parameter to LMM learning, optional
 If not given will search for best value.
 If mixing is unspecified, then h2 must also be unspecified.</li>
-<li><strong>log_delta</strong> (<em>number</em>) &#8211; a re-parameterization of h2 provided for backwards compatibility. h2 is 1./(exp(log_delta)+1)</li>
-<li><strong>cache_file</strong> (<em>file name</em>) &#8211; Name of  file to read or write cached precomputation values to, optional.
+<li><strong>log_delta</strong> (<em>number</em>) – a re-parameterization of h2 provided for backwards compatibility. h2 is 1./(exp(log_delta)+1)</li>
+<li><strong>cache_file</strong> (<em>file name</em>) – Name of  file to read or write cached precomputation values to, optional.
 If not given, no cache file will be used.
 If given and file does not exist, will write precomputation values to file.
 If given and file does exist, will read precomputation values from file.
-The file contains the U and S matrix from the decomposition of the training matrix. It is in Python&#8217;s np.savez (*.npz) format.
-Calls using the same cache file should have the same &#8216;K0&#8217; and &#8216;K1&#8217;
+The file contains the U and S matrix from the decomposition of the training matrix. It is in Python’s np.savez (*.npz) format.
+Calls using the same cache file should have the same ‘K0’ and ‘K1’
 If given and the file does exist then K0 and K1 need not be given.</li>
-<li><strong>GB_goal</strong> (<em>number</em>) &#8211; gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
+<li><strong>GB_goal</strong> (<em>number</em>) – gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
 which is memory efficient with little overhead on computation time.</li>
-<li><strong>interact_with_snp</strong> &#8211; index of a covariate to perform an interaction test with. 
+<li><strong>interact_with_snp</strong> – index of a covariate to perform an interaction test with. 
 Allows for interaction testing (interact_with_snp x snp will be tested)
 default: None</li>
-<li><strong>force_full_rank</strong> (<em>Boolean</em>) &#8211; Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
-<li><strong>force_low_rank</strong> (<em>Boolean</em>) &#8211; Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
-<li><strong>G0</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string (or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>)) &#8211; Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.</li>
-<li><strong>G1</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string (or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>)) &#8211; Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.</li>
-<li><strong>runner</strong> (<em>a runner.</em>) &#8211; a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+<li><strong>force_full_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
+<li><strong>force_low_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
+<li><strong>G0</strong> – Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.</li>
+<li><strong>G1</strong> – Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.</li>
+<li><strong>runner</strong> – a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</li>
-<li><strong>count_A1</strong> (<em>bool</em>) &#8211; If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
 alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include &#8220;PValue&#8221;</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
 <span class="go">null_576 1e-07 10000</span>
 </pre></div>
@@ -130,66 +155,170 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </dd></dl>
 
 </div>
-<div class="section" id="single-snp-all-plus-select">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">single_snp_all_plus_select</span></code><a class="headerlink" href="#single-snp-all-plus-select" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="single-snp-scale">
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_scale</span></code><a class="headerlink" href="#single-snp-scale" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="fastlmm.association.single_snp_all_plus_select">
-<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_all_plus_select</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G=None</em>, <em>covar=None</em>, <em>k_list=None</em>, <em>n_folds=10</em>, <em>seed=0</em>, <em>output_file_name=None</em>, <em>GB_goal=None</em>, <em>force_full_rank=False</em>, <em>force_low_rank=False</em>, <em>mixing=None</em>, <em>h2=None</em>, <em>do_plot=False</em>, <em>runner=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_all_plus_select" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function performing single SNP GWAS based on two kernels. The first kernel is based on all SNPs. The second kernel is a similarity matrix
-constructed of the top <em>k</em> SNPs where the SNPs are ordered via the PValue from <code class="xref py py-meth docutils literal"><span class="pre">single_snp()</span></code> and <em>k</em> is determined via out-of-sample prediction.
-All work is done via &#8216;leave_out_one_chrom&#8217;, that one chromosome is tested and the kernels are constructed from the other chromosomes.
-Will reorder and intersect IIDs as needed.</p>
+<dt id="fastlmm.association.single_snp_scale">
+<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_scale</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G0=None</em>, <em>covar=None</em>, <em>cache=None</em>, <em>memory_factor=1</em>, <em>output_file_name=None</em>, <em>K0=None</em>, <em>runner=None</em>, <em>min_work_count=1</em>, <em>gtg_runner=None</em>, <em>gtg_min_work_count=None</em>, <em>svd_runner=None</em>, <em>postsvd_runner=None</em>, <em>postsvd_min_work_count=None</em>, <em>test_snps_runner=None</em>, <em>test_snps_min_work_count=None</em>, <em>count_A1=False</em>, <em>clear_local_lambda=None</em>, <em>force_python_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function performing single SNP GWAS using REML and cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
+It gives the same results as <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
+runs require appropriate modules for parameters <code class="docutils literal notranslate"><span class="pre">cache</span></code> and <code class="docutils literal notranslate"><span class="pre">runner</span></code>.)</p>
+<p>Compared to <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>, <a class="reference internal" href="#fastlmm.association.single_snp_scale" title="fastlmm.association.single_snp_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp_scale()</span></code></a> always:</p>
+<ul class="simple">
+<li>does cross validation of chromosomes (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">leave_out_one_chrom=True</span></code>)</li>
+<li>use a low-rank kernel only (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">force_low_rank=True</span></code>)</li>
+<li>uses exactly one kernel constructed from SNPs</li>
+<li>searches for the best <code class="docutils literal notranslate"><span class="pre">h2</span></code>. (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">h2=None</span></code>)</li>
+</ul>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>test_snps</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs to test. Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>pheno</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; A single phenotype: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
-If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-Any IIDs with missing values will be removed.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>G</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs from which to create a similarity matrix of the top <em>k</em> SNPs. If not given, will use test_snps.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
-<li><strong>covar</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; covariate information, optional: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
-If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>k_list</strong> (<em>list of numbers</em>) &#8211; Values of <em>k</em> (in addition to 0) to test. Default to [1,2,4,8,...8192].</li>
-<li><strong>n_folds</strong> (<em>number</em>) &#8211; Number of folds of cross validation to use for out-of-sample evaluation of various values of <em>k</em>. Default to 10.</li>
-<li><strong>seed</strong> (<em>number</em>) &#8211; (optional) Random seed used to generate permutations for lrt G0 fitting.</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) &#8211; Name of file to write results to, optional. If not given, no output file will be created.</li>
-<li><strong>GB_goal</strong> (<em>number</em>) &#8211; gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
-which is memory efficient with little overhead on computation time.</li>
-<li><strong>force_full_rank</strong> (<em>Boolean</em>) &#8211; Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
-<li><strong>force_low_rank</strong> (<em>Boolean</em>) &#8211; Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
-<li><strong>mixing</strong> (<em>number</em>) &#8211; A parameter to LMM learning telling how to combine the two kernels, optional
-If not given will search for best value.</li>
-<li><strong>h2</strong> (<em>number</em>) &#8211; A parameter to LMM learning that tells how much weight to give the K&#8217;s vs. the identity matrix, optional
-If not given will search for best value.</li>
-<li><strong>do_plot</strong> (<em>boolean</em>) &#8211; If true, will plot, for each chrom, the negative loglikelihood vs k.</li>
-<li><strong>runner</strong> (<em>a runner.</em>) &#8211; a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+<li><strong>test_snps</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
+If you give a string, it should be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-bed">Bed</a>-formatted file.
+For cluster runs, this and <code class="docutils literal notranslate"><span class="pre">G0</span></code> should be readable from any node on the cluster, for example, by using 
+<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-distributedbed">DistributedBed</a> format.</li>
+<li><strong>pheno</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example,
+<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a>, or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+If you give a string, it should be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a>-formatted file.
+Any individual with missing phenotype data will be removed from processing.</li>
+<li><strong>G0</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs from which to create a similarity matrix. Defaults to <code class="docutils literal notranslate"><span class="pre">test_snps</span></code>.
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
+If you give a string, it should be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-bed">Bed</a>-formatted file.
+For cluster runs, this and <code class="docutils literal notranslate"><span class="pre">test_snps</span></code> should be readable from any node on the cluster, for example, by using 
+<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-distributedbed">DistributedBed</a> format.</li>
+<li><strong>covar</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a>,
+or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>,.
+If you give a string, it should be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a>-formatted file.</li>
+<li><strong>cache</strong> (None or string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-filecache-filecache">FileCache</a> or dictionary from number to a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-filecache-filecache">FileCache</a>.) – Tells where to store intermediate results. Place the cache on an SSD drive for best performance.
+By default, the cache will be an automatically-erasing temporary directory. (If the TEMP environment variable is set,
+Python places the temporary directory under it.)
+A string can be given and will be interpreted as the path of a local directory to use as a cache. (The local
+directory will <strong>not</strong> be automatically erased and so must be user managed.) A <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-filecache-filecache">FileCache</a>
+instance can be given, which provides a
+method to specify a cluster-distributed cache. (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-filecache-filecache">FileCache</a>’s will <strong>not</strong> be automatically erased and must be user managed.)
+Finally, a dictionary from 0 to 22 (inclusive) to <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-filecache-filecache">FileCache</a> (or None or string)
+can be given. The dictionary specifies a cache for general work (0) and for every chromosome (1 to 22, inclusive).</li>
+<li><strong>memory_factor</strong> (<em>number</em>) – How much memory to use proportional to <code class="docutils literal notranslate"><span class="pre">G0</span></code>, optional.
+If not given, will assume that it can use memory about the same size as one copy of <code class="docutils literal notranslate"><span class="pre">G0</span></code>.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
+<li><strong>runner</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>) – a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</li>
+<li><strong>min_work_count</strong> (<em>integer</em>) – When running the work on a cluster, the <strong>minimum</strong> number of pieces in which to divide the work. Defaults to 1, which is usually fine.</li>
+<li><strong>gtg_runner</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>) – the <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a> to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the GtG stage of work.
+For an overview of the stages, see below.</li>
+<li><strong>gtg_min_work_count</strong> (<em>integer</em>) – the min_work_count to use instead of <code class="docutils literal notranslate"><span class="pre">min_work_count</span></code> on the GtG stage of work.</li>
+<li><strong>svd_runner</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>) – the <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a> to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the SVD stage of work.</li>
+<li><strong>postsvd_runner</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>.) – the <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a> to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the PostSVD stage of work.</li>
+<li><strong>postsvd_min_work_count</strong> (<em>integer</em>) – the min_work_count to use instead of <code class="docutils literal notranslate"><span class="pre">min_work_count</span></code> on the PostSVD stage of work.</li>
+<li><strong>test_snps_runner</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>.) – the <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a> to use instead of <code class="docutils literal notranslate"><span class="pre">runner</span></code> for the TestSNPS stage of work.</li>
+<li><strong>test_snps_min_work_count</strong> (<em>integer</em>) – the min_work_count to use instead of <code class="docutils literal notranslate"><span class="pre">min_work_count</span></code> on the TestSNPS stage of work.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
+<li><strong>clear_local_lambda</strong> (<em>function</em><em> or </em><em>lambda</em>) – A function to run in the middle of the PostSVD stage, typically to clear unneeded large files from the local file cache.</li>
+<li><strong>force_python_only</strong> – (Default: False) Skip faster C++ code. Used for debugging and testing.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include &#8220;PValue&#8221;</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s1">&#39;../../tests/datasets/synth/all&#39;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:,::</span><span class="mi">10</span><span class="p">]</span> <span class="c1">#use every 10th SNP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/synth/pheno_10_causals.txt&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/synth/cov.txt&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_scale</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
+<span class="go">snp1200_m0_.37m1_.36 0.0 500</span>
+</pre></div>
+</div>
+<p>The stages of processing are:</p>
+<ul class="simple">
+<li>0: G - Read G0 (the selected SNPs), standardize, regress out covariates, output G</li>
+<li>1: GtG - Compute GtG = G.T x G</li>
+<li>2: SVD - For each chromosome in the TestSNPs, extract the GtG for the chromosome, compute the singular value decomposition (SVD) on that GtG</li>
+<li>3: PostSVD - Transform the 22 GtG SVD into 22 G SVD results called U1 .. U22. Find h2, the importance of person-to-person similarity.</li>
+<li>4: TestSNPs - For each test SNP, read its data, regress out covariates, use the appropriate U and compute a Pvalue.</li>
+</ul>
+<p>All stages cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="single-snp-all-plus-select">
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_all_plus_select</span></code><a class="headerlink" href="#single-snp-all-plus-select" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="fastlmm.association.single_snp_all_plus_select">
+<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_all_plus_select</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G=None</em>, <em>covar=None</em>, <em>k_list=None</em>, <em>n_folds=10</em>, <em>seed=0</em>, <em>output_file_name=None</em>, <em>GB_goal=None</em>, <em>force_full_rank=False</em>, <em>force_low_rank=False</em>, <em>mixing=None</em>, <em>h2=None</em>, <em>do_plot=False</em>, <em>runner=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_all_plus_select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function performing single SNP GWAS based on two kernels. The first kernel is based on all SNPs. The second kernel is a similarity matrix
+constructed of the top <em>k</em> SNPs where the SNPs are ordered via the PValue from <code class="xref py py-meth docutils literal notranslate"><span class="pre">single_snp()</span></code> and <em>k</em> is determined via out-of-sample prediction.
+All work is done via ‘leave_out_one_chrom’, that one chromosome is tested and the kernels are constructed from the other chromosomes.
+Will reorder and intersect IIDs as needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_snps</strong> – <p>SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
+</li>
+<li><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+If you give a string, it should be the file name of a PLINK phenotype-formatted file.
+Any IIDs with missing values will be removed.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
+</li>
+<li><strong>G</strong> – <p>SNPs from which to create a similarity matrix of the top <em>k</em> SNPs. If not given, will use test_snps.
+Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p>
+</li>
+<li><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+If you give a string, it should be the file name of a PLINK phenotype-formatted file.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
+</li>
+<li><strong>k_list</strong> (<em>list of numbers</em>) – Values of <em>k</em> (in addition to 0) to test. Default to [1,2,4,8,…8192].</li>
+<li><strong>n_folds</strong> (<em>number</em>) – Number of folds of cross validation to use for out-of-sample evaluation of various values of <em>k</em>. Default to 10.</li>
+<li><strong>seed</strong> (<em>number</em>) – (optional) Random seed used to generate permutations for lrt G0 fitting.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created.</li>
+<li><strong>GB_goal</strong> (<em>number</em>) – gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
+which is memory efficient with little overhead on computation time.</li>
+<li><strong>force_full_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
+<li><strong>force_low_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
+<li><strong>mixing</strong> (<em>number</em>) – A parameter to LMM learning telling how to combine the two kernels, optional
+If not given will search for best value.</li>
+<li><strong>h2</strong> (<em>number</em>) – A parameter to LMM learning that tells how much weight to give the K’s vs. the identity matrix, optional
+If not given will search for best value.</li>
+<li><strong>do_plot</strong> (<em>boolean</em>) – If true, will plot, for each chrom, the negative loglikelihood vs k.</li>
+<li><strong>runner</strong> – <p>a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
+If not given, the function is run locally.</p>
+</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp_all_plus_select</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util.runner</span> <span class="k">import</span> <span class="n">LocalMultiProc</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.util.mapreduce1.runner</span> <span class="k">import</span> <span class="n">LocalMultiProc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom.bed&quot;</span><span class="p">)[:,::</span><span class="mi">100</span><span class="p">]</span> <span class="c1">#To make example faster, run on only 1/100th of the data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom.bed&quot;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)[:,::</span><span class="mi">100</span><span class="p">]</span> <span class="c1">#To make example faster, run on only 1/100th of the data</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chrom5_snps</span> <span class="o">=</span> <span class="n">snps</span><span class="p">[:,</span><span class="n">snps</span><span class="o">.</span><span class="n">pos</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">5</span><span class="p">]</span> <span class="c1"># Test on only chrom5</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_all_plus_select</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">chrom5_snps</span><span class="p">,</span><span class="n">G</span><span class="o">=</span><span class="n">snps</span><span class="p">,</span><span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span><span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">runner</span><span class="o">=</span><span class="n">LocalMultiProc</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="n">mkl_num_threads</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span> <span class="c1">#Run multiproc</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_all_plus_select</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">chrom5_snps</span><span class="p">,</span><span class="n">G</span><span class="o">=</span><span class="n">snps</span><span class="p">,</span><span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span><span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">runner</span><span class="o">=</span><span class="n">LocalMultiProc</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="n">mkl_num_threads</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1">#Run multiproc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
 <span class="go">null_9800 0.0793385 4</span>
 </pre></div>
@@ -198,48 +327,50 @@ If not given, the function is run locally.</li>
 
 </div>
 <div class="section" id="single-snp-linreg">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">single_snp_linreg</span></code><a class="headerlink" href="#single-snp-linreg" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_linreg</span></code><a class="headerlink" href="#single-snp-linreg" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.single_snp_linreg">
-<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_linreg</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>covar=None</em>, <em>max_output_len=None</em>, <em>output_file_name=None</em>, <em>GB_goal=None</em>, <em>runner=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_linreg" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_linreg</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>covar=None</em>, <em>max_output_len=None</em>, <em>output_file_name=None</em>, <em>GB_goal=None</em>, <em>runner=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_linreg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using linear regression. Will reorder and intersect IIDs as needed.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>test_snps</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs to test. Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>pheno</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; A single phenotype: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
+<li><strong>test_snps</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
+<li><strong>pheno</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 Any IIDs with missing values will be removed.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>covar</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; covariate information, optional: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
+<li><strong>covar</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>max_output_len</strong> (<em>number</em>) &#8211; Maximum number of Pvalues to return. Default to None, which means &#8216;Return all&#8217;.</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) &#8211; Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.</li>
-<li><strong>GB_goal</strong> (<em>number</em>) &#8211; gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks of size iid_count,
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
+<li><strong>max_output_len</strong> (<em>number</em>) – Maximum number of Pvalues to return. Default to None, which means ‘Return all’.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
+<li><strong>GB_goal</strong> (<em>number</em>) – gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks of size iid_count,
 which is memory efficient with little overhead on computation time.</li>
-<li><strong>runner</strong> (<em>a runner.</em>) &#8211; a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+<li><strong>runner</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>) – <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include &#8220;PValue&#8221;</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp_linreg</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_linreg</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_linreg</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
 <span class="go">null_576 1e-07 10000</span>
 </pre></div>
@@ -248,61 +379,62 @@ If not given, the function is run locally.</li>
 
 </div>
 <div class="section" id="single-snp-select">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">single_snp_select</span></code><a class="headerlink" href="#single-snp-select" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_select</span></code><a class="headerlink" href="#single-snp-select" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.single_snp_select">
-<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_select</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G=None</em>, <em>covar=None</em>, <em>k_list=None</em>, <em>n_folds=10</em>, <em>just_return_selected_snps=False</em>, <em>seed=0</em>, <em>output_file_name=None</em>, <em>GB_goal=None</em>, <em>force_full_rank=False</em>, <em>force_low_rank=False</em>, <em>h2=None</em>, <em>runner=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_select" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">fastlmm.association.</code><code class="descname">single_snp_select</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G=None</em>, <em>covar=None</em>, <em>k_list=None</em>, <em>n_folds=10</em>, <em>just_return_selected_snps=False</em>, <em>seed=0</em>, <em>output_file_name=None</em>, <em>GB_goal=None</em>, <em>force_full_rank=False</em>, <em>force_low_rank=False</em>, <em>h2=None</em>, <em>runner=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_select" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS based on covariates (often PCs) and a similarity matrix constructed of the top <em>k</em> SNPs where
-SNPs are ordered via the PValue from <code class="xref py py-meth docutils literal"><span class="pre">single_snp_linreg()</span></code> and <em>k</em> is determined via out-of-sample prediction. Will reorder and intersect IIDs as needed.</p>
+SNPs are ordered via the PValue from <code class="xref py py-meth docutils literal notranslate"><span class="pre">single_snp_linreg()</span></code> and <em>k</em> is determined via out-of-sample prediction. Will reorder and intersect IIDs as needed.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>test_snps</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs to test. Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>pheno</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; A single phenotype: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
+<li><strong>test_snps</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
+<li><strong>pheno</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 Any IIDs with missing values will be removed.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>G</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs from which to create a similarity matrix of the top <em>k</em> SNPs. If not given, will use test_snps.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
-<li><strong>covar</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; covariate information, optional: Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>, for example, <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
+<li><strong>G</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs from which to create a similarity matrix of the top <em>k</em> SNPs. If not given, will use test_snps.
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
+<li><strong>covar</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-(For backwards compatibility can also be dictionary with keys &#8216;vals&#8217;, &#8216;iid&#8217;, &#8216;header&#8217;)</li>
-<li><strong>k_list</strong> (<em>list of numbers</em>) &#8211; Values of <em>k</em> (in addition to 0) to test. Default to [1,2,4,8,...8192].</li>
-<li><strong>n_folds</strong> (<em>number</em>) &#8211; Number of folds of cross validation to use for out-of-sample evaluation of various values of <em>k</em>. Default to 10.</li>
-<li><strong>just_return_selected_snps</strong> (<em>list of strings</em>) &#8211; Instead of returning the results of GWAS, return the top <em>k</em> SNPs selected.</li>
-<li><strong>seed</strong> (<em>number</em>) &#8211; (optional) Random seed used to generate permutations for lrt G0 fitting.</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) &#8211; Name of file to write results to, optional. If not given, no output file will be created.</li>
-<li><strong>GB_goal</strong> (<em>number</em>) &#8211; gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</li>
+<li><strong>k_list</strong> (<em>list of numbers</em>) – Values of <em>k</em> (in addition to 0) to test. Default to [1,2,4,8,…8192].</li>
+<li><strong>n_folds</strong> (<em>number</em>) – Number of folds of cross validation to use for out-of-sample evaluation of various values of <em>k</em>. Default to 10.</li>
+<li><strong>just_return_selected_snps</strong> (<em>list of strings</em>) – Instead of returning the results of GWAS, return the top <em>k</em> SNPs selected.</li>
+<li><strong>seed</strong> (<em>number</em>) – (optional) Random seed used to generate permutations for lrt G0 fitting.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created.</li>
+<li><strong>GB_goal</strong> (<em>number</em>) – gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
 which is memory efficient with little overhead on computation time.</li>
-<li><strong>force_full_rank</strong> (<em>Boolean</em>) &#8211; Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
-<li><strong>force_low_rank</strong> (<em>Boolean</em>) &#8211; Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
-<li><strong>h2</strong> (<em>number</em>) &#8211; A parameter to LMM learning that tells how much weight to give the K&#8217;s vs. the identity matrix, optional
+<li><strong>force_full_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
+<li><strong>force_low_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
+<li><strong>h2</strong> (<em>number</em>) – A parameter to LMM learning that tells how much weight to give the K’s vs. the identity matrix, optional
 If not given will search for best value.</li>
-<li><strong>runner</strong> (<em>a runner.</em>) &#8211; a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+<li><strong>runner</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>) – a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include &#8220;PValue&#8221;</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp_select</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="k">import</span> <span class="n">compute_auto_pcs</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bed_fn</span> <span class="o">=</span> <span class="s2">&quot;../../tests/datasets/synth/all.bed&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">phen_fn</span> <span class="o">=</span> <span class="s2">&quot;../../tests/datasets/synth/pheno_10_causals.txt&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">bed_fn</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_select</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">bed_fn</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="n">bed_fn</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">phen_fn</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">covar</span><span class="p">,</span> <span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">bed_fn</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_select</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">bed_fn</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="n">bed_fn</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">phen_fn</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">covar</span><span class="p">,</span> <span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
 <span class="go">snp495_m0_.01m1_.04 0.0 5000</span>
 </pre></div>
@@ -311,59 +443,61 @@ If not given, the function is run locally.</li>
 
 </div>
 <div class="section" id="epistasis">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">epistasis</span></code><a class="headerlink" href="#epistasis" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">epistasis</span></code><a class="headerlink" href="#epistasis" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.epistasis">
-<code class="descclassname">fastlmm.association.</code><code class="descname">epistasis</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G0</em>, <em>G1=None</em>, <em>mixing=0.0</em>, <em>covar=None</em>, <em>output_file_name=None</em>, <em>sid_list_0=None</em>, <em>sid_list_1=None</em>, <em>log_delta=None</em>, <em>min_log_delta=-5</em>, <em>max_log_delta=10</em>, <em>cache_file=None</em>, <em>runner=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.epistasis" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">fastlmm.association.</code><code class="descname">epistasis</code><span class="sig-paren">(</span><em>test_snps</em>, <em>pheno</em>, <em>G0</em>, <em>G1=None</em>, <em>mixing=0.0</em>, <em>covar=None</em>, <em>output_file_name=None</em>, <em>sid_list_0=None</em>, <em>sid_list_1=None</em>, <em>log_delta=None</em>, <em>min_log_delta=-5</em>, <em>max_log_delta=10</em>, <em>cache_file=None</em>, <em>runner=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.epistasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing epistasis GWAS with ML (never REML).  See <a class="reference external" href="http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html">http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html</a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>test_snps</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs from which to test pairs. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
-<li><strong>pheno</strong> (<em>a 'pheno dictionary' or a string</em>) &#8211; A single phenotype: A &#8216;pheno dictionary&#8217; contains an ndarray on the &#8216;vals&#8217; key and a iid list on the &#8216;iid&#8217; key.
+<li><strong>test_snps</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs from which to test pairs. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
+<li><strong>pheno</strong> (<em>a 'pheno dictionary'</em><em> or </em><em>a string</em>) – A single phenotype: A ‘pheno dictionary’ contains an ndarray on the ‘vals’ key and a iid list on the ‘iid’ key.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>G0</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs from which to construct a similarity matrix.
+<li><strong>G0</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs from which to construct a similarity matrix.
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
-<li><strong>G1</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs from which to construct a second similarity kernel, optional. Also, see &#8216;mixing&#8217;).
+<li><strong>G1</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs from which to construct a second similarity kernel, optional. Also, see ‘mixing’).
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
-<li><strong>mixing</strong> (<em>number</em>) &#8211; Weight between 0.0 (inclusive, default) and 1.1 (inclusive) given to G1 relative to G0.
+<li><strong>mixing</strong> (<em>number</em>) – Weight between 0.0 (inclusive, default) and 1.1 (inclusive) given to G1 relative to G0.
 If you give no mixing number, G0 will get all the weight and G1 will be ignored.</li>
-<li><strong>covar</strong> (<em>a 'pheno dictionary' or a string</em>) &#8211; covariate information, optional: A &#8216;pheno dictionary&#8217; contains an ndarray on the &#8216;vals&#8217; key and a iid list on the &#8216;iid&#8217; key.
+<li><strong>covar</strong> (<em>a 'pheno dictionary'</em><em> or </em><em>a string</em>) – covariate information, optional: A ‘pheno dictionary’ contains an ndarray on the ‘vals’ key and a iid list on the ‘iid’ key.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>sid_list_0</strong> (<em>list of strings</em>) &#8211; list of sids, optional:
+<li><strong>sid_list_0</strong> (<em>list of strings</em>) – list of sids, optional:
 All unique pairs from sid_list_0 x sid_list_1 will be evaluated.
 If you give no sid_list_0, all sids in test_snps will be used.</li>
-<li><strong>sid_list_1</strong> (<em>list of strings</em>) &#8211; list of sids, optional:
+<li><strong>sid_list_1</strong> (<em>list of strings</em>) – list of sids, optional:
 All unique pairs from sid_list_0 x sid_list_1 will be evaluated.
 If you give no sid_list_1, all sids in test_snps will be used.</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) &#8211; Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-deleted text.</li>
-<li><strong>log_delta</strong> (<em>number</em>) &#8211; A parameter to LMM learning, optional
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.</li>
+<li><strong>log_delta</strong> (<em>number</em>) – A parameter to LMM learning, optional
 If not given will search for best value.</li>
-<li><strong>min_log_delta</strong> (<em>number</em>) &#8211; (default:-5)
+<li><strong>min_log_delta</strong> (<em>number</em>) – (default:-5)
 When searching for log_delta, the lower bounds of the search.</li>
-<li><strong>max_log_delta</strong> (<em>number</em>) &#8211; (default:-5)
+<li><strong>max_log_delta</strong> (<em>number</em>) – (default:-5)
 When searching for log_delta, the upper bounds of the search.</li>
-<li><strong>cache_file</strong> (<em>file name</em>) &#8211; Name of  file to read or write cached precomputation values to, optional.
+<li><strong>cache_file</strong> (<em>file name</em>) – Name of  file to read or write cached precomputation values to, optional.
 If not given, no cache file will be used.
 If given and file does not exists, will write precomputation values to file.
 If given and file does exists, will read precomputation values from file.
-The file contains the U and S matrix from the decomposition of the training matrix. It is in Python&#8217;s np.savez (*.npz) format.
-Calls using the same cache file should have the same &#8216;G0&#8217; and &#8216;G1&#8217;</li>
-<li><strong>runner</strong> (<em>a runner.</em>) &#8211; a runner, optional: Tells how to run locally, multi-processor, or on a cluster.
+The file contains the U and S matrix from the decomposition of the training matrix. It is in Python’s np.savez (*.npz) format.
+Calls using the same cache file should have the same ‘G0’ and ‘G1’</li>
+<li><strong>runner</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>) – a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per SNP pair. Columns include &#8220;PValue&#8221;</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas dataframe with one row per SNP pair. Columns include “PValue”</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">epistasis</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
@@ -372,7 +506,8 @@ If not given, the function is run locally.</li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/all_chr.maf0.001.covariates.N300.txt&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">epistasis</span><span class="p">(</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">covar</span><span class="p">,</span> 
 <span class="gp">... </span>                                <span class="n">sid_list_0</span><span class="o">=</span><span class="n">test_snps</span><span class="o">.</span><span class="n">sid</span><span class="p">[:</span><span class="mi">10</span><span class="p">],</span> <span class="c1">#first 10 snps</span>
-<span class="gp">... </span>                                <span class="n">sid_list_1</span><span class="o">=</span><span class="n">test_snps</span><span class="o">.</span><span class="n">sid</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">15</span><span class="p">])</span> <span class="c1">#Skip 5 snps, use next 10</span>
+<span class="gp">... </span>                                <span class="n">sid_list_1</span><span class="o">=</span><span class="n">test_snps</span><span class="o">.</span><span class="n">sid</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">15</span><span class="p">],</span> <span class="c1">#Skip 5 snps, use next 10</span>
+<span class="gp">... </span>                                <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP0</span><span class="p">,</span> <span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP1</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">5</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">)</span>
 <span class="go">1_12 1_9 0.07779 85</span>
 </pre></div>
@@ -381,7 +516,7 @@ If not given, the function is run locally.</li>
 
 </div>
 <div class="section" id="snp-set">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">snp_set</span></code><a class="headerlink" href="#snp-set" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">snp_set</span></code><a class="headerlink" href="#snp-set" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.snp_set">
 <code class="descclassname">fastlmm.association.</code><code class="descname">snp_set</code><span class="sig-paren">(</span><em>test_snps</em>, <em>set_list</em>, <em>pheno</em>, <em>covar=None</em>, <em>output_file_name=None</em>, <em>G0=None</em>, <em>test='lrt'</em>, <em>write_lrtperm=False</em>, <em>nperm=10</em>, <em>npermabs=None</em>, <em>mpheno=1</em>, <em>G0_fit='qq'</em>, <em>qmax=0.1</em>, <em>seed=None</em>, <em>minsetsize=None</em>, <em>maxsetsize=None</em>, <em>mindist=0</em>, <em>idist=1</em>, <em>show_pvalue_5050=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.snp_set" title="Permalink to this definition">¶</a></dt>
@@ -391,27 +526,27 @@ If not given, the function is run locally.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>test_snps</strong> (<em>a string</em>) &#8211; The base name of the file containing the SNPs for alternative kernel. The file must be in PLINK Bed format.</li>
-<li><strong>set_list</strong> (<em>a string</em>) &#8211; The name of a tab-delimited file defining the sets. The file should contain two-columns &#8216;snp&#8217; and &#8216;set&#8217;.</li>
-<li><strong>pheno</strong> (<em>a string</em>) &#8211; The name of a file containing the phenotype. The file must be in PLINK phenotype format.</li>
-<li><strong>covar</strong> (<em>a 'pheno dictionary' or a string</em>) &#8211; covariate information, optional: The name of a file in PLINK phenotype format.</li>
-<li><strong>output_file_name</strong> (<em>file name</em>) &#8211; Name of file to write results to, optional. If not given, no output file will be created.</li>
-<li><strong>G0</strong> (<em>a string</em>) &#8211; Training SNPs from which to construct a similarity kernel. It should be the base name of files in PLINK Bed or Ped format.</li>
-<li><strong>test</strong> (<em>a string</em>) &#8211; &#8216;lrt&#8217; (default) or &#8216;sc_davies&#8217;</li>
-<li><strong>write_lrtperm</strong> (<em>boolean</em>) &#8211; (default: False) If True, write the lrtperm vector (dictated by seed) to a file.</li>
-<li><strong>nperm</strong> (<em>number</em>) &#8211; (default: 10) number of permutations per test</li>
-<li><strong>npermabs</strong> (<em>number</em>) &#8211; (default: None) absolute number of permutations</li>
-<li><strong>mpheno</strong> (<em>number</em>) &#8211; (default: 1) integer, starting at 1, representing the index of the phenotype tested</li>
-<li><strong>G0_fit</strong> (<em>string</em>) &#8211; (default: &#8220;qq&#8221;) How to fit G0. Should be either &#8220;qq&#8221; or &#8220;ml&#8221;</li>
-<li><strong>qmax</strong> (<em>number</em>) &#8211; (default: .1) Use the top qmax fraction of G0 distrib test statistics to fit the G0 distribution</li>
-<li><strong>seed</strong> (<em>number</em>) &#8211; (optional) Random seed used to generate permutations for lrt G0 fitting.</li>
-<li><strong>minsetsize</strong> (<em>number</em>) &#8211; (optional) only include sets at least this large (inclusive)</li>
-<li><strong>maxsetsize</strong> (<em>number</em>) &#8211; (optional) only include sets no more than this large (inclusive)</li>
-<li><strong>mindist</strong> (<em>number</em>) &#8211; (default 0) SNPs within mindist from the test SNPs will be removed from</li>
-<li><strong>idist</strong> (<em>number</em>) &#8211; (default: 1) the type of position to use with mindist
+<li><strong>test_snps</strong> (<em>a string</em>) – The base name of the file containing the SNPs for alternative kernel. The file must be in PLINK Bed format.</li>
+<li><strong>set_list</strong> (<em>a string</em>) – The name of a tab-delimited file defining the sets. The file should contain two-columns ‘snp’ and ‘set’.</li>
+<li><strong>pheno</strong> (<em>a string</em>) – The name of a file containing the phenotype. The file must be in PLINK phenotype format.</li>
+<li><strong>covar</strong> (<em>a 'pheno dictionary'</em><em> or </em><em>a string</em>) – covariate information, optional: The name of a file in PLINK phenotype format.</li>
+<li><strong>output_file_name</strong> (<em>file name</em>) – Name of file to write results to, optional. If not given, no output file will be created.</li>
+<li><strong>G0</strong> (<em>a string</em>) – Training SNPs from which to construct a similarity kernel. It should be the base name of files in PLINK Bed or Ped format.</li>
+<li><strong>test</strong> (<em>a string</em>) – ‘lrt’ (default) or ‘sc_davies’</li>
+<li><strong>write_lrtperm</strong> (<em>boolean</em>) – (default: False) If True, write the lrtperm vector (dictated by seed) to a file.</li>
+<li><strong>nperm</strong> (<em>number</em>) – (default: 10) number of permutations per test</li>
+<li><strong>npermabs</strong> (<em>number</em>) – (default: None) absolute number of permutations</li>
+<li><strong>mpheno</strong> (<em>number</em>) – (default: 1) integer, starting at 1, representing the index of the phenotype tested</li>
+<li><strong>G0_fit</strong> (<em>string</em>) – (default: “qq”) How to fit G0. Should be either “qq” or “ml”</li>
+<li><strong>qmax</strong> (<em>number</em>) – (default: .1) Use the top qmax fraction of G0 distrib test statistics to fit the G0 distribution</li>
+<li><strong>seed</strong> (<em>number</em>) – (optional) Random seed used to generate permutations for lrt G0 fitting.</li>
+<li><strong>minsetsize</strong> (<em>number</em>) – (optional) only include sets at least this large (inclusive)</li>
+<li><strong>maxsetsize</strong> (<em>number</em>) – (optional) only include sets no more than this large (inclusive)</li>
+<li><strong>mindist</strong> (<em>number</em>) – (default 0) SNPs within mindist from the test SNPs will be removed from</li>
+<li><strong>idist</strong> (<em>number</em>) – (default: 1) the type of position to use with mindist
 1, genomic distance
 2, base-pair distance</li>
-<li><strong>show_pvalue_5050</strong> (<em>Boolean</em>) &#8211; (default: False) show a conservative P-value arising from an assumed null distribution that is a 50-50 mixture distribution of 0 and 1 dof chi squares [Molenberghs and Verbeke, 2003].
+<li><strong>show_pvalue_5050</strong> (<em>Boolean</em>) – (default: False) show a conservative P-value arising from an assumed null distribution that is a 50-50 mixture distribution of 0 and 1 dof chi squares [Molenberghs and Verbeke, 2003].
 Provided for backwards compatibility.</li>
 </ul>
 </td>
@@ -423,7 +558,7 @@ Provided for backwards compatibility.</li>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">snp_set</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">result_dataframe</span> <span class="o">=</span> <span class="n">snp_set</span><span class="p">(</span>
@@ -438,7 +573,7 @@ Provided for backwards compatibility.</li>
 
 </div>
 <div class="section" id="fastlmm">
-<h2><code class="xref py py-class docutils literal"><span class="pre">FastLMM</span></code><a class="headerlink" href="#fastlmm" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code><a class="headerlink" href="#fastlmm" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="fastlmm.inference.FastLMM">
 <em class="property">class </em><code class="descclassname">fastlmm.inference.</code><code class="descname">FastLMM</code><span class="sig-paren">(</span><em>GB_goal=None</em>, <em>force_full_rank=False</em>, <em>force_low_rank=False</em>, <em>snp_standardizer=Unit()</em>, <em>covariate_standardizer=Unit()</em>, <em>kernel_standardizer=DiagKtoN()</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM" title="Permalink to this definition">¶</a></dt>
@@ -450,12 +585,12 @@ Provided for backwards compatibility.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>GB_goal</strong> (int) &#8211; gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel, which is memory efficient with little overhead on computation time.</li>
-<li><strong>force_full_rank</strong> (bool) &#8211; Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
-<li><strong>force_low_rank</strong> (bool) &#8211; Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
-<li><strong>snp_standardizer</strong> (<code class="xref py py-class docutils literal"><span class="pre">Standardizer</span></code>) &#8211; The PySnpTools standardizer to be apply to SNP data. Choices include <code class="xref py py-class docutils literal"><span class="pre">Standardizer.Unit</span></code> (Default. Makes values for each SNP have mean zero and standard deviation 1.0, then fills missing with zero) and <code class="xref py py-class docutils literal"><span class="pre">Standardizer.Identity</span></code> (Do nothing)</li>
-<li><strong>covariate_standardizer</strong> (<code class="xref py py-class docutils literal"><span class="pre">Standardizer</span></code>) &#8211; The PySnpTools standardizer to be apply to X, the covariate data. Some choices include <code class="xref py py-class docutils literal"><span class="pre">Standardizer.Unit</span></code> (Default. Fills missing with zero) and <code class="xref py py-class docutils literal"><span class="pre">Standardizer.Identity</span></code> (do nothing)</li>
-<li><strong>kernel_standardizer</strong> (<code class="xref py py-class docutils literal"><span class="pre">KernelStandardizer</span></code>) &#8211; The PySnpTools kernel standardizer to be apply to the kernels. Some choices include <code class="xref py py-class docutils literal"><span class="pre">KernelStandardizer.DiagKToN</span></code> (Default. Make the diagonal sum to iid_count)  and <code class="xref py py-class docutils literal"><span class="pre">KernelStandardizer.Identity</span></code> (Do nothing)</li>
+<li><strong>GB_goal</strong> (int) – gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel, which is memory efficient with little overhead on computation time.</li>
+<li><strong>force_full_rank</strong> (bool) – Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</li>
+<li><strong>force_low_rank</strong> (bool) – Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</li>
+<li><strong>snp_standardizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer</span></code>) – The PySnpTools standardizer to be apply to SNP data. Choices include <code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer.Unit</span></code> (Default. Makes values for each SNP have mean zero and standard deviation 1.0, then fills missing with zero) and <code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer.Identity</span></code> (Do nothing)</li>
+<li><strong>covariate_standardizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer</span></code>) – The PySnpTools standardizer to be apply to X, the covariate data. Some choices include <code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer.Unit</span></code> (Default. Fills missing with zero) and <code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer.Identity</span></code> (do nothing)</li>
+<li><strong>kernel_standardizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">KernelStandardizer</span></code>) – The PySnpTools kernel standardizer to be apply to the kernels. Some choices include <code class="xref py py-class docutils literal notranslate"><span class="pre">KernelStandardizer.DiagKToN</span></code> (Default. Make the diagonal sum to iid_count)  and <code class="xref py py-class docutils literal notranslate"><span class="pre">KernelStandardizer.Identity</span></code> (Do nothing)</li>
 </ul>
 </td>
 </tr>
@@ -463,12 +598,12 @@ Provided for backwards compatibility.</li>
 </tr>
 </tbody>
 </table>
-<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span><span class="p">,</span> <span class="n">Pheno</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="k">import</span> <span class="n">FastLMM</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">snpreader</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s1">&#39;../feature_selection/examples/toydata.bed&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">snpreader</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s1">&#39;../feature_selection/examples/toydata.bed&#39;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.cov&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="n">snpreader</span><span class="o">.</span><span class="n">iid_count</span><span class="p">]</span> <span class="c1"># iids 10 and on</span>
@@ -476,10 +611,10 @@ Provided for backwards compatibility.</li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fastlmm</span> <span class="o">=</span> <span class="n">FastLMM</span><span class="p">(</span><span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1">#We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. </span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">fastlmm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">K0_train</span><span class="o">=</span><span class="n">snpreader</span><span class="p">[</span><span class="n">train_idx</span><span class="p">,:],</span><span class="n">X</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">)</span> 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mean</span><span class="p">,</span> <span class="n">covariance</span> <span class="o">=</span> <span class="n">fastlmm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">K0_whole_test</span><span class="o">=</span><span class="n">snpreader</span><span class="p">[</span><span class="n">test_idx</span><span class="p">,:],</span><span class="n">X</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mean</span><span class="p">,</span> <span class="n">covariance</span> <span class="o">=</span> <span class="n">fastlmm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">K0_whole_test</span><span class="o">=</span><span class="n">snpreader</span><span class="p">[</span><span class="n">test_idx</span><span class="p">,:],</span><span class="n">X</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">mean</span><span class="o">.</span><span class="n">iid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">round</span><span class="p">(</span><span class="n">mean</span><span class="o">.</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">7</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">covariance</span><span class="o">.</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="mi">7</span><span class="p">)</span>
 <span class="go">[&#39;per0&#39; &#39;per0&#39;] 0.1791958 0.8995209</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">nll</span> <span class="o">=</span> <span class="n">fastlmm</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">K0_whole_test</span><span class="o">=</span><span class="n">snpreader</span><span class="p">[</span><span class="n">test_idx</span><span class="p">,:],</span><span class="n">X</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nll</span> <span class="o">=</span> <span class="n">fastlmm</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">K0_whole_test</span><span class="o">=</span><span class="n">snpreader</span><span class="p">[</span><span class="n">test_idx</span><span class="p">,:],</span><span class="n">X</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="nb">round</span><span class="p">(</span><span class="n">nll</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span>
 <span class="go">13.4623234</span>
 </pre></div>
@@ -488,28 +623,37 @@ Provided for backwards compatibility.</li>
 </dl>
 <dl class="method">
 <dt id="fastlmm.inference.FastLMM.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_train=None</em>, <em>K1_train=None</em>, <em>h2raw=None</em>, <em>mixing=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method for training a <code class="xref py py-class docutils literal"><span class="pre">FastLMM</span></code> predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.</p>
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_train=None</em>, <em>K1_train=None</em>, <em>h2raw=None</em>, <em>mixing=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for training a <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; training covariate information, optional: 
+<li><strong>X</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>
+(such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – training covariate information, optional: 
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>y</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; training phenotype:
+<li><strong>y</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> 
+(such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – training phenotype:
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>K0_train</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; A similarity matrix or SNPs from which to construct such a similarity matrix.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, can be the name of a PLINK-formated Bed file.
-Can be PySnpTools <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>. If you give a string it can be the name of a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code> file.</li>
-<li><strong>K1_train</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; A second similarity matrix or SNPs from which to construct such a second similarity matrix. (Also, see &#8216;mixing&#8217;).
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, can be the name of a PLINK-formated Bed file.
-Can be PySnpTools <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>. If you give a string it can be the name of a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code> file.</li>
-<li><strong>h2raw</strong> (<em>number</em>) &#8211; A parameter to LMM learning that tells how much weight to give the K&#8217;s vs. the identity matrix, optional 
+<li><strong>K0_train</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or
+<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – A similarity matrix or SNPs from which to construct such a similarity matrix.
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
+If you give a string, can be the name of a PLINK-formated Bed file.
+Can be PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>.
+If you give a string it can be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a> file.</li>
+<li><strong>K1_train</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or
+<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – A second similarity matrix or SNPs from which to construct such a second similarity matrix. (Also, see ‘mixing’).
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, can be the name of a PLINK-formated Bed file.
+Can be PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>.
+If you give a string it can be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a> file.</li>
+<li><strong>h2raw</strong> (<em>number</em>) – A parameter to LMM learning that tells how much weight to give the K’s vs. the identity matrix, optional 
 If not given will search for best value.
 If mixing is unspecified, then h2 must also be unspecified.</li>
-<li><strong>mixing</strong> (<em>number</em>) &#8211; Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1_train relative to K0_train.
+<li><strong>mixing</strong> (<em>number</em>) – Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1_train relative to K0_train.
 If you give no mixing number and a K1_train is given, the best weight will be learned.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
@@ -522,29 +666,29 @@ If you give no mixing number and a K1_train is given, the best weight will be le
 
 <dl class="method">
 <dt id="fastlmm.inference.FastLMM.predict">
-<code class="descname">predict</code><span class="sig-paren">(</span><em>X=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.predict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method for predicting from a fitted <code class="xref py py-class docutils literal"><span class="pre">FastLMM</span></code> predictor.
+<code class="descname">predict</code><span class="sig-paren">(</span><em>X=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for predicting from a fitted <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor.
 If the examples in X, K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; testing covariate information, optional: 
+<li><strong>X</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – testing covariate information, optional: 
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>K0_whole_test</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; A similarity matrix from all the examples to the test examples. Alternatively,
+<li><strong>K0_whole_test</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – A similarity matrix from all the examples to the test examples. Alternatively,
 the test SNPs needed to construct such a similarity matrix.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, can be the name of a PLINK-formated Bed file.
-Can be PySnpTools <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>. If you give a string it can be the name of a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code> file.</li>
-<li><strong>K1_whole_test</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; A second similarity matrix from all the examples to the test examples. Alternatively,
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, can be the name of a PLINK-formated Bed file.
+Can be PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>. If you give a string it can be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a> file.</li>
+<li><strong>K1_whole_test</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – A second similarity matrix from all the examples to the test examples. Alternatively,
 the test SNPs needed to construct such a similarity matrix.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, can be the name of a PLINK-formated Bed file.
-Can be PySnpTools <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>. If you give a string it can be the name of a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code> file.</li>
-<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) &#8211; Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, can be the name of a PLINK-formated Bed file.
+Can be PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>. If you give a string it can be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a> file.</li>
+<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) – Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code> of the means and a <code class="xref py py-class docutils literal"><span class="pre">KernelData</span></code> of the covariance</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a> of the means and a <code class="xref py py-class docutils literal notranslate"><span class="pre">KernelData</span></code> of the covariance</p>
 </td>
 </tr>
 </tbody>
@@ -553,7 +697,7 @@ Can be PySnpTools <code class="xref py py-class docutils literal"><span class="p
 
 <dl class="method">
 <dt id="fastlmm.inference.FastLMM.score">
-<code class="descname">score</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em>, <em>return_mse_too=False</em>, <em>return_per_iid=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.score" title="Permalink to this definition">¶</a></dt>
+<code class="descname">score</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em>, <em>return_mse_too=False</em>, <em>return_per_iid=False</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.score" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for calculating the negative log likelihood of testing examples.
 If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -561,20 +705,24 @@ If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they wil
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; testing covariate information, optional: 
+<li><strong>X</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – testing covariate information, optional: 
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>y</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; testing phenotype:
+<li><strong>y</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – testing phenotype:
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>K0_whole_test</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; A similarity matrix from all the examples to the test examples. Alternatively,
+<li><strong>K0_whole_test</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – A similarity matrix from all the examples to the test examples. Alternatively,
 the test SNPs needed to construct such a similarity matrix.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, can be the name of a PLINK-formated Bed file.
-Can be PySnpTools <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>. If you give a string it can be the name of a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code> file.</li>
-<li><strong>K1_whole_test</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; A second similarity matrix from all the examples to the test examples. Alternatively,
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, can be the name of a PLINK-formated Bed file.
+Can be PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>. If you give a string it can be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a> file.</li>
+<li><strong>K1_whole_test</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – A second similarity matrix from all the examples to the test examples. Alternatively,
 the test SNPs needed to construct such a similarity matrix.
-Can be any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>. If you give a string, can be the name of a PLINK-formated Bed file.
-Can be PySnpTools <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>. If you give a string it can be the name of a <code class="xref py py-class docutils literal"><span class="pre">KernelNpz</span></code> file.</li>
-<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) &#8211; Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
-<li><strong>return_mse_too</strong> (<em>bool</em>) &#8211; If true, will also return the mean squared error.</li>
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, can be the name of a PLINK-formated Bed file.
+Can be PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>. If you give a string it can be the name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a> file.</li>
+<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) – Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
+<li><strong>return_mse_too</strong> (<em>bool</em>) – If true, will also return the mean squared error.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
+<li><strong>count_A1</strong> – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
@@ -589,7 +737,7 @@ Can be PySnpTools <code class="xref py py-class docutils literal"><span class="p
 
 </div>
 <div class="section" id="linearregression">
-<h2><code class="xref py py-class docutils literal"><span class="pre">LinearRegression</span></code><a class="headerlink" href="#linearregression" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearRegression</span></code><a class="headerlink" href="#linearregression" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="fastlmm.inference.LinearRegression">
 <em class="property">class </em><code class="descclassname">fastlmm.inference.</code><code class="descname">LinearRegression</code><span class="sig-paren">(</span><em>covariate_standardizer=Unit()</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression" title="Permalink to this definition">¶</a></dt>
@@ -601,7 +749,7 @@ Can be PySnpTools <code class="xref py py-class docutils literal"><span class="p
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>covariate_standardizer</strong> (<code class="xref py py-class docutils literal"><span class="pre">Standardizer</span></code>) &#8211; The PySnpTools standardizer to be apply to X, the covariate data. Some choices include <code class="xref py py-class docutils literal"><span class="pre">Standardizer.Unit</span></code> (Default. Fills missing with zero) and <code class="xref py py-class docutils literal"><span class="pre">Standardizer.Identity</span></code> (do nothing)</li>
+<li><strong>covariate_standardizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer</span></code>) – The PySnpTools standardizer to be apply to X, the covariate data. Some choices include <code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer.Unit</span></code> (Default. Fills missing with zero) and <code class="xref py py-class docutils literal notranslate"><span class="pre">Standardizer.Identity</span></code> (do nothing)</li>
 </ul>
 </td>
 </tr>
@@ -609,7 +757,7 @@ Can be PySnpTools <code class="xref py py-class docutils literal"><span class="p
 </tr>
 </tbody>
 </table>
-<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Pheno</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="k">import</span> <span class="n">LinearRegression</span>
@@ -633,21 +781,23 @@ Can be PySnpTools <code class="xref py py-class docutils literal"><span class="p
 </dl>
 <dl class="method">
 <dt id="fastlmm.inference.LinearRegression.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_train=None</em>, <em>K1_train=None</em>, <em>h2=None</em>, <em>mixing=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method for training a <code class="xref py py-class docutils literal"><span class="pre">FastLMM</span></code> predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.</p>
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_train=None</em>, <em>K1_train=None</em>, <em>h2=None</em>, <em>mixing=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for training a <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; training covariate information, optional: 
+<li><strong>X</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – training covariate information, optional: 
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>y</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; training phenotype:
+<li><strong>y</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – training phenotype:
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>K0_train</strong> (<em>None</em>) &#8211; Must be None. Represents the identity similarity matrix.</li>
-<li><strong>K1_train</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; Must be None. Represents the identity similarity matrix.</li>
-<li><strong>h2</strong> (<em>number</em>) &#8211; Ignored. Optional.</li>
-<li><strong>mixing</strong> (<em>number</em>) &#8211; Ignored. Optional.</li>
+<li><strong>K0_train</strong> (<em>None</em>) – Must be None. Represents the identity similarity matrix.</li>
+<li><strong>K1_train</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – Must be None. Represents the identity similarity matrix.</li>
+<li><strong>h2</strong> (<em>number</em>) – Ignored. Optional.</li>
+<li><strong>mixing</strong> (<em>number</em>) – Ignored. Optional.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
@@ -660,23 +810,25 @@ If you give a string, it should be the file name of a PLINK phenotype-formatted 
 
 <dl class="method">
 <dt id="fastlmm.inference.LinearRegression.predict">
-<code class="descname">predict</code><span class="sig-paren">(</span><em>X=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.predict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method for predicting from a fitted <code class="xref py py-class docutils literal"><span class="pre">FastLMM</span></code> predictor.
+<code class="descname">predict</code><span class="sig-paren">(</span><em>X=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for predicting from a fitted <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor.
 If the examples in X, K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; testing covariate information, optional: 
+<li><strong>X</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – testing covariate information, optional: 
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>K0_whole_test</strong> (<em>None</em>) &#8211; Must be None. Represents the identity similarity matrix.</li>
-<li><strong>K1_whole_test</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; Must be None. Represents the identity similarity matrix.</li>
-<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) &#8211; Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
+<li><strong>K0_whole_test</strong> (<em>None</em>) – Must be None. Represents the identity similarity matrix.</li>
+<li><strong>K1_whole_test</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – Must be None. Represents the identity similarity matrix.</li>
+<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) – Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code> of the means and a <code class="xref py py-class docutils literal"><span class="pre">KernelData</span></code> of the covariance</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a> of the means and a <code class="xref py py-class docutils literal notranslate"><span class="pre">KernelData</span></code> of the covariance</p>
 </td>
 </tr>
 </tbody>
@@ -685,7 +837,7 @@ If you give a string, it should be the file name of a PLINK phenotype-formatted 
 
 <dl class="method">
 <dt id="fastlmm.inference.LinearRegression.score">
-<code class="descname">score</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em>, <em>return_mse_too=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.score" title="Permalink to this definition">¶</a></dt>
+<code class="descname">score</code><span class="sig-paren">(</span><em>X=None</em>, <em>y=None</em>, <em>K0_whole_test=None</em>, <em>K1_whole_test=None</em>, <em>iid_if_none=None</em>, <em>return_mse_too=False</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.score" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for calculating the negative log likelihood of testing examples.
 If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -693,14 +845,16 @@ If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they wil
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; testing covariate information, optional: 
+<li><strong>X</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – testing covariate information, optional: 
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>y</strong> (a PySnpTools <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> (such as <code class="xref py py-class docutils literal"><span class="pre">Pheno</span></code> or <code class="xref py py-class docutils literal"><span class="pre">SnpData</span></code>) or string.) &#8211; testing phenotype:
+<li><strong>y</strong> (a PySnpTools <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> (such as <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>) or string.) – testing phenotype:
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</li>
-<li><strong>K0_whole_test</strong> (<em>None</em>) &#8211; Must be None. Represents the identity similarity matrix.</li>
-<li><strong>K1_whole_test</strong> (<code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string or <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>) &#8211; Must be None. Represents the identity similarity matrix.</li>
-<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) &#8211; Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
-<li><strong>return_mse_too</strong> (<em>bool</em>) &#8211; If true, will also return the mean squared error.</li>
+<li><strong>K0_whole_test</strong> (<em>None</em>) – Must be None. Represents the identity similarity matrix.</li>
+<li><strong>K1_whole_test</strong> (<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>) – Must be None. Represents the identity similarity matrix.</li>
+<li><strong>iid_if_none</strong> (<em>an ndarray of two strings</em>) – Examples to predict for if no X, K0_whole_test, K1_whole_test is provided.</li>
+<li><strong>return_mse_too</strong> (<em>bool</em>) – If true, will also return the mean squared error.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
@@ -715,44 +869,46 @@ If you give a string, it should be the file name of a PLINK phenotype-formatted 
 
 </div>
 <div class="section" id="heritability-spatial-correction">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">heritability_spatial_correction</span></code><a class="headerlink" href="#heritability-spatial-correction" title="Permalink to this headline">¶</a></h2>
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">heritability_spatial_correction</span></code><a class="headerlink" href="#heritability-spatial-correction" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="fastlmm.association.heritability_spatial_correction">
-<code class="descclassname">fastlmm.association.</code><code class="descname">heritability_spatial_correction</code><span class="sig-paren">(</span><em>G_kernel</em>, <em>spatial_coor</em>, <em>spatial_iid</em>, <em>alpha_list</em>, <em>alpha_power</em>, <em>pheno</em>, <em>map_function=&lt;built-in function map&gt;</em>, <em>cache_folder=None</em>, <em>jackknife_count=500</em>, <em>permute_plus_count=10000</em>, <em>permute_times_count=10000</em>, <em>seed=0</em>, <em>just_testing=False</em>, <em>always_remote=False</em>, <em>allow_gxe2=True</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.heritability_spatial_correction" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">fastlmm.association.</code><code class="descname">heritability_spatial_correction</code><span class="sig-paren">(</span><em>G_kernel</em>, <em>spatial_coor</em>, <em>spatial_iid</em>, <em>alpha_list</em>, <em>alpha_power</em>, <em>pheno</em>, <em>map_function=&lt;built-in function map&gt;</em>, <em>cache_folder=None</em>, <em>jackknife_count=500</em>, <em>permute_plus_count=10000</em>, <em>permute_times_count=10000</em>, <em>seed=0</em>, <em>just_testing=False</em>, <em>always_remote=False</em>, <em>allow_gxe2=True</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.heritability_spatial_correction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function measuring heritability with correction for spatial location.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>G_kernel</strong> (a <code class="xref py py-class docutils literal"><span class="pre">KernelReader</span></code>, <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; A kernel that tells the genetic similarity between all pairs of individuals. The kernel can be given 
-explicitly, for example with a <code class="xref py py-class docutils literal"><span class="pre">KernelData</span></code>. The kernel can also be given implicitly by providing a set of
+<li><strong>G_kernel</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – A kernel that tells the genetic similarity between all pairs of individuals. The kernel can be given 
+explicitly, for example with a <code class="xref py py-class docutils literal notranslate"><span class="pre">KernelData</span></code>. The kernel can also be given implicitly by providing a set of
 SNPs or the name of a BED file.</li>
-<li><strong>spatial_coor</strong> (<em>a iid_count x 2 array</em>) &#8211; The position of each individual given by two coordinates. Any units are allowed, but the two values
-must be compatible so that distance can be determined via Pythagoras&#8217; theorem. (So, longitude and latitude should
+<li><strong>spatial_coor</strong> (<em>a iid_count x 2 array</em>) – The position of each individual given by two coordinates. Any units are allowed, but the two values
+must be compatible so that distance can be determined via Pythagoras’ theorem. (So, longitude and latitude should
 not be used unless the locations are near the Equator.)</li>
-<li><strong>spatial_iid</strong> (<em>array of strings with shape [iid_count,2]</em>) &#8211; A ndarray of the iids. Each iid is a ndarray of two strings (a family ID and a case ID) that identifies an individual.</li>
-<li><strong>alpha_list</strong> (<em>number</em>) &#8211; a list of numbers to search to find the best alpha, which is the similarity scale. The similarity of two individuals
+<li><strong>spatial_iid</strong> (<em>array of strings with shape</em><em> [</em><em>iid_count</em><em>,</em><em>2</em><em>]</em>) – A ndarray of the iids. Each iid is a ndarray of two strings (a family ID and a case ID) that identifies an individual.</li>
+<li><strong>alpha_list</strong> (<em>number</em>) – a list of numbers to search to find the best alpha, which is the similarity scale. The similarity of two individuals
 is here defined as exp(-(distance_between/alpha)**alpha_power). If the closest individuals are 100 units apart and the farthest
 individuals are 4e6 units apart, a reasonable alpha_list might be: [int(v) for v in np.logspace(np.log10(100),np.log10(1e10), 100)]
-The function&#8217;s reports on the alphas chosen. If an extreme alpha is picked, change alpha_list to cover more range.</li>
-<li><strong>alpha_power</strong> &#8211; 2 (a good choice) means that similarity goes with area. 1 means with distance.</li>
-<li><strong>pheno</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or string) &#8211; The target values(s) to predict. It can be a file name readable via <code class="xref py py-class docutils literal"><span class="pre">SnpReader.Pheno</span></code> or any <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code>.</li>
-<li><strong>cache_folder</strong> (<em>a string</em>) &#8211; (default &#8216;None&#8217;) The name of a directory in which to save intermediate results. If &#8216;None&#8217;, then no intermediate results are saved.</li>
-<li><strong>map_function</strong> (<em>a function</em>) &#8211; (default &#8216;map&#8217;) A function with the same inputs and functionality as Python&#8217;s &#8216;map&#8217; function.
-Can be used to run &#8216;heritability_spatial_correction&#8217; on a cluster.</li>
-<li><strong>jackknife_count</strong> (<em>number</em>) &#8211; (default 500) The number of jackknife groups to use when calculating standard errors (SE). Changing to a small number, 2, 
+The function’s reports on the alphas chosen. If an extreme alpha is picked, change alpha_list to cover more range.</li>
+<li><strong>alpha_power</strong> – 2 (a good choice) means that similarity goes with area. 1 means with distance.</li>
+<li><strong>pheno</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or string) – The target values(s) to predict. It can be a file name readable via <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.</li>
+<li><strong>cache_folder</strong> (<em>a string</em>) – (default ‘None’) The name of a directory in which to save intermediate results. If ‘None’, then no intermediate results are saved.</li>
+<li><strong>map_function</strong> (<em>a function</em>) – (default ‘map’) A function with the same inputs and functionality as Python’s ‘map’ function.
+Can be used to run ‘heritability_spatial_correction’ on a cluster.</li>
+<li><strong>jackknife_count</strong> (<em>number</em>) – (default 500) The number of jackknife groups to use when calculating standard errors (SE). Changing to a small number, 2, 
 speeds up calculation at the cost of unusable SEs.</li>
-<li><strong>permute_plus_count</strong> (<em>number</em>) &#8211; (default 10000) The number of permutations used when calculating P values. Changing to a small number, 1, 
+<li><strong>permute_plus_count</strong> (<em>number</em>) – (default 10000) The number of permutations used when calculating P values. Changing to a small number, 1, 
 speeds up calculation at the cost of unusable P values.</li>
-<li><strong>permute_times_count</strong> (<em>number</em>) &#8211; (default 10000) The number of permutations used when calculating P values. Changing to a small number, 1, 
+<li><strong>permute_times_count</strong> (<em>number</em>) – (default 10000) The number of permutations used when calculating P values. Changing to a small number, 1, 
 speeds up calculation at the cost of unusable P values.</li>
-<li><strong>seed</strong> (<em>number</em>) &#8211; (default 0) The random seed used by jackknifing and permutation.</li>
-<li><strong>just_testing</strong> (<em>bool</em>) &#8211; (default False) If true, skips actual LMM-related search and calculation.</li>
+<li><strong>seed</strong> (<em>number</em>) – (default 0) The random seed used by jackknifing and permutation.</li>
+<li><strong>just_testing</strong> (<em>bool</em>) – (default False) If true, skips actual LMM-related search and calculation.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Pandas dataframe with one row per phenotyper. Columns include &#8220;h2uncorr&#8221;, &#8220;h2corr&#8221;, etc.</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Pandas dataframe with one row per phenotype. Columns include “h2uncorr”, “h2corr”, etc.</p>
 </td>
 </tr>
 </tbody>
@@ -760,8 +916,10 @@ speeds up calculation at the cost of unusable P values.</li>
 </dd></dl>
 
 </div>
-<div class="section" id="compute-auto-pcs">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">compute_auto_pcs</span></code><a class="headerlink" href="#compute-auto-pcs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="util-module">
+<h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">util</span></code> Module<a class="headerlink" href="#util-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="util-compute-auto-pcs">
+<h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.compute_auto_pcs</span></code><a class="headerlink" href="#util-compute-auto-pcs" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="fastlmm.util.compute_auto_pcs">
 <code class="descclassname">fastlmm.util.</code><code class="descname">compute_auto_pcs</code><span class="sig-paren">(</span><em>snpreader</em>, <em>cutoff=0.1</em>, <em>k_values=array([ 0</em>, <em>1</em>, <em>2</em>, <em>3</em>, <em>4</em>, <em>5</em>, <em>6</em>, <em>7</em>, <em>8</em>, <em>9</em>, <em>10])</em>, <em>output_file_name=None</em>, <em>count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.compute_auto_pcs" title="Permalink to this definition">¶</a></dt>
@@ -771,34 +929,82 @@ speeds up calculation at the cost of unusable P values.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>snpreader</strong> (a <code class="xref py py-class docutils literal"><span class="pre">SnpReader</span></code> or a string) &#8211; SNPs for which to find the best PCs
+<li><strong>snpreader</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs for which to find the best PCs
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</li>
-<li><strong>cutoff</strong> (<em>a number between 0 and 1.</em>) &#8211; (default: .1) The degree of relatedness to remove before finding the best number of PCs.
+<li><strong>cutoff</strong> (<em>a number between 0 and 1.</em>) – (default: .1) The degree of relatedness to remove before finding the best number of PCs.
 Relatedness is measured with a RRM (realized relationship matrix) so 0 is no relation, .5 is a sibling or parent, and 1 is self or twin.</li>
-<li><strong>k_values</strong> (<em>list of integers</em>) &#8211; (default: 0 ... 10 [inclusive]) The number of PCs to search.</li>
-<li><strong>count_A1</strong> (<em>bool</em>) &#8211; If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
+<li><strong>k_values</strong> (<em>list of integers</em>) – (default: 0 … 10 [inclusive]) The number of PCs to search.</li>
+<li><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
 alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">A phenotype dictionary with property &#8216;iid&#8217; listing the iids and property &#8216;vals&#8217; containing a nparray of PC values.</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">A phenotype dictionary with property ‘iid’ listing the iids and property ‘vals’ containing a nparray of PC values.</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
 </tr>
 </tbody>
 </table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="k">import</span> <span class="n">compute_auto_pcs</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">file_name</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">best_pcs</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">best_pcs</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="nb">int</span><span class="p">(</span><span class="n">best_pcs</span><span class="p">[</span><span class="s1">&#39;vals&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="nb">int</span><span class="p">(</span><span class="n">best_pcs</span><span class="p">[</span><span class="s1">&#39;vals&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 <span class="go">500 0</span>
 </pre></div>
 </div>
 </dd></dl>
 
+</div>
+<div class="section" id="util-manhattan-plot">
+<h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.manhattan_plot</span></code><a class="headerlink" href="#util-manhattan-plot" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="fastlmm.util.manhattan_plot">
+<code class="descclassname">fastlmm.util.</code><code class="descname">manhattan_plot</code><span class="sig-paren">(</span><em>chr_pos_pvalue_array</em>, <em>pvalue_line=None</em>, <em>plot_threshold=1.0</em>, <em>vline_significant=False</em>, <em>marker='o'</em>, <em>chromosome_starts=None</em>, <em>xaxis_unit_bp=True</em>, <em>alpha=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.manhattan_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to create a Manhattan plot.  See <a class="reference external" href="http://en.wikipedia.org/wiki/Manhattan_plot">http://en.wikipedia.org/wiki/Manhattan_plot</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>chr_pos_pvalue_array</strong> (<em>numpy array</em>) – an n x 3 numpy array. The three columns are the chrom number 
+(as a number), the position, and pvalue.</li>
+<li><strong>pvalue_line</strong> (<em>number</em>) – (Default: None). If given, draws a line at that PValue.</li>
+<li><strong>plot_threshold</strong> (<em>number</em>) – (Default: 1) Plot only SNPs that achieve a P-value smaller than pvalue_threshold
+to speed up plotting</li>
+<li><strong>vline_significant</strong> (<em>Boolean</em>) – If true, draw a vertical line at each significant Pvalue (Default: False)</li>
+<li><strong>marker</strong> (<em>string</em>) – marker for the scatter plot. default: “o”</li>
+<li><strong>chromosome_starts</strong> (<em>[</em><em>Nchrom x 3</em><em>] </em><em>ndarray</em>) – chromosome, cumulative start position, cumulative stop position
+cumulative chromosome starts, for plotting. If None (default), this is estimated from data</li>
+<li><strong>xaxis_unit_bp</strong> (<em>Boolean</em>) – If true, plot cumulative position in basepair units on x axis. If False, only 
+use rank of SNP positions. (default: True)</li>
+<li><strong>alpha</strong> (<em>number</em>) – alpha (opaqueness) for P-value markers in scatterplot (default 0.5)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">chromosome_starts       [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
+cumulative chromosome starts used in plotting.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">fastlmm.util.util</span> <span class="k">as</span> <span class="nn">flutil</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">h2</span><span class="o">=.</span><span class="mi">2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chromosome_starts</span> <span class="o">=</span> <span class="n">flutil</span><span class="o">.</span><span class="n">manhattan_plot</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">[[</span><span class="s2">&quot;Chr&quot;</span><span class="p">,</span> <span class="s2">&quot;ChrPos&quot;</span><span class="p">,</span> <span class="s2">&quot;PValue&quot;</span><span class="p">]],</span><span class="n">pvalue_line</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#plt.show()</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="indices-and-tables">
 <h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
@@ -818,19 +1024,24 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table Of Contents</a></h3>
+  <h3><a href="#">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#"><code class="docutils literal"><span class="pre">fastlmm</span></code> API Documentation</a><ul>
-<li><a class="reference internal" href="#single-snp"><code class="docutils literal"><span class="pre">single_snp</span></code></a></li>
-<li><a class="reference internal" href="#single-snp-all-plus-select"><code class="docutils literal"><span class="pre">single_snp_all_plus_select</span></code></a></li>
-<li><a class="reference internal" href="#single-snp-linreg"><code class="docutils literal"><span class="pre">single_snp_linreg</span></code></a></li>
-<li><a class="reference internal" href="#single-snp-select"><code class="docutils literal"><span class="pre">single_snp_select</span></code></a></li>
-<li><a class="reference internal" href="#epistasis"><code class="docutils literal"><span class="pre">epistasis</span></code></a></li>
-<li><a class="reference internal" href="#snp-set"><code class="docutils literal"><span class="pre">snp_set</span></code></a></li>
-<li><a class="reference internal" href="#fastlmm"><code class="docutils literal"><span class="pre">FastLMM</span></code></a></li>
-<li><a class="reference internal" href="#linearregression"><code class="docutils literal"><span class="pre">LinearRegression</span></code></a></li>
-<li><a class="reference internal" href="#heritability-spatial-correction"><code class="docutils literal"><span class="pre">heritability_spatial_correction</span></code></a></li>
-<li><a class="reference internal" href="#compute-auto-pcs"><code class="docutils literal"><span class="pre">compute_auto_pcs</span></code></a></li>
+<li><a class="reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation</a><ul>
+<li><a class="reference internal" href="#single-snp"><code class="docutils literal notranslate"><span class="pre">single_snp</span></code></a></li>
+<li><a class="reference internal" href="#single-snp-scale"><code class="docutils literal notranslate"><span class="pre">single_snp_scale</span></code></a></li>
+<li><a class="reference internal" href="#single-snp-all-plus-select"><code class="docutils literal notranslate"><span class="pre">single_snp_all_plus_select</span></code></a></li>
+<li><a class="reference internal" href="#single-snp-linreg"><code class="docutils literal notranslate"><span class="pre">single_snp_linreg</span></code></a></li>
+<li><a class="reference internal" href="#single-snp-select"><code class="docutils literal notranslate"><span class="pre">single_snp_select</span></code></a></li>
+<li><a class="reference internal" href="#epistasis"><code class="docutils literal notranslate"><span class="pre">epistasis</span></code></a></li>
+<li><a class="reference internal" href="#snp-set"><code class="docutils literal notranslate"><span class="pre">snp_set</span></code></a></li>
+<li><a class="reference internal" href="#fastlmm"><code class="docutils literal notranslate"><span class="pre">FastLMM</span></code></a></li>
+<li><a class="reference internal" href="#linearregression"><code class="docutils literal notranslate"><span class="pre">LinearRegression</span></code></a></li>
+<li><a class="reference internal" href="#heritability-spatial-correction"><code class="docutils literal notranslate"><span class="pre">heritability_spatial_correction</span></code></a></li>
+<li><a class="reference internal" href="#util-module"><code class="docutils literal notranslate"><span class="pre">util</span></code> Module</a><ul>
+<li><a class="reference internal" href="#util-compute-auto-pcs"><code class="docutils literal notranslate"><span class="pre">util.compute_auto_pcs</span></code></a></li>
+<li><a class="reference internal" href="#util-manhattan-plot"><code class="docutils literal notranslate"><span class="pre">util.manhattan_plot</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and Tables</a></li>
 </ul>
 </li>
@@ -839,18 +1050,20 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/index.txt"
+      <li><a href="_sources/index.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -863,12 +1076,12 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright .
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+        &#169; Copyright .
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
     </div>
   </body>
 </html>
