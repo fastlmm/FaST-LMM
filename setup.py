@@ -7,7 +7,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.3.1'
+version = '0.3.3'
 
 
 def readme():
@@ -154,7 +154,7 @@ setup(
         "fastlmm/util/standardizer",
         "fastlmm/util/stats",
         "fastlmm/util/stats/quadform",
-        "fastlmm/util/stats/quadform/qfc_src",
+        "fastlmm/util/stats/quadform/qfc_src"
     ],
     package_data={"fastlmm/association" : [
                        "Fastlmm_autoselect/FastLmmC.exe",
@@ -174,12 +174,10 @@ setup(
                        "examples/toydata.cov",
                        "examples/toydata.dat",
                        "examples/toydata.fam",
-                       "examples/toydata.iidmajor.hdf5",
                        "examples/toydata.map",
                        "examples/toydata.phe",
                        "examples/toydata.shufflePlus.phe",
                        "examples/toydata.sim",
-                       "examples/toydata.snpmajor.hdf5",
                        "examples/toydataTest.phe",
                        "examples/toydataTrain.phe"
                        ]
