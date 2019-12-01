@@ -3,6 +3,7 @@
 #recursive-include tests *
 #recursive-include fastlmm *.py (this will only work for sdist, source distribution)
 recursive-include fastlmm *.c *.h *.pyx *.pxd *.cpp
+recursive-include external *.a *.h *.so
 include LICENSE.md
 include AUTHORS.txt
 include README.md
