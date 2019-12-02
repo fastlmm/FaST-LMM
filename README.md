@@ -2,17 +2,19 @@ FaST-LMM
 =================================
 
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing 
-genome-wide association studies (GWAS) on datasets of all sizes, up to one millions samples. This release contains:
+genome-wide association studies (GWAS) on datasets of all sizes, up to one millions samples.
+
+This release contains:
 
 * core FaST-LMM ([IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)), [Lippert *et al.*, *Nature Methods* 2011](http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html)
 
 and these improvements:
 
 * Ludicrous-Speed GWAS ([IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/SingleSnpScale.ipynb)), [Kadie and Heckerman, *bioRxiv* 2018](https://www.biorxiv.org/content/10.1101/154682v2)
-* Heritability with Spatial Correction ([IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb))), [Heckerman *et al.*, *PNAS* 2016](http://www.pnas.org/content/113/27/7377.abstract)
+* Heritability with Spatial Correction ([IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb)), [Heckerman *et al.*, *PNAS* 2016](http://www.pnas.org/content/113/27/7377.abstract)
 * Two Kernels ([IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)), [Widmer *et al.*, *Scientific Reports* 2014](http://www.nature.com/srep/2014/141112/srep06874/full/srep06874.html)
 * Set Analysis ([IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)), [Lippert *et al.*, *Bioinformatics* 2014](http://bioinformatics.oxfordjournals.org/content/early/2014/09/07/bioinformatics.btu504)
-* Epistasis ([`IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)), [Lippert *et al.*, *Scientific Reports,* 2013](http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html)
+* Epistasis ([IPython notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)), [Lippert *et al.*, *Scientific Reports,* 2013](http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html)
 
 *A C++ version, which is generally less functional, is available. See http://fastlmm.github.io/.*
 
@@ -20,7 +22,7 @@ and these improvements:
 Documentation
 =================================
 
-* IPython Notebooks
+* IPython Notebooks:
 	* [Core, Epistasis, Set Analysis, Two Kernels](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)
 	* [Heritability with Spatial Correction](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb)
 	* [Ludicrous-Speed GWAS](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/SingleSnpScale.ipynb)
@@ -64,8 +66,8 @@ Packages:
 (1) Installation of dependent packages
 -------------------------------------------
 
-We highly recommend using a python distribution such as 
-Anaconda (https://store.continuum.io/cshop/anaconda/).
+We recommend using a Python distribution such as 
+[Anaconda](https://www.anaconda.com/distribution/).
 This distribution can be used on Linux and Windows and is free.
 It is the easiest way to get all the required package
 dependencies.
