@@ -1,20 +1,38 @@
 FaST-LMM
 =================================
 
-FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both single-SNP and SNP-set
-genome-wide association studies (GWAS) on extremely large data sets.  This release contains the improvements described in Widmer *et al.*, *Scientific Reports* 2014,
-and tests for epistasis.
+FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing 
+genome-wide association studies (GWAS) on datasets of all sizes, up to one millions samples. This release contains:
 
-Our documentation (including live examples) is also available as IPython notebooks:
+* Core FaST-LMM -- `IPython Notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_  -- `Lippert *et al.*, *Nature Method* 2011 <http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html>`_
 
-* Main Functions: https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
-* Heritability with Spatial Correction (described in Heckerman *et al.*, *PNAS* 2016): https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb
+and these improvements:
 
-Additionally, API documentation is available at http://fastlmm.github.io/FaST-LMM/.
+* Ludicrous-Speed GWAS -- `IPython Notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/SingleSnpScale.ipynb>`_  -- `Kadie and Heckerman, *bioRxiv* 2018 <https://www.biorxiv.org/content/10.1101/154682v2>`_
+* Heritability with Spatial Correction `IPython Notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb>`_ 	`Heckerman *et al.*, *PNAS* 2016 <http://www.pnas.org/content/113/27/7377.abstract>`_
+* Two Kernels -- `IPython Notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_  -- `Widmer *et al.*, *Scientific Reports* 2014 <http://www.nature.com/srep/2014/141112/srep06874/full/srep06874.html>`_
+* Set Analysis -- `IPython Notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_  -- `Lippert *et al.*, *Bioinformatics* 2014 <http://bioinformatics.oxfordjournals.org/content/early/2014/09/07/bioinformatics.btu504>`_
+* Epistasis `IPython Notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_  -- `Lippert *et al.*, *Scientific Reports,* 2013 <http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html>`_
 
-A C++ version, which is generally less functional, is available. See http://fastlmm.github.io/.
+*A C++ version, which is generally less functional, is available. See http://fastlmm.github.io/.*
 
-Also http://fastlmm.github.io/ for the project's home and bibliography.
+
+Documentation
+=================================
+
+* IPython Notebooks
+	* `Core, Epistasis, Set Analysis, Two Kernels <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_
+	* `Heritability with Spatial Correction <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb>`_
+	* `Ludicrous-Speed GWAS <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/SingleSnpScale.ipynb>`_
+* `API Documentation <http://fastlmm.github.io/FaST-LMM/>`_
+* `Project Home and Full Annotated Bibliography <https://fastlmm.github.io/>`_
+
+Contacts
+=================================
+
+* Email the developers at fastlmm-dev@python.org.
+* `Join <mailto:fastlmm-user-join@python.org?subject=Subscribe>`_ the user discussion and announcement list (or `web sign up <https://mail.python.org/mailman3/lists/fastlmm-user.python.org>`_).
+* `Open an issue <https://github.com/fastlmm/FaST-LMM/issues>`_ on GitHub.
 
 Quick install:
 =================================
@@ -47,11 +65,9 @@ Packages:
 -------------------------------------------
 
 We highly recommend using a python distribution such as 
-Anaconda (https://store.continuum.io/cshop/anaconda/) 
-or Enthought (https://www.enthought.com/products/epd/free/).
-Both these distributions can be used on Linux and Windows, are free 
-for non-commercial use, and optionally include an MKL-compiled distribution
-for optimal speed. This is the easiest way to get all the required package
+Anaconda (https://store.continuum.io/cshop/anaconda/).
+This distribution can be used on Linux and Windows and is free.
+It is the easiest way to get all the required package
 dependencies.
 
 
