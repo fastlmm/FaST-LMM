@@ -4,7 +4,7 @@ FaST-LMM
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing 
 genome-wide association studies (GWAS) on datasets of all sizes, up to one millions samples. This release contains:
 
-* Core FaST-LMM -- `IPython Notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_  -- `Lippert *et al.*, *Nature Method* 2011 <http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html>`_
+* Core FaST-LMM -- [IPython Notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>)  -- [Lippert *et al.*, *Nature Method* 2011](http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html)
 
 and these improvements:
 
