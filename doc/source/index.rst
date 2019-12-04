@@ -4,21 +4,26 @@
 
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
-This release contains the improvements described in Widmer *et al.*, *Scientific Reports* 2014, and tests for epistasis.
 
-Our main documentation (including live examples) is a `ipython notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_.
+See `FaST-LMM's README.md <https://github.com/fastlmm/FaST-LMM/blob/master/README.md>`_ for installation instructions, documentation, code, and a bibliography.
 
 :new:
 
 :func:`.single_snp_scale` Does single-SNP GWAS on a cluster.
   (Also, scales on a single machine a little better than :func:`.single_snp`.)
 
-:Contact:
+:Code:
 
-* Project Home: https://fastlmm.github.io/ (including bibliography)
-* For discussion and announcements, join the user list. Send an email to `fastlmm-user-join@python.org <mailto:fastlmm-user-join@python.org?subject=Subscribe>`_.
-* Contact the developers at `fastlmm-dev@python.org <mailto:fastlmm-dev@python.org>`_.
-* `Open issues <https://github.com/fastlmm/FaST-LMM/issues>`_ on GitHub.
+* `PyPi <https://pypi.org/project/fastlmm/>`_
+* `GitHub <https://github.com/fastlmm/FaST-LMM>`_
+
+:Contacts:
+
+* Email the developers at `fastlmm-dev@python.org <mailto:fastlmm-dev@python.org>`_.
+* `Join <mailto:fastlmm-user-join@python.org?subject=Subscribe>`_ the user discussion and announcements
+  list (or use `web sign up <https://mail.python.org/mailman3/lists/fastlmm-user.python.org>`_).
+* `Open an issue <https://github.com/fastlmm/PySnpTools/issues>`_ on GitHub.
+* `Project Home <https://fastlmm.github.io/>`_ (including bibliography).
 
 
 **************************************************

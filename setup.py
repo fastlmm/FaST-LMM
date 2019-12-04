@@ -7,7 +7,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.3.6'
+version = '0.3.7'
 
 
 def readme():
@@ -131,7 +131,7 @@ setup(
     description='Fast GWAS',
     long_description=readme(),
     long_description_content_type = 'text/markdown',
-    keywords='gwas bioinformatics LMMs MLMs',
+    keywords='gwas bioinformatics LMMs MLMs linear mixed models',
     url="https://fastlmm.github.io/",
     author='FaST-LMM Team',
     author_email='fastlmm-dev@python.org',
