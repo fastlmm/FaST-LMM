@@ -2,6 +2,8 @@
 example of how to use feature selection from python (see also command line interface)
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import scipy.linalg as LA
 import sys, os
@@ -32,15 +34,15 @@ def computePC(file, filepath = None, numpc = [5]):
     if type(numpc) is int or type(numpc) is float:
         numpc = [numpc]
     alt_snpreader = Bed(fn)
-    print "computing K"
+    print("computing K")
     K = dist.build_kernel_blocked(fn,alt_snpreader=alt_snpreader)
-    print "computing the Eigenvalue decomposition of K"
+    print("computing the Eigenvalue decomposition of K")
     [s_all,u_all] = LA.eigh(K)
     s_all=s_all[::-1]
     u_all=u_all[:,::-1]
     for numpcs in numpc:
         #import pdb; pdb.set_trace()
-        print "saving %i PCs from %s" %(numpcs,fn)
+        print("saving %i PCs from %s" %(numpcs,fn))
         
         #import pdb; pdb.set_trace()
 

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import scipy as sp
 import scipy.stats as st
@@ -6,10 +8,11 @@ import scipy.linalg as la
 import fastlmm.util.preprocess as util
 import scipy.stats as st
 import time
+from six.moves import range
 #import ipdb
 
 def print_missing_info(y):
-    print str(np.isnan(y).sum().sum()) + " missing items out of " + str(np.product(y.shape)) + "=" + str(100.0*np.isnan(y).sum().sum()/np.product(y.shape)) + "%"
+    print(str(np.isnan(y).sum().sum()) + " missing items out of " + str(np.product(y.shape)) + "=" + str(100.0*np.isnan(y).sum().sum()/np.product(y.shape)) + "%")
 
 
 #would be nice to make a low-mem version of this, but this requires
@@ -27,41 +30,41 @@ def TESTBEFOREUSING_pca_covariates(bedfile,npc,outfile=None):
     import scipy.linalg as la
     import numpy as np
     root, ext = os.path.splitext(bedfile)
-    print "reading in bed file..."
+    print("reading in bed file...")
 
     t0=time.time()   
     SNPs = Bed(root).read().standardize()
     t1=time.time()   
-    print ("Elapsed time %.2f seconds" % (t1-t0))
+    print(("Elapsed time %.2f seconds" % (t1-t0)))
 
     [N,M]=snps.shape
-    print "found nind=" + str(N) + ", nsnp=" + str(M)
+    print("found nind=" + str(N) + ", nsnp=" + str(M))
     if M<N: 
-        print "only doing full rank, should use low rank here"
+        print("only doing full rank, should use low rank here")
     
     #not needed, and in practice, makes no difference
     #mean center the individuals    
     #meanval=sp.mean(snps,axis=0)
     #snps=snps-meanval
     
-    print "computing kernel..."
+    print("computing kernel...")
     t0=time.time()           
     K=sp.dot(snps,snps.T)  
     t1=time.time()       
-    print ("Elapsed time %.2f seconds" % (t1-t0))  
+    print(("Elapsed time %.2f seconds" % (t1-t0)))  
     snps=None
     
     t0=time.time()   
-    print "computing svd..."
+    print("computing svd...")
     [U,S,V] = la.svd(K,full_matrices = False) #!!!use big_svd?
     t1=time.time()   
-    print ("Elapsed time %.2f seconds" % (t1-t0))  
+    print(("Elapsed time %.2f seconds" % (t1-t0)))  
     
     S=sp.sqrt(S)
     #UShalf=sp.dot(U,sp.diag(S)) #expensive
     UShalf=sp.multiply(U,np.tile(S,(N,1))) #faster, but not as fast as as_strided which I can't get to work
     pccov=UShalf[:,0:npc]
-    print "done."
+    print("done.")
     if outfile is not None:
         import fastlmm.util.util as ut        
         ut.write_plink_covariates(SNPs['iid'],pccov,outfile)
@@ -74,13 +77,13 @@ def lrtpvals_qqfit_file(filein, qmax=0.1):
     import pandas as pd          
     colname="2*(LL(alt)-LL(null))"
     lrtperm=pd.read_csv(filein,delimiter = '\t',dtype={colname:np.float64},usecols=[colname])[colname].values    
-    print "found " + str(len(lrtperm)) + "null test stats"
+    print("found " + str(len(lrtperm)) + "null test stats")
 
     mix = c2.chi2mixture( lrt = lrtperm, qmax = qmax, alteqnull = None)     
     res = mix.fit_params_Qreg() # paramter fitting        
-    print "mixture (non-zero dof)="+ str(mix.mixture) + "\n"
-    print "dof="+str(res["dof"]) + "\n"
-    print "scale="+str(res["scale"]) + "\n"
+    print("mixture (non-zero dof)="+ str(mix.mixture) + "\n")
+    print("dof="+str(res["dof"]) + "\n")
+    print("scale="+str(res["scale"]) + "\n")
     import ipdb; ipdb.set_trace()
 
 def lrt(stat,dof):
@@ -98,7 +101,7 @@ def linreg_uniscan(X,y,covar=None,REML=False):
         p-value, LLnull, LLalt
     '''
     numtests=X.shape[1]
-    print "numtests=" + str(numtests)
+    print("numtests=" + str(numtests))
     pv = np.nan*np.ones(numtests)
     m_alt=[]
     nullfeat = np.ones_like(y) #bias term
@@ -115,7 +118,7 @@ def linreg_uniscan(X,y,covar=None,REML=False):
         pv[i] = lrt(-2*(m_alt[i]['nLL']-m_null['nLL']),dof=1)
         if i % 50000==0:
             ttt1=time.time()
-            print "Elapsed time for %d of %d tests is %.2f seconds" % (i, numtests,(ttt1-ttt0))       
+            print("Elapsed time for %d of %d tests is %.2f seconds" % (i, numtests,(ttt1-ttt0)))       
     return pv,m_null,m_alt
 
 def linreg(X,y,REML=True,**kwargs):
@@ -159,7 +162,7 @@ def stats(a):
     '''
     Reports the mean, std, min, and max values in a
     '''
-    print "mean="+str(np.mean(a)) + ", std=" +str(np.std(a)) + ", [min,max]=[" + str(np.min(a)) + "," + str(np.max(a)) + "]"
+    print("mean="+str(np.mean(a)) + ", std=" +str(np.std(a)) + ", [min,max]=[" + str(np.min(a)) + "," + str(np.max(a)) + "]")
 
 
 

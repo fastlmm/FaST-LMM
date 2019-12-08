@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from .Beta import *
 from .Unit import *
 
@@ -52,7 +53,7 @@ def standardize_unit_python(snps, returnStats=False):
 
     # avoid div by 0 when standardizing
     if snp_std.__contains__(0.0):
-        logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
+        logging.warning("A least one snps has only one value, that is, its standard deviation is zero")
     snp_std[snp_std == 0.0] = 1.0
     snps /= snp_std
     snps[imissX] = 0
@@ -78,7 +79,7 @@ def standardize_beta_python(snps, betaA, betaB):
     snps -= snp_mean
     snp_std = np.sqrt(np.nansum(snps**2, axis=0)/n_obs_sum)
     if snp_std.__contains__(0.0):
-        logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
+        logging.warning("A least one snps has only one value, that is, its standard deviation is zero")
 
     maf = snp_mean/2.0
     maf[maf>0.5]=1.0- maf[maf>0.5]

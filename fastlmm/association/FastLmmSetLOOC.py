@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from fastlmm.association.FastLmmSet import *
 #from pysnptools.util.mapreduce1.distributable import *
 from pysnptools.util.mapreduce1.runner import *
@@ -34,8 +36,8 @@ if __name__ == "__main__":
     else: raise Exception("please specify 'chrm' in the input file")
 
     for chr in chrmset:
-        print "doing leave-one-out chromosome"
-        print "chrm: " + str(chr)
+        print("doing leave-one-out chromosome")
+        print("chrm: " + str(chr))
         tt0=time.time()
 
         if bedfilealt.rfind("%i") > -1:

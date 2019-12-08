@@ -15,11 +15,15 @@ Examples:
     [0]
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import scipy as sp
 from collections import defaultdict
 import logging
 import itertools
+import six
+from six.moves import zip
 
 class VertexCut(object):
 
@@ -43,7 +47,7 @@ class VertexCut(object):
 
     def _load_graph_from_matrix(self, matrix, minvalue):
         where = np.where(matrix >= minvalue)
-        sparse_input_sequence = itertools.izip(where[0],where[1])
+        sparse_input_sequence = zip(where[0],where[1])
         graph = self._load_graph(sparse_input_sequence,len(where[0]))
         return graph
 
@@ -61,7 +65,7 @@ class VertexCut(object):
         return graph
 
     def _check_that_symmetric(self, graph):
-        for node1, list in graph.iteritems():
+        for node1, list in six.iteritems(graph):
             for node2 in list:
                 if not node1 in graph[node2]:
                     raise Exception("expect symmetric graph {0}, {1}".format(node1, node2))
@@ -73,12 +77,12 @@ class VertexCut(object):
             graph[node2].remove(node1)
 
     def _find_a_most_connected_node(self, graph):
-        best_node, best_list = max(graph.iteritems(), key=lambda pair : len(pair[1])) # find the node connected to the most other nodes
+        best_node, best_list = max(six.iteritems(graph), key=lambda pair : len(pair[1])) # find the node connected to the most other nodes
         logging.debug("Removing a node with {0} connections".format(len(best_list)))
         return best_node
 
     def _piece_count(self, graph):
-        unassigned = set(graph.iterkeys())
+        unassigned = set(six.iterkeys(graph))
         pieceCount = 0
         while len(unassigned) > 0:
             seed = unassigned.pop()
@@ -103,4 +107,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     import doctest
     doctest.testmod()
-    print "done"
+    print("done")

@@ -41,6 +41,7 @@ TODO list:
 
 # stdlib imports
 from __future__ import print_function
+from __future__ import absolute_import
 import argparse
 import base64
 import errno
@@ -53,11 +54,12 @@ import multiprocessing
 import os
 import platform
 import logging
+from six.moves import range
 # pylint: disable=F0401
 try:
     import queue
 except ImportError:  # pragma: no cover
-    import Queue as queue
+    import six.moves.queue as queue
 # pylint: enable=F0401
 import socket
 import sys
@@ -67,7 +69,7 @@ import traceback
 try:
     from urllib.parse import quote as urlquote
 except ImportError:  # pramga: no cover
-    from urllib import quote as urlquote
+    from six.moves.urllib.parse import quote as urlquote
 import xml.etree.ElementTree as ET
 # non-stdlib imports
 import azure.common
@@ -102,7 +104,7 @@ try:
 except NameError:  # pragma: no cover
     xrange = range
 try:
-    long
+    int
 except NameError:  # pragma: no cover
     long = int
 # pylint: enable=W0622,C0103
@@ -337,7 +339,7 @@ class EncryptionMetadataJson(object):
                 self.hmac = None
         # populate chunksize
         if self.encmode == _ENCRYPTION_MODE_CHUNKEDBLOB:
-            self.chunksizebytes = long(
+            self.chunksizebytes = int(
                 meta[_ENCRYPTION_METADATA_LAYOUT][
                     _ENCRYPTION_METADATA_CHUNKOFFSETS])
         # if RSA key is a public key, stop here as keys cannot be decrypted
@@ -500,7 +502,7 @@ class SasBlobService(object):
         for blob in blobs.iter('Blob'):
             name = blob.find('Name').text
             props = blob.find('Properties')
-            cl = long(props.find('Content-Length').text)
+            cl = int(props.find('Content-Length').text)
             md5 = props.find('Content-MD5').text
             bt = props.find('BlobType').text
             metadata = blob.find('Metadata')
@@ -599,7 +601,7 @@ class SasBlobService(object):
         blob = azure.storage.blob.Blob()
         blob.propertes = azure.storage.blob.BlobProperties()
         blob.properties.content_length = \
-            long(response.headers['content-length'])
+            int(response.headers['content-length'])
         blob.properties.content_settings = azure.storage.blob.ContentSettings()
         if 'content-md5' in response.headers:
             blob.properties.content_settings.content_md5 = \
@@ -1748,7 +1750,7 @@ def create_all_parent_directories_fileshare(
         Nothing
     """
     dirs = fsfile[0].split(os.path.sep)
-    for i in xrange(0, len(dirs)):
+    for i in range(0, len(dirs)):
         dir = os.path.join(*(dirs[0:i + 1]))
         if dir not in dirscreated:
             file_service.create_directory(
@@ -1887,7 +1889,7 @@ def generate_xferspec_download(
         else:
             filedesc = None
     chunktoadd = min(chunksize, contentlength)
-    for i in xrange(nchunks + 1):
+    for i in range(nchunks + 1):
         if chunktoadd + currfileoffset > contentlength:
             chunktoadd = contentlength - currfileoffset
         # on download, chunktoadd must be offset by 1 as the x-ms-range
@@ -1975,7 +1977,7 @@ def generate_xferspec_upload(
     symkey = None
     signkey = None
     ivmap = None
-    for i in xrange(nchunks + 1):
+    for i in range(nchunks + 1):
         if chunktoadd + currfileoffset > filesize:
             chunktoadd = filesize - currfileoffset
         blockid = '{0:08d}'.format(currfileoffset // chunksizebytes)
@@ -2513,7 +2515,7 @@ def main_internal(exit_is_ok):
             blobskipdict = {}
         if os.path.isdir(args.localresource):
             if args.remoteresource is not None:
-                logging.warn('WARNING: ignoring specified remoteresource {} for '
+                logging.warning('WARNING: ignoring specified remoteresource {} for '
                       'directory upload'.format(args.remoteresource))
             _remotefiles = set()
             # mirror directory
@@ -2786,7 +2788,7 @@ def main_internal(exit_is_ok):
     logging.debug('spawning {} worker threads'.format(maxworkers))
     exc_list = []
     threads = []
-    for _ in xrange(maxworkers):
+    for _ in range(maxworkers):
         thr = StorageChunkWorker(
             exc_list, storage_in_queue, storage_out_queue, args, xfertoazure,
             blob_service, file_service)
@@ -3016,7 +3018,7 @@ def main_robust(exit_is_ok=True): #!!! for some exceptions like "The specified b
     if do_robust:
         sleep_time = 1.0
         is_ok = False
-        for try_index in xrange(50):
+        for try_index in range(50):
             try:
                 main_internal(exit_is_ok=exit_is_ok)
                 is_ok = True

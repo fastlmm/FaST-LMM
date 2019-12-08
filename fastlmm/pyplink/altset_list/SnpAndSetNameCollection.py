@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import numpy as SP
 import subprocess, sys, os.path
 from itertools import *
 from fastlmm.pyplink.snpset import *
 import logging
+import six
 
 class SnpAndSetNameCollection(object):  # implements ISnpSetList
     '''
@@ -20,7 +22,7 @@ class SnpAndSetNameCollection(object):  # implements ISnpSetList
         setname_to_snp_list = defaultdict(list)
         for snp,gene in snp_and_setname_sequence.itertuples(index=False):
             setname_to_snp_list[gene].append(snp)
-        self.bigToSmall = sorted(setname_to_snp_list.iteritems(), key = lambda (gene, snp_list):-len(snp_list))
+        self.bigToSmall = sorted(six.iteritems(setname_to_snp_list), key = lambda gene_snp_list:-len(gene_snp_list[1]))
 
     def addbed(self, bed):
         return SnpAndSetNameCollectionPlusBed(self,bed)

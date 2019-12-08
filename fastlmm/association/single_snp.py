@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -27,6 +28,7 @@ from pysnptools.snpreader import wrap_matrix_subset
 from pysnptools.util.intrangeset import IntRangeSet
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
 import fastlmm.inference.linear_regression as lin_reg
+from six.moves import range
 
 def single_snp(test_snps, pheno, K0=None,
                  K1=None, mixing=None,
@@ -133,13 +135,14 @@ def single_snp(test_snps, pheno, K0=None,
 
     :Example:
 
+    >>> from __future__ import print_function
     >>> import logging
     >>> from fastlmm.association import single_snp
     >>> from pysnptools.snpreader import Bed
     >>> logging.basicConfig(level=logging.INFO)
     >>> pheno_fn = "../feature_selection/examples/toydata.phe"
     >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
-    >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
+    >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_576 1e-07 10000
 
 
@@ -174,7 +177,7 @@ def single_snp(test_snps, pheno, K0=None,
     else: 
         chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
         assert not np.isnan(chrom_list).any(), "chrom list should not contain NaN"
-        input_files = [test_snps, pheno, K0, G0, K1, G1, covar] + ([] if covar_by_chrom is None else covar_by_chrom.values())
+        input_files = [test_snps, pheno, K0, G0, K1, G1, covar] + ([] if covar_by_chrom is None else list(covar_by_chrom.values()))
 
         def nested_closure(chrom):
             test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
@@ -407,7 +410,7 @@ class _Mixer(object):
                     else:
                         _mix_from_Gs(G, K0.snpreader.val, K1.snpreader.val, mixer.mixing)
                         G = SnpData(iid=K0.iid,
-                                            sid=["K0_{0}".format(i) for i in xrange(K0.sid_count)]+["K1_{0}".format(i) for i in xrange(K1.sid_count)], #rename the sids so that they can't collide.
+                                            sid=["K0_{0}".format(i) for i in range(K0.sid_count)]+["K1_{0}".format(i) for i in range(K1.sid_count)], #rename the sids so that they can't collide.
                                             val=G,name="{0}&{1}".format(K0.snpreader,K1.snpreader),
                                             pos=np.concatenate((K0.pos,K1.pos),axis=0)
                                             )
@@ -611,7 +614,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         dataframe = _create_dataframe(snps_read.sid_count)
         dataframe['sid_index'] = np.arange(start,end)
-        dataframe['SNP'] = snps_read.sid
+        dataframe['SNP'] = np.array(snps_read.sid ,np.str) #!!!cmk test
         dataframe['Chr'] = snps_read.pos[:,0]
         dataframe['GenDist'] = snps_read.pos[:,1]
         dataframe['ChrPos'] = snps_read.pos[:,2] 
@@ -640,7 +643,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         return frame
 
-    frame = map_reduce(xrange(work_count),
+    frame = map_reduce(range(work_count),
                        mapper=mapper_closure,reducer=reducer_closure,
                        input_files=[test_snps],output_files=[output_file_name],
                        name="single_snp(output_file={0})".format(output_file_name),
@@ -669,7 +672,7 @@ def _find_mixing_from_Gs(G, covar, G0_standardized_val, G1_standardized_val, h2,
     resmin=[None]
     def f(mixing,G0_standardized_val=G0_standardized_val,G1_standardized_val=G1_standardized_val,covar=covar,y=y,**kwargs):
 
-        if not isinstance(mixing, (int, long, float, complex)):
+        if not isinstance(mixing, (int, int, float, complex)):
             assert mixing.ndim == 1 and mixing.shape[0] == 1
             mixing = mixing[0]
 
@@ -684,7 +687,7 @@ def _find_mixing_from_Gs(G, covar, G0_standardized_val, G1_standardized_val, h2,
         return result['nLL']
     mixing,nLL = mingrid.minimize1D(f=f, nGrid=10, minval=0.0, maxval=1.0,verbose=False)
 
-    if not isinstance(mixing, (int, long, float, complex)):
+    if not isinstance(mixing, (int, int, float, complex)):
         assert mixing.ndim == 1 and mixing.shape[0] == 1
         mixing = mixing[0]
 
@@ -698,7 +701,7 @@ def _find_mixing_from_Ks(K, covar, K0_val, K1_val, h2, y):
     resmin=[None]
     def f(mixing,K0_val=K0_val,K1_val=K1_val,covar=covar,y=y,**kwargs):
 
-        if not isinstance(mixing, (int, long, float, complex)):
+        if not isinstance(mixing, (int, int, float, complex)):
             assert mixing.ndim == 1 and mixing.shape[0] == 1
             mixing = mixing[0]
 
@@ -713,7 +716,7 @@ def _find_mixing_from_Ks(K, covar, K0_val, K1_val, h2, y):
         return result['nLL']
     mixing,nLL = mingrid.minimize1D(f=f, nGrid=10, minval=0.0, maxval=1.0,verbose=False)
 
-    if not isinstance(mixing, (int, long, float, complex)):
+    if not isinstance(mixing, (int, int, float, complex)):
         assert mixing.ndim == 1 and mixing.shape[0] == 1
         mixing = mixing[0]
     h2 = resmin[0]['h2']

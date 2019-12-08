@@ -6,10 +6,12 @@ Created on 2013-07-28
 """
 
 # std modules
+from __future__ import absolute_import
+from __future__ import print_function
 from collections import defaultdict
 import gzip
 import bz2
-import cPickle
+import six.moves.cPickle
 import time
 import os 
 import gc
@@ -39,10 +41,11 @@ import fastlmm.util.util as util
 import fastlmm.util.preprocess as up
 import fastlmm.inference as inference
 import fastlmm.inference.linear_regression as lin_reg
-import PerformSelectionDistributable as psd
+from . import PerformSelectionDistributable as psd
 from pysnptools.util.mapreduce1.runner import *
 from pysnptools.standardizer import Unit
 import pysnptools.snpreader as sr
+from six.moves import range
 
 class FeatureSelectionStrategy(object):
 
@@ -275,7 +278,7 @@ class FeatureSelectionStrategy(object):
         self.run_once()
 
         # set up splitting strategy
-        kf = ShuffleSplit(n_splits=self.num_folds, test_size=self.test_size, random_state=self.random_state).split(range(len(self.y)))
+        kf = ShuffleSplit(n_splits=self.num_folds, test_size=self.test_size, random_state=self.random_state).split(list(range(len(self.y))))
 
         fold_idx = start -1
         for (train_idx, test_idx) in islice(kf,start,stop):
@@ -374,7 +377,7 @@ class FeatureSelectionStrategy(object):
         self.biggest_k = max(k_values)
         
         if (strategy!="lmm_full_cv") and (strategy!="insample_cv"):
-            logging.warn("strategies other than lmm_full_cv and insample_cv are experimental!")
+            logging.warning("strategies other than lmm_full_cv and insample_cv are experimental!")
             raise Exception("strategies other than lmm_full_cv and insample_cv are experimental!")
 
         perform_selection_distributable = psd.PerformSelectionDistributable(self, k_values, delta_values, strategy, output_prefix, select_by_ll, penalty=penalty,create_pdf=create_pdf)
@@ -406,7 +409,7 @@ class FeatureSelectionStrategy(object):
             # save cv scores
             if output_prefix != None:
                 split_idx = ["mean"]*len(k_values)
-                for idx in xrange(len(loss_cv)):
+                for idx in range(len(loss_cv)):
                     split_idx.extend([idx]*loss_cv[idx].shape[0])
                                 
                 stacked_result = np.vstack(loss_cv)
@@ -420,11 +423,11 @@ class FeatureSelectionStrategy(object):
             
             # make sure delta is not at the boundary for any k
             assert average_loss.shape[0] == len(k_values)
-            for k_idx in xrange(average_loss.shape[0]):
+            for k_idx in range(average_loss.shape[0]):
                 tmp_idx = np.argmin(average_loss[k_idx])
                 
                 if tmp_idx == 0 or tmp_idx == len(delta_values)-1:
-                    logging.warn("(select by %s): ln_delta for k=%i is at the boundary (idx=%i) of defined delta grid" % (label, k_values[k_idx], tmp_idx))
+                    logging.warning("(select by %s): ln_delta for k=%i is at the boundary (idx=%i) of defined delta grid" % (label, k_values[k_idx], tmp_idx))
             
             best_k_idx, best_delta_idx = np.unravel_index(average_loss.argmin(), average_loss.shape)
             best_k, best_delta = k_values[best_k_idx], delta_values[best_delta_idx]
@@ -443,7 +446,7 @@ class FeatureSelectionStrategy(object):
                     best_str += ", ln_d_interp=%.2f" % (best_ln_delta_interp)
                     logging.info("best interpolated ln_delta {0}".format(best_ln_delta_interp))
                 else:
-                    logging.warn("(select by %s): best ln_delta for all k is at the boundary (idx=%i) of search grid, please consider a larger grid" % (label, best_delta_idx))
+                    logging.warning("(select by %s): best ln_delta for all k is at the boundary (idx=%i) of search grid, please consider a larger grid" % (label, best_delta_idx))
                     #if output_prefix != None:
                         #create a size-zero file so that the cluster will aways have something to copy
                         #plot_fn=output_prefix+"_parabola.pdf"
@@ -469,8 +472,8 @@ class FeatureSelectionStrategy(object):
 
                     #TODO: this assumes the k_values are sorted:
                     pylab.ylim(ymax=average_loss[0].max() + abs(average_loss[0].max())*0.05 )
-                    if k_values[0] != 0: logging.warn("Expect the first k value to be zero") #!!move this change earlier
-                    for i in xrange(len(k_values)):
+                    if k_values[0] != 0: logging.warning("Expect the first k value to be zero") #!!move this change earlier
+                    for i in range(len(k_values)):
                         if k_values[i] == 0:
                             ax.axhline(average_loss[i].max(), color = 'green')
                             mymin = average_loss.min() 
@@ -500,7 +503,7 @@ class FeatureSelectionStrategy(object):
             delta_array = np.array(best_delta_for_k)
             unique_deltas_for_k = set(delta_array[:,best_k_idx])
             if len(unique_deltas_for_k) > 1:
-                logging.warn("ambiguous choice of delta for k: {0} {1}".format(best_k, unique_deltas_for_k))
+                logging.warning("ambiguous choice of delta for k: {0} {1}".format(best_k, unique_deltas_for_k))
 
             best_delta = np.median(delta_array[:,best_k_idx])
 
@@ -508,14 +511,14 @@ class FeatureSelectionStrategy(object):
             logging.info(best_str)
             if output_prefix != None:
                 split_idx = ["mean"]*len(k_values)
-                for idx in xrange(len(loss_cv)):
+                for idx in range(len(loss_cv)):
                     split_idx.extend([idx]*loss_cv[idx].shape[0])
                                 
                 stacked_result = np.vstack(loss_cv)
                 stacked_result = np.vstack((average_loss, stacked_result))
                 out_fn = output_prefix + "_" + label  + ".csv"
                 cols = pd.MultiIndex.from_arrays([split_idx, k_values*(self.num_folds+1)], names=['split_id','k_value'])
-                print "Christoph: bug, this is a quick fix that runs but may write out wrong results"
+                print("Christoph: bug, this is a quick fix that runs but may write out wrong results")
                 df = pd.DataFrame(stacked_result.flatten()[:, None], columns=[label], index=cols)
                 pstutil.create_directory_if_necessary(out_fn)
                 df.to_csv(out_fn)
@@ -534,8 +537,8 @@ class FeatureSelectionStrategy(object):
                     #TODO: this assumes the k_values are sorted:
                     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
                     pylab.ylim(ymax=average_loss[0].max() + abs(average_loss[0].max())*0.05 )
-                    if k_values[0] != 0: logging.warn("Expect the first k value to be zero") #!!move this change earlier
-                    for i in xrange(len(k_values)):
+                    if k_values[0] != 0: logging.warning("Expect the first k value to be zero") #!!move this change earlier
+                    for i in range(len(k_values)):
                         if k_values[i] == 0:
                             ax.axhline(average_loss[i].max(), color = 'green')
                             mymin =average_loss.min() 
@@ -832,7 +835,7 @@ def main():
     ##############################
     # set up grid
     ##############################
-    k_values = [int(x) if x != 'all' else sys.maxint for x in args.k_values.lstrip('[').rstrip(']').lower().split(',')]
+    k_values = [int(x) if x != 'all' else sys.maxsize for x in args.k_values.lstrip('[').rstrip(']').lower().split(',')]
     delta_values = np.array([np.exp(float(x)) for x in args.ln_delta_values.lstrip('[').rstrip(']').split(',')])
 
     np.set_printoptions(precision=3, suppress=True, linewidth=150)

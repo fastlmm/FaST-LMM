@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 import logging
 import unittest
@@ -21,6 +22,7 @@ from pysnptools.standardizer import Identity as StandardizerIdentity
 from scipy.stats import multivariate_normal
 from fastlmm.util.pickle_io import load, save
 from pysnptools.pstreader import PstReader
+from six.moves import range
 
 class _SnpWholeTest(KernelReader):
     '''
@@ -60,12 +62,12 @@ class _SnpWholeTest(KernelReader):
         col_index_or_none = PstReader._make_sparray_from_sparray_or_slice(self.col_count, iid1_indexer)
 
         if row_index_or_none is None:
-            row_index_or_none = range(self.row_count)
+            row_index_or_none = list(range(self.row_count))
 
         assert not isinstance(row_index_or_none,str), "row_index_or_none should not be a string"
         iid = self.row[row_index_or_none]
 
-        if col_index_or_none is None or np.array_equal(col_index_or_none,range(self.col_count)):
+        if col_index_or_none is None or np.array_equal(col_index_or_none,list(range(self.col_count))):
             test = self.test
         else:
             test = self.test[col_index_or_none]
@@ -152,7 +154,7 @@ class _SnpTrainTest(KernelReader):
                 ct = 0
                 ts = time.time()
 
-                for start in xrange(0, self.train.sid_count, self.block_size):
+                for start in range(0, self.train.sid_count, self.block_size):
                     ct += self.block_size
                     train_snps = self.train[:,start:start+self.block_size].read(dtype=dtype).standardize(self.standardizer)
                     test_snps =  self.test [:,start:start+self.block_size].read(dtype=dtype).standardize(self.standardizer)
@@ -234,6 +236,7 @@ class FastLMM(object):
 
         :Example:
 
+        >>> from __future__ import print_function
         >>> import numpy as np
         >>> import logging
         >>> from pysnptools.snpreader import Bed, Pheno
@@ -248,10 +251,10 @@ class FastLMM(object):
         >>> #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
         >>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
         >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
-        >>> print mean.iid[0], round(mean.val[0],7), round(covariance.val[0,0],7)
+        >>> print(mean.iid[0], round(mean.val[0],7), round(covariance.val[0,0],7))
         ['per0' 'per0'] 0.1791958 0.8995209
         >>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
-        >>> print round(nll,7)
+        >>> print(round(nll,7))
         13.4623234
 
 
@@ -459,7 +462,7 @@ class FastLMM(object):
         else:
             if not return_mse_too:
                 result = SnpData(iid=y.iid,sid=['nLL'],val=np.empty((y.iid_count,1)),name="nLL")
-                for iid_index in xrange(y.iid_count):
+                for iid_index in range(y.iid_count):
                     var = multivariate_normal(mean=mean[iid_index], cov=covar[iid_index,iid_index])
                     nll = -np.log(var.pdf(y_actual[iid_index]))
                     result.val[iid_index,0] = nll

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 import scipy as sp
 import logging
@@ -12,6 +13,7 @@ from fastlmm.inference import LMM
 import unittest
 import os.path
 import time
+from six.moves import range
 
 currentFolder = os.path.dirname(os.path.realpath(__file__))
 
@@ -118,8 +120,8 @@ class TestGwas(unittest.TestCase):
         snp_pos = snp_reader.rs
 
         
-        idx_sim = range(0, 5000)
-        idx_test = range(5000, 10000)
+        idx_sim = list(range(0, 5000))
+        idx_test = list(range(5000, 10000))
 
         snp_pos_sim = snp_pos[idx_sim]
         snp_pos_test = snp_pos[idx_test]
@@ -145,7 +147,7 @@ class TestGwas(unittest.TestCase):
         if False:
             import pylab
             pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas_f.p_values_F), "x")
-            pylab.plot(range(-66,0,1), range(-66,0,1))
+            pylab.plot(list(range(-66,0,1)), list(range(-66,0,1)))
             pylab.show()
 
         # we compare lmm_cov.py to fastlmmc with REML=False
@@ -293,7 +295,7 @@ class GwasPrototype(object):
         assert self.lmm != None
         self.precompute_UX(self.X)
 
-        for idx in xrange(self.n_test):
+        for idx in range(self.n_test):
 
             self.set_current_UX(idx)
             res = self.lmm.nLLeval(delta=self.delta, REML=self.REML)
@@ -318,7 +320,7 @@ class GwasPrototype(object):
 
         assert len(self.res_alt) == self.n_test
 
-        for idx in xrange(self.n_test):
+        for idx in range(self.n_test):
             test_statistic = self.ll_alt[idx] - self.ll_null
             self.p_values[idx] = stats.chi2.sf(2.0 * test_statistic, degrees_of_freedom)
 
@@ -337,7 +339,7 @@ class GwasPrototype(object):
         pylab.semilogy(self.p_values)
         pylab.show()
 
-        dummy = [self.res_alt[idx]["nLL"] for idx in xrange(self.n_test)]
+        dummy = [self.res_alt[idx]["nLL"] for idx in range(self.n_test)]
         pylab.hist(dummy, bins=100)
         pylab.title("neg likelihood")
         pylab.show()

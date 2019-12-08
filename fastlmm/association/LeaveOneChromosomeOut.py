@@ -9,6 +9,7 @@ Created on 2014-03-11
 @summary: Module for performing GWAS
 """
 
+from __future__ import absolute_import
 import logging
 
 import numpy as np

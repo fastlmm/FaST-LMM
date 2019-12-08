@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import scipy as sp
 import scipy.stats as st
@@ -6,6 +8,7 @@ import scipy.linalg as la
 import pylab as pl
 from fastlmm.association.tests import Cv
 import fastlmm.util.util as ut
+from six.moves import range
 
 def pnames():
     '''
@@ -37,7 +40,7 @@ def getfiles(dirin, filepattern):
             if st in f: keep=False
         if keep: myfiles.append(f)
       
-    print str(len(myfiles)) + " files found"
+    print(str(len(myfiles)) + " files found")
     
     assert f>0, "no files found"
     return myfiles
@@ -54,7 +57,7 @@ def recalibrate(dirin,filepattern='*.txt', lrtpermfile=None, pnames=["P-value(50
     ii=0
     for f in myfiles:       
         ii=ii+1
-        print str(ii) + ") " + f
+        print(str(ii) + ") " + f)
         pv,rowids,llnull,llalt = extractpvals(f,pnames,rownames)
         lrt = -2*(llnull-llalt)  
         alteqnull = (lrt==0)
@@ -92,7 +95,7 @@ def _qqplot_bar(M=1000000, alphalevel = 0.05,distr = 'log10'):
     betaalphaLevel=sp.zeros(numPts);#down in the plot
     betaOneMinusalphaLevel=sp.zeros(numPts);#up in the plot
     betaInvHalf=sp.zeros(numPts);
-    for n in xrange(numPts):
+    for n in range(numPts):
         m=mRange[n]; #numplessThanThresh=m;
         betaInvHalf[n]=st.beta.ppf(0.5,m,M-m);
         betaalphaLevel[n]=st.beta.ppf(alphalevel,m,M-m);
@@ -163,9 +166,9 @@ def pairedpvalsplot(dirin,filepattern='*.txt',pnames=pnames(), rownames=rownames
             if strn in f: keep=False
         if keep: 
             myfiles.append(f)
-            print "keeping: " + f
+            print("keeping: " + f)
         else:
-            print "not including: " + f
+            print("not including: " + f)
     indrange=sp.arange(0,len(myfiles))
     if len(myfiles)==0: raise Exception("no files found")
     pv={};
@@ -205,7 +208,7 @@ def pairedpvalsplot(dirin,filepattern='*.txt',pnames=pnames(), rownames=rownames
                     tmp=j1; j1=j2; j2=tmp;
                 assert len(pv[j1]) == len(pv[j2]), "different # of pvals in each file"                
                 if newplot: pl.figure()
-                print "%i, %i" % (j1,j2)
+                print("%i, %i" % (j1,j2))
                 imag1 =(pv[j1]<=0.0)
                 imag2 = (pv[j2]<=0.0)
                 imag = imag1 | imag2
@@ -260,28 +263,28 @@ def type1errdir_agg(dirin,filepattern=['*.txt'],savefiles=False, pnames=pnames()
     Norig=None        
     for s in sp.arange(0,S):
         if filepattern[s] is not None:
-            thresh, obs_error, obs_count[s], p_twot, N, nfiles, missingind, duplicates=type1errdir(dirin, filepattern[s],dopower=True,auditrange=range(1,6),verbose=False)
+            thresh, obs_error, obs_count[s], p_twot, N, nfiles, missingind, duplicates=type1errdir(dirin, filepattern[s],dopower=True,auditrange=list(range(1,6)),verbose=False)
             obs_count_tot = obs_count_tot + obs_count[s]
             N_tot+=N        
             if Norig is None:
                 Norig=N
             else:
                 if not (N==Norig):
-                    type1errdir(dirin, filepattern[s],dopower=True,auditrange=range(1,6),verbose=True);
+                    type1errdir(dirin, filepattern[s],dopower=True,auditrange=list(range(1,6)),verbose=True);
                     raise Exception("number of tests has changed, look for missing files")
 
     thresh=thresh[threshInd]
     obs_count_tot=obs_count_tot[threshInd]
-    print "\n\n**********AGGREGATE************************"
-    print "filepattern="
-    for f in filepattern: print f
+    print("\n\n**********AGGREGATE************************")
+    print("filepattern=")
+    for f in filepattern: print(f)
     padl=15
     strfm="%1.2e"
 
-    print "Threshold".ljust(padl," ") + "\t" + "Obs. Count".ljust(padl," ") 
-    print "--------------------------------------------------------"    
+    print("Threshold".ljust(padl," ") + "\t" + "Obs. Count".ljust(padl," ")) 
+    print("--------------------------------------------------------")    
     for t in sp.arange(0,len(thresh)):
-        print str(strfm % thresh[t]).ljust(padl," ") + "\t" + (str(int(obs_count_tot[t])) + "/" + str(N_tot)).ljust(padl," ")
+        print(str(strfm % thresh[t]).ljust(padl," ") + "\t" + (str(int(obs_count_tot[t])) + "/" + str(N_tot)).ljust(padl," "))
 
     return thresh,obs_count_tot,N_tot
 
@@ -307,7 +310,7 @@ def type1errdir(dirin,filepattern='*.txt',savefiles=False, pnames=pnames(), rown
             if st in f: keep=False
         if keep: myfiles.append(f)
   
-    if verbose: print str(len(myfiles)) + " files found"    
+    if verbose: print(str(len(myfiles)) + " files found")    
     ycoord=0    
   
     auditdic={}; duplicates=[]; extras=[]; auditind=None
@@ -328,7 +331,7 @@ def type1errdir(dirin,filepattern='*.txt',savefiles=False, pnames=pnames(), rown
             if auditrange is not None: 
                 searchstring=str.format(auditstring,"([0-9]*)") #".S([0-9]*)."            
                 auditind= float(re.search(searchstring,shortf).groups()[0])
-            if auditdic.has_key(auditind): 
+            if auditind in auditdic: 
                 if auditrange is not None: duplicates.append(int(auditind))
             elif auditrange is not None and auditind not in auditrange: 
                 extras.append(int(auditind))
@@ -364,51 +367,51 @@ def type1errdir(dirin,filepattern='*.txt',savefiles=False, pnames=pnames(), rown
             nummis=0
             msg="missinginds=["
             for a in auditrange:        
-                if not auditdic.has_key(a):
+                if a not in auditdic:
                     nummis+=1
                     msg+=str(a) + ", "
             msg+="]"
-            print "--------------------------------------------------------"
-            print msg
-            print "found " + str(nummis) + " missing entries"
-        print "--------------------------------------------------------"
+            print("--------------------------------------------------------")
+            print(msg)
+            print("found " + str(nummis) + " missing entries")
+        print("--------------------------------------------------------")
         if len(duplicates)>0:
             msg="["
-            print "ignored duplicates for ["
+            print("ignored duplicates for [")
             for a in duplicates:
                 msg+= str(a) + ","
             msg+= "]"
-            print msg
-        else: print "found no duplicates"
-        print "--------------------------------------------------------"
+            print(msg)
+        else: print("found no duplicates")
+        print("--------------------------------------------------------")
         if len(extras)>0:
             msg="["
-            print "ignored extras ["
+            print("ignored extras [")
             for a in extras:
                 msg+= str(a) + ","
             msg+= "]"
-            print msg
-        else: print "found no extras"
-        print "--------------------------------------------------------"
+            print(msg)
+        else: print("found no extras")
+        print("--------------------------------------------------------")
                 
-        print "--------------------------------------------------------"
-        print "found total of " + str(N) + " p-values over " + str(nfiles) + " files with pattern:\n " + filepatternorig
-        print "from dir= " + dirin
-        print "--------------------------------------------------------"
+        print("--------------------------------------------------------")
+        print("found total of " + str(N) + " p-values over " + str(nfiles) + " files with pattern:\n " + filepatternorig)
+        print("from dir= " + dirin)
+        print("--------------------------------------------------------")
         padl=15
     
         if not dopower:
-            print "Threshold".ljust(padl," ") + "\t" + "Obs. Error".ljust(padl," ") + "\t" + "Obs. Count".ljust(padl," ")  +"\t" + "two-tail P".ljust(padl," ") #+ "\t" + "one-tail P".ljust(padl," ")
-            print "--------------------------------------------------------"
+            print("Threshold".ljust(padl," ") + "\t" + "Obs. Error".ljust(padl," ") + "\t" + "Obs. Count".ljust(padl," ")  +"\t" + "two-tail P".ljust(padl," ")) #+ "\t" + "one-tail P".ljust(padl," ")
+            print("--------------------------------------------------------")
             strfm="%1.2e"
             for t in sp.arange(0,len(thresh)):
-                print str(strfm % thresh[t]).ljust(padl," ") + "\t" + str(strfm % (obs_count[t]/float(N))).ljust(padl," ") + "\t" + (str(int(obs_count[t])) + "/" + str(N)).ljust(padl," ")  + "\t" + str(strfm % (p_twot[t])).ljust(padl," ")
+                print(str(strfm % thresh[t]).ljust(padl," ") + "\t" + str(strfm % (obs_count[t]/float(N))).ljust(padl," ") + "\t" + (str(int(obs_count[t])) + "/" + str(N)).ljust(padl," ")  + "\t" + str(strfm % (p_twot[t])).ljust(padl," "))
         else:
-            print "Threshold".ljust(padl," ") + "\t" + "Obs. Count".ljust(padl," ") 
-            print "--------------------------------------------------------"
+            print("Threshold".ljust(padl," ") + "\t" + "Obs. Count".ljust(padl," ")) 
+            print("--------------------------------------------------------")
             strfm="%1.2e"
             for t in sp.arange(0,len(thresh)):
-                print str(strfm % thresh[t]).ljust(padl," ") + "\t" + (str(int(obs_count[t])) + "/" + str(N)).ljust(padl," ")
+                print(str(strfm % thresh[t]).ljust(padl," ") + "\t" + (str(int(obs_count[t])) + "/" + str(N)).ljust(padl," "))
     if plot:
         fileout=None
         qqplot(pv, fileout, alphalevel,legend,xlim,ylim)     
@@ -437,7 +440,7 @@ def qqplotdir(dirin,filepattern='*.txt',savefiles=False, pnames=pnames(), rownam
             if st in f: keep=False
         if keep: myfiles.append(f)
       
-    print str(len(myfiles)) + " files found"
+    print(str(len(myfiles)) + " files found")
     maxycoord=800
     ycoordshift=int(plotsize.split("x")[1])
     ycoord=-ycoordshift
@@ -449,7 +452,7 @@ def qqplotdir(dirin,filepattern='*.txt',savefiles=False, pnames=pnames(), rownam
         
     for f in myfiles:       
         ii=ii+1
-        print str(ii) + ") " + f
+        print(str(ii) + ") " + f)
         ycoord=ycoord+ycoordshift
         if ycoord>maxycoord: ycoord=ycoord-ycoordshift+10   
         if savefiles: fileout = f[0:-4]+".out.png" 
@@ -471,18 +474,18 @@ def extractpvals(filein,pnames=pnames(), rownames=rownames(),sort=False,includef
     pname=None
     rowname=None
     for p in pnames:
-       if p in header.keys():
+       if p in list(header.keys()):
            pname=p
            break
     for r in rownames:
-       if r in header.keys():
+       if r in list(header.keys()):
            rowname=r
            break   
     if pname is None: 
-       print "header: " +  str(header.keys())
+       print("header: " +  str(list(header.keys())))
        raise Exception(str(pnames) + " not found")    
     if rowname is None:
-       print "header: " +  str(header.keys())
+       print("header: " +  str(list(header.keys())))
        raise Exception(str(rownames) + " not found")
     try:
         data=pd.read_csv(filein,delimiter = '\t',dtype={pname:np.float64,nullname:np.float64,altname:np.float64},usecols=[pname,rowname,nullname,altname])
@@ -500,8 +503,8 @@ def extractpvals(filein,pnames=pnames(), rownames=rownames(),sort=False,includef
     rowids=data[rowname].values
     import os    
     if verbose: 
-        print "M=" + str(len(pv)) + ", pname=" + pname + ", rowname=" + rowname 
-        if includefilename: print " (" + os.path.split(filein)[1] + ")"
+        print("M=" + str(len(pv)) + ", pname=" + pname + ", rowname=" + rowname) 
+        if includefilename: print(" (" + os.path.split(filein)[1] + ")")
     return pv,rowids,llnull,llalt
 
 def qqplotfile(filein,fileout = None, pnames=pnames(), rownames=rownames(),alphalevel = 0.05,legend=None,xlim=None,ylim=None,ycoord=10,plotsize="652x526",dohist=True):
@@ -656,7 +659,7 @@ def qqplot(pvals, fileout = None, alphalevel = 0.05,legend=None,xlim=None,ylim=N
          
     maxval = 0
 
-    for i in xrange(len(pvallist)):        
+    for i in range(len(pvallist)):        
         pval =pvallist[i].flatten()
         M = pval.shape[0]
         pnull = (0.5 + sp.arange(M))/M
@@ -683,7 +686,7 @@ def qqplot(pvals, fileout = None, alphalevel = 0.05,legend=None,xlim=None,ylim=N
         #pl.plot([0,qemp.max()], [0,qemp.max()],'r')        
         if addlambda:
             lambda_gc = estimate_lambda(pval)
-            print "lambda=%1.4f" % lambda_gc
+            print("lambda=%1.4f" % lambda_gc)
             #pl.legend(["gc="+ '%1.3f' % lambda_gc],loc=2)   
             # if there's only one method, just print the lambda
             if len(pvallist) == 1:

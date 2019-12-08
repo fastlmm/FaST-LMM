@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import logging
 import unittest
@@ -14,6 +16,7 @@ from pysnptools.kernelreader import  Identity as KernelIdentity
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelreader import SnpKernel
+from six.moves import range
 
 
 class TestSingleSnp(unittest.TestCase):
@@ -484,7 +487,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         pheno = self.phen_fn
         covar = Pheno(self.cov_fn).read()
         covar = SnpData(iid=covar.iid,sid=["pheno-1"],val=covar.val)
-        covar_by_chrom = {chrom:self.cov_fn for chrom in xrange(1,6)}
+        covar_by_chrom = {chrom:self.cov_fn for chrom in range(1,6)}
         output_file = self.file_name("covar_by_chrom")
         frame = single_snp(test_snps, pheno,
                                     covar=covar, mixing=0,
@@ -501,7 +504,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         covar = self.cov_fn
         covar = Pheno(self.cov_fn).read()
         covar = SnpData(iid=covar.iid,sid=["pheno-1"],val=covar.val)
-        covar_by_chrom = {chrom:self.cov_fn for chrom in xrange(1,6)}
+        covar_by_chrom = {chrom:self.cov_fn for chrom in range(1,6)}
         output_file = self.file_name("covar_by_chrom_mixing")
         frame = single_snp(test_snps, pheno,
                                     covar=covar,
@@ -573,7 +576,7 @@ if __name__ == '__main__':
         #runner = LocalInParts(0,2,mkl_num_threads=1) # For debugging the cluster runs
         #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done with testing")

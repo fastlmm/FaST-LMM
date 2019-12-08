@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import pdb
 import scipy.linalg as LA
@@ -20,6 +21,7 @@ import fastlmm.association as association
 import statsmodels.api as sm
 
 from sklearn import linear_model
+from six.moves import range
 
 class lrt(association.varcomp_test):
     __slots__ = ["model0","model1","lrt","forcefullrank","nullModel","altModel","G0","K0","__testGcalled"]
@@ -35,7 +37,7 @@ class lrt(association.varcomp_test):
         self.G0=G0
         self.K0=K0
         self.__testGcalled=False
-        if (not nullModel.has_key('penalty')) or nullModel['penalty'] is None:
+        if ('penalty' not in nullModel) or nullModel['penalty'] is None:
             nullModel['penalty'] = 'l2'
         if nullModel['effect']=='fixed':
 
@@ -45,7 +47,7 @@ class lrt(association.varcomp_test):
                 self._nullModelLogReg(G0, nullModel['penalty'])
             else:
                 assert False, 'Unknown link function.'
-            assert not nullModel.has_key('approx') or nullModel['approx'] is None, 'Cannot use approx with fixed effect'
+            assert 'approx' not in nullModel or nullModel['approx'] is None, 'Cannot use approx with fixed effect'
 
 
         elif nullModel['effect']=='mixed':
@@ -195,7 +197,7 @@ class lrt(association.varcomp_test):
                 assert False, 'Link function not implemented yet.'
             else:
                 assert False, 'Unkown link function.'
-            assert not altModel.has_key('approx') or altModel['approx'] is None, 'Cannot use approx with fixed effect'
+            assert 'approx' not in altModel or altModel['approx'] is None, 'Cannot use approx with fixed effect'
         elif self.altModel['effect']=='mixed':
             if self.altModel['link']=='linear':
                 (lik1,stat,alteqnull) = self._altModelMixedEffectLinear(G1)

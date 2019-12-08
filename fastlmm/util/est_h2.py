@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import fastlmm.inference.lmm_cov as lmm_cov
 import numpy as np
 
@@ -40,5 +42,5 @@ def est_h2(Y, K, covariates=None, nGridH2=10000, plot=True, verbose=True):
         plt.xlabel("$h^2$")
         plt.ylabel("$p( h^2 | Data)$")
     if verbose:
-        print "max[h^2] = %.5f  E[h^2] = %.5f +- %.5f" % (h2['h2'], h2_mean,np.sqrt(h2_var))
+        print("max[h^2] = %.5f  E[h^2] = %.5f +- %.5f" % (h2['h2'], h2_mean,np.sqrt(h2_var)))
     return h2, h2_mean, h2_var, grid, post_h2 

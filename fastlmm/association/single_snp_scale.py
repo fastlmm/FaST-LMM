@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import logging
 import collections
@@ -11,7 +13,7 @@ import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed, Pheno, SnpData, SnpReader, SnpNpz
 from pysnptools.kernelreader import KernelData, KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.util.mapreduce1.mapreduce import _identity, _dyn_vars
+from pysnptools.util.mapreduce1.mapreduce import _identity, _MapReduce
 from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.util.intrangeset import IntRangeSet
 from pysnptools.util import log_in_place
@@ -25,6 +27,9 @@ from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
 from fastlmm.util.mingrid import minimize1D
 from fastlmm.util.matrix.bigsvd import big_sdd
 from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
+import six
+from six.moves import filter
+from six.moves import range
 
 def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor=1,
             output_file_name=None, K0=None,
@@ -129,6 +134,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     :Example:
 
+    >>> from __future__ import print_function
     >>> import logging
     >>> from fastlmm.association import single_snp
     >>> from pysnptools.snpreader import Bed
@@ -137,7 +143,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     >>> pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
     >>> cov_fn = '../../tests/datasets/synth/cov.txt'
     >>> results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
-    >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
+    >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     snp1200_m0_.37m1_.36 0.0 500
 
     The stages of processing are:
@@ -198,7 +204,7 @@ def generate(data_folder,iid_count,file_count,sid_count,seed=0):
     from pysnptools.util import snp_gen
     from pysnptools.util.generate import _generate_phenotype
 
-    for file_index in xrange(file_count):
+    for file_index in range(file_count):
         snp_filename = snp_fn(data_folder,file_index)
         pheno_filename = pheno_fn(data_folder,file_index)
         covar_filename = covar_fn(data_folder,file_index)
@@ -256,7 +262,7 @@ def generate(data_folder,iid_count,file_count,sid_count,seed=0):
 def read_pheno_cache(data_folder,file_index_end,prefix,fn_fp):
     merge_fn = data_folder + "/{0}.0.{1}.merge.npz".format(prefix,file_index_end)
     if not os.path.exists(merge_fn):
-        snpreader = _MergeIIDs([Pheno(fn_fp(data_folder,file_index)) for file_index in xrange(file_index_end)]).read()
+        snpreader = _MergeIIDs([Pheno(fn_fp(data_folder,file_index)) for file_index in range(file_index_end)]).read()
         SnpNpz.write(merge_fn,snpreader)
     else:
         snpreader = SnpNpz(merge_fn)
@@ -266,7 +272,7 @@ def bed_list(data_folder,snp0,file_index_end,iid_list_or_none=None):
     return [Bed(snp_fn(data_folder,file_index),
                 sid=snp0.sid,pos=snp0.pos,
                 iid = (None if iid_list_or_none is None else iid_list_or_none[file_index]),
-                skip_format_check=True) for file_index in xrange(file_index_end)]
+                skip_format_check=True) for file_index in range(file_index_end)]
 def read_bed_cache(data_folder, file_index_end):
     snp0 = Bed(snp_fn(data_folder,0),skip_format_check=True)
     snps_iid_list_fn = data_folder + "/snps.0.{0}.iid_lists.npz".format(file_index_end)
@@ -342,7 +348,7 @@ def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, s
     
     dataframe = _create_dataframe(len(sid))
     dataframe['sid_index'] = np.arange(start,stop)
-    dataframe['SNP'] = sid
+    dataframe['SNP'] = np.array(sid,np.str)#!!!cmk test
     dataframe['Chr'] = pos[:,0]
     dataframe['GenDist'] = pos[:,1]
     dataframe['ChrPos'] = pos[:,2]
@@ -396,10 +402,10 @@ def preload(covar, G0, pheno, test_snps, count_A1):
 def get_clear_local(file_cache):
 
     def sub_dir_path(d):
-        return filter(os.path.isdir, [os.path.join(d,f) for f in os.listdir(d)])
+        return list(filter(os.path.isdir, [os.path.join(d,f) for f in os.listdir(d)]))
 
     def clear_local_lambda():
-        for local_root in set(storage.local_lambda()[1] for storage in file_cache.itervalues()):
+        for local_root in set(storage.local_lambda()[1] for storage in six.itervalues(file_cache)):
             for sub in sub_dir_path(local_root):
                 logging.info("Removing '{0}'".format(sub))
                 shutil.rmtree(sub)
@@ -447,7 +453,7 @@ def get_G0_memmap(G0, file_cache_parent, X, Xdagger, memory_factor):
             logging.info("Finished with allocation of memmap of G0_data.memmap")
             ss_per_snp = np.empty([G0.sid_count])
             t0 = time.time()
-            for work_index in xrange(work_count2):
+            for work_index in range(work_count2):
                 if work_count2 > 1: logging.info("get_G0_data_memmap: Working on part {0} of {1}".format(work_index,work_count2))
                 start = debatch_closure2(work_index)
                 stop = debatch_closure2(work_index+1)
@@ -694,7 +700,7 @@ def postsvd_piece(start_iid_index, stop_iid_index, G0_memmap, idx_array, SVinv3b
         for start_idx,stop_idx in idx_array:
             start_idx,stop_idx = int(start_idx),int(stop_idx) #We convert from numpy.int32 to python ints so that their product will be a python long instead of a (overflowed) numpy.int32
             fp.seek(G0_memmap.offset+start_idx*G0_memmap.iid_count*8) #Skip sids that are not of interest
-            for sid_index in xrange(so_far_idx,so_far_idx+stop_idx-start_idx):
+            for sid_index in range(so_far_idx,so_far_idx+stop_idx-start_idx):
                 if log_frequency > 0 and sid_index % log_frequency == 0:
                     logging.info("on sid_index {0} of {1}".format(sid_index,SVinv3b.shape[0]))
                 row = np.fromfile(fp, dtype=np.float64, count=G0_memmap.iid_count) #!!! instead of reading whole column, how about just reading the piece of the column that is wanted? Whould this be a little faster?
@@ -760,7 +766,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             ##############################################################
             # 1M x 25K x 25K => 1M x 25K
 
-            sid = ["sid{0}".format(i) for i in xrange(SVinv3b.shape[1])]
+            sid = ["sid{0}".format(i) for i in range(SVinv3b.shape[1])]
             idx_intrangeset = IntRangeSet(i for i,keep in enumerate(idx) if keep) #IntRangeSet('285:1000')
             idx_array = np.array(list(idx_intrangeset.ranges()))
 
@@ -805,7 +811,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             logging.info("File downloads took {0}. Next putting U together".format(format_delta(t0_download-t0_start)))
 
             with chrom_storage.open_write(fn_U) as handle_fn_U_file_name:
-                sid = ["sid{0}".format(i) for i in xrange(sid_count)]    
+                sid = ["sid{0}".format(i) for i in range(sid_count)]    
                 U_snp_mem_map = SnpMemMap.empty(iid=G0_iid,sid=sid,filename=handle_fn_U_file_name,dtype=np.float64, order='F')
                 fp_list = [] #!!! would be nice to have a try_catch to be sure all these get closed
                 file_name_list = []
@@ -816,7 +822,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                 with open(U_snp_mem_map.filename,"r+b") as fp_U:
                     fp_U.seek(U_snp_mem_map.offset)
                     with log_in_place("Creating U file", logging.INFO) as log_writer:
-                        for sid_index in xrange(sid_count):
+                        for sid_index in range(sid_count):
                             if sid_index % 100 == 0: #!!!use something like log_freq instead of '100'
                                 log_writer("On sid {0} of {1}".format(sid_index,sid_count))
                             prev_stop = 0
@@ -879,7 +885,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                 format_delta(t0_up - t0_start)
                 ))
 
-        return map_reduce(xrange(work_count),
+        return map_reduce(range(work_count),
                             mapper=mapper_closure_inner,
                             reducer=reducer_closure_inner,
                             name="{0}.postsvd_{1}".format(os.path.basename(chrom_storage.name),chrom),
@@ -938,7 +944,7 @@ def __del__(test_snps):
         for sub in test_snps.reader_list:
             __del__(sub)
     else:
-        logging.warn("Don't know how to __del__ '{0}'".format(test_snps))
+        logging.warning("Don't know how to __del__ '{0}'".format(test_snps))
 
 # code: no longer used (was for debugging???)
 #def is_good(node,file,chrom):
@@ -1089,7 +1095,7 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             frame.index = np.arange(len(frame))
             return frame
     
-        frame = map_reduce(xrange(work_count),
+        frame = map_reduce(range(work_count),
                    mapper=mapper_closure,
                    name="{0}.test_snps_{1}".format(os.path.basename(cache_dict[0].name),chrom),
                    reducer=reducer_closure,
@@ -1180,7 +1186,7 @@ def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer)
 def _cache_dict_fixup(cache_dict,chrom_list):
     #If a dictionary, then fix up the values. Else, fix up the value and create a dictionary.
     if isinstance(cache_dict, collections.Mapping):
-        return {k:FileCache._fixup(v) for k,v in cache_dict.iteritems()}
+        return {k:FileCache._fixup(v) for k,v in six.iteritems(cache_dict)}
     else:
         cache_value = FileCache._fixup(cache_dict)
         return {chrom:cache_value for chrom in [0]+chrom_list}
@@ -1220,7 +1226,7 @@ def map_reduceX(input_seq, mapper=_identity, reducer=list, runner=None,name=None
         if len(distributable_list) > 1:
             name += "-etc"
 
-    with _dyn_vars(is_in_nested=True):
+    with _MapReduce._dyn_vars(is_in_nested=True):
         distributable_list = [mapper(input) for input in input_seq]
     if hasattr(runner,"run_list"):
         return runner.run_list(distributable_list,reducer=reducer,name=name)
@@ -1281,7 +1287,7 @@ if __name__ == "__main__":
 
 
             results_df = single_snp_scale(test_snps, pheno_fn, covar=cov_fn, count_A1=False, cache=file_cache, runner=runner)
-        print(results_df.head(n=10))
+        print((results_df.head(n=10)))
     #snp1200_m0_.37m1_.36 0.0 500
 
 

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -99,6 +101,7 @@ def snp_set(
 
     :Example:
 
+    >>> from __future__ import print_function
     >>> import logging
     >>> from fastlmm.association import snp_set
     >>> logging.basicConfig(level=logging.INFO)
@@ -106,7 +109,7 @@ def snp_set(
     ...     test_snps = '../../tests/datasets/all_chr.maf0.001.N300',
     ...     set_list = '../../tests/datasets/set_input.23.txt',
     ...     pheno = '../../tests/datasets/phenSynthFrom22.23.N300.txt')
-    >>> print result_dataframe.iloc[0].SetId, round(result_dataframe.iloc[0]['P-value'],15)
+    >>> print(result_dataframe.iloc[0].SetId, round(result_dataframe.iloc[0]['P-value'],15))
     set23 0.0
 
     """
@@ -184,5 +187,5 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    print "done"
+    print("done")
 

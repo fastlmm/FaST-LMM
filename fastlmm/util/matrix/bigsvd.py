@@ -1,9 +1,11 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
 import datetime
-import cample
+import fastlmm.util.matrix.cample as cample
 
 def big_sdd(a):
     if a.flags['C_CONTIGUOUS']:
@@ -16,7 +18,7 @@ def big_sdd(a):
     vt = np.zeros((a.shape[1],a.shape[1]),order='F')
     work = np.zeros(1,order='F')
     iwork = np.zeros(8*minmn,dtype=np.int64)
-    info = cample.pydgesdd(  "A",
+    info = cample.pydgesdd( b"A",
                             a.shape[0], #row count
                             a.shape[1], #col count
                             a,
@@ -31,7 +33,7 @@ def big_sdd(a):
                             iwork)
     assert info==0
     work = np.zeros(int(work[0]),order='F') #!!! empty faster than zero? (and also for the next items)
-    info = cample.pydgesdd(  "A",
+    info = cample.pydgesdd( b"A",
                             a.shape[0], #row count
                             a.shape[1], #col count
                             a,
@@ -55,8 +57,8 @@ def lapack_svd(a):
     u = np.zeros((a.shape[0],a.shape[0]),order='F')
     vt = np.zeros((a.shape[1],a.shape[1]),order='F')
     work = np.zeros(1,order='F')
-    info = cample.dgesvd(  "A",
-                            "A",
+    info = cample.dgesvd(  b"A",
+                            b"A",
                             a.shape[0], #row count
                             a.shape[1], #col count
                             a,
@@ -70,8 +72,8 @@ def lapack_svd(a):
                             -1)
     assert info==0
     work = np.zeros(int(work[0]),order='F') #!!! empty faster than zero? (and also for the next items)
-    info = cample.dgesvd(  "A", #Called twice. Once to get size and once to do the work.
-                            "A",
+    info = cample.dgesvd(  b"A", #Called twice. Once to get size and once to do the work.
+                            b"A",
                             a.shape[0], #row count
                             a.shape[1], #col count
                             a,
@@ -148,7 +150,7 @@ if __name__ == '__main__':
             logging.info("doing small np.linalg.svd")
             U, s, V = np.linalg.svd(a, full_matrices=False,compute_uv=True)
             logging.info("done with np.linalg.svd {0}x{1} in time {2}".format(m_row,n_col, datetime.datetime.now()-now))
-            print U.shape, s.shape, V.shape, 
+            print(U.shape, s.shape, V.shape, end=' ') 
             S = np.zeros((min_row_col,min_row_col))
             S = np.diag(s)
             assert np.allclose(a, np.dot(U, np.dot(S, V)))

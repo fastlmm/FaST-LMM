@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as SP
 import subprocess, sys, os.path
 from itertools import *
@@ -5,6 +6,7 @@ from fastlmm.pyplink.snpset import *
 from fastlmm.pyplink.altset_list import *
 import pandas as pd
 import logging
+from six.moves import range
 
 WRAPPED_PLINK_PARSER_PRESENT = None
 
@@ -19,8 +21,8 @@ def decide_once_on_plink_reader():
             from pysnptools.snpreader import wrap_plink_parser
             WRAPPED_PLINK_PARSER_PRESENT = True #!!does the standardizer work without c++
             logging.info("using c-based plink parser")
-        except Exception, detail:
-            logging.warn(detail)
+        except Exception as detail:
+            logging.warning(detail)
             WRAPPED_PLINK_PARSER_PRESENT = False
 
 
@@ -62,9 +64,9 @@ class Bed(object):
         self.pos = self.bimfields[[0,2,3]].values
         self.snp_to_index = {}
         logging.info("indexing snps");
-        for i in xrange(self.snp_count):
+        for i in range(self.snp_count):
             snp = self.rs[i]
-            if self.snp_to_index.has_key(snp) : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
+            if snp in self.snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
             self.snp_to_index[snp]=i
 
         bedfile = self.basefilename+ '.bed'
@@ -180,7 +182,7 @@ class Bed(object):
             iid_index_out = self.ind_used
         else:
             iid_count_out = iid_count_in
-            iid_index_out = range(0,iid_count_in)
+            iid_index_out = list(range(0,iid_count_in))
         snp_count_out = len(snpset_withbbed)
         snp_index_out = list(snpset_withbbed)  #make a copy, in case it's in some strange format, such as HDF5
         return iid_count_in, iid_count_out, iid_index_out, snp_count_in, snp_count_out, snp_index_out
@@ -220,7 +222,7 @@ class Bed(object):
             # An earlier version of this code had a way to read consecutive SNPs of code in one read. May want
             # to add that ability back to the code. 
             # Also, note that reading with python will often result in non-contigious memory, so the python standardizers will automatically be used, too.       
-            logging.warn("using pure python plink parser (might be much slower!!)")
+            logging.warning("using pure python plink parser (might be much slower!!)")
             SNPs = SP.zeros(((int(SP.ceil(0.25*iid_count_in))*4),snp_count_out),order=order, dtype=dtype) #allocate it a little big
             for SNPsIndex, bimIndex in enumerate(snpset_withbbed):
 

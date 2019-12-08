@@ -1,10 +1,12 @@
+from __future__ import absolute_import
 import fastlmm.association.lrt as lr
 import scipy as SP
 import fastlmm.util.stats.chi2mixture as c2
 import fastlmm.association.score as score
 import scipy.linalg as LA
 import scipy.stats as ST
-import tests_util as tu
+from . import tests_util as tu
+from six.moves import range
 
 class Sc(object):
     """description of class"""
@@ -113,7 +115,7 @@ class Sc(object):
 
     def write(self, fp, ind, result_dict, pv_adj, detailed_table):
         fp.write("\t".join(("SetId", "P-value", "#SNPs_in_Set", "#ExcludedSNPs","test stat", "chrm", "pos. range")) + "\n")
-        for i in xrange(len(ind)):
+        for i in range(len(ind)):
             ii = ind[i]
             result = result_dict[ii]
             fp.write("\t".join((result.setname, str(pv_adj[ii]), 

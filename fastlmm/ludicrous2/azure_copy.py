@@ -1,9 +1,12 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import tempfile
 import logging
 import unittest
+from six.moves import range
 logging.basicConfig(level=logging.INFO)
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalMultiThread
@@ -14,7 +17,7 @@ import pysnptools.util as pstutil
 import time
 import multiprocessing
 import random
-import cStringIO as StringIO
+from io import StringIO
 import random
 from contextlib import contextmanager
 from onemil.AzureBatch import AzureBatch
@@ -24,7 +27,7 @@ import azure.batch.models as batchmodels
 try:
     import azure.storage.blob as azureblob
     azure_ok = True
-except Exception, exception:
+except Exception as exception:
     logging.warning("Can't import azure, so won't be able to clusterize to azure")
     azure_ok = False
 
@@ -129,8 +132,8 @@ class StorageCredential(object):
 
         try:
             batch_client.pool.add(new_pool)
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
         return name
 
     def _pool_id_to_pool(self, pool_id, pool_list=None):
@@ -191,7 +194,7 @@ class StorageCredential(object):
 
     def _container_exists(self, block_blob_service, container_name):
         sleep_time = 1.0
-        for try_index in xrange(50):
+        for try_index in range(50):
             try:
                 return block_blob_service.exists(container_name=container_name)
             except Exception as e:
@@ -216,7 +219,7 @@ class StorageCredential(object):
         block_blob_service, container_name, sub_path = self._split(azure_path)
         assert sub_path is None, "expect no sub_path"
         sleep_time = 1.0
-        for try_index in xrange(50):
+        for try_index in range(50):
             try:
                 block_blob_service.delete_container(container_name)
                 return
@@ -231,7 +234,7 @@ class StorageCredential(object):
 
     def _robust_delete_blob(self, block_blob_service, container_name, blob_name):
         sleep_time = 1.0
-        for try_index in xrange(50):
+        for try_index in range(50):
             try:
                 block_blob_service.delete_blob(container_name, blob_name)
                 return
@@ -249,7 +252,7 @@ class StorageCredential(object):
         block_blob_service,container_name,blob = blobetc
         sleep_time = 1.0
         is_ok = False
-        for try_index in xrange(50):
+        for try_index in range(50):
             try:
                 stream.seek(start)
                 block_blob_service.get_blob_to_stream(container_name, blob.name, stream ,max_connections=max_connections)
@@ -266,7 +269,7 @@ class StorageCredential(object):
         block_blob_service, container_name, sub_path = self._split(azure_path)
         sleep_time = 1.0
         is_ok = False
-        for try_index in xrange(50):
+        for try_index in range(50):
             try:
                 fp.seek(start)
                 block_blob_service.create_blob_from_stream(container_name, sub_path, fp, count=stop-start,max_connections=max_connections) #http://azure.github.io/azure-storage-python/ref/azure.storage.blob.blockblobservice.html
@@ -284,7 +287,7 @@ class StorageCredential(object):
     def _create_container(self, block_blob_service, container_name):
         if not self._container_exists(block_blob_service, container_name):
             sleep_time = 1.0
-            for try_index in xrange(50):
+            for try_index in range(50):
                 try:
                     return block_blob_service.create_container(container_name)
                 except Exception as e:
@@ -300,7 +303,7 @@ class StorageCredential(object):
         sleep_time = 1.0
         is_ok = False
         result = None
-        for try_index in xrange(50):
+        for try_index in range(50):
             try:
                 result = [] #list_blocks returns all blobs with this prefix. Need to be sure we have an exact match.
                 if not block_blob_service.exists(container_name):
@@ -342,7 +345,7 @@ def azurep2p_cache_dict(container_prefix, storage_credential=None):
     
     max_chrom = len(storage_credential.storage_account_name_list)-1
     cache_dict = {}
-    for chrom in xrange(0,23):
+    for chrom in range(0,23):
         if chrom < len(storage_credential.storage_account_name_list):
             storage_account_name = storage_credential.storage_account_name_list[chrom]
         else:
@@ -413,7 +416,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
                     self._create_blob_from_stream(local_path,stop,stop,"{0}/exists.txt".format(azure_path))
         
             map_reduce(
-                range(piece_count),
+                list(range(piece_count)),
                 mapper=mapper_closure,
                 runner=self._get_runner(),
                 )
@@ -487,7 +490,7 @@ class AzureShardContainer(object): #!!! could this gave a better name?
             
             name = "download." + os.path.basename(local_path) + datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")  + str(random.random())
             map_reduce(
-                    range(piece_count),
+                    list(range(piece_count)),
                     mapper = mapper_closure,
                     name = name,
                     runner=self._get_runner(),
@@ -696,7 +699,7 @@ class TestAzureShardContainer(unittest.TestCase):
                 logging.info("Transferring {0}".format(next_name))
 
                 sleep_time=5.0
-                for j in xrange(50):
+                for j in range(50):
                     if storage.file_exists(next_name):
                         break
                     logging.info("Waiting for '{0}' to exist. Will sleep {1}".format(next_name,sleep_time))
@@ -713,7 +716,7 @@ class TestAzureShardContainer(unittest.TestCase):
                 return Mbps2
             return None
 
-        mbps_list = map_reduce(xrange(nn),
+        mbps_list = map_reduce(range(nn),
                         mapper=mapper,
                         reducer=lambda sequence:[x for x in sequence if x is not None],
                         name="big_filename.{0}{1}".format(n,".x2" if double_it else ""),
@@ -784,7 +787,7 @@ class TestAzureShardContainer(unittest.TestCase):
                     mbps0 = _mbps(big_size, time.time()-t0)
             return mbps0
 
-        mbps_list = map_reduce(xrange(n),
+        mbps_list = map_reduce(range(n),
                         mapper=mapper,
                         name="big_files_slow_down",
                         runner=runner)
@@ -799,8 +802,8 @@ class TestAzureShardContainer(unittest.TestCase):
         from azure.storage.blob.models import ContentSettings
         import getpass
 
-        username, subscription_id = [s.strip() for s in open(os.path.expanduser("~")+"/azurebatch/account.txt").xreadlines()]
-        print "Azure password"
+        username, subscription_id = [s.strip() for s in open(os.path.expanduser("~")+"/azurebatch/account.txt")]
+        print("Azure password")
         password = getpass.getpass()
         credentials = UserPassCredentials(username, password)
         resource_client = ResourceManagementClient(credentials, subscription_ids)
@@ -816,7 +819,7 @@ class TestAzureShardContainer(unittest.TestCase):
         blob_service.create_container('my_container_name')
         blob_service.create_blob_from_bytes( 'my_container_name', 'my_blob_name', b'<center><h1>Hello World!</h1></center>',
             content_settings=ContentSettings('text/html') )
-        print(blob_service.make_blob_url('my_container_name', 'my_blob_name'))
+        print((blob_service.make_blob_url('my_container_name', 'my_blob_name')))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
@@ -835,7 +838,7 @@ if __name__ == '__main__':
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest
         runner = Local() #LocalMultiProc(taskcount=22,mkl_num_threads=5,just_one_process=True)
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done")

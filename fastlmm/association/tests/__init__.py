@@ -20,8 +20,9 @@ interface ISnpSetPlusBed:
         return # string of name of this set of snps
 '''
 
+from __future__ import absolute_import
 from .Lrt import *
 from .Cv import *
 from .Sc import *
-import LRT_up as lrt
+from . import LRT_up as lrt
 

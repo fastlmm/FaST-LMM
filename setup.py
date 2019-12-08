@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import platform
 import os
 import sys
@@ -38,7 +40,7 @@ class CleanCommand(Clean):
                     or filename.endswith('.pyc')
                                 ):
                     tmp_fn = os.path.join(dirpath, filename)
-                    print "removing", tmp_fn
+                    print("removing", tmp_fn)
                     os.unlink(tmp_fn)
 
 # set up macros

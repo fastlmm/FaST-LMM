@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import logging
 import datetime
 import os
@@ -9,25 +11,26 @@ import tempfile
 import numpy as np
 import math
 from pysnptools.util.mapreduce1 import  map_reduce
-from pysnptools.util.mapreduce1.mapreduce import _identity, _dyn_vars
+from pysnptools.util.mapreduce1.mapreduce import _identity
 import pysnptools.util as pstutil
+from six.moves import range
 
 try:
     import dill as pickle
 except:
     logging.warning("Can't import dill, so won't be able to clusterize lambda expressions. If you try, you'll get this error 'Can't pickle <type 'function'>: attribute lookup __builtin__.function failed'")
-    import cPickle as pickle
+    import six.moves.cPickle as pickle
 
 try:
     import azure.batch.models as batchmodels
     import azure.storage.blob as azureblob
     azure_ok = True
-except Exception, exception:
+except Exception as exception:
     logging.warning("Can't import azure, so won't be able to clusterize to azure")
     azure_ok = False
 
 if azure_ok:
-    import azurehelper as commonhelpers #!!! is this the best way to include the code from the Azure python sample's common.helper.py?
+    from . import azurehelper as commonhelpers #!!! is this the best way to include the code from the Azure python sample's common.helper.py?
     import azure.batch.batch_service_client as batch 
     import azure.batch.batch_auth as batchauth 
     from onemil.blobxfer import run_command_string as blobxfer #https://pypi.io/project/blobxfer/
@@ -36,7 +39,7 @@ if azure_ok:
 def deal(player_count, card_count):
     assert player_count <= card_count, "Some will get no resources"
     hand_count_list = [0]*player_count
-    for card_index in xrange(card_count): #There is another way to do this that is linear in # of players instead of # of cards
+    for card_index in range(card_count): #There is another way to do this that is linear in # of players instead of # of cards
         hand_count_list[card_index % player_count] += 1
     return hand_count_list
         
@@ -208,8 +211,8 @@ exit /b 0
 
         if True: # Create the map.bat and reduce.bat programs to run.
             if log_writer is not None: log_writer("{0}: Create map.bat and reduce.bat script".format(name))
-            pythonpath_string = "set pythonpath=" + ";".join(r"%AZ_BATCH_NODE_SHARED_DIR%\{0}\pp\v{1}\{2}".format(self.container,self.pp_version,i) for i in xrange(len(localpythonpath.split(';'))))
-            for index in xrange(len(distributable_list)):
+            pythonpath_string = "set pythonpath=" + ";".join(r"%AZ_BATCH_NODE_SHARED_DIR%\{0}\pp\v{1}\{2}".format(self.container,self.pp_version,i) for i in range(len(localpythonpath.split(';'))))
+            for index in range(len(distributable_list)):
                 subtaskcount = subtaskcount_list[index]
                 output_blobfn = job_id_etc_list[index][2]
                 for i, bat_filename in enumerate(["map{0}.bat".format(index),"reduce{0}.bat".format(index)]):
@@ -259,7 +262,7 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
             jobprepbat_url = commonhelpers.upload_blob_and_create_sas(block_blob_client, self.container, jobprep_blobfn, os.path.join(run_dir_rel, "jobprep.bat"), datetime.datetime.utcnow() + datetime.timedelta(days=30))
 
             map_reduce_url_list = []
-            for index in xrange(len(distributable_list)):
+            for index in range(len(distributable_list)):
                 distributablep_blobfn = "{0}/distributable{1}.p".format(run_dir_rel.replace("\\","/"),index)
                 distributablep_filename = os.path.join(run_dir_rel, "distributable{0}.p".format(index))
                 distributablep_url = commonhelpers.upload_blob_and_create_sas(block_blob_client, self.container, distributablep_blobfn, distributablep_filename, datetime.datetime.utcnow() + datetime.timedelta(days=30)) #!!!should there be an expiry?
@@ -281,7 +284,7 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
             resource_files=[
                 batchmodels.ResourceFile(blob_source=blobxfer_url, file_path="blobxfer.py"),
                 batchmodels.ResourceFile(blob_source=jobprepbat_url, file_path="jobprep.bat")]
-            for index in xrange(len(distributable_list)):
+            for index in range(len(distributable_list)):
                 _, _, distributablep_url = map_reduce_url_list[index]
                 resource_files.append(batchmodels.ResourceFile(blob_source=distributablep_url, file_path="distributable{0}.p".format(index)))
             
@@ -302,7 +305,7 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
                 )
             try:
                 self.batch_client.job.add(job)
-            except batchmodels.BatchErrorException, e:
+            except batchmodels.BatchErrorException as e:
                 if e.inner_exception.values is not None:
                     raise Exception(e.inner_exception.values[-1].value)
                 else:
@@ -312,11 +315,11 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
             if log_writer is not None: log_writer("{0}: Add tasks to job".format(name))
             task_factor = int(10**math.ceil(math.log(max(subtaskcount_list),10))) #When we have multiple distributables, this helps us number them e.g. 0,1,2,10,11,12,20,21,22
             task_list = []
-            for index in xrange(len(distributable_list)):
+            for index in range(len(distributable_list)):
                 start = len(task_list)
                 map_url, reduce_url, _ = map_reduce_url_list[index]
                 subtaskcount = subtaskcount_list[index]
-                for taskindex in xrange(subtaskcount):
+                for taskindex in range(subtaskcount):
                     map_task = batchmodels.TaskAddParameter(
                         id=index * task_factor + taskindex,
                         #run_elevated=True,
@@ -338,10 +341,10 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
                 task_list.append(reduce_task)
 
             try:
-                for i in xrange(0,len(task_list),100): #The Python API only lets us add 100 at a time.
+                for i in range(0,len(task_list),100): #The Python API only lets us add 100 at a time.
                     self.batch_client.task.add_collection(job_id, task_list[i:i+100])
             except Exception as exception:
-                print exception
+                print(exception)
                 raise exception
         return job_id_etc_list
 
@@ -412,7 +415,7 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
         assert len(self.pool_id_list) >= len(distributable_list), "The length of the pool_id_list should be at least as long as the list of top-level work to do"
 
         name_list = []
-        for index in xrange(len(distributable_list)):
+        for index in range(len(distributable_list)):
             if not isinstance(name,str): #If the name is not a string, assume it is a lambda
                 name_in = name(index)
             else:
@@ -422,7 +425,7 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
 
         with log_in_place("creating job_id_etc", logging.INFO) as log_writer:            
             job_id_etc_list = []
-            for index,(distributable,pool_id,name_in) in enumerate(izip(distributable_list,self.pool_id_list,name_list)):
+            for index,(distributable,pool_id,name_in) in enumerate(zip(distributable_list,self.pool_id_list,name_list)):
                 log_writer(name_in)
                 job_id_etc = self._setup_job([distributable],pool_id,name_in)[0]
                 job_id_etc_list.append(job_id_etc)

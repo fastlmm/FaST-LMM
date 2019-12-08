@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as NP
 import scipy as SP
 from numpy import dot
@@ -7,7 +8,7 @@ from fastlmm.external.util.math import check_definite_positiveness,check_symmetr
 from fastlmm.external.util.math import stl, stu, dotd
 from fastlmm.inference.glmm import GLMM_N1K3, GLMM_N3K1
 from fastlmm.inference.likelihood import LogitLikelihood, ProbitLikelihood
-import likelihood as LH
+from . import likelihood as LH
 
 
 '''

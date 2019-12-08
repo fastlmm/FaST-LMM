@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import scipy as sp
 import pdb
 import scipy.linalg as la
@@ -20,9 +21,9 @@ def genphen(y_G0,G1,covDat,options,nInd,K1=None,fracCausal=None,randseed=None):
     Notes: uses sp.random.X so that the seed that was set can be used
     '''    
     
-    sp.random.seed(int(randseed % sys.maxint))
+    sp.random.seed(int(randseed % sys.maxsize))
 
-    if options.has_key("numBackSnps") and options["numBackSnps"]>0:
+    if "numBackSnps" in options and options["numBackSnps"]>0:
         raise Exception("I accidentally deleted this move from FastLMmSet to here, see code for FastLmmSet.py from 11/24/2013")
     
     ## generate from the causal (not background) SNPs---------------

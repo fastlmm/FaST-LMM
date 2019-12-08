@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import pdb
 import os
 import numpy as SP
-from snpset import *
+from .snpset import *
 import logging
+from six.moves import range
 
 # attempt to import wrapped plink parser
 WRAPPED_PLINK_PARSER_PRESENT = True
@@ -46,14 +48,14 @@ def readPED(basefilename, delimiter = ' ',missing = '0',standardize = True, phen
     inan=snpsstr==missing
     snps = SP.zeros((snpsstr.shape[0],snpsstr.shape[1]/2))
     if standardize:
-        for i in xrange(snpsstr.shape[1]/2):
+        for i in range(snpsstr.shape[1]/2):
             snps[inan[:,2*i],i]=0
             vals=snpsstr[~inan[:,2*i],2*i:2*(i+1)]
             snps[~inan[:,2*i],i]+=(vals==vals[0,0]).sum(1)
             snps[~inan[:,2*i],i]-=snps[~inan[:,2*i],i].mean()
             snps[~inan[:,2*i],i]/=snps[~inan[:,2*i],i].std()
     else:
-        for i in xrange(snpsstr.shape[1]/2):
+        for i in range(snpsstr.shape[1]/2):
             snps[inan[:,2*i],i]=SP.nan
             vals=snpsstr[~inan[:,2*i],2*i:2*(i+1)]
             snps[~inan[:,2*i],i]+=(vals==vals[0,0]).sum(1)
@@ -101,14 +103,14 @@ def readRAW(basefilename, delimiter = ' ',missing = '0',standardize = True, phen
     inan=snpsstr==missing
     snps = SP.zeros((snpsstr.shape[0],snpsstr.shape[1]/2))
     if standardize:
-        for i in xrange(snpsstr.shape[1]/2):
+        for i in range(snpsstr.shape[1]/2):
             raw[inan[:,2*i],i]=0
             vals=snpsstr[~inan[:,2*i],2*i:2*(i+1)]
             snps[~inan[:,2*i],i]+=(vals==vals[0,0]).sum(1)
             snps[~inan[:,2*i],i]-=snps[~inan[:,2*i],i].mean()
             snps[~inan[:,2*i],i]/=snps[~inan[:,2*i],i].std()
     else:
-        for i in xrange(snpsstr.shape[1]/2):
+        for i in range(snpsstr.shape[1]/2):
             snps[inan[:,2*i],i]=SP.nan
             vals=snpsstr[~inan[:,2*i],2*i:2*(i+1)]
             snps[~inan[:,2*i],i]+=(vals==vals[0,0]).sum(1)
@@ -145,7 +147,7 @@ def readBED(basefilename, snp_set = AllSnps(), order = 'F'):
     This is a one-shot reader for BED files that internally uses the Bed class. If you need repeated random access to a BED file,
     it is much faster to use the Bed class directly. Such use avoids the need to re-read the associated BIM file.
     '''
-    import snpreader as sr
+    from . import snpreader as sr
     bed = sr.Bed(basefilename)
     return bed.read(snp_set, order = order)
 
@@ -157,11 +159,11 @@ def nSnpFromBim(basefilename):
 
 def findIndex(idsSep, bedidsSep):
     sids = set()
-    for i in xrange(idsSep.shape[0]):
+    for i in range(idsSep.shape[0]):
         sids.add( idsSep[i,0] + "_" + idsSep[i,1] )
 
     beids = dict()
-    for i in xrange(bedidsSep.shape[0]):
+    for i in range(bedidsSep.shape[0]):
         beids[ bedidsSep[i,0] + "_" + bedidsSep[i,1] ] = i
 
     inter = sids.intersection( set(beids.keys()) )

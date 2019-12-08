@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as NP
 import scipy as SP
 import scipy.io as SIO
@@ -8,6 +9,7 @@ from fastlmm.inference import getLMM
 import unittest
 import os.path
 import logging
+from six.moves import range
 
 currentFolder = os.path.dirname(os.path.realpath(__file__))
 
@@ -78,7 +80,8 @@ class TestLmmKernel(unittest.TestCase):
         
         # make sure results are the same
         for key in result.keys():
-            self.assertAlmostEqual(result[key], target_result[key])
+            NP.testing.assert_array_almost_equal(result[key], target_result[key])
+            #self.assertAlmostEqual(result[key], target_result[key])
 
         
     def test_nLLeval_2(self):
@@ -97,7 +100,8 @@ class TestLmmKernel(unittest.TestCase):
         target_result = {'scale': 1.0, 'h2': 0.0, 'beta': NP.array([ 0.05863443]), 'a2': 0.4, 'REML': True, 'nLL': 90.940636012858121, 'sigma2': 0.96761436076968987}
         # make sure results are the same
         for key in result.keys():
-            self.assertAlmostEqual(result[key], target_result[key])
+            NP.testing.assert_array_almost_equal(result[key], target_result[key])
+            #self.assertAlmostEqual(result[key], target_result[key])
          
          
          
@@ -118,7 +122,8 @@ class TestLmmKernel(unittest.TestCase):
         target_result = {'scale': 1.0, 'h2': 0.5, 'beta': NP.array([ 0.05863443]), 'a2': 0.4, 'REML': True, 'nLL': 90.940636012858121, 'sigma2': 1.9352287215393797}
         # make sure results are the same
         for key in result.keys():
-            self.assertAlmostEqual(result[key], target_result[key])
+            NP.testing.assert_array_almost_equal(result[key], target_result[key])
+            #self.assertAlmostEqual(result[key], target_result[key])
             
         
 class TestProximalContamination(unittest.TestCase):     
@@ -159,8 +164,8 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            #NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
-            self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
+            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            #self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
     
         wproj = SP.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj*ypred_nocut).sum(),(wproj*ypred_cut).sum())
@@ -200,8 +205,8 @@ class TestProximalContamination(unittest.TestCase):
         
         # make sure results are the same
         for key in ret_nocut.keys():
-            #NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
-            self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
+            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            #self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
     
         wproj = SP.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj*ypred_nocut).sum(),(wproj*ypred_cut).sum())
@@ -240,8 +245,8 @@ class TestProximalContamination(unittest.TestCase):
         
         # make sure results are the same
         for key in ret_nocut.keys():
-            #NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
-            self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
+            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            #self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
         wproj = SP.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj*ypred_nocut).sum(),(wproj*ypred_cut).sum())
             
@@ -279,8 +284,8 @@ class TestProximalContamination(unittest.TestCase):
         
         # make sure results are the same
         for key in ret_nocut.keys():
-            #NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
-            self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
+            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            #self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
         wproj = SP.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj*ypred_nocut).sum(),(wproj*ypred_cut).sum())
     
@@ -314,8 +319,8 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            #NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
-            self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
+            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            #self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
             
             
     def test_two_kernels_lowrank_REML(self):
@@ -348,8 +353,8 @@ class TestProximalContamination(unittest.TestCase):
         
         # make sure results are the same
         for key in ret_nocut.keys():
-            #NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
-            self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
+            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            #self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
 
 def generate_random_data(N, d, s_c):
     """
@@ -357,7 +362,7 @@ def generate_random_data(N, d, s_c):
     """
     
 
-    num_excludes = s_c / 2
+    num_excludes = s_c // 2
     s = s_c # total number of SNPs to be tested
     
     X = NP.ones((N, d))

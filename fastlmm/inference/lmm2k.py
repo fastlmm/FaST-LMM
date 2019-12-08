@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import scipy as SP
 import numpy as NP
 import scipy.linalg as LA
@@ -284,7 +286,7 @@ class lmm2k(object):
                     [U,S,V] = LA.svd(self.G1rot,full_matrices = False)
                     self.eig1 = [S*S,U]
                 except LA.LinAlgError:  # revert to Eigenvalue decomposition
-                    print "Got SVD exception, trying eigenvalue decomposition of square of G. Note that this is a little bit less accurate"
+                    print("Got SVD exception, trying eigenvalue decomposition of square of G. Note that this is a little bit less accurate")
                     [S_,V_] = LA.eigh(self.G1rot.T.dot(self.G1rot))
                     S_nonz=(S_>0.0)
                     S1 = S_[S_nonz]
@@ -305,7 +307,7 @@ class lmm2k(object):
                     [U,S,V] = LA.svd(self.G0,full_matrices = False)
                     self.eig0 = [S*S,U]
                 except LA.LinAlgError:  # revert to Eigenvalue decomposition
-                    print "Got SVD exception, trying eigenvalue decomposition of square of G. Note that this is a little bit less accurate"
+                    print("Got SVD exception, trying eigenvalue decomposition of square of G. Note that this is a little bit less accurate")
                     [S_,V_] = LA.eigh(self.G0.T.dot(self.G0))
                     S_nonz=(S_>0.0)
                     S0 = S_[S_nonz]
@@ -378,7 +380,7 @@ class lmm2k(object):
             #print "one objective function call took %.2f seconds elapsed" % (t1-t0)
             #import pdb; pdb.set_trace()
             return res['nLL']
-        if verbose: print "findGammas"
+        if verbose: print("findGammas")
         min = minimize1D(f=f, nGrid=nGridGamma1, minval=minGamma1, maxval=maxGamma1,verbose=False)
         #print "numcalls to innerLoopTwoKernel= " + str(self.numcalls)
         return resmin[0]

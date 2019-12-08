@@ -3,6 +3,8 @@ file to set up python package, see http://docs.python.org/2/distutils/setupscrip
 """
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import platform
 import os
 import sys
@@ -15,13 +17,13 @@ from distutils.command.clean import clean as Clean
 try:
     from Cython.Distutils import build_ext
 except Exception:
-    print "cython needed for installation, please install cython first"
+    print("cython needed for installation, please install cython first")
     sys.exit()
 
 try:
     import numpy
 except Exception:
-    print "numpy needed for installation, please install numpy first"
+    print("numpy needed for installation, please install numpy first")
     sys.exit()
 
 

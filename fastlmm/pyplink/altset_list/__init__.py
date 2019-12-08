@@ -17,6 +17,7 @@ interface ISnpSetListPlusBed:
         return # a sequence of ISnpSetPlusBed's
 
 '''
+from __future__ import absolute_import
 from fastlmm.pyplink.snpset import *
 from .SnpAndSetNameCollection import *
 from .Subset import *

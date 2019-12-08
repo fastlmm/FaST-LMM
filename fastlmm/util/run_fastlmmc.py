@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import subprocess 
 import os 
 import scipy
@@ -183,9 +185,9 @@ def run(bfile=None,pheno=None,bfileSim=None,sim=None,linreg=None,covar=None,out=
     output = ""
     try:
         output = subprocess.check_output(cmd,shell=True,stderr=subprocess.STDOUT)
-    except Exception, e:
+    except Exception as e:
         print(e)
-    print output
+    print(output)
     #LG.info(output)
     #return output
 

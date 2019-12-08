@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import random
 import os
@@ -11,12 +13,13 @@ import time
 from onemil.file_cache import DibLib
 from contextlib import contextmanager
 import threading
+from six.moves import range
 
 try:
     import azure.batch.models as batchmodels
     import azure.storage.blob as azureblob
     azure_ok = True
-except Exception, exception:
+except Exception as exception:
     logging.warning("Can't import azure, so won't be able to clusterize to azure")
     azure_ok = False
 
@@ -111,7 +114,7 @@ class AzureP2P(FileCache):
         subhandle_as_file_name = subhandle_as.__enter__()
 
         if self.file_share._simple_file_exists(simple_file_name):
-            logging.warn("The AzureStorage doesn't already have the file that is being written, but the PeerToPeer does, so removing it from the PeerToPeer. {0},'{1}'".format(self.file_share,simple_file_name))
+            logging.warning("The AzureStorage doesn't already have the file that is being written, but the PeerToPeer does, so removing it from the PeerToPeer. {0},'{1}'".format(self.file_share,simple_file_name))
             self.file_share._simple_remove(simple_file_name)
         subhandle_fs = self.file_share.open_write(simple_file_name,size=size,updater=updater)
         subhandle_fs_file_name = subhandle_fs.__enter__()
@@ -135,7 +138,7 @@ class AzureP2P(FileCache):
             subhandle1 = self.file_share._simple_open_read(simple_file_name) #!!!should file share be self-repairing. If the "main" is gone, pick one of the others
             subhandle1_file_name = subhandle1.__enter__()
             is_ok = True
-        except Exception, e:
+        except Exception as e:
             logging.info("AzureP2P - machine-to-machine copy of '{0}' failed, so reading from AzureStorage. Exception='{1}'".format(simple_file_name,e))
         if is_ok:
             yield subhandle1_file_name
@@ -169,7 +172,7 @@ class AzureP2P(FileCache):
                 read_handle = self.file_share._simple_open_read(simple_file_name) #!!! should file share be self-repairing. If the "main" is gone, pick one of the others
                 file_name2 = read_handle.__enter__()
                 is_ok = True
-            except Exception, e:
+            except Exception as e:
                 logging.info("2nd try of reading from PeerToPeer failed with message '{0}'".format(e.message))
             if is_ok:
                 yield file_name2
@@ -377,7 +380,7 @@ class TestAzureP2P(unittest.TestCase):
             assert storage.load("a/b/c.txt")=="Hello"
             return True
 
-        result = map_reduce(xrange(4),
+        result = map_reduce(range(4),
                     mapper=mapper_closure,
                     runner=runner
                     )
@@ -409,7 +412,7 @@ class TestAzureP2P(unittest.TestCase):
     def _is_error(self,lambda0):
         try:
             lambda0()
-        except Exception, e:
+        except Exception as e:
             logging.debug(e.message)
             return True
         return False
@@ -577,7 +580,7 @@ if __name__ == '__main__':
         #runner = LocalMultiProc(taskcount=22,mkl_num_threads=5,just_one_process=True)
         runner = Local()
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done")

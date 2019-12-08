@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 import logging
 from fastlmm.association import single_snp
@@ -16,6 +17,7 @@ from fastlmm.inference import FastLMM
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
 from fastlmm.association.single_snp import _K_per_chrom
 from fastlmm.association import single_snp_linreg
+from six.moves import range
 
 #!!!move this
 class _SnpWholeWithTrain(KernelReader):
@@ -52,7 +54,7 @@ class _SnpWholeWithTrain(KernelReader):
                 ct = 0
                 ts = time.time()
 
-                for start in xrange(0, self.whole.sid_count, self.block_size):
+                for start in range(0, self.whole.sid_count, self.block_size):
                     ct += self.block_size
                     # read blocks of whole
                     whole = self.whole[:,start:start+self.block_size].read(dtype=dtype,force_python_only=force_python_only)
@@ -122,27 +124,27 @@ def _kfold(iid_count, n_folds, seed, end_with_all=False, iid_to_index=None):
         table=pd.read_csv(n_folds,delimiter='\s',comment=None,engine='python')
         fold_count = 1+max(table.Fold)
         result = []
-        for fold_index in xrange(fold_count):
+        for fold_index in range(fold_count):
             train = index_list(table[table.Fold!=fold_index])
             test = index_list(table[table.Fold==fold_index])
             result.append((fold_index, [train,test]))
         if end_with_all:
-            result.append((fold_count, [range(iid_count),[]]))
+            result.append((fold_count, [list(range(iid_count)),[]]))
         return result
     if n_folds == 1:
         logging.info("Running test-on-train")
-        return [(0, [range(iid_count),range(iid_count)])]
+        return [(0, [list(range(iid_count)),list(range(iid_count))])]
 
     if n_folds < 0:
         logging.info("Running just one train/test split")
-        result = list(enumerate(KFold(n_splits=-n_folds, random_state=seed, shuffle=True).split(range(iid_count))))[0:1]
+        result = list(enumerate(KFold(n_splits=-n_folds, random_state=seed, shuffle=True).split(list(range(iid_count)))))[0:1]
         if end_with_all:
-            result = result +[(1, [range(iid_count),[]])]
+            result = result +[(1, [list(range(iid_count)),[]])]
         return result
 
-    result = list(enumerate(KFold(n_splits=n_folds, random_state=seed, shuffle=True).split(range(iid_count))))
+    result = list(enumerate(KFold(n_splits=n_folds, random_state=seed, shuffle=True).split(list(range(iid_count)))))
     if end_with_all:
-        result = result +[(n_folds, [range(iid_count),[]])]
+        result = result +[(n_folds, [list(range(iid_count)),[]])]
     return result 
 
 #!!!This doesn't (and shouldn't) work when everything is from the same chrom, right? Add a better error message for that case.
@@ -224,6 +226,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
 
     :Example:
 
+    >>> from __future__ import print_function
     >>> import logging
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_all_plus_select
@@ -234,7 +237,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     >>> snps = Bed("../feature_selection/examples/toydata.5chrom.bed",count_A1=False)[:,::100] #To make example faster, run on only 1/100th of the data
     >>> chrom5_snps = snps[:,snps.pos[:,0]==5] # Test on only chrom5
     >>> results_dataframe = single_snp_all_plus_select(test_snps=chrom5_snps,G=snps,pheno=pheno_fn,GB_goal=2,runner=LocalMultiProc(20,mkl_num_threads=5), count_A1=False) #Run multiproc
-    >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
+    >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_9800 0.0793385 4
 
     """

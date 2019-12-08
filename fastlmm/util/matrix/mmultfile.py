@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import logging
 import numpy as np
@@ -9,6 +11,8 @@ from pysnptools.kernelreader import KernelData, KernelNpz
 import time
 from pysnptools.util import format_delta
 from pysnptools.snpreader import SnpMemMap
+from six.moves import range
+from pysnptools.util import to_ascii
 
 def get_num_threads():
     if 'MKL_NUM_THREADS' in os.environ:
@@ -48,7 +52,7 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
         
         return result
 
-    gtg_npz_lambda = map_reduce(xrange(work_count),
+    gtg_npz_lambda = map_reduce(range(work_count),
                mapper=mapper_closure,
                reducer=reducer_closure,
                runner=runner,
@@ -75,7 +79,7 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
         with open(a.filename,"rb") as fp:
             fp.seek(a.offset+start*a.iid_count*8)
             slice = np.fromfile(fp, dtype=np.float64, count=a.iid_count*(stop-start)).reshape(a.iid_count,stop-start,order="F")
-            for i in xrange(work_index,work_count):
+            for i in range(work_index,work_count):
                 starti = debatch_closure(i)
                 stopi = debatch_closure(i+1)
                 if i > work_index:
@@ -86,7 +90,7 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
                     logging.info("{0}/{1}".format(i,work_count))
                 ata_piece[starti-start:stopi-start,:] = np.dot(slicei.T,slice)
     else:
-        mmultfile_atax(a_filename,a.offset,a.iid_count,a.sid_count,
+        mmultfile_atax(to_ascii(a_filename),a.offset,a.iid_count,a.sid_count,
                         work_index,work_count,
                         ata_piece,
                         num_threads = get_num_threads(),
@@ -103,7 +107,7 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=
         b_mem = np.array(b,order="F") #!!! if we want this in "F" how about just creating that way instead of copying it
         with open(a_filename,"rb") as U_fp:
             U_fp.seek(a_snp_mem_map.offset)
-            for i in xrange(a_snp_mem_map.sid_count):
+            for i in range(a_snp_mem_map.sid_count):
                 a_mem = np.fromfile(U_fp, dtype=np.float64, count=a_snp_mem_map.iid_count)
                 if i%log_frequency == 0 and log_frequency > 0:
                     logging.info("{0}/{1}".format(i,a_snp_mem_map.sid_count))
@@ -115,7 +119,7 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=
         aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1]))
         aaTb = np.array(b1,order="F")
         mmultfile_b_less_aatbx(
-                        a_snp_mem_map.filename,
+                        to_ascii(a_snp_mem_map.filename),
                         a_snp_mem_map.offset,
                         a_snp_mem_map.iid_count, #row count
                         a_snp_mem_map.sid_count, #col count
@@ -172,9 +176,9 @@ if __name__ == '__main__':
         local_fn_U = r"d:\deldir\local_fn_U.memmap"
         t0 = time.time()
         U_memmap = post_svd(local_fn_U, G0_memmap, idx, SVinv3, inonzero, memory_factor, runner, do_original=do_original,force_python_only=force_python_only,log_frequency=log_frequency)
-        print U_memmap.val
+        print(U_memmap.val)
         logging.info("clocktime {0}".format(format_delta(time.time()-t0)))
-        print "done"
+        print("done")
         
 
 
@@ -197,7 +201,7 @@ if __name__ == '__main__':
 
         mmultfile_ata(memmap_lambda,writer,a.sid,work_count,name=None,runner=Local(),force_python_only=force_python_only)
         result = result[0]
-        print result.val
+        print(result.val)
         logging.info("Done")
 
     else:

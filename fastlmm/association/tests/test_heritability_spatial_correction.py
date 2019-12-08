@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 import scipy as sp
 import logging
@@ -12,6 +13,7 @@ from fastlmm.association.heritability_spatial_correction import heritability_spa
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
+from six.moves import range
 
 tolerance = 1e-4
 
@@ -45,7 +47,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         half = self.pheno_whole.read().val
         pheno = SnpData(iid=self.pheno_whole.iid,sid=["pheno0","pheno1"],val=np.c_[half,half])
 
-        spatial_coor = [[i,-i] for i in xrange(self.snpreader_whole.iid_count)]
+        spatial_coor = [[i,-i] for i in range(self.snpreader_whole.iid_count)]
         alpha_list = alpha_list_big=[int(v) for v in np.logspace(2,np.log10(4000), 2)]
         dataframe = heritability_spatial_correction(self.snpreader_whole,spatial_coor,self.snpreader_whole.iid,alpha_list,2,pheno,jackknife_count=2,permute_plus_count=1,permute_times_count=1,just_testing=True)
 
@@ -64,7 +66,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
 
         snpreader = self.snpreader_whole[:10,:]
 
-        spatial_coor = [[i,-i] for i in xrange(snpreader.iid_count)]
+        spatial_coor = [[i,-i] for i in range(snpreader.iid_count)]
         alpha_list = alpha_list_big=[int(v) for v in np.logspace(2,np.log10(4000), 2)]
         dataframe = heritability_spatial_correction(snpreader,spatial_coor,snpreader.iid,alpha_list,2,self.pheno_whole,jackknife_count=2,permute_plus_count=1,permute_times_count=1,just_testing=False)
 
@@ -83,7 +85,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
 
         snpreader = self.snpreader_whole[:10,:]
 
-        spatial_coor = [[i,-i] for i in xrange(snpreader.iid_count)]
+        spatial_coor = [[i,-i] for i in range(snpreader.iid_count)]
         alpha_list = alpha_list_big=[int(v) for v in np.logspace(2,np.log10(4000), 2)]
         dataframe = heritability_spatial_correction(snpreader,spatial_coor,snpreader.iid,alpha_list,2,self.pheno_whole,jackknife_count=0,permute_plus_count=0,permute_times_count=0,just_testing=False)
 

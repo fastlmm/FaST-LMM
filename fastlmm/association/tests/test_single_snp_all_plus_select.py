@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import matplotlib
 matplotlib.use("TKAgg",warn=False)
 import pylab
@@ -452,7 +454,7 @@ if __name__ == '__main__':
         #runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done with testing")

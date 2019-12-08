@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import doctest
 import unittest
 import numpy as np
@@ -16,6 +18,7 @@ from pysnptools.snpreader import SnpGen
 from fastlmm.association import single_snp
 from fastlmm.association import single_snp_scale
 from pysnptools.util.mapreduce1.runner import LocalMultiProc
+from six.moves import range
 
 class TestSingleSnpScale(unittest.TestCase):
     @classmethod
@@ -68,7 +71,7 @@ class TestSingleSnpScale(unittest.TestCase):
         storage = top.join("intermediate")
         if clear_cache:
             storage.rmtree()
-        cache_dict={chrom:storage for chrom in xrange(23)}
+        cache_dict={chrom:storage for chrom in range(23)}
         return cache_dict
         
     def test_low(self):
@@ -260,7 +263,7 @@ if __name__ == '__main__':
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest
         runner = LocalMultiProc(taskcount=22,mkl_num_threads=5,just_one_process=False)
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done")

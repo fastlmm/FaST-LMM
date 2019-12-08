@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from fastlmm.pyplink.snpreader.Hdf5 import Hdf5
 
 ##how the input file was created

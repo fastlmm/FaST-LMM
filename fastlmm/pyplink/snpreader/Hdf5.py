@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from six.moves import range
 try:
     import h5py
 except:
@@ -31,7 +33,7 @@ class Hdf5(object):
         self._ran_once = True
         try:
             self.h5 = h5py.File(self.filename, "r")
-        except IOError, e:
+        except IOError as e:
             raise IOError("Missing or unopenable file '{0}' -- Native error message: {1}".format(self.filename,e))
 
         self._original_iids = sp.empty(self.h5['iid'].shape,dtype=self.h5['iid'].dtype) #make a 2D deepcopy from h5 (more direct methods, don't seem to work)
@@ -46,7 +48,7 @@ class Hdf5(object):
         self.snp_to_index = {}
         logging.info("indexing snps");
         for i,snp in enumerate(self.rs):
-            if self.snp_to_index.has_key(snp) : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
+            if snp in self.snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
             self.snp_to_index[snp]=i
 
         self.snpsInFile = self.h5['snps']
@@ -83,7 +85,7 @@ class Hdf5(object):
     def is_sorted_without_repeats(list):
         if len(list) < 2:
             return True
-        for i in xrange(1,len(list)):
+        for i in range(1,len(list)):
             if not list[i-1] < list[i]:
                 return False
         return True
@@ -164,7 +166,7 @@ class Hdf5(object):
                 snp_index_index_list = sp.arange(S)
                 snp_index_list_sorted = snp_index_list
 
-            for start in xrange(0, S, blocksize):
+            for start in range(0, S, blocksize):
                 #print start
                 end = min(start+blocksize,S)
                 if end-start < blocksize:  #On the last loop, the buffer might be too big, so make it smaller

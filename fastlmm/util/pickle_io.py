@@ -2,7 +2,8 @@
 simple module to save and load compressed pickle files
 """
 
-import cPickle
+from __future__ import absolute_import
+import six.moves.cPickle
 import bz2
 import sys
 
@@ -19,12 +20,12 @@ def save(filename, myobj):
  
     try:
         f = bz2.BZ2File(filename, 'wb')
-    except IOError, details:
+    except IOError as details:
         sys.stderr.write('File ' + filename + ' cannot be written\n')
         sys.stderr.write(details)
         return
  
-    cPickle.dump(myobj, f, protocol=2)
+    six.moves.cPickle.dump(myobj, f, protocol=2)
     f.close()
  
  
@@ -39,12 +40,12 @@ def load(filename):
  
     try:
         f = bz2.BZ2File(filename, 'rb')
-    except IOError, details:
+    except IOError as details:
         sys.stderr.write('File ' + filename + ' cannot be read\n')
         sys.stderr.write(details)
         return
  
-    myobj = cPickle.load(f)
+    myobj = six.moves.cPickle.load(f)
     f.close()
     return myobj
 

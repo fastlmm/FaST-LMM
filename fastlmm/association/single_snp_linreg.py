@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -28,6 +29,7 @@ from pysnptools.util.intrangeset import IntRangeSet
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
 import fastlmm.inference.linear_regression as lin_reg
 from fastlmm.association.single_snp import _set_block_size
+from six.moves import range
 
 def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_file_name=None, GB_goal=None, runner=None, count_A1=None):
     """
@@ -72,6 +74,7 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
 
     :Example:
 
+    >>> from __future__ import print_function
     >>> import logging
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_linreg
@@ -79,7 +82,7 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
     >>> logging.basicConfig(level=logging.INFO)
     >>> pheno_fn = "../feature_selection/examples/toydata.phe"
     >>> results_dataframe = single_snp_linreg(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
-    >>> print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
+    >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_576 1e-07 10000
 
 
@@ -148,7 +151,7 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
         dataframe['PValue'] = dataframe['PValue'].astype(np.float)
 
         dataframe['sid_index'] = index
-        dataframe['SNP'] = test_snps.sid[index]
+        dataframe['SNP'] = np.array(test_snps.sid[index],dtype=np.str)#!!!cmk test
         dataframe['Chr'] = test_snps.pos[index,0]
         dataframe['GenDist'] = test_snps.pos[index,1]
         dataframe['ChrPos'] = test_snps.pos[index,2]
@@ -159,7 +162,7 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
 
         return dataframe
 
-    dataframe = map_reduce(xrange(0,test_snps.sid_count,block_size),
+    dataframe = map_reduce(range(0,test_snps.sid_count,block_size),
                            mapper=mapper,
                            reducer=reducer,
                            input_files=[test_snps,pheno,covar],

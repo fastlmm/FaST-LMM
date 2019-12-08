@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fastlmm.association as association
 import scipy as sp
 from sklearn import linear_model
@@ -7,6 +8,7 @@ from sklearn.model_selection import GridSearchCV
 from fastlmm import inference
 import fastlmm.util.util as util
 import pdb
+from six.moves import range
 
 
 
@@ -168,7 +170,7 @@ class testCV(association.varcomp_test):
 
     # the effect parameter should not be used here, but I dont have a better an idea for now
     def score_nestedCV(self, G1, model, param_grid, effect, nested):
-        k_fold = model_selection.KFold(n_splits=self.n_folds).split(range(self.Y.shape[0]))
+        k_fold = model_selection.KFold(n_splits=self.n_folds).split(list(range(self.Y.shape[0])))
         i_fold=0
         scores = sp.zeros(self.n_folds)
         params = list()

@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import fastlmm.association.lrt as lr
 import scipy as sp
 import fastlmm.util.stats.chi2mixture as c2
 
-import tests_util as tu
+from . import tests_util as tu
+from six.moves import range
 
 class Lrt(object):
     """description of class"""
@@ -16,7 +18,7 @@ class Lrt(object):
     def construct(self, Y, X=None, forcefullrank = False, SNPs0 = None, i_exclude = None, nullModel = None, altModel = None,
                   scoring = None, greater_is_better = None):
         G0,K0=tu.set_snps0(SNPs0=SNPs0,sample_size=Y.shape[0],i_exclude=i_exclude)
-        return lr.lrt(Y=Y, X=X, model0=None, appendbias=False, forcefullrank=forcefullrank, G0=G0,K0=K0, nullModel=nullModel, altModel=altModel)
+        return lr.lrt_method(Y=Y, X=X, model0=None, appendbias=False, forcefullrank=forcefullrank, G0=G0,K0=K0, nullModel=nullModel, altModel=altModel)
 
     def construct_no_backgound_kernel(self, Y, X, forcefullrank, nullModel, altModel, scoring,
                                       greater_is_better):
@@ -35,16 +37,16 @@ class Lrt(object):
         else:
             return result.h2
 
-    def lrt(self, result):
+    def lrt_method(self, result):
         return result.stat
 
     def pv_adj_from_result(self, result):
         '''
         If local aUD exists, take that, if not, take the raw local.
         '''        
-        if result.test.has_key("pv-local-aUD") and not sp.isnan(result.test["pv-local-aUD"]):
+        if "pv-local-aUD" in result.test and not sp.isnan(result.test["pv-local-aUD"]):
             return result.test["pv-local-aUD"]
-        elif result.test.has_key("pv-local"):
+        elif "pv-local" in result.test:
             return result.test["pv-local"]
         else:
             return sp.nan
@@ -61,7 +63,7 @@ class Lrt(object):
 
     def write(self, fp,ind, result_dict, pv_adj, detailed_table, signal_ratio=True):
         
-        if result_dict[0].test.has_key("pv-local-aUD"):
+        if "pv-local-aUD" in result_dict[0].test:
             # in this case, for p_adj, we use pv-local-aUD if it exists, and otherwise
             # pv-local. So don't know which is which in the "P-value adjusted" column. To
             # disambiguate, also print out "pv-local" here
@@ -80,15 +82,15 @@ class Lrt(object):
             lik1Info = result_dict[0].lik1Details
             lik0Info = result_dict[0].lik0Details
 
-            altNames = lik1Info.keys()
-            altIndices = sorted(range(len(altNames)), key=lambda k: altNames[k])
+            altNames = list(lik1Info.keys())
+            altIndices = sorted(list(range(len(altNames))), key=lambda k: altNames[k])
             altNames.sort()
 
             altNames = ['Alt'+t for t in altNames]
             head += "\t" + "\t".join( altNames )
 
-            nullNames = lik0Info.keys()
-            nullIndices = sorted(range(len(nullNames)), key=lambda k: nullNames[k])
+            nullNames = list(lik0Info.keys())
+            nullIndices = sorted(list(range(len(nullNames))), key=lambda k: nullNames[k])
             nullNames.sort()
 
             nullNames = ['Null'+t for t in nullNames]
@@ -98,12 +100,12 @@ class Lrt(object):
 
         fp.write(head)
    
-        for i in xrange(len(ind)):
+        for i in range(len(ind)):
             ii = ind[i]
             result = result_dict[ii]
             ll0=str( -(result.stat/2.0+result.test['lik1']['nLL']) )
 
-            if result_dict[0].test.has_key("pv-local-aUD"):
+            if "pv-local-aUD" in result_dict[0].test:
                 rowvals = [result.setname, str(-result.test['lik1']['nLL']), ll0,
                            str(pv_adj[ii]),str(result.test['pv-local']),str(result.pv), str(result.setsize),
                            str(result.nexclude), result.ichrm, result.iposrange]
@@ -122,11 +124,11 @@ class Lrt(object):
                 lik1Info = result.lik1Details
                 lik0Info = result.lik0Details
 
-                vals = lik1Info.values()
+                vals = list(lik1Info.values())
                 vals = [vals[j] for j in altIndices]
                 row += "\t" + "\t".join([str(v) for v in vals])
 
-                vals = lik0Info.values()
+                vals = list(lik0Info.values())
                 vals = [vals[j] for j in nullIndices]
                 row += "\t" + "\t".join([str(v) for v in vals])
 

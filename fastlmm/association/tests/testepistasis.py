@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import scipy as sp
 import logging
@@ -13,6 +15,8 @@ import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
 from pysnptools.util.mapreduce1.runner import Local,LocalMultiProc, LocalInParts
+from six.moves import range
+from pysnptools.util import to_ascii
 
 class TestEpistasis(unittest.TestCase):
 
@@ -56,7 +60,7 @@ class TestEpistasis(unittest.TestCase):
         assert len(pvalue_list) == len(table)
         for row in table.iterrows():
             snp0cpp,snp1cpp,pvaluecpp,i1,i2 = row[1]
-            for i in xrange(len(pvalue_list)):
+            for i in range(len(pvalue_list)):
                 found = False
                 pvaluepy = pvalue_list[i]
                 snp0py = sid0[i]
@@ -360,8 +364,8 @@ class TestEpistasis(unittest.TestCase):
         reference=sp.loadtxt(reffile,dtype='str',comments=None,skiprows=1)
         assert len(pvalue_list) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
         for row in reference:
-            sid0 = row[0]
-            sid1 = row[4]
+            sid0 = to_ascii(row[0])
+            sid1 = to_ascii(row[4])
             if sid0 < sid1:
                 key = (sid0, sid1)
             else:
@@ -404,7 +408,7 @@ if __name__ == '__main__':
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
         #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done with testing")

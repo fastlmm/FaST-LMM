@@ -10,6 +10,8 @@ the full kernel according to their univariate association with the phenotype
 and then choosing a number to cut off using cross-validation.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import logging
 
@@ -20,6 +22,7 @@ from sklearn.metrics import mean_squared_error
 
 from fastlmm.association.LocoGwas import FastGwas
 import fastlmm.inference.linear_regression as lin_reg
+from six.moves import range
 
 
 
@@ -67,7 +70,7 @@ class FeatureSelectionInSample(object):
         self.ll = np.zeros((self.n_folds, self.n_k_grid))
 
         self.grid_k = [int(k) for k in np.logspace(0, max_log_k, base=2, num=self.n_k_grid, endpoint=True)]
-        print self.grid_k
+        print(self.grid_k)
         self.random_state = random_state
         self.mixes = np.zeros((self.n_folds, self.n_k_grid))
         self.h2 = np.zeros((self.n_folds, self.n_k_grid))
@@ -127,7 +130,7 @@ class FeatureSelectionInSample(object):
             np.testing.assert_array_almost_equal(norm_factor, norm_factor_check, decimal=1)
             
 
-        for kfold_idx, (train_idx, test_idx) in enumerate(KFold(n_splits=self.n_folds, random_state=self.random_state, shuffle=True).split(range(num_ind))):
+        for kfold_idx, (train_idx, test_idx) in enumerate(KFold(n_splits=self.n_folds, random_state=self.random_state, shuffle=True).split(list(range(num_ind)))):
 
             t0 = time.time()
             logging.info("running fold: %i" % kfold_idx)

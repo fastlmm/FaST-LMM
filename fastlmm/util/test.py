@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import scipy as sp
 import logging
@@ -58,4 +60,4 @@ if __name__ == '__main__':
     suites = getTestSuite()
     r = unittest.TextTestRunner(failfast=False)
     r.run(suites)
-    print "done"
+    print("done")

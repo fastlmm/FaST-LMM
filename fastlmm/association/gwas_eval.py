@@ -9,6 +9,8 @@ Created on 2014-04-07
 @summary: Module containing helper function to evaluate quality of GWAS
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import os.path
 
@@ -42,7 +44,7 @@ def cut_snps_close_to_causals(p_values, pos, causal_idx, mindist, plot=False):
     # keep causals and far away snps
     i_keepers = np.bitwise_or(i_causal_all, ~close_to_causals_mask)
         
-    print("keeping %i/%i SNPs (mindist=%f)" % (sum(i_keepers), len(i_keepers), mindist))
+    print(("keeping %i/%i SNPs (mindist=%f)" % (sum(i_keepers), len(i_keepers), mindist)))
 
     pv = p_values[i_keepers]
     #pv_lin = p_values_lin[i_keepers]
@@ -385,7 +387,7 @@ def merge_results(results_dir, fn_filter_list, mindist):
 
         for method_fn in method_files:
             tmp_fn = results_dir + "/" + method_fn
-            print tmp_fn
+            print(tmp_fn)
             dat = load(tmp_fn)
 
             pv_m, i_causal_m = cut_snps_close_to_causals(dat["p_values_uncut"], dat["pos"], dat["causal_idx"], mindist=mindist)
@@ -437,4 +439,4 @@ if __name__ == "__main__":
     
     t0 = time.time()
     compute_power_data(pv, i_causal)
-    print("time taken:", time.time() - t0)
+    print(("time taken:", time.time() - t0))

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import logging
 
@@ -20,6 +22,7 @@ import os.path
 import pysnptools.util
 from fastlmm.feature_selection.feature_selection_two_kernel import FeatureSelectionInSample
 import fastlmm.util.standardizer as stdizer
+from six.moves import range
 
 
 
@@ -60,9 +63,9 @@ class TestTwoKernelFeatureSelection(unittest.TestCase):
         best_k, feat_idx, best_mix, best_delta = select.run_select(self.G, self.G, self.y, cov=self.G_cov)    
     
         # print results
-        print "best_k:", best_k
-        print "best_mix:", best_mix
-        print "best_delta:", best_delta
+        print("best_k:", best_k)
+        print("best_mix:", best_mix)
+        print("best_delta:", best_delta)
 
         self.assertEqual(best_k, 64)
         self.assertAlmostEqual(best_mix, 0.8621642030968627, places=6)
@@ -76,9 +79,9 @@ class TestTwoKernelFeatureSelection(unittest.TestCase):
         best_k, feat_idx, best_mix, best_delta = select.run_select(self.G, self.G, self.y, cov=self.G_cov)    
     
         # print results
-        print "best_k:", best_k
-        print "best_mix:", best_mix
-        print "best_delta:", best_delta
+        print("best_k:", best_k)
+        print("best_mix:", best_mix)
+        print("best_delta:", best_delta)
 
         self.assertEqual(best_k, 32)
         self.assertAlmostEqual(best_mix, 0.6786566031577429, places=6)
@@ -331,7 +334,7 @@ class TestFeatureSelection(unittest.TestCase):
         best_k_1, best_delta_1, best_obj_1, best_snps_1 = fss_1.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         #some misc testing
-        import PerformSelectionDistributable as psd
+        from . import PerformSelectionDistributable as psd
         perform_selection_distributable = psd.PerformSelectionDistributable(fss_1, k_values, delta_values, strategy, output_prefix, select_by_ll=True, penalty=0.0,create_pdf=False)
         self.assertEqual(perform_selection_distributable.work_count, 3)
         s = perform_selection_distributable.tempdirectory
@@ -405,7 +408,7 @@ class TestFeatureSelection(unittest.TestCase):
         ll_1_expected = np.array([79.7217, 80.5289, 79.9218, 53.7485, 71.4134, 71.5751, 58.4209, 69.82, 85.5727, 72.7218])
         ll_1 = core_run(snpreader, self.pheno_fn, 50, np.exp(-5))
 
-        for i in xrange(len(ll_1)):
+        for i in range(len(ll_1)):
             np.testing.assert_approx_equal(ll_1[i], ll_1_expected[i], significant=3, err_msg='Log-likelihoods differ', verbose=True)
 
 
@@ -413,7 +416,7 @@ class TestFeatureSelection(unittest.TestCase):
         ll_2_expected = np.array([68.7098, 70.0446, 75.1816, 62.3675, 69.34, 74.6755, 59.9937, 66.6408, 74.1564, 68.3146])
         ll_2 = core_run(snpreader, self.pheno_fn, 50, np.exp(10))
 
-        for i in xrange(len(ll_2)):
+        for i in range(len(ll_2)):
             np.testing.assert_approx_equal(ll_2[i], ll_2_expected[i], significant=3, err_msg='Log-likelihoods differ', verbose=True)
 
 
@@ -423,7 +426,7 @@ class TestFeatureSelection(unittest.TestCase):
         ll_3_expected = np.array([1636.33, 28711.8, 32008.8, 1363.74, 128444, 22277.6, 16389.2, 95458.7, 4710.33, 68308.9])
         ll_3 = core_run(snpreader, self.pheno_fn, 5000, np.exp(-5))
 
-        for i in xrange(len(ll_3)):
+        for i in range(len(ll_3)):
             np.testing.assert_approx_equal(ll_3[i], ll_3_expected[i], significant=2, err_msg='Log-likelihoods differ', verbose=True)
 
         
@@ -431,7 +434,7 @@ class TestFeatureSelection(unittest.TestCase):
         ll_4_expected = np.array([68.4794, 70.7483, 76.6886, 62.2721, 69.0659, 76.8207, 59.5216, 66.1517, 75.9149, 68.6061])
         ll_4 = core_run(snpreader, self.pheno_fn, 5000, np.exp(10))
 
-        for i in xrange(len(ll_4)):
+        for i in range(len(ll_4)):
             np.testing.assert_approx_equal(ll_4[i], ll_4_expected[i], significant=3, err_msg='Log-likelihoods differ', verbose=True)
 
 
@@ -439,7 +442,7 @@ class TestFeatureSelection(unittest.TestCase):
         ll_5_expected = np.array([259.91, 351.914, 389.971, 313.807, 334.883, 345.312, 221.556, 206.15, 270.53, 304.231])
         ll_5 = core_run(snpreader, self.pheno_fn, 500, np.exp(2))
 
-        for i in xrange(len(ll_5)):
+        for i in range(len(ll_5)):
             np.testing.assert_approx_equal(ll_5[i], ll_5_expected[i], significant=3, err_msg='Log-likelihoods differ', verbose=True)
 
 def core_run(snpreader, pheno_fn, k, delta):
@@ -448,7 +451,7 @@ def core_run(snpreader, pheno_fn, k, delta):
     """
 
     G, X, y = load_snp_data(snpreader, pheno_fn, standardizer=Unit())
-    kf = KFold(n_splits=10, shuffle=False).split(range(len(y)))
+    kf = KFold(n_splits=10, shuffle=False).split(list(range(len(y))))
 
     ll = np.zeros(10)
 

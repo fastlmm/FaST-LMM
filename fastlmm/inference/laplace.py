@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from fastlmm import Pr
 import scipy as sp
 import numpy as NP
@@ -9,6 +10,7 @@ from fastlmm.external.util.math import stl, stu
 from fastlmm.inference.glmm import GLMM_N1K3, GLMM_N3K1
 from fastlmm.inference.likelihood import LogitLikelihood, ProbitLikelihood
 import sys
+from six.moves import range
 
 '''
     Important! Always run test.py in the current folder for unit testing after
@@ -183,7 +185,7 @@ class LaplaceGLMM(object):
         n = len(kstarstar)
         ps = NP.zeros(n)
 
-        for i in xrange(n):
+        for i in range(n):
             ps[i] = self._predict_each(meanstar[i], kstar[i,:], kstarstar[i], prob)
 
         return ps

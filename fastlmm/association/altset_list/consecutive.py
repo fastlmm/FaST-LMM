@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 import numpy as np
 import subprocess, sys, os.path
 from itertools import *
 import math
+from six.moves import range
 
 class Consecutive(object):  # implements ISnpSetList
     """
@@ -51,7 +53,7 @@ class _ConsecutivePlusBed(object): # implements ISnpSetListPlusBed
             midIndex = math.floor((startIndex+lastIndex)/2.0)
             name = "{0}@{1}@{2}".format(startIndex,midIndex,lastIndex)
 
-            snpList=self.sid[range(startIndex,endIndex)]
+            snpList=self.sid[list(range(startIndex,endIndex))]
             yield _SnpAndSetNamePlusBed(name,snpList,self.bed)
 
     def __len__(self):

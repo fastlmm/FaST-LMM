@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fastlmm.association as association
 import fastlmm.association.lrt as lrt
 import numpy as np

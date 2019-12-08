@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fastlmm.feature_selection.PerformSelectionDistributable as psd
 import fastlmm.util.preprocess as up
 import numpy as np
@@ -27,10 +28,10 @@ def set_snps0(SNPs0,sample_size,i_exclude=None, forcefullrank=False,blocksize=10
     '''    
     if SNPs0 is None:
         return None, None
-    if SNPs0.has_key("K"):
+    if "K" in SNPs0:
         K0 = SNPs0["K"]
         G0 = None
-    elif SNPs0.has_key("data"):
+    elif "data" in SNPs0:
         K0 = None
         G0 = SNPs0["data"]["snps"]
     else:        

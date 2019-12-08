@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from fastlmm.association.varcomp_test import varcomp_test
 from fastlmm.association.single_snp import single_snp
 from fastlmm.association.single_snp import single_snp_leave_out_one_chrom

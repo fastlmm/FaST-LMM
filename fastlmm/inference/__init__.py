@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from fastlmm.inference.fastlmm_predictor import FastLMM
 from fastlmm.inference.linear_regression import LinearRegression
 
@@ -8,9 +9,9 @@ from fastlmm.inference.linear_regression import LinearRegression
 #from bin2kernel import getFastestBin2Kernel
 #from bin2kernel import Bin2KernelEPLinearN
 
-from laplace import LaplaceGLMM_N3K1, LaplaceGLMM_N1K3
-from ep import EPGLMM_N3K1, EPGLMM_N1K3
-from lmm import LMM
+from .laplace import LaplaceGLMM_N3K1, LaplaceGLMM_N1K3
+from .ep import EPGLMM_N3K1, EPGLMM_N1K3
+from .lmm import LMM
 
 '''
 Return the fastest implementation according to the data provided.

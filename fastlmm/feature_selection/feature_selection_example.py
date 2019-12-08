@@ -2,6 +2,7 @@
 example of how to use feature selection from python (see also command line interface)
 """
 
+from __future__ import absolute_import
 import numpy as np
 from fastlmm.feature_selection import FeatureSelectionStrategy
 from pysnptools.snpreader import Bed

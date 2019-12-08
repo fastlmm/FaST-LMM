@@ -1,4 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import matplotlib
+from six.moves import range
 matplotlib.use("TKAgg",warn=False)
 import pylab
 
@@ -209,7 +212,7 @@ class TestFastLMM(unittest.TestCase):
         test_idx  = np.r_[0:10] # the first 10 iids
 
         covariate_train3 = self.covariate_whole[train_idx,:].read()
-        covariate_train3.val = np.array([[float(num)] for num in xrange(covariate_train3.iid_count)])
+        covariate_train3.val = np.array([[float(num)] for num in range(covariate_train3.iid_count)])
         pheno_train3 = self.pheno_whole[train_idx,:].read()
         np.random.seed(0)
         pheno_train3.val = covariate_train3.val * 2.0 + 100 + np.random.normal(size=covariate_train3.val.shape) # y = 2*x+100+normal(0,1)
@@ -243,7 +246,7 @@ class TestFastLMM(unittest.TestCase):
 
             #make covar just numbers 0,1,...
             covar = self.covariate_whole.read()
-            covar.val = np.array([[float(num)] for num in xrange(covar.iid_count)])
+            covar.val = np.array([[float(num)] for num in range(covar.iid_count)])
             covar._name = 'np.array([[float(num)] for num in xrange(covar.iid_count)])'
             covariate_train = covar[train_idx,:].read()
             covariate_test = covar[test_idx,:].read()
@@ -368,7 +371,7 @@ class TestFastLMM(unittest.TestCase):
 
         #make covar just numbers 0,1,...
         covar = self.covariate_whole.read()
-        covar.val = np.array([[float(num)] for num in xrange(covar.iid_count)])
+        covar.val = np.array([[float(num)] for num in range(covar.iid_count)])
         covariate_train = covar[train_idx,:].read()
         covariate_test = covar[test_idx,:].read()
         K0_whole_test = KernelIdentity(covar.iid,covariate_test.iid)
@@ -640,7 +643,7 @@ class TestFastLMM(unittest.TestCase):
 
         G0_train = self.snpreader_whole[train_idx,:]
         covariate_train3 = self.covariate_whole[train_idx,:].read()
-        covariate_train3.val = np.array([[float(num)] for num in xrange(covariate_train3.iid_count)])
+        covariate_train3.val = np.array([[float(num)] for num in range(covariate_train3.iid_count)])
         pheno_train3 = self.pheno_whole[train_idx,:].read()
         np.random.seed(0)
         pheno_train3.val = covariate_train3.val * 2.0 + 100 + np.random.normal(size=covariate_train3.val.shape) # y = 2*x+100+normal(0,1)
@@ -686,15 +689,15 @@ class TestFastLMM(unittest.TestCase):
         import pylab
         logging.info("TestLmmTrain test_lmm")
 
-        iid = [["cid{0}P{1}".format(iid_index,iid_index//250)]*2 for iid_index in xrange(iid_count)]
+        iid = [["cid{0}P{1}".format(iid_index,iid_index//250)]*2 for iid_index in range(iid_count)]
         train_idx = np.r_[10:iid_count] # iids 10 and on
         test_idx  = np.r_[0:10] # the first 10 iids
 
 
         #Every person is 100% related to everyone in one of 5 families
         K0a = KernelData(iid=iid,val=np.empty([iid_count,iid_count]),name="related by distance")
-        for iid_index0 in xrange(iid_count):
-            for iid_index1 in xrange(iid_count):
+        for iid_index0 in range(iid_count):
+            for iid_index1 in range(iid_count):
                 K0a.val[iid_index0,iid_index1] = 1 if iid_index0 % 5 == iid_index1 % 5 else 0
                 if iid_index1 < iid_index0:
                     assert K0a.val[iid_index0,iid_index1] == K0a.val[iid_index1,iid_index0]
@@ -704,11 +707,11 @@ class TestFastLMM(unittest.TestCase):
         np.random.seed(seed)
         home = np.random.random([iid_count])
         K0b = KernelData(iid=iid,val=np.empty([iid_count,iid_count]),name="related by distance")
-        for iid_index in xrange(iid_count):
+        for iid_index in range(iid_count):
             K0b.val[iid_index,:] = 1 - np.abs(home-home[iid_index])**.1
 
         #make covar just numbers 0,1,...
-        covar = SnpData(iid=iid,sid=["x"],val=np.array([[float(num)] for num in xrange(iid_count)]))
+        covar = SnpData(iid=iid,sid=["x"],val=np.array([[float(num)] for num in range(iid_count)]))
         covariate_train = covar[train_idx,:].read()
         covariate_test = covar[test_idx,:].read()
 
@@ -844,7 +847,7 @@ class TestFastLMM(unittest.TestCase):
                 assert np.abs(covar_phenoB0.val[0,0] - covar_phenoB.val[0,0]) < 1e-6, "Expect a single case to get the same prediction as a set of cases"
 
                 #Predict with model test on some train and some test
-                some_idx = range(covar.iid_count)
+                some_idx = list(range(covar.iid_count))
                 some_idx.remove(train_idx[0])
                 some_idx.remove(test_idx[0])
                 covariate_some = covar[some_idx,:]
@@ -990,8 +993,8 @@ class TestFastLMM(unittest.TestCase):
         reference=Dat(reffile).read()
         assert np.array_equal(answer.col,reference.col), "sid differs. File '{0}'".format(reffile)
         assert np.array_equal(answer.row,reference.row), "iid differs. File '{0}'".format(reffile)
-        for iid_index in xrange(reference.row_count):
-            for sid_index in xrange(reference.col_count):
+        for iid_index in range(reference.row_count):
+            for sid_index in range(reference.col_count):
                 a_v = answer.val[iid_index,sid_index]
                 r_v = reference.val[iid_index,sid_index]
                 assert abs(a_v - r_v) < 1e-4 or abs(a_v - r_v)/abs(r_v) < 1e5, "Value at {0},{1} differs too much from file '{2}'".format(iid_index,sid_index,reffile)
@@ -1031,7 +1034,7 @@ if __name__ == '__main__':
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
         #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done with testing")

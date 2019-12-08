@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import scipy as SP
 import scipy.optimize as opt
+from six.moves import range
 
 
 def minimize1D(f, evalgrid = None, nGrid=10, minval=0.0, maxval = 0.99999, verbose=False, brent=True,check_boundaries = True, resultgrid=None, return_grid=False):
@@ -25,7 +28,7 @@ def minimize1D(f, evalgrid = None, nGrid=10, minval=0.0, maxval = 0.99999, verbo
     --------------------------------------------------------------------------
     '''
     #evaluate the target function on a grid:
-    if verbose: print "evaluating target function on a grid"
+    if verbose: print("evaluating target function on a grid")
     if evalgrid is not None and brent:# if brent we need to sort the input values
         i_sort = evalgrid.argsort()
         evalgrid = evalgrid[i_sort]
@@ -36,29 +39,29 @@ def minimize1D(f, evalgrid = None, nGrid=10, minval=0.0, maxval = 0.99999, verbo
     minglobal = (evalgrid[i_currentmin],resultgrid[i_currentmin])
     if brent:#do Brent search in addition to rest? 
         if check_boundaries:
-            if verbose: print "checking grid point boundaries to see if further search is required"
+            if verbose: print("checking grid point boundaries to see if further search is required")
             if resultgrid[0]<resultgrid[1]:#if the outer boundary point is a local optimum expand search bounded between the grid points
-                if verbose: print "resultgrid[0]<resultgrid[1]--> outer boundary point is a local optimum expand search bounded between the grid points"
+                if verbose: print("resultgrid[0]<resultgrid[1]--> outer boundary point is a local optimum expand search bounded between the grid points")
                 minlocal = opt.fminbound(f,evalgrid[0],evalgrid[1],full_output=True)
                 if minlocal[1]<minglobal[1]:
-                    if verbose: print "found a new minimum during grid search"
+                    if verbose: print("found a new minimum during grid search")
                     minglobal=minlocal[0:2]
             if resultgrid[-1]<resultgrid[-2]:#if the outer boundary point is a local optimum expand search bounded between the grid points
-                if verbose: print "resultgrid[-1]<resultgrid[-2]-->outer boundary point is a local optimum expand search bounded between the grid points"
+                if verbose: print("resultgrid[-1]<resultgrid[-2]-->outer boundary point is a local optimum expand search bounded between the grid points")
                 minlocal = opt.fminbound(f,evalgrid[-2],evalgrid[-1],full_output=True)
                 if minlocal[1]<minglobal[1]:
-                    if verbose: print "found a new minimum during grid search"
+                    if verbose: print("found a new minimum during grid search")
                     minglobal=minlocal[0:2]
-        if verbose: print "exploring triplets with brent search"
+        if verbose: print("exploring triplets with brent search")
         onebrent=False
-        for i in xrange(resultgrid.shape[0]-2):#if any triplet is found, where the inner point is a local optimum expand search
+        for i in range(resultgrid.shape[0]-2):#if any triplet is found, where the inner point is a local optimum expand search
             if (resultgrid[i+1]<resultgrid[i+2]) and (resultgrid[i+1]<resultgrid[i]):
                 onebrent=True
-                if verbose: print "found triplet to explore"
+                if verbose: print("found triplet to explore")
                 minlocal = opt.brent(f,brack = (evalgrid[i],evalgrid[i+1],evalgrid[i+2]),full_output=True)
                 if minlocal[1]<minglobal[1]:
                     minglobal=minlocal[0:2]
-                    if verbose: print "found new minimum from brent search"
+                    if verbose: print("found new minimum from brent search")
     if return_grid:
         return (minglobal[0], minglobal[1], evalgrid, resultgrid)
     else:
@@ -88,7 +91,7 @@ def evalgrid1D(f, evalgrid = None, nGrid=10, minval=0.0, maxval = 0.99999, dimF=
         resultgrid = SP.ones((evalgrid.shape[0],dimF))*9999999999999.0
     else:
         resultgrid = SP.ones(evalgrid.shape[0])*9999999999999.0
-    for i in xrange(evalgrid.shape[0]):        
+    for i in range(evalgrid.shape[0]):        
         fevalgrid = f(evalgrid[i])
 
         is_real=False

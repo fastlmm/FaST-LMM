@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import logging
 import numpy as np
 import unittest
@@ -16,6 +18,7 @@ from pysnptools.standardizer import Identity as SS_Identity
 from pysnptools.kernelstandardizer import Identity as KS_Identity
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData, SnpKernel
+from six.moves import range
 
 class TestLinRegTrain(unittest.TestCase):
     @classmethod
@@ -47,7 +50,7 @@ class TestLinRegTrain(unittest.TestCase):
 
         #make covar just numbers 0,1,...
         covar = self.covariate_whole.read()
-        covar.val = np.array([[float(num)] for num in xrange(covar.iid_count)])
+        covar.val = np.array([[float(num)] for num in range(covar.iid_count)])
         covariate_train = covar[train_idx,:].read()
         covariate_test = covar[test_idx,:].read()
         K0_test_test = KernelIdentity(covariate_test.iid)
@@ -159,8 +162,8 @@ class TestLinRegTrain(unittest.TestCase):
         reference=Dat(reffile).read()
         assert np.array_equal(answer.col,reference.col), "sid differs. File '{0}'".format(reffile)
         assert np.array_equal(answer.row,reference.row), "iid differs. File '{0}'".format(reffile)
-        for iid_index in xrange(reference.row_count):
-            for sid_index in xrange(reference.col_count):
+        for iid_index in range(reference.row_count):
+            for sid_index in range(reference.col_count):
                 a_v = answer.val[iid_index,sid_index]
                 r_v = reference.val[iid_index,sid_index]
                 assert abs(a_v - r_v) < 1e-4, "Value at {0},{1} differs too much from file '{2}'".format(iid_index,sid_index,reffile)
@@ -200,7 +203,7 @@ if __name__ == '__main__':
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
         #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
-        print runner.run(distributable_test)
+        print(runner.run(distributable_test))
 
 
     logging.info("done with testing")

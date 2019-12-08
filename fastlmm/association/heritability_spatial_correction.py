@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -18,6 +20,8 @@ from pysnptools.standardizer import Unit
 import itertools
 from sklearn import model_selection
 from scipy import stats
+from six.moves import map
+from six.moves import range
 
 
 def _nth(iterable, n, default=None):
@@ -53,15 +57,15 @@ def spatial_similarity(spatial_coor, alpha, power):     # scale spatial coordina
 def work_item(arg_tuple):
     return work_item2(*arg_tuple)
 
-def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power,    # The main inputs
-     (jackknife_index, jackknife_count, jackknife_seed),               # Jackknifing and permutations inputs
-     (permute_plus_index, permute_plus_count, permute_plus_seed),
-     (permute_times_index, permute_times_count, permute_times_seed),
+def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power, xxx_todo_changeme, xxx_todo_changeme1, xxx_todo_changeme2,
      just_testing, do_uncorr, do_gxe2, a2): 
     
     #########################################
     # Load GPS info from filename if that's the way it is given
     ########################################
+    (jackknife_index, jackknife_count, jackknife_seed) = xxx_todo_changeme
+    (permute_plus_index, permute_plus_count, permute_plus_seed) = xxx_todo_changeme1
+    (permute_times_index, permute_times_count, permute_times_seed) = xxx_todo_changeme2
     if isinstance(spatial_coor,str):
         assert spatial_iid is None, "if spatial_coor is a str, then spatial_iid should be None"
         gps_table = pd.read_csv(spatial_coor, delimiter=" ").dropna()
@@ -91,7 +95,7 @@ def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power,  
     if jackknife_index >= 0:
         assert jackknife_count <= G_kernel.iid_count, "expect the number of groups to be less than the number of iids"
         assert jackknife_index < jackknife_count, "expect the jackknife index to be less than the count"
-        m_fold = model_selection.KFold(n_splits=jackknife_count, shuffle=True, random_state=jackknife_seed%4294967295).split(range(G_kernel.iid_count))
+        m_fold = model_selection.KFold(n_splits=jackknife_count, shuffle=True, random_state=jackknife_seed%4294967295).split(list(range(G_kernel.iid_count)))
         iid_index,_ = _nth(m_fold, jackknife_index)
         pheno = pheno[iid_index,:]
         G_kernel = G_kernel[iid_index]
@@ -282,9 +286,9 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
         pstutil.create_directory_if_necessary(cache_folder,isfile=False)
 
     
-    jackknife_seed = seed or 1954692566L
-    permute_plus_seed = seed or 2372373100L
-    permute_times_seed = seed or 2574440128L
+    jackknife_seed = seed or 1954692566
+    permute_plus_seed = seed or 2372373100
+    permute_times_seed = seed or 2574440128
 
     ######################
     # Find 'alpha', the scale for distance
@@ -307,7 +311,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
                 arg_list.append(arg_tuple)
 
         # Run "run_line" on each set of arguments and save to file
-        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else map(work_item, arg_list)
+        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
         return_list = [line for line in return_list if line is not None] #Remove 'None' results
         alpha_table = pd.DataFrame(return_list)
         if cache_folder is not None:
@@ -353,7 +357,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
                     arg_list.append(arg_tuple)    
 
         # Run "run_line" on each set of arguments and save to file
-        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else map(work_item, arg_list)
+        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
         return_list = [line for line in return_list if line is not None] #Remove 'None' results
         jackknife_table = pd.DataFrame(return_list)
         if cache_folder is not None:
@@ -427,7 +431,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
                 arg_list.append(arg_tuple)
 
         # Run "run_line" on each set of arguments and save to file
-        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else map(work_item, arg_list)
+        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
         return_list = [line for line in return_list if line is not None] #Remove 'None' results
         permplus_table = pd.DataFrame(return_list)
         if cache_folder is not None:
@@ -475,7 +479,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
                 arg_list.append(arg_tuple)    
 
             # Run "run_line" on each set of arguments and save to file
-            return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else map(work_item, arg_list)
+            return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
             return_list = [line for line in return_list if line is not None] #Remove 'None' results
             permtime_results = pd.DataFrame(return_list)
             if cache_folder is not None:
@@ -629,11 +633,11 @@ if __name__ == "__main__":
 
     is_pop0 = snpdata.iid[:,0]=="0"
     is_pop1 = snpdata.iid[:,0]=="1"
-    print "pop0 mean={0}. pop1 mean={1}".format(pheno.val[is_pop0].mean(),pheno.val[is_pop1].mean())
+    print("pop0 mean={0}. pop1 mean={1}".format(pheno.val[is_pop0].mean(),pheno.val[is_pop1].mean()))
 
     if do_plot:
         pylab.suptitle("Phenotype $y$")
-        plt.plot(range(sum(is_pop0)),pheno.val[is_pop0],"r.",range(sum(is_pop1)),pheno.val[is_pop1],"b.")
+        plt.plot(list(range(sum(is_pop0))),pheno.val[is_pop0],"r.",list(range(sum(is_pop1))),pheno.val[is_pop1],"b.")
         plt.show()
 
     from pysnptools.standardizer import Unit
@@ -705,7 +709,7 @@ if __name__ == "__main__":
         run generate_and_analyze on different seeds
         '''
         df_list = []
-        for seed in xrange(seed_count):
+        for seed in range(seed_count):
             if cache_folder is not None:
                 cache_folder_per_seed = cache_folder.format(seed)
             else:
@@ -716,7 +720,7 @@ if __name__ == "__main__":
         
         #format the output dataframe            
         df2 = pd.concat(df_list)
-        df2["seed"] = range(seed_count)
+        df2["seed"] = list(range(seed_count))
         df2["N"]=N
         df2["do_shuffle"]=do_shuffle
         df3 = df2[["seed","N","do_shuffle", "alpha","h2corr","e2","h2uncorr"]]

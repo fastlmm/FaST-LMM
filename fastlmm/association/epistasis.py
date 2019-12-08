@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -10,6 +12,7 @@ from pysnptools.snpreader import Bed
 from fastlmm.util.pickle_io import load, save
 import time
 import pandas as pd
+from six.moves import range
 
 def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_name=None,sid_list_0=None,sid_list_1=None,
                  log_delta=None, min_log_delta=-5, max_log_delta=10, 
@@ -87,6 +90,7 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
 
     :Example:
 
+    >>> from __future__ import print_function
     >>> import logging
     >>> from pysnptools.snpreader import Bed
     >>> from fastlmm.association import epistasis
@@ -98,7 +102,7 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
     ...                                 sid_list_0=test_snps.sid[:10], #first 10 snps
     ...                                 sid_list_1=test_snps.sid[5:15], #Skip 5 snps, use next 10
     ...                                 count_A1=False)
-    >>> print results_dataframe.iloc[0].SNP0, results_dataframe.iloc[0].SNP1,round(results_dataframe.iloc[0].PValue,5),len(results_dataframe)
+    >>> print(results_dataframe.iloc[0].SNP0, results_dataframe.iloc[0].SNP1,round(results_dataframe.iloc[0].PValue,5),len(results_dataframe))
     1_12 1_9 0.07779 85
 
     """
@@ -118,7 +122,7 @@ def write(sid0_list, sid1_list, pvalue_list, output_file):
     """
     with open(output_file,"w") as out_fp:
         out_fp.write("{0}\t{1}\t{2}\n".format("sid0","sid1","pvalue"))
-        for i in xrange(len(pvalue_list)):
+        for i in range(len(pvalue_list)):
             out_fp.write("{0}\t{1}\t{2}\n".format(sid0_list[i],sid1_list[i],pvalue_list[i]))
 
 
@@ -359,14 +363,14 @@ class _Epistasis(object) : #implements IDistributable
         skip_ref[0] = skip_ref[0] - row_start * col_count
         assert skip_ref[0] >=0, "real assert"
 
-        for row_index in xrange(row_start, row_count):
+        for row_index in range(row_start, row_count):
             sid0 = distinct__list0[row_index]
             if row_index == row_start:
                 col_start = skip_ref[0]
                 skip_ref[0] = 0
             else:
                 col_start = 0
-            for col_index in xrange(col_start, col_count):
+            for col_index in range(col_start, col_count):
                 sid1 = distinct__list1[col_index]
                 yield sid0, sid1
 
@@ -382,14 +386,14 @@ class _Epistasis(object) : #implements IDistributable
         skip_ref[0] = skip_ref[0] - (count*row_start - (row_start*(1 + row_start))//2)
         assert skip_ref[0] >=0, "real assert"
 
-        for row_index in xrange(row_start, count):
+        for row_index in range(row_start, count):
             sid0 = list[row_index]
             if row_index == row_start:
                 col_start = skip_ref[0]
                 skip_ref[0] = 0
             else:
                 col_start = 0
-            for col_index in xrange(col_start + 1 + row_index, count):
+            for col_index in range(col_start + 1 + row_index, count):
                 sid1 = list[col_index]
                 assert sid0 is not sid1, "real assert"
                 yield sid0, sid1
@@ -553,5 +557,5 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    print "done"
+    print("done")
 

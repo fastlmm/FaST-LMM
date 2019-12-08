@@ -1,6 +1,9 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import scipy.stats as st
 import fastlmm.util.mingrid as mingrid
+from six.moves import range
 
 
 class MetaAnalysis(object):
@@ -110,7 +113,7 @@ if __name__ == '__main__':
     p_values = np.zeros(N_repeats)
     z_scores_re = np.zeros(N_repeats)
     p_values_re = np.zeros(N_repeats)
-    for i in xrange(N_repeats):
+    for i in range(N_repeats):
        
         var = np.random.uniform(size=N_tests)
         ste = np.sqrt(var)
@@ -123,7 +126,7 @@ if __name__ == '__main__':
         var_beta = fe.var_beta()
         z_scores[i] = fe.z_score()
 
-        print "Fixed effects:  mean=%.6f, ste=%.6f, pv=%.6f, z_score=%.6f" % (mean_fe, ste_fe, p_values[i], z_scores[i])
+        print("Fixed effects:  mean=%.6f, ste=%.6f, pv=%.6f, z_score=%.6f" % (mean_fe, ste_fe, p_values[i], z_scores[i]))
 
         re = RandomEffects(beta=beta, ste=ste)
         p_values_re[i] = re.meta_pvalue()
@@ -131,7 +134,7 @@ if __name__ == '__main__':
         ste_fe = re.ste_mean()
         var_beta = re.var_beta()
         z_scores_re[i] = re.z_score()
-        print "random effects:  mean=%.6f, ste=%.6f, pv=%.6f, z_score=%.6f" % (mean_fe, ste_fe, p_values_re[i], z_scores_re[i])
+        print("random effects:  mean=%.6f, ste=%.6f, pv=%.6f, z_score=%.6f" % (mean_fe, ste_fe, p_values_re[i], z_scores_re[i]))
 
     plt.figure(); plt.hist(z_scores, bins=50)
     plt.figure(); plt.hist(p_values)

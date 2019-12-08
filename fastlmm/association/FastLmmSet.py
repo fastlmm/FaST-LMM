@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import fastlmm.association.lrt as lr
 import fastlmm.association.score as score
 import fastlmm.association.testCV as testCV
@@ -14,8 +16,8 @@ import pysnptools.util as pstutil
 import fastlmm.util.util as utilx
 import fastlmm.util.stats as ss
 import time
-from Result import *
-from PairResult import *
+from .Result import *
+from .PairResult import *
 from fastlmm.association.tests import *
 import fastlmm.util.genphen as gp
 import scipy as sp
@@ -26,6 +28,9 @@ import warnings
 from tempfile import TemporaryFile
 import fastlmm.util.preprocess as util
 import os
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 class FastLmmSet: # implements IDistributable
     '''
@@ -199,7 +204,7 @@ class FastLmmSet: # implements IDistributable
                 
         if self.altset_list2 is None: #singleton sets            
             for iset, altset in enumerate(self.altsetlist_filtbysnps):
-                for iperm in xrange(-1, self.nperm):   #note that self.nperm is the 'stop', not the 'count'
+                for iperm in range(-1, self.nperm):   #note that self.nperm is the 'stop', not the 'count'
                     SNPsalt=altset.read()
                     SNPsalt['snps'] = util.standardize(SNPsalt['snps'])
                     G1 = SNPsalt['snps']/sp.sqrt(SNPsalt['snps'].shape[1])  
@@ -232,7 +237,7 @@ class FastLmmSet: # implements IDistributable
                             nSnp=self.__SNPs0['data']['snps'].shape[1]
                             y_back=sp.sqrt(self.genphen["varBack"]/nSnp)*self.__varBackNullSnpsGen['snps'].dot(sp.random.randn(self.__varBackNullSnpsGen['snps'].shape[1],1))/sp.sqrt(self.__varBackNullSnpsGen['snps'].shape[1]) 
                             #self.printPhenToFile(nInd, SNPsalt, y_back);
-                        elif self.genphen.has_key("varBackNullPhenGen") and self.genphen["varBackNullPhenGen"] is not None and y_back is None:
+                        elif "varBackNullPhenGen" in self.genphen and self.genphen["varBackNullPhenGen"] is not None and y_back is None:
                             y_back=loadPhen(filename = self.genphen["varBackNullPhenGen"])['vals']                            
                         elif y_back is None:          
                             y_back=0                          
@@ -298,7 +303,7 @@ class FastLmmSet: # implements IDistributable
         try:
             pstutil.create_directory_if_necessary(infofile)
         except:
-            logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(infofile))
+            logging.warning("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(infofile))
 
         logging_handler=logging.FileHandler(infofile,"w",delay=False)
         logger = logging.getLogger()
@@ -331,13 +336,13 @@ class FastLmmSet: # implements IDistributable
                 if result.iperm < 0:
                     result_dict[result.iset] = result
                     #iset is the index of the test (irrespective of permutation)
-                    lrt[result.iset] = self.test.lrt(result)
+                    lrt[result.iset] = self.test.lrt_method(result)
                     alteqnull[result.iset] = result.alteqnull #equiv to result["alteqnull"]
                     #pv_adj[result.iset,:] = self.test.pv_adj_from_result(result)                
                     pv_adj[result.iset] = self.test.pv_adj_from_result(result)                
                 else:
                     isetiperm = result.iset+result.iperm*len(self.altsetlist_filtbysnps)
-                    lrtperm[isetiperm] = self.test.lrt(result)
+                    lrtperm[isetiperm] = self.test.lrt_method(result)
                     alteqnullperm[isetiperm] = result.alteqnull
                     setsizeperm[isetiperm] = result.setsize
                 if result.alteqnull is None and str(self.test)[0:3]=="lrt":
@@ -389,12 +394,12 @@ class FastLmmSet: # implements IDistributable
 
     def TESTBEFOREUSINGKfromAltSnps(self, N, SNPsalt=None):        
        
-        print "constructing K from all SNPs"
+        print("constructing K from all SNPs")
         t0=time.time()
 
         Kall=sp.zeros([N,N])
         nSnpTotal=self.alt_snpreader.snp_count
-        print "reading in " +str(nSnpTotal)+ " SNPs and adding up kernels"
+        print("reading in " +str(nSnpTotal)+ " SNPs and adding up kernels")
         #altsnps = readBED(self.bedfilealt,standardizeSNPs=True)['snps'] #loads all in to memory        
         blocksize=100
         ct=0
@@ -411,7 +416,7 @@ class FastLmmSet: # implements IDistributable
             Kall=Kall + snps.dot(snps.T)    
             t1=time.time()
             if ct % 50000==0: 
-                print "read %s SNPs in %.2f seconds" % (ct, t1-ts)
+                print("read %s SNPs in %.2f seconds" % (ct, t1-ts))
                 ts=time.time()
             #if ct==2: 
             #    break
@@ -429,7 +434,7 @@ class FastLmmSet: # implements IDistributable
         try:
             pstutil.create_directory_if_necessary(outfile)
         except:
-            logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(outfile))
+            logging.warning("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(outfile))
 
         logging.info("writing to file " + outfile + ".")
 
@@ -438,7 +443,7 @@ class FastLmmSet: # implements IDistributable
         if type(values) == sp.ndarray:
             values = (values,)
 
-        values = map( list, zip(*values) )
+        values = list(map( list, list(zip(*values)) ))
 
         with open(outfile, "w") as fp:
             fp.write('\t'.join(header) + "\n")
@@ -475,11 +480,11 @@ class FastLmmSet: # implements IDistributable
             copier.input(self.extractSim)
         if (self.nullfitfile is not None):                        
             copier.input(self.nullfitfile)
-        if self.genphen is not None and self.genphen.has_key("varBackNullFileGen"):
+        if self.genphen is not None and "varBackNullFileGen" in self.genphen:
             copier.input(self.genphen["varBackNullFileGen"]+".fam")
             copier.input(self.genphen["varBackNullFileGen"]+".bim")
             copier.input(self.genphen["varBackNullFileGen"]+".bed")
-        if self.genphen is not None and self.genphen.has_key("varBackNullPhenGen") and self.genphen["varBackNullPhenGen"] is not None:
+        if self.genphen is not None and "varBackNullPhenGen" in self.genphen and self.genphen["varBackNullPhenGen"] is not None:
             copier.input(self.genphen["varBackNullPhenGen"])
 
     #Note that the files created are not automatically copied. Instead,
@@ -500,9 +505,9 @@ class FastLmmSet: # implements IDistributable
     # =================================================================
 
     def _check_entries(self, entries):
-        assert entries.has_key('nullModel') and entries.has_key('altModel')
-        assert entries['nullModel'].has_key('effect') and entries['nullModel'].has_key('link')
-        assert entries['altModel'].has_key('effect') and entries['altModel'].has_key('link')
+        assert 'nullModel' in entries and 'altModel' in entries
+        assert 'effect' in entries['nullModel'] and 'link' in entries['nullModel']
+        assert 'effect' in entries['altModel'] and 'link' in entries['altModel']
 
         assert entries['nullModel']['effect'] in set(['fixed', 'mixed'])
         assert entries['altModel']['effect'] in set(['fixed', 'mixed'])
@@ -526,10 +531,10 @@ class FastLmmSet: # implements IDistributable
         assert self.nullfitfile is None or self.nlocalperm==0, "cannot use nullfitfile with nlocalperm"
 
         if self.genphen is not None:
-            if 'casefrac' not in self.genphen.keys(): self.genphen['casefrac']=None
-            if 'fracCausal' not in self.genphen.keys(): self.genphen['fracCausal']=1.0
-            if 'numBackSnps' not in self.genphen.keys(): self.genphen['numBackSnps']=0
-            if 'varBackNullFileGen' not in self.genphen.keys(): self.genphen['varBackNullFileGen']=None  
+            if 'casefrac' not in list(self.genphen.keys()): self.genphen['casefrac']=None
+            if 'fracCausal' not in list(self.genphen.keys()): self.genphen['fracCausal']=1.0
+            if 'numBackSnps' not in list(self.genphen.keys()): self.genphen['numBackSnps']=0
+            if 'varBackNullFileGen' not in list(self.genphen.keys()): self.genphen['varBackNullFileGen']=None  
     
     def _check_params_before(self):
         pass
@@ -557,7 +562,7 @@ class FastLmmSet: # implements IDistributable
         randomstate = RandomState(self.rseed)
         checkpoint=1000
         powerneeded=2
-        for pm in xrange(self.nlocalperm):
+        for pm in range(self.nlocalperm):
             if pm==checkpoint:
                 logging.info('checkpointing '  + str(pm))                    
                 numbetter=sp.sum(permstatbetter)
@@ -597,7 +602,7 @@ class FastLmmSet: # implements IDistributable
         logging.info("    used " + str(pm+1) + " permutations to compute p=" + str(pv) + ", p50=" + str(result.test['pv']))
         
     def G_exclude(self, i_exclude):
-        if self.__SNPs0.has_key("data"):
+        if "data" in self.__SNPs0:
             G_exclude = self.__SNPs0["data"]["snps"][:,i_exclude]
         else:
             snp_names = self.__SNPs0["reader"].rs[i_exclude]
@@ -644,7 +649,7 @@ class FastLmmSet: # implements IDistributable
             logging.info(" (" + str(result.setsize) + " SNPs)")              
 
             if self.filenull is not None:
-                if self.__SNPs0.has_key('data'):
+                if 'data' in self.__SNPs0:
                     pos0=self.__SNPs0['data']['pos']
                 else:
                     pos0=self.__SNPs0['snp_set'].pos
@@ -1117,7 +1122,7 @@ class FastLmmSet: # implements IDistributable
                 #self.__SNPs0['iid']=sp.copy(self.__SNPs0['iid'][indarr[:,3]])
                 #self.__SNPs0['snps']=sp.copy(self.__SNPs0['snps'][indarr[:,3]])
                 #self.__SNPs0['data']['iid']=self.__SNPs0['data']['iid'][indarr[:,3]]
-                if self.__SNPs0.has_key('data'):
+                if 'data' in self.__SNPs0:
                     self.__SNPs0['data']['iid'] = self.__SNPs0['data']['iid'][indarr[:,3]]
                     self.__SNPs0['data']['snps'] = self.__SNPs0['data']['snps'][indarr[:,3]]
                 else:
@@ -1163,8 +1168,8 @@ class FastLmmSet: # implements IDistributable
             return "{0} {1}".format(self.__class__.__name__, self.outfile)
 
     def __repr__(self):
-        import cStringIO
-        fp = cStringIO.StringIO()
+        from io import StringIO
+        fp = StringIO.StringIO()
         fp.write("{0}(\n".format(self.__class__.__name__))
         varlist = []
         for f in dir(self):

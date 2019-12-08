@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 import numpy as np
 import subprocess, sys, os.path
 from itertools import *
 import logging
+import six
 
 class SnpAndSetNameCollection(object):  # implements ISnpSetList
     '''
@@ -19,7 +21,7 @@ class SnpAndSetNameCollection(object):  # implements ISnpSetList
         setname_to_sid = defaultdict(list)
         for snp,gene in snp_and_setname_sequence.itertuples(index=False):
             setname_to_sid[gene].append(snp)
-        self.bigToSmall = sorted(setname_to_sid.iteritems(), key = lambda (gene, sid):-len(sid))
+        self.bigToSmall = sorted(six.iteritems(setname_to_sid), key = lambda gene_sid:-len(gene_sid[1]))
 
     def addbed(self, bed):
         return _SnpAndSetNameCollectionPlusBed(self,bed)
