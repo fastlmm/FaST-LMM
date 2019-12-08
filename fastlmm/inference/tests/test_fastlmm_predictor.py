@@ -544,7 +544,7 @@ class TestFastLMM(unittest.TestCase):
         test_idx  = np.r_[0:10] # the first 10 iids
 
         G0_train = self.snpreader_whole[train_idx,:]
-        G1_train = SnpData(iid=G0_train.iid,sid=[item+"_1" for item in G0_train.sid],val=G0_train.read().val,pos=G0_train.pos,name="Different SNP names for {0}".format(G0_train))
+        G1_train = SnpData(iid=G0_train.iid,sid=[item+b"_1" for item in G0_train.sid],val=G0_train.read().val,pos=G0_train.pos,name="Different SNP names for {0}".format(G0_train))
         covariate_train = self.covariate_whole[train_idx,:]
         pheno_train = self.pheno_whole[train_idx,:]
 
@@ -558,7 +558,7 @@ class TestFastLMM(unittest.TestCase):
                 
         # predict on test set
         G0_test = self.snpreader_whole[test_idx,:]
-        G1_test = SnpData(iid=G0_test.iid,sid=[item+"_1" for item in G0_test.sid],val=G0_test.read().val,pos=G0_test.pos,name="Different SNP names for {0}".format(G0_test))
+        G1_test = SnpData(iid=G0_test.iid,sid=[item+b"_1" for item in G0_test.sid],val=G0_test.read().val,pos=G0_test.pos,name="Different SNP names for {0}".format(G0_test))
         covariate_test = self.covariate_whole[test_idx,:]
 
         predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, K1_whole_test=G1_test, X=covariate_test,count_A1=False)

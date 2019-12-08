@@ -384,3 +384,4 @@ tests/tmp_extract_sim.txt
 /tests/peertopeer
 /fastlmm/association/mdeldir/peertopeer1
 *.py.bak
+/fastlmm/inference/fastlmmpy3
