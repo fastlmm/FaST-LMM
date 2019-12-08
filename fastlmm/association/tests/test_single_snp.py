@@ -17,6 +17,7 @@ from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelreader import SnpKernel
 from six.moves import range
+from pysnptools.util import to_ascii
 
 
 class TestSingleSnp(unittest.TestCase):
@@ -409,7 +410,10 @@ class TestSingleSnp(unittest.TestCase):
         assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
         for _, row in reference.iterrows():
             sid = row.SNP
-            pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
+            try:
+                pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
+            except:
+                print('!!!cmk')
             assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
 
     def test_doctest(self):

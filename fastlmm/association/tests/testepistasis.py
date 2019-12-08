@@ -60,6 +60,7 @@ class TestEpistasis(unittest.TestCase):
         assert len(pvalue_list) == len(table)
         for row in table.iterrows():
             snp0cpp,snp1cpp,pvaluecpp,i1,i2 = row[1]
+            snp0cpp,snp1cpp = to_ascii(snp0cpp),to_ascii(snp1cpp)
             for i in range(len(pvalue_list)):
                 found = False
                 pvaluepy = pvalue_list[i]
@@ -332,7 +333,7 @@ class TestEpistasis(unittest.TestCase):
         from pysnptools.snpreader import Bed
         test_snps = Bed(self.bedbase,count_A1=False)
         pheno = pstpheno.loadOnePhen(self.phen_fn,vectorize=True)
-        pheno['iid'] = np.vstack([pheno['iid'][::-1],[['Bogus','Bogus']]])
+        pheno['iid'] = np.vstack([pheno['iid'][::-1],[[b'Bogus',b'Bogus']]])
         pheno['vals'] = np.hstack([pheno['vals'][::-1],[-34343]])
 
         
@@ -361,7 +362,7 @@ class TestEpistasis(unittest.TestCase):
                 key = (sid1, sid0)
             pair_to_pvalue[key] = pvalue_list[index]
 
-        reference=sp.loadtxt(reffile,dtype='str',comments=None,skiprows=1)
+        reference=sp.loadtxt(reffile,dtype='S',comments=None,skiprows=1)
         assert len(pvalue_list) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
         for row in reference:
             sid0 = to_ascii(row[0])

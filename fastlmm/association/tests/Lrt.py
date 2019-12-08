@@ -18,7 +18,7 @@ class Lrt(object):
     def construct(self, Y, X=None, forcefullrank = False, SNPs0 = None, i_exclude = None, nullModel = None, altModel = None,
                   scoring = None, greater_is_better = None):
         G0,K0=tu.set_snps0(SNPs0=SNPs0,sample_size=Y.shape[0],i_exclude=i_exclude)
-        return lr.lrt_method(Y=Y, X=X, model0=None, appendbias=False, forcefullrank=forcefullrank, G0=G0,K0=K0, nullModel=nullModel, altModel=altModel)
+        return lr.lrt(Y=Y, X=X, model0=None, appendbias=False, forcefullrank=forcefullrank, G0=G0,K0=K0, nullModel=nullModel, altModel=altModel)
 
     def construct_no_backgound_kernel(self, Y, X, forcefullrank, nullModel, altModel, scoring,
                                       greater_is_better):

@@ -23,7 +23,7 @@ import time
 import fastlmm.inference as fastlmm
 
 import fastlmm.util.util as util 
-from fastlmm.pyplink.snpreader.Bed import Bed
+#!!!cmk can we remove this??? from fastlmm.pyplink.snpreader.Bed import Bed
 from fastlmm.util.pickle_io import load, save
 from fastlmm.util.util import argintersect_left
 

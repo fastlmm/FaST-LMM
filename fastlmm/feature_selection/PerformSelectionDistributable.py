@@ -8,6 +8,7 @@ import time
 import os 
 import gc
 import logging
+import io
 
 # common modules
 import matplotlib
@@ -175,8 +176,7 @@ class PerformSelectionDistributable(object) : #implements IDistributable
 
 
     def __repr__(self):
-        from io import StringIO
-        fp = StringIO.StringIO()
+        fp = io.StringIO()
         fp.write("{0}(\n".format(self.__class__.__name__))
         varlist = []
         for f in dir(self):

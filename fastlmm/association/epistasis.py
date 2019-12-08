@@ -90,7 +90,7 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
 
     :Example:
 
-    >>> from __future__ import print_function
+    >>> from pysnptools.util import print2 # Makes ascii strings look the same under Python2/Python3
     >>> import logging
     >>> from pysnptools.snpreader import Bed
     >>> from fastlmm.association import epistasis
@@ -102,15 +102,15 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
     ...                                 sid_list_0=test_snps.sid[:10], #first 10 snps
     ...                                 sid_list_1=test_snps.sid[5:15], #Skip 5 snps, use next 10
     ...                                 count_A1=False)
-    >>> print(results_dataframe.iloc[0].SNP0, results_dataframe.iloc[0].SNP1,round(results_dataframe.iloc[0].PValue,5),len(results_dataframe))
-    1_12 1_9 0.07779 85
+    >>> print2((results_dataframe.iloc[0].SNP0, results_dataframe.iloc[0].SNP1,round(results_dataframe.iloc[0].PValue,5),len(results_dataframe)))
+    ('1_12', '1_9', 0.07779, 85)
 
     """
 
     if runner is None:
         runner = Local()
 
-    epistasis = _Epistasis(test_snps,pheno,G0, G1, mixing, covar,sid_list_0,sid_list_1, log_delta, min_log_delta, max_log_delta, output_file_name, cache_file, count_A1=count_A1)
+    epistasis = _Epistasis(test_snps, pheno, G0, G1, mixing, covar, sid_list_0, sid_list_1, log_delta, min_log_delta, max_log_delta, output_file_name, cache_file, count_A1=count_A1)
     logging.info("# of pairs is {0}".format(epistasis.pair_count))
     epistasis.fill_in_cache_file()
     result = runner.run(epistasis)
@@ -129,7 +129,7 @@ def write(sid0_list, sid1_list, pvalue_list, output_file):
 # could this be written without the inside-out of IDistributable?
 class _Epistasis(object) : #implements IDistributable
 
-    def __init__(self,test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,sid_list_0=None,sid_list_1=None,
+    def __init__(self, test_snps, pheno, G0, G1=None, mixing=0.0, covar=None,sid_list_0=None,sid_list_1=None,
                  log_delta=None, min_log_delta=-5, max_log_delta=10, output_file=None, cache_file=None, count_A1=None):
         self._ran_once = False
 
@@ -139,8 +139,8 @@ class _Epistasis(object) : #implements IDistributable
         self.cache_file = cache_file
         self.count_A1 = count_A1
         self.covar = covar
-        self.sid_list_0 = sid_list_0
-        self.sid_list_1 = sid_list_1
+        self.sid_list_0 = np.array(sid_list_0,dtype='S') if sid_list_0 is not None else None
+        self.sid_list_1 = np.array(sid_list_1,dtype='S') if sid_list_1 is not None else None
         self.G0=G0
         self.G1_or_none=G1
         self.mixing=mixing

@@ -614,7 +614,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         dataframe = _create_dataframe(snps_read.sid_count)
         dataframe['sid_index'] = np.arange(start,end)
-        dataframe['SNP'] = np.array(snps_read.sid ,np.str) #!!!cmk test
+        dataframe['SNP'] = np.array(snps_read.sid, 'str') #This will be ascii on Python2 and unicode on Python3
         dataframe['Chr'] = snps_read.pos[:,0]
         dataframe['GenDist'] = snps_read.pos[:,1]
         dataframe['ChrPos'] = snps_read.pos[:,2] 

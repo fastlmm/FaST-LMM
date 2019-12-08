@@ -348,7 +348,7 @@ def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, s
     
     dataframe = _create_dataframe(len(sid))
     dataframe['sid_index'] = np.arange(start,stop)
-    dataframe['SNP'] = np.array(sid,np.str)#!!!cmk test
+    dataframe['SNP'] = np.array(sid,'str') #This will be ascii on Python2 and unicode on Python3
     dataframe['Chr'] = pos[:,0]
     dataframe['GenDist'] = pos[:,1]
     dataframe['ChrPos'] = pos[:,2]

@@ -36,13 +36,13 @@ def readPED(basefilename, delimiter = ' ',missing = '0',standardize = True, phen
     '''
     pedfile = basefilename+".ped"
     mapfile = basefilename+".map"
-    map = SP.loadtxt(mapfile,dtype = 'str',comments=None)
+    map = SP.loadtxt(mapfile,dtype = 'S',comments=None)
 
     rs = map[:,1]
     pos = SP.array(map[:,(0,2,3)],dtype = 'float')
     map = None
 
-    ped = SP.loadtxt(pedfile,dtype = 'str',comments=None)
+    ped = SP.loadtxt(pedfile,dtype = 'S',comments=None)
     iid = ped[:,0:2]
     snpsstr = ped[:,6::]
     inan=snpsstr==missing
@@ -92,12 +92,12 @@ def readRAW(basefilename, delimiter = ' ',missing = '0',standardize = True, phen
     '''
     rawfile = basefilename+".raw"
     #mapfile = basefilename+".map"
-    #map = SP.loadtxt(mapfile,dtype = 'str',comments=None)
+    #map = SP.loadtxt(mapfile,dtype = 'S',comments=None)
 
     #rs = map[:,1]
     #pos = SP.array(map[:,(0,2,3)],dtype = 'float')
     #map = None
-    raw = SP.loadtxt(rawfile,dtype = 'str',comments=None)
+    raw = SP.loadtxt(rawfile,dtype = 'S',comments=None)
     iid = raw[:,0:2]
     snpsstr = raw[:,6::]
     inan=snpsstr==missing
@@ -153,7 +153,7 @@ def readBED(basefilename, snp_set = AllSnps(), order = 'F'):
 
 def nSnpFromBim(basefilename):
     bim = basefilename+'.bim'
-    bimx = SP.loadtxt(bim,dtype = 'str',usecols = (0,1,2,3),comments=None)
+    bimx = SP.loadtxt(bim,dtype = 'S',usecols = (0,1,2,3),comments=None)
     S = bimx.shape[0]
     return S
 

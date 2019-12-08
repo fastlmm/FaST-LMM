@@ -303,7 +303,7 @@ class FastLmmSet: # implements IDistributable
         try:
             pstutil.create_directory_if_necessary(infofile)
         except:
-            logging.warning("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(infofile))
+            logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(infofile))
 
         logging_handler=logging.FileHandler(infofile,"w",delay=False)
         logger = logging.getLogger()
@@ -434,7 +434,7 @@ class FastLmmSet: # implements IDistributable
         try:
             pstutil.create_directory_if_necessary(outfile)
         except:
-            logging.warning("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(outfile))
+            logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(outfile))
 
         logging.info("writing to file " + outfile + ".")
 
@@ -1168,8 +1168,8 @@ class FastLmmSet: # implements IDistributable
             return "{0} {1}".format(self.__class__.__name__, self.outfile)
 
     def __repr__(self):
-        from io import StringIO
-        fp = StringIO.StringIO()
+        import io
+        fp = io.StringIO()
         fp.write("{0}(\n".format(self.__class__.__name__))
         varlist = []
         for f in dir(self):

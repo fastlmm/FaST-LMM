@@ -45,12 +45,12 @@ class Dat(object):
 
         #!!similar code in BED reader
         logging.info("Loading fam file {0}".format(famfile))
-        self._original_iids = SP.loadtxt(famfile,dtype = 'str',usecols=(0,1),comments=None)
+        self._original_iids = SP.loadtxt(famfile,dtype = 'S',usecols=(0,1),comments=None)
 
         #!!similar code in BED reader
         logging.info("Loading map file {0}".format(mapfile))
         self.bimfields = pd.read_csv(mapfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
-        self.rs = SP.array(self.bimfields[1].tolist(),dtype='str')
+        self.rs = SP.array(self.bimfields[1].tolist(),dtype='S')
         self.pos = self.bimfields[[0,2,3]].values
         self.snp_to_index = {}
         logging.info("indexing snps");

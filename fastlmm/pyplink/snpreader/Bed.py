@@ -7,6 +7,7 @@ from fastlmm.pyplink.altset_list import *
 import pandas as pd
 import logging
 from six.moves import range
+from pysnptools.util import to_ascii
 
 WRAPPED_PLINK_PARSER_PRESENT = None
 
@@ -22,7 +23,7 @@ def decide_once_on_plink_reader():
             WRAPPED_PLINK_PARSER_PRESENT = True #!!does the standardizer work without c++
             logging.info("using c-based plink parser")
         except Exception as detail:
-            logging.warning(detail)
+            logging.warn(detail)
             WRAPPED_PLINK_PARSER_PRESENT = False
 
 
@@ -56,11 +57,11 @@ class Bed(object):
         bimfile = self.basefilename+'.bim'
 
         logging.info("Loading fam file {0}".format(famfile))
-        self._original_iids = SP.loadtxt(famfile,dtype = 'str',usecols=(0,1),comments=None)
+        self._original_iids = SP.loadtxt(famfile,dtype = 'S',usecols=(0,1),comments=None)
         logging.info("Loading bim file {0}".format(bimfile))
 
         self.bimfields = pd.read_csv(bimfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
-        self.rs = SP.array(self.bimfields[1].tolist(),dtype='str')
+        self.rs = SP.array(self.bimfields[1].tolist(),dtype='S')
         self.pos = self.bimfields[[0,2,3]].values
         self.snp_to_index = {}
         logging.info("indexing snps");
@@ -72,9 +73,9 @@ class Bed(object):
         bedfile = self.basefilename+ '.bed'
         self._filepointer = open(bedfile, "rb")
         mode = self._filepointer.read(2)
-        if mode != 'l\x1b': raise Exception('No valid binary BED file')
+        if mode != b'l\x1b': raise Exception('No valid binary BED file')
         mode = self._filepointer.read(1) #\x01 = SNP major \x00 = individual major
-        if mode != '\x01': raise Exception('only SNP-major is implemented')
+        if mode != b'\x01': raise Exception('only SNP-major is implemented')
         logging.info("bed file is open {0}".format(bedfile))
         return self
 
@@ -205,16 +206,16 @@ class Bed(object):
 
             if dtype == SP.float64:
                 if order=="F":
-                    wrap_plink_parser.readPlinkBedFile2doubleFAAA(bed_fn, iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2doubleFAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 elif order=="C":
-                    wrap_plink_parser.readPlinkBedFile2doubleCAAA(bed_fn, iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2doubleCAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 else:
                     raise Exception("order '{0}' not known, only 'F' and 'C'".format(order));
             elif dtype == SP.float32:
                 if order=="F":
-                    wrap_plink_parser.readPlinkBedFile2floatFAAA(bed_fn, iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2floatFAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 elif order=="C":
-                    wrap_plink_parser.readPlinkBedFile2floatCAAA(bed_fn, iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2floatCAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 else:
                     raise Exception("dtype '{0}' not known, only float64 and float32".format(dtype))
             
@@ -222,7 +223,7 @@ class Bed(object):
             # An earlier version of this code had a way to read consecutive SNPs of code in one read. May want
             # to add that ability back to the code. 
             # Also, note that reading with python will often result in non-contigious memory, so the python standardizers will automatically be used, too.       
-            logging.warning("using pure python plink parser (might be much slower!!)")
+            logging.warn("using pure python plink parser (might be much slower!!)")
             SNPs = SP.zeros(((int(SP.ceil(0.25*iid_count_in))*4),snp_count_out),order=order, dtype=dtype) #allocate it a little big
             for SNPsIndex, bimIndex in enumerate(snpset_withbbed):
 

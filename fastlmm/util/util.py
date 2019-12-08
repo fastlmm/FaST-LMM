@@ -35,8 +35,8 @@ def compare_files(file1,file2,tol=1e-8,delimiter="\t"):
     Returns: val,msg 
     where val is True/False (true means files to compare to each other) and a msg for the failure.
     '''
-    dat1=np.loadtxt(file1,dtype='str',delimiter=delimiter,comments=None)
-    dat2=np.loadtxt(file2,dtype='str',delimiter=delimiter,comments=None)
+    dat1=np.loadtxt(file1,dtype='S',delimiter=delimiter,comments=None)
+    dat2=np.loadtxt(file2,dtype='S',delimiter=delimiter,comments=None)
 
     ncol1=dat1[0].size
     ncol2=dat2[0].size
@@ -86,8 +86,8 @@ def compare_mixed_files(file1,file2,tol=1e-8,delimiter="\t"):
     Returns: val,msg 
     where val is True/False (true means files to compare to each other) and a msg for the failure.
     '''
-    dat1=np.loadtxt(file1,dtype='str',delimiter=delimiter,comments=None)
-    dat2=np.loadtxt(file2,dtype='str',delimiter=delimiter,comments=None)
+    dat1=np.loadtxt(file1,dtype='S',delimiter=delimiter,comments=None)
+    dat2=np.loadtxt(file2,dtype='S',delimiter=delimiter,comments=None)
 
     ncol1=dat1[0].size
     ncol2=dat2[0].size
@@ -218,7 +218,7 @@ def argintersect_left(a, b):
     return np.arange(a.shape[0])[np.in1d(a,b)]
 
 
-def intersect_ids(idslist,sep="Q_Q"):
+def intersect_ids(idslist,sep=b"Q_Q"):
     '''
     Takes a list of 2d string arrays of family and individual ids.
     These are intersected.

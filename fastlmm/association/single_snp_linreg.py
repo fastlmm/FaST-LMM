@@ -151,7 +151,7 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
         dataframe['PValue'] = dataframe['PValue'].astype(np.float)
 
         dataframe['sid_index'] = index
-        dataframe['SNP'] = np.array(test_snps.sid[index],dtype=np.str)#!!!cmk test
+        dataframe['SNP'] = np.array(test_snps.sid[index],dtype='str') #This will be ascii on Python2 and unicode on Python3
         dataframe['Chr'] = test_snps.pos[index,0]
         dataframe['GenDist'] = test_snps.pos[index,1]
         dataframe['ChrPos'] = test_snps.pos[index,2]
