@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import matplotlib
 from six.moves import range
-matplotlib.use("TKAgg",warn=False)
-import pylab
+#import matplotlib
+#matplotlib.use("TKAgg",warn=False)
+#import pylab
 
 import logging
 import numpy as np

@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import matplotlib
-matplotlib.use("TKAgg",warn=False)
-import pylab
+#import matplotlib
+#matplotlib.use("TKAgg",warn=False)
+#import pylab
 import pandas as pd
 
 import numpy as np

@@ -385,3 +385,7 @@ tests/tmp_extract_sim.txt
 /fastlmm/association/mdeldir/peertopeer1
 *.py.bak
 /fastlmm/inference/fastlmmpy3
+/fastlmm/util/matrix/mmultfilex.cpython-38-x86_64-linux-gnu.so
+/fastlmm/util/matrix/mmultfilex.cpython-37m-x86_64-linux-gnu.so
+/fastlmm/util/matrix/cample.cpython-38-x86_64-linux-gnu.so
+/fastlmm/util/matrix/cample.cpython-37m-x86_64-linux-gnu.so
