@@ -12,7 +12,6 @@ import time
 from pysnptools.util import format_delta
 from pysnptools.snpreader import SnpMemMap
 from six.moves import range
-from pysnptools.util import to_ascii
 
 def get_num_threads():
     if 'MKL_NUM_THREADS' in os.environ:
@@ -90,7 +89,7 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
                     logging.info("{0}/{1}".format(i,work_count))
                 ata_piece[starti-start:stopi-start,:] = np.dot(slicei.T,slice)
     else:
-        mmultfile_atax(to_ascii(a_filename),a.offset,a.iid_count,a.sid_count,
+        mmultfile_atax(a_filename.encode('ascii'),a.offset,a.iid_count,a.sid_count,
                         work_index,work_count,
                         ata_piece,
                         num_threads = get_num_threads(),
@@ -119,7 +118,7 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=
         aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1]))
         aaTb = np.array(b1,order="F")
         mmultfile_b_less_aatbx(
-                        to_ascii(a_snp_mem_map.filename),
+                        a_snp_mem_map.filename.encode('ascii'),
                         a_snp_mem_map.offset,
                         a_snp_mem_map.iid_count, #row count
                         a_snp_mem_map.sid_count, #col count

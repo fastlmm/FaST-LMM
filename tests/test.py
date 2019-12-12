@@ -147,22 +147,22 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([
                                     #getDebugTestSuite(),
 
-                                    #!!!cmk need to fix tests.test.getTestSuite(),
-                                    #!!!cmkOK fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
-                                    #!!!cmkOK fastlmm.util.test.getTestSuite(),
-                                    #!!!cmkOK fastlmm.inference.tests.test.getTestSuite(),
-                                    #!!!cmkOK fastlmm.association.tests.test_single_snp.getTestSuite(),
-                                    #!!!cmkOK fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
-                                    #!!!cmk need to fix fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
-                                    #!!!cmk need to fix fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-                                    #!!!cmkOK fastlmm.association.tests.testepistasis.getTestSuite(),
-                                    #!!!cmk need to fix fastlmm.association.tests.test_snp_set.getTestSuite(),
-                                    #!!!cmkOK fastlmm.inference.tests.test.getTestSuite(),
-                                    #!!!cmk need to fix fastlmm.association.tests.test_gwas.getTestSuite(),                                    
-                                    #fastlmm.feature_selection.test.getTestSuite(),
-                                    #fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
-                                    fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
-                                    #fastlmm.inference.tests.test_linear_regression.getTestSuite(),
+                                    ###!!!cmk need to fix tests.test.getTestSuite(),
+                                    ##fastlmm.association.tests.test_single_snp_scale.getTestSuite(),#!!!cmkOK 
+                                    ##fastlmm.util.test.getTestSuite(),#!!!cmkOK 
+                                    ##fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
+                                    ##fastlmm.association.tests.test_single_snp.getTestSuite(),#!!!cmkOK 
+                                    ##fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),#!!!cmkOK 
+                                    ###!!!cmk need to fix fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
+                                    ###!!!cmk need to fix fastlmm.association.tests.test_single_snp_select.getTestSuite(),
+                                    ##fastlmm.association.tests.testepistasis.getTestSuite(),#!!!cmkOK 
+                                    ###!!!cmk need to fix fastlmm.association.tests.test_snp_set.getTestSuite(),
+                                    ##fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
+                                    ###!!!cmk need to fix fastlmm.association.tests.test_gwas.getTestSuite(),                                    
+                                    ###fastlmm.feature_selection.test.getTestSuite(),
+                                    ##fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),#!!!cmkOK 
+                                    fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),#!!!cmkOK except for linux doctest 
+                                    ###fastlmm.inference.tests.test_linear_regression.getTestSuite(),
                                     ])
 
     

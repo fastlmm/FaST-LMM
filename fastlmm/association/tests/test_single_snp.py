@@ -17,8 +17,6 @@ from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelreader import SnpKernel
 from six.moves import range
-from pysnptools.util import to_ascii
-
 
 class TestSingleSnp(unittest.TestCase):
 

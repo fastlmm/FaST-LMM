@@ -47,7 +47,7 @@ class TestFastLMM(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def test_api(self):
+    def cmktest_api(self):
         train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
         test_idx  = np.r_[0:10] # the first 10 iids
 
@@ -102,7 +102,7 @@ class TestFastLMM(unittest.TestCase):
         predicted_pheno, covar = fastlmm2.predict(K0_whole_test=self.snpreader_whole[test_idx,:], X=self.covariate_whole,count_A1=False)
         self.compare_files(predicted_pheno,"one")
 
-    def test_notebook1(self):
+    def cmktest_notebook1(self):
         do_plot=False
 
         import matplotlib.pyplot as plt
@@ -141,7 +141,7 @@ class TestFastLMM(unittest.TestCase):
             plt.ylabel('predicted')
             plt.show()
 
-    def test_one(self):
+    def cmktest_one(self):
         logging.info("TestLmmTrain test_one")
 
         train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
@@ -174,7 +174,7 @@ class TestFastLMM(unittest.TestCase):
 
         self.compare_files(predicted_pheno,"one")
 
-    def test_str(self):
+    def cmktest_str(self):
         logging.info("TestLmmTrain test_str")
 
         G0_train = self.pythonpath + "/tests/datasets/synth/all"
@@ -205,7 +205,7 @@ class TestFastLMM(unittest.TestCase):
 
         self.compare_files(predicted_pheno,"str")
 
-    def test_lr_no_K0(self):
+    def cmktest_lr_no_K0(self):
         logging.info("TestLinRegTrain test_lr_no_k0")
 
         train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
@@ -231,7 +231,7 @@ class TestFastLMM(unittest.TestCase):
 
         self.compare_files(predicted_pheno,"lr_no_k0")
 
-    def test_lr_as_lmm(self):
+    def cmktest_lr_as_lmm(self):
             do_plot = False
             #later why does this test case generate two intersect info messages instead of just one?
             import pylab
@@ -360,7 +360,7 @@ class TestFastLMM(unittest.TestCase):
                 self.compare_files(predicted_pheno,"lr_as_lmmb_")
                 self.compare_files(covar2,"lr_as_lmmb.cov_")
 
-    def test_lr2(self):
+    def cmktest_lr2(self):
         do_plot = False
 
         import pylab
@@ -481,7 +481,7 @@ class TestFastLMM(unittest.TestCase):
             self.compare_files(covar2,"lr2b.cov_"+first_name)
 
 
-    def test_str2(self):
+    def cmktest_str2(self):
         logging.info("TestLmmTrain test_str2")
 
 
@@ -522,19 +522,19 @@ class TestFastLMM(unittest.TestCase):
         self.compare_files(predicted_pheno,"str2")
 
     #Creating multiple tests so that will run faster when on cluster.
-    def test_fasttwoK(self):
+    def cmktest_fasttwoK(self):
         logging.info("TestLmmTrain test_fasttwoK")
         self._fasttwoK(None,None)
 
-    def test_fasttwoK_force_low_rank(self):
+    def cmktest_fasttwoK_force_low_rank(self):
         logging.info("TestLmmTrain test_fasttwoK_force_low_rank")
         self._fasttwoK(True,None)
 
-    def test_fasttwoK_GB2(self):
+    def cmktest_fasttwoK_GB2(self):
         logging.info("TestLmmTrain test_fasttwoK_GB2")
         self._fasttwoK(None,2)
 
-    def test_fasttwoK_force_low_rank_GB2(self):
+    def cmktest_fasttwoK_force_low_rank_GB2(self):
         logging.info("TestLmmTrain test_fasttwoK_force_low_rank_GB2")
         self._fasttwoK(True,2)
 
@@ -544,7 +544,7 @@ class TestFastLMM(unittest.TestCase):
         test_idx  = np.r_[0:10] # the first 10 iids
 
         G0_train = self.snpreader_whole[train_idx,:]
-        G1_train = SnpData(iid=G0_train.iid,sid=[item+b"_1" for item in G0_train.sid],val=G0_train.read().val,pos=G0_train.pos,name="Different SNP names for {0}".format(G0_train))
+        G1_train = SnpData(iid=G0_train.iid,sid=[item+"_1" for item in G0_train.sid],val=G0_train.read().val,pos=G0_train.pos,name="Different SNP names for {0}".format(G0_train))
         covariate_train = self.covariate_whole[train_idx,:]
         pheno_train = self.pheno_whole[train_idx,:]
 
@@ -558,7 +558,7 @@ class TestFastLMM(unittest.TestCase):
                 
         # predict on test set
         G0_test = self.snpreader_whole[test_idx,:]
-        G1_test = SnpData(iid=G0_test.iid,sid=[item+b"_1" for item in G0_test.sid],val=G0_test.read().val,pos=G0_test.pos,name="Different SNP names for {0}".format(G0_test))
+        G1_test = SnpData(iid=G0_test.iid,sid=[item+'_1' for item in G0_test.sid],val=G0_test.read().val,pos=G0_test.pos,name="Different SNP names for {0}".format(G0_test))
         covariate_test = self.covariate_whole[test_idx,:]
 
         predicted_pheno, covar = fastlmm2.predict(K0_whole_test=G0_test, K1_whole_test=G1_test, X=covariate_test,count_A1=False)
@@ -574,7 +574,7 @@ class TestFastLMM(unittest.TestCase):
 
         self.compare_files(predicted_pheno,"one")
 
-    def test_lowrank(self):
+    def cmktest_lowrank(self):
         logging.info("TestLmmTrain test_lowrank")
 
         snpreader = self.snpreader_whole[:,:100]
@@ -597,7 +597,7 @@ class TestFastLMM(unittest.TestCase):
 
         logging.info("finished with TestLmmTrain test_lowrank")
 
-    def test_twoK(self):
+    def cmktest_twoK(self):
         logging.info("TestLmmTrain test_twoK")
 
         train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
@@ -631,7 +631,7 @@ class TestFastLMM(unittest.TestCase):
 
         self.compare_files(predicted_pheno,"one")
 
-    def test_lr(self):
+    def cmktest_lr(self):
         import matplotlib.pyplot as plt
         import pylab
 
@@ -680,7 +680,7 @@ class TestFastLMM(unittest.TestCase):
 
             self.compare_files(predicted_pheno,"lr")
 
-    def test_lmm(self):
+    def cmktest_lmm(self):
         do_plot = False
         iid_count = 500
         seed = 0
@@ -870,7 +870,7 @@ class TestFastLMM(unittest.TestCase):
                     assert np.abs(varC - var_ref) < 1e-6
 
 
-    def test_snps(self):
+    def cmktest_snps(self):
         logging.info("TestLmmTrain test_snps")
 
         train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
@@ -910,7 +910,7 @@ class TestFastLMM(unittest.TestCase):
 
         self.compare_files(predicted_pheno,"snps")
 
-    def test_kernel(self):
+    def cmktest_kernel(self):
         logging.info("TestLmmTrain test_kernel")
 
         train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
@@ -952,7 +952,7 @@ class TestFastLMM(unittest.TestCase):
 
         self.compare_files(predicted_pheno,"snps") #"kernel" and "snps" test cases should give the same results
 
-    def test_kernel_one(self):
+    def cmktest_kernel_one(self):
         logging.info("TestLmmTrain test_kernel_one")
 
         train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
@@ -999,7 +999,28 @@ class TestFastLMM(unittest.TestCase):
                 r_v = reference.val[iid_index,sid_index]
                 assert abs(a_v - r_v) < 1e-4 or abs(a_v - r_v)/abs(r_v) < 1e5, "Value at {0},{1} differs too much from file '{2}'".format(iid_index,sid_index,reffile)
 
-    def test_doctest(self):
+    def test_r(self):
+        from fastlmm.inference.fastlmm_predictor import FastLMM
+        from pysnptools.snpreader.snpdata import SnpData
+        np.random.seed(0)        
+
+        fastlmm = FastLMM(GB_goal=2)
+        y = SnpData(iid=np.array([[str(x), str(x)] for x in range(10)]), sid=['label'],
+                                   val=np.random.random((10, 1)), pos=[[1, 0, 0]])
+        K0_train = SnpData(iid=np.array([[str(x), str(x)] for x in range(10)]),
+                                      sid=[f'a{str(x)}' for x in range(20)],
+                                   val=(np.random.random((10, 20)) > 0.5).astype(np.float),
+                                   pos=[[1, 1, 1]] * 20)
+        K0_test  = SnpData(iid=np.array([[str(x), str(x)] for x in range(10, 20)]),
+                                      sid=[f'a{str(x)}' for x in range(20)],
+                                   val=(np.random.random((10, 20)) > 0.5).astype(np.float),
+                                   pos=[[1, 1, 1]] * 20)
+        fastlmm.fit(X=None, y=y, K0_train=K0_train)
+        result = fastlmm.predict(X=None, K0_whole_test=K0_test)
+        print(result)
+
+
+    def cmktest_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         result = doctest.testfile("../fastlmm_predictor.py")

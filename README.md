@@ -64,8 +64,9 @@ Packages:
 * matplotlib
 * scikit.learn (sklearn)
 * dill
+* mkl
 * pysnptools
-* cython
+* * cython
 * optional: [statsmodels -- install only required for logistic-based tests, not the standard linear LRT]
 
 

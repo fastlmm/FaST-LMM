@@ -7,7 +7,6 @@ from fastlmm.pyplink.altset_list import *
 import pandas as pd
 import logging
 from six.moves import range
-from pysnptools.util import to_ascii
 
 WRAPPED_PLINK_PARSER_PRESENT = None
 
@@ -206,16 +205,16 @@ class Bed(object):
 
             if dtype == SP.float64:
                 if order=="F":
-                    wrap_plink_parser.readPlinkBedFile2doubleFAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2doubleFAAA(bed_fn.encode('ascii'), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 elif order=="C":
-                    wrap_plink_parser.readPlinkBedFile2doubleCAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2doubleCAAA(bed_fn.encode('ascii'), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 else:
                     raise Exception("order '{0}' not known, only 'F' and 'C'".format(order));
             elif dtype == SP.float32:
                 if order=="F":
-                    wrap_plink_parser.readPlinkBedFile2floatFAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2floatFAAA(bed_fn.encode('ascii'), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 elif order=="C":
-                    wrap_plink_parser.readPlinkBedFile2floatCAAA(to_ascii(bed_fn), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
+                    wrap_plink_parser.readPlinkBedFile2floatCAAA(bed_fn.encode('ascii'), iid_count_in, snp_count_in, count_A1, iid_index_out, snp_index_out, SNPs)
                 else:
                     raise Exception("dtype '{0}' not known, only float64 and float32".format(dtype))
             

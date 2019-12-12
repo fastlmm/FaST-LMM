@@ -198,7 +198,7 @@ def work_item2(pheno, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power, x
     #########################################
 
     ret = {"h2uncorr": h2uncorr, "nLLuncorr": nLLuncorr, "h2corr": h2corr, "h2corr_raw": h2corr_raw,"e2":e2, "a2": a2, "nLLcorr": nLLcorr,
-           "gxe2": gxe2, "a2_gxe2": a2_gxe2, "nLL_gxe2": nLL_gxe2, "alpha": alpha, "alpha_power":alpha_power, "phen": pheno.sid[0],
+           "gxe2": gxe2, "a2_gxe2": a2_gxe2, "nLL_gxe2": nLL_gxe2, "alpha": alpha, "alpha_power":alpha_power, "phen": np.array(pheno.sid,dtype='str')[0],
            "jackknife_index": jackknife_index, "jackknife_count":jackknife_count, "jackknife_seed":jackknife_seed,
            "permute_plus_index": permute_plus_index, "permute_plus_count":permute_plus_count, "permute_plus_seed":permute_plus_seed,
            "permute_times_index": permute_times_index, "permute_times_count":permute_times_count, "permute_times_seed":permute_times_seed
@@ -296,12 +296,13 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
 
     # create the alpha table (unless it is already there)
     alpha_table_fn = "{0}/alpha_table.{1}.txt".format(cache_folder,pheno.sid_count) # create a name for the alpha_table cache file
+    phen_target_array = np.array(pheno.sid,dtype='str')
     if cache_folder is not None and os.path.exists(alpha_table_fn):
         alpha_table = pd.read_csv(alpha_table_fn, delimiter = '\t',index_col=False, comment=None)
     else:
         # create the list of arguments to run    
         arg_list = []   
-        for phen_target in pheno.sid:
+        for phen_target in phen_target_array:
             pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
             for alpha in alpha_list:
                             #pheno, G_kernel, spatial_coor, spatial_iid, alpha,     alpha_power,  (jackknife_index, jackknife_count, jackknife_seed),
@@ -341,7 +342,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
         jackknife_table = pd.read_csv(jackknife_table_fn, delimiter = '\t',index_col=False, comment=None)
     else:
         arg_list = []
-        for phen_target in pheno.sid:
+        for phen_target in phen_target_array:
             pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
             alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
             alpha_set = set([alpha_corr, alpha_gxe2]) #If these are the same, then only need to do half the work
@@ -420,7 +421,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
         permplus_table = pd.read_csv(permplus_table_fn, delimiter = '\t',index_col=False, comment=None)
     else:
         arg_list = []
-        for phen_target in pheno.sid:
+        for phen_target in phen_target_array:
             pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
             alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
             for jackknife_index in range(-1,permute_plus_count):
@@ -459,7 +460,7 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
 
     #Only process phenos for which gxe2 is not 0
     nonzero = set(results_gxe2[results_gxe2.gxe2 !=0].phen)
-    permtimes_phenotypes = set(pheno.sid) & nonzero #intersection
+    permtimes_phenotypes = set(phen_target_array) & nonzero #intersection
     permtimes_table_list = []
     for phen_target in permtimes_phenotypes:
         permtimes_table_fn = "{0}/permutation.GxE/{1}.count{2}.txt".format(cache_folder, phen_target, permute_times_count)
