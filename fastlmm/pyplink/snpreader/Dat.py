@@ -50,7 +50,7 @@ class Dat(object):
         #!!similar code in BED reader
         logging.info("Loading map file {0}".format(mapfile))
         self.bimfields = pd.read_csv(mapfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
-        self.rs = SP.array(self.bimfields[1].tolist(),dtype='S')
+        self.rs = SP.array(self.bimfields[1].tolist(),dtype='str')
         self.pos = self.bimfields[[0,2,3]].values
         self.snp_to_index = {}
         logging.info("indexing snps");

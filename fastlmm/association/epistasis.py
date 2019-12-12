@@ -139,8 +139,8 @@ class _Epistasis(object) : #implements IDistributable
         self.cache_file = cache_file
         self.count_A1 = count_A1
         self.covar = covar
-        self.sid_list_0 = np.array(sid_list_0,dtype='S') if sid_list_0 is not None else None
-        self.sid_list_1 = np.array(sid_list_1,dtype='S') if sid_list_1 is not None else None
+        self.sid_list_0 = np.array(sid_list_0,dtype='str') if sid_list_0 is not None else None
+        self.sid_list_1 = np.array(sid_list_1,dtype='str') if sid_list_1 is not None else None
         self.G0=G0
         self.G1_or_none=G1
         self.mixing=mixing

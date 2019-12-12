@@ -43,7 +43,7 @@ class _SnpWholeTest(KernelReader):
             assert np.array_equal(self.train.sid,self.test.sid), "Expect train and test to have same sid in same order"
             train_set = set(tuple(item) for item in self.train.iid)
             test_unique = [item2 for item2 in (tuple(item) for item in self.test.iid) if item2 not in train_set]
-            self._row = np.r_[self.train.iid,np.array(test_unique,dtype=self.train.iid.dtype).reshape(-1,2)]
+            self._row = np.r_[self.train.iid,np.array(test_unique,dtype='str').reshape(-1,2)]
         return self._row
 
 

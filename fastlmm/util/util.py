@@ -86,8 +86,8 @@ def compare_mixed_files(file1,file2,tol=1e-8,delimiter="\t"):
     Returns: val,msg 
     where val is True/False (true means files to compare to each other) and a msg for the failure.
     '''
-    dat1=np.loadtxt(file1,dtype='S',delimiter=delimiter,comments=None)
-    dat2=np.loadtxt(file2,dtype='S',delimiter=delimiter,comments=None)
+    dat1=np.loadtxt(file1,dtype='str',delimiter=delimiter,comments=None)
+    dat2=np.loadtxt(file2,dtype='str',delimiter=delimiter,comments=None)
 
     ncol1=dat1[0].size
     ncol2=dat2[0].size
