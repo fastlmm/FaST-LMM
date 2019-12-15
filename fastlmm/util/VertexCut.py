@@ -77,12 +77,12 @@ class VertexCut(object):
             graph[node2].remove(node1)
 
     def _find_a_most_connected_node(self, graph):
-        best_node, best_list = max(six.iteritems(graph), key=lambda pair : len(pair[1])) # find the node connected to the most other nodes
+        best_node, best_list = max(sorted(six.iteritems(graph)), key=lambda pair : len(pair[1])) # find the node connected to the most other nodes
         logging.debug("Removing a node with {0} connections".format(len(best_list)))
         return best_node
 
     def _piece_count(self, graph):
-        unassigned = set(six.iterkeys(graph))
+        unassigned = sorted(set(six.iterkeys(graph)))
         pieceCount = 0
         while len(unassigned) > 0:
             seed = unassigned.pop()

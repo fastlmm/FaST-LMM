@@ -7,7 +7,7 @@
     <ProjectHome>
     </ProjectHome>
     <StartupFile>test.py</StartupFile>
-    <SearchPath>..\..\fastlmmpy3;..\..\PySnpToolsPy3</SearchPath>
+    <SearchPath>..\..\PySnpToolsPy3;..\..\delfastlmm3</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>tests</Name>
@@ -26,7 +26,7 @@
     <InterpreterArguments />
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <InterpreterId>CondaEnv|CondaEnv|py3</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
     <TestFramework>unittest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

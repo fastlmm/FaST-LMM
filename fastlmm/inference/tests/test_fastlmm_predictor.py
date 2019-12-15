@@ -1007,7 +1007,7 @@ class TestFastLMM(unittest.TestCase):
         fastlmm = FastLMM(GB_goal=2)
         iid_train = [[str(x), str(x)] for x in range(10)]
         iid_test = [[str(x), str(x)] for x in range(10, 20)]
-        sid = [f'a{str(x)}' for x in range(20)]
+        sid = ['a{0}'.format(str(x)) for x in range(20)]
         val_train = (np.random.random((10, 20)) > 0.5).astype(np.float)
         val_test = (np.random.random((10, 20)) > 0.5).astype(np.float)
 
