@@ -237,7 +237,7 @@ class FastLMM(object):
         :Example:
 
         #!!!cmk
-        #>>> from __future__ import print_function
+        #>>> cmkmfrom __future__ import print_function
         #>>> from pysnptools.util import print2 # Makes ascii strings look the same under Python2/Python3
         #>>> import numpy as np
         #>>> import logging

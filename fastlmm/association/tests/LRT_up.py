@@ -127,7 +127,7 @@ class LRT_up(object):
 
     def pv_adj_and_ind(self, nperm, pv_adj, nullfit, lrt, lrtperm,
                        alteqnull, alteqnullperm, qmax, nullfitfile, nlocalperm):        
-        if nlocalperm>0: #don't do the fitting
+        if nlocalperm and nlocalperm>0: #don't do the fitting
             ind = pv_adj.argsort()
             return pv_adj, ind
 

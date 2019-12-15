@@ -56,7 +56,7 @@ class Bed(object):
         bimfile = self.basefilename+'.bim'
 
         logging.info("Loading fam file {0}".format(famfile))
-        self._original_iids = SP.loadtxt(famfile,dtype = 'S',usecols=(0,1),comments=None)
+        self._original_iids = SP.loadtxt(famfile,dtype = 'str',usecols=(0,1),comments=None)
         logging.info("Loading bim file {0}".format(bimfile))
 
         self.bimfields = pd.read_csv(bimfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
@@ -109,7 +109,7 @@ class Bed(object):
 
         Examples:
 
-        >>> bed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
+        >>> cmkabed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
         ... ret = bed.read()
         ... len(ret['rs'])
         ... ret = bed.read(AllSnps())

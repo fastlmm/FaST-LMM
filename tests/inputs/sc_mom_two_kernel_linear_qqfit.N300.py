@@ -1,4 +1,4 @@
-distributable = FastLmmSet(
+FastLmmSet(
     test="sc_mom",
     outfile = 'tmp/sc_mom_two_kernel_linear_qqfit.N300.txt',
     phenofile = 'datasets/phenSynthFrom22.23.N300.txt',

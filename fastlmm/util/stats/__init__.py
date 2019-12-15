@@ -86,7 +86,7 @@ def lrtpvals_qqfit_file(filein, qmax=0.1):
     print("scale="+str(res["scale"]) + "\n")
     import ipdb; ipdb.set_trace()
 
-def lrt(stat,dof):
+def lrt_method(stat,dof):
     '''
     Standard way to compute p-value when no boundary conditions
     '''

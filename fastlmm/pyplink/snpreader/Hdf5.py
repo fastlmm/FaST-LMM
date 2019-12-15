@@ -36,12 +36,9 @@ class Hdf5(object):
         except IOError as e:
             raise IOError("Missing or unopenable file '{0}' -- Native error message: {1}".format(self.filename,e))
 
-        self._original_iids = sp.empty(self.h5['iid'].shape,dtype=self.h5['iid'].dtype) #make a 2D deepcopy from h5 (more direct methods, don't seem to work)
-        for iRow, row in enumerate(self.h5['iid']):
-            for iCol, value in enumerate(row):
-                self._original_iids[iRow,iCol] = value
-
-        self.rs = sp.array(self.h5['rs'])
+        
+        self._original_iids = sp.array(sp.array(self.h5['iid']),dtype=str)
+        self.rs = sp.array(sp.array(self.h5['rs']),dtype='str')
         self.pos = sp.array(self.h5['pos'])
 
         ## similar code in bed
@@ -59,7 +56,7 @@ class Hdf5(object):
         S_original = len(self.rs)
         N_original = len(self.original_iids)
         if self.is_snp_major:
-            if not self.snpsInFile.shape == (S_original, N_original, ) : raise Exception("In Hdf5, snps matrix dimensions don't match those of 'rs' and 'iid'")
+            if not self.snpsInFile.shape == (S_original, N_original) : raise Exception("In Hdf5, snps matrix dimensions don't match those of 'rs' and 'iid'")
         else:
             if not self.snpsInFile.shape == (N_original, S_original) : raise Exception("In Hdf5, snps matrix dimensions don't match those of 'rs' and 'iid'")
 
@@ -178,7 +175,7 @@ class Hdf5(object):
 
         rs = self.rs[snp_index_list]
         pos = self.pos[snp_index_list,:]
-        iids = sp.array(self.original_iids[iid_index_list],dtype="S") #Need to make another copy of to stop it from being converted to a list of 1-d string arrays
+        iids = sp.array(self.original_iids[iid_index_list],dtype="str") #Need to make another copy of to stop it from being converted to a list of 1-d string arrays
 
         has_right_order = (order=="C" and SNPs.flags["C_CONTIGUOUS"]) or (order=="F" and SNPs.flags["F_CONTIGUOUS"])
         #if SNPs.shape == (1, 1):

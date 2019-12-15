@@ -382,7 +382,7 @@ class _Epistasis(object) : #implements IDistributable
             assert skip_ref[0] >=0, "real assert"
             return
 
-        row_start = int((-1 + 2*count - np.sqrt(1 - 4*count + 4*count**2 - 8*skip_ref[0]))/2)
+        row_start = int((-1 + 2*count - np.sqrt(1 - 4*count + 4*count**2 - 8*skip_ref[0]))//2)
         skip_ref[0] = skip_ref[0] - (count*row_start - (row_start*(1 + row_start))//2)
         assert skip_ref[0] >=0, "real assert"
 

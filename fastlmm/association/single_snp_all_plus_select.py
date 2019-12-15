@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import logging
 from fastlmm.association import single_snp
@@ -419,6 +420,23 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARN) #Needs to be WARN and not INFO to stop Doctest from putting out extra messages.
+
+    if True: #!!!cmk
+        #from __future__ import print_function
+        import logging
+        import numpy as np
+        from fastlmm.association import single_snp_all_plus_select
+        from pysnptools.snpreader import Bed
+        from pysnptools.util.mapreduce1.runner import LocalMultiProc
+        logging.basicConfig(level=logging.INFO)
+        pheno_fn = "../feature_selection/examples/toydata.phe"
+        snps = Bed("../feature_selection/examples/toydata.5chrom.bed",count_A1=False)[:,::200] #To make example faster, run on only 1/100th of the data
+        chrom5_snps = snps[:,snps.pos[:,0]==5] # Test on only chrom5
+        runner = LocalMultiProc(20,mkl_num_threads=5)
+        results_dataframe = single_snp_all_plus_select(test_snps=chrom5_snps,G=snps,pheno=pheno_fn,GB_goal=2,runner=runner, count_A1=False, n_folds=2) #Run multiproc
+        print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
+        #null_9800 0.0793385 4
+
 
     import doctest
     doctest.testmod()

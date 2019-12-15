@@ -20,6 +20,7 @@ import fastlmm.util.util as ut
 import fastlmm.pyplink.plink as plink
 from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+from fastlmm.pyplink.snpreader.Hdf5 import Hdf5
 
 tolerance = 1e-4
 
@@ -78,7 +79,10 @@ class WidgetTestCase(unittest.TestCase):
             filecontent = f.read()
 
         runner = Local()
-        exec(filecontent)#!!!cmk this doesn't work in python 3
+        try:
+            distributable = eval(filecontent)#!!!cmk this doesn't work in python 3
+        except:
+            raise Exception("Can't eval '{0}'".format(self._infile))
         runner.run(distributable)                               
                 
         out,msg=ut.compare_files(tmpOutfile, referenceOutfile, tolerance)                
@@ -147,28 +151,33 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([
                                     #getDebugTestSuite(),
 
-                                    ###!!!cmk need to fix tests.test.getTestSuite(),
-                                    ###!!!cmk need to fix fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
-                                    ###!!!cmk need to fix fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-                                    ###!!!cmk need to fix fastlmm.association.tests.test_snp_set.getTestSuite(),
-                                    ###!!!cmk need to fix fastlmm.association.tests.test_gwas.getTestSuite(),                                    
-                                    ###!!!cmk need to fix fastlmm.feature_selection.test.getTestSuite(),
+                                    
 
-                                    fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),#!!!cmkOK except for linux doctest 
-                                    fastlmm.inference.tests.test_linear_regression.getTestSuite(), #!!!cmkOK
-                                    fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.testepistasis.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_single_snp_scale.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.util.test.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_single_snp.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),#!!!cmkOK 
+                                    ###!!!cmk many pvalues differ. Need to compare with py2 
+                                    fastlmm.association.tests.test_single_snp_select.getTestSuite(),
+
+                                    ###!!!16 tests pass (marked out) 1 fails - compare with py2 TEST: test_blocking_cov_pcs
+                                    #fastlmm.feature_selection.test.getTestSuite(),
+
+                                    #tests.test.getTestSuite(),#!!!cmkOK
+                                    #fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),#!!!cmkOK
+                                    #fastlmm.association.tests.test_gwas.getTestSuite(),  #!!!cmkOK                                   
+                                    #fastlmm.association.tests.test_snp_set.getTestSuite(), #!!!cmkOK
+                                    #fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(), #!!!cmkOK
+                                    #fastlmm.inference.tests.test_linear_regression.getTestSuite(), #!!!cmkOK
+                                    #fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
+                                    #fastlmm.association.tests.testepistasis.getTestSuite(),#!!!cmkOK 
+                                    #fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),#!!!cmkOK 
+                                    #fastlmm.association.tests.test_single_snp_scale.getTestSuite(),#!!!cmkOK 
+                                    #fastlmm.util.test.getTestSuite(),#!!!cmkOK 
+                                    #fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
+                                    #fastlmm.association.tests.test_single_snp.getTestSuite(),#!!!cmkOK 
+                                    #fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),#!!!cmkOK 
                                     ])
 
     
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=True) #!!!cmk
+        r = unittest.TextTestRunner(failfast=False) #!!!cmk
         r.run(suites)
     else: #Cluster test run
         #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first in the PYTHONPATH

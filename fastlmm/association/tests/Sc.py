@@ -102,7 +102,7 @@ class Sc(object):
     def w2(self, G0, result):
         return 0.0
 
-    def lrt(self, result):
+    def lrt_method(self, result):
         return 0.0
 
     def pv_adj_from_result(self, result):

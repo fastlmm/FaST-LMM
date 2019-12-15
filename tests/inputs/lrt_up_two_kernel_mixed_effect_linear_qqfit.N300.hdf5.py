@@ -1,13 +1,10 @@
-from __future__ import absolute_import
-from fastlmm.pyplink.snpreader.Hdf5 import Hdf5
-
 ###how the input file was created
 #from fastlmm.pyplink.snpreader.Bed import Bed
 #bed = Bed('datasets/all_chr.maf0.001.N300')
 #snpMatrix = bed.read()
 #Hdf5.write(snpMatrix, 'datasets/all_chr.maf0.001.N300.hdf5')
 
-distributable = FastLmmSet(
+FastLmmSet(
     phenofile = 'datasets/phenSynthFrom22.23.N300.txt',
     alt_snpreader = Hdf5('datasets/all_chr.maf0.001.N300.hdf5'),
     altset_list = 'datasets/set_input.23.txt',

@@ -41,7 +41,7 @@ class Cv(object):
     def w2(self, G0, result):
         return SP.nan
 
-    def lrt(self, result):
+    def lrt_method(self, result):
         return result.test['stat'] #iset is the index of the test (irrespective of permutation)
 
     def pv_adj_from_result(self, result):

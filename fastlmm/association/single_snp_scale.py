@@ -134,7 +134,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     :Example:
 
-    >>> from __future__ import print_function
+    >>> cmkifrom __future__ import print_function
     >>> import logging
     >>> from fastlmm.association import single_snp
     >>> from pysnptools.snpreader import Bed

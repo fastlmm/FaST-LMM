@@ -45,7 +45,7 @@ class Dat(object):
 
         #!!similar code in BED reader
         logging.info("Loading fam file {0}".format(famfile))
-        self._original_iids = SP.loadtxt(famfile,dtype = 'S',usecols=(0,1),comments=None)
+        self._original_iids = SP.loadtxt(famfile,dtype = 'str',usecols=(0,1),comments=None)
 
         #!!similar code in BED reader
         logging.info("Loading map file {0}".format(mapfile))

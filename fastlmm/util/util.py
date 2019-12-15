@@ -160,11 +160,13 @@ def write_plink_covariates(iid,X,fileout):
         f.write('%s\t%s%s\n'%(iid[i,0],iid[i,1],''.join(row)))
     f.close()
 
+def to_bytes(item):
+    return np.array([item],dtype='S')[0]
 
 def combineseeds(seed1,seed2):
     import hashlib
     import sys
-    seed=int(hashlib.md5(str(seed1) + "_" + str(seed2)).hexdigest()[-8:], 16)    #as of numpy 1.9, seeds must be 32-bit, so keep only the 8 right-most hex digits
+    seed=int(hashlib.md5(to_bytes(seed1) + b'_' + to_bytes(seed2)).hexdigest()[-8:], 16)    #as of numpy 1.9, seeds must be 32-bit, so keep only the 8 right-most hex digits
     return seed
 
 
@@ -243,13 +245,13 @@ def intersect_ids(idslist,sep='Q_Q'):
                         raise Exception("first list must be non-empty")
                     else:
                         for i in range(id_list.shape[0]):
-                            id=id_list[i,0] +sep+ id_list[i,1]
+                            id=id_list[i,0]+sep+id_list[i,1]
                             entry=np.zeros(L)*np.nan #id_list to contain the index for this id, for all lists provided
                             entry[l]=i                 #index for the first one
                             id2ind[id]=entry
                 elif observed[l]:
                     for i in range(id_list.shape[0]):
-                        id=id_list[i,0] +sep+ id_list[i,1]
+                        id=id_list[i,0]+sep+id_list[i,1]
                         if id in id2ind:
                             id2ind[id][l]=i
 

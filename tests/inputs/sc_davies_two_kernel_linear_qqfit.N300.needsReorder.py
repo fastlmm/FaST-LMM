@@ -1,4 +1,4 @@
-distributable = FastLmmSet(
+FastLmmSet(
     test="sc_davies",
     outfile = 'tmp/sc_davies_two_kernel_linear_qqfit.N300.needsReorder.txt',
     phenofile = 'datasets/phenSynthFrom22.23.N300.randcidorder.txt',

@@ -336,7 +336,10 @@ class FastLmmSet: # implements IDistributable
                 if result.iperm < 0:
                     result_dict[result.iset] = result
                     #iset is the index of the test (irrespective of permutation)
-                    lrt[result.iset] = self.test.lrt_method(result)
+                    try:
+                        lrt[result.iset] = self.test.lrt_method(result)
+                    except:
+                        print('!!!cmk')
                     alteqnull[result.iset] = result.alteqnull #equiv to result["alteqnull"]
                     #pv_adj[result.iset,:] = self.test.pv_adj_from_result(result)                
                     pv_adj[result.iset] = self.test.pv_adj_from_result(result)                
@@ -704,7 +707,7 @@ class FastLmmSet: # implements IDistributable
             logging.info("p=%.2e",result.test['pv'])                   
 
             # do the permutations here, rather than as they would normally be done with a seperate call to             
-            if self.nlocalperm is not None and self.nlocalperm>0:
+            if self.nlocalperm and self.nlocalperm>0:
                 self.pv_from_localperm(iperm, result, t0, varcomp_test, y)
         else: #caching for 1-kernel LRT (save expensive stuff from non-permuted run)
             #currently not used, because need to be able to pass back values to work_sequence for caching
