@@ -10,7 +10,7 @@ Examples:
     #>>> VertexCut().work(sparse_input_sequence)
     #['a']
 
-    matrix = np.array([[3, 3, 1],[3, 3, 1],[1, 1, 3]])
+    >>> matrix = np.array([[3, 3, 1],[3, 3, 1],[1, 1, 3]])
     >>> VertexCut().work(matrix,2)
     [0]
 

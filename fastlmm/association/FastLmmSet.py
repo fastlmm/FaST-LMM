@@ -1172,7 +1172,7 @@ class FastLmmSet: # implements IDistributable
 
     def __repr__(self):
         import io
-        fp = io.StringIO()
+        fp = io.StringIO() if sys.version_info >= (3,0) else io.BytesIO()
         fp.write("{0}(\n".format(self.__class__.__name__))
         varlist = []
         for f in dir(self):
