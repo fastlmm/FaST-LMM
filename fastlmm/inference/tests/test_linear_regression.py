@@ -8,6 +8,7 @@ import doctest
 import pandas as pd
 import pysnptools.util as pstutil
 from sklearn.externals import joblib
+import sys
 
 from fastlmm.inference import LinearRegression
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc

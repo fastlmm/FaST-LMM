@@ -7,6 +7,7 @@ import unittest
 import os.path
 import doctest
 import pandas as pd
+import sys
 
 from fastlmm.association import single_snp
 from fastlmm.association import single_snp_linreg

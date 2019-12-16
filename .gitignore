@@ -389,3 +389,9 @@ tests/tmp_extract_sim.txt
 /fastlmm/util/matrix/mmultfilex.cpython-37m-x86_64-linux-gnu.so
 /fastlmm/util/matrix/cample.cpython-38-x86_64-linux-gnu.so
 /fastlmm/util/matrix/cample.cpython-37m-x86_64-linux-gnu.so
+/fastlmm/inference/.working
+/fastlmm/inference/local_cache
+/fastlmm/inference/peertopeer
+/fastlmm/inference/tmp_extract_sim.txt
+/fastlmm/inference/tmp_extract.txt
+/fastlmm/inference/out.txt

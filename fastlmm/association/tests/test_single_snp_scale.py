@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import tempfile
 import shutil
+import sys
 
 import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed, DistributedBed

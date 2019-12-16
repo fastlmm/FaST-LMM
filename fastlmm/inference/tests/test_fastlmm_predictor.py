@@ -11,6 +11,7 @@ import unittest
 import os.path
 import doctest
 import pandas as pd
+import sys
 import pysnptools.util as pstutil
 
 from fastlmm.inference import FastLMM
