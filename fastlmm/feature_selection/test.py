@@ -334,7 +334,7 @@ class TestFeatureSelection(unittest.TestCase):
         best_k_1, best_delta_1, best_obj_1, best_snps_1 = fss_1.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
 
         #some misc testing
-        from . import PerformSelectionDistributable as psd
+        from fastlmm.feature_selection import PerformSelectionDistributable as psd
         perform_selection_distributable = psd.PerformSelectionDistributable(fss_1, k_values, delta_values, strategy, output_prefix, select_by_ll=True, penalty=0.0,create_pdf=False)
         self.assertEqual(perform_selection_distributable.work_count, 3)
         s = perform_selection_distributable.tempdirectory

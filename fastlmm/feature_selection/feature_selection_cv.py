@@ -41,7 +41,7 @@ import fastlmm.util.util as util
 import fastlmm.util.preprocess as up
 import fastlmm.inference as inference
 import fastlmm.inference.linear_regression as lin_reg
-from . import PerformSelectionDistributable as psd
+from fastlmm.feature_selection import PerformSelectionDistributable as psd
 from pysnptools.util.mapreduce1.runner import *
 from pysnptools.standardizer import Unit
 import pysnptools.snpreader as sr

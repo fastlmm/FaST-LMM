@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import fastlmm.feature_selection.PerformSelectionDistributable as psd
+from fastlmm.feature_selection import PerformSelectionDistributable as psd
 import fastlmm.util.preprocess as up
 import numpy as np
 
