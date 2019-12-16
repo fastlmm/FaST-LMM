@@ -80,7 +80,7 @@ class WidgetTestCase(unittest.TestCase):
 
         runner = Local()
         try:
-            distributable = eval(filecontent)#!!!cmk this doesn't work in python 3
+            distributable = eval(filecontent)
         except:
             raise Exception("Can't eval '{0}'".format(self._infile))
         runner.run(distributable)                               
@@ -153,12 +153,11 @@ if __name__ == '__main__':
 
                                     
 
-                                    ###!!!cmk many pvalues differ. Need to compare with py2 
-                                    fastlmm.association.tests.test_single_snp_select.getTestSuite(),
 
                                     ###!!!16 tests pass (marked out) 1 fails - compare with py2 TEST: test_blocking_cov_pcs
                                     fastlmm.feature_selection.test.getTestSuite(),
 
+                                    fastlmm.association.tests.test_single_snp_select.getTestSuite(),
                                     tests.test.getTestSuite(),#!!!cmkOK
                                     fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),#!!!cmkOK
                                     fastlmm.association.tests.test_gwas.getTestSuite(),  #!!!cmkOK                                   

@@ -119,7 +119,7 @@ class TestFeatureSelection(unittest.TestCase):
 
     """
     make sure the used pca yields the same result as standard pca
-    def cmktest_pca(self):
+    def test_pca(self):
 
         from sklearn.decomposition import PCA, KernelPCA
 
@@ -147,28 +147,28 @@ class TestFeatureSelection(unittest.TestCase):
     """
  
 
-    def cmktest_regression_bed(self):
+    def test_regression_bed(self):
         self.regression(self.snpreader_bed, self.regular_regression_answers)
 
-    def cmktest_regression_hdf5(self):
+    def test_regression_hdf5(self):
         self.regression(self.snpreader_hdf5, self.regular_regression_answers)
 
-    def cmktest_regression_dat(self):
+    def test_regression_dat(self):
         self.regression(self.snpreader_dat, self.regular_regression_answers)
 
-    def cmktest_regression_ped(self):
+    def test_regression_ped(self):
         self.regression(self.snpreader_ped, self.regular_regression_answers)
 
     regular_regression_answers = (22, 20.085536923, 61.2448170241, 0.67586545761317196)
     cov_pca_regression_answers = (22, 20.085536923, 61.8146293815, 0.692761716513)
     cov_pca_insample_cv_regression_answers = (22, 1.6513737331988527, 63.6062289765, 0.71724685708485092)
 
-    def cmktest_regression_cov_pcs(self):
+    def test_regression_cov_pcs(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
         cov_fn = currentFolder + "/examples/toydata.cov"
         self.regression(self.snpreader_bed, self.cov_pca_regression_answers, cov_fn=cov_fn, num_pcs=3)
 
-    def cmktest_regression_cov_pcs_insample_cv(self):
+    def test_regression_cov_pcs_insample_cv(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
         cov_fn = currentFolder + "/examples/toydata.cov"
         self.regression(self.snpreader_bed, self.cov_pca_insample_cv_regression_answers, cov_fn=cov_fn, num_pcs=3, strategy = "insample_cv", delta=5)
@@ -209,17 +209,17 @@ class TestFeatureSelection(unittest.TestCase):
         self.assertAlmostEqual(best_delta, answers[1], delta)
         self.assertAlmostEqual(best_obj, answers[3])
 
-    def cmktest_blocking_bed(self):
+    def test_blocking_bed(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
         self.blocking(currentFolder + "/examples/toydata") # use string instead of reader, to test that strings work
 
-    def cmktest_blocking_hdf5(self):
+    def test_blocking_hdf5(self):
         self.blocking(self.snpreader_hdf5)
 
-    def cmktest_blocking_dat(self):
+    def test_blocking_dat(self):
         self.blocking(self.snpreader_dat)
 
-    def cmktest_blocking_ped(self):
+    def test_blocking_ped(self):
         self.blocking(self.snpreader_ped)
 
 
@@ -385,16 +385,16 @@ class TestFeatureSelection(unittest.TestCase):
             self.assertAlmostEqual(best_delta_4, best_delta_6)
        
 
-    def cmktest_log_likelihood_bed(self):
+    def test_log_likelihood_bed(self):
         self.log_likelihood(self.snpreader_bed)
         
-    def cmktest_log_likelihood_hdf5(self):
+    def test_log_likelihood_hdf5(self):
         self.log_likelihood(self.snpreader_hdf5)
 
-    def cmktest_log_likelihood_dat(self):
+    def test_log_likelihood_dat(self):
         self.log_likelihood(self.snpreader_dat)
 
-    def cmktest_log_likelihood_ped(self):
+    def test_log_likelihood_ped(self):
         self.log_likelihood(self.snpreader_ped)
 
     def log_likelihood(self, snpreader):

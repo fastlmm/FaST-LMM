@@ -6,8 +6,8 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>single_snp_select.py</StartupFile>
-    <SearchPath>..\..\..\fastlmmpy3;..\..\..\PySnpToolsPy3</SearchPath>
+    <StartupFile>single_snp_linreg.py</StartupFile>
+    <SearchPath>..\..\..\PySnpToolsPy3;..\..\..\delfastlmm3</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
@@ -28,7 +28,7 @@
     </InterpreterArguments>
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <InterpreterId>CondaEnv|CondaEnv|py3</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
     <Environment>TEMP=m:\</Environment>
     <TestFramework>unittest</TestFramework>
   </PropertyGroup>

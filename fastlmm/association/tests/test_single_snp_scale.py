@@ -234,7 +234,7 @@ class TestSingleSnpScale(unittest.TestCase):
     def Xtest_doctest(self): #Can't get doc test to work so marked out.
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
-        result = doctest.testfile("../single_snp_scale.py",optionflags=doctest.ELLIPSIS|doctest.NORMALIZE_WHITESPACE)
+        result = doctest.testmod(sys.modules['fastlmm.association.single_snp_scale'],optionflags=doctest.ELLIPSIS|doctest.NORMALIZE_WHITESPACE)
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
         

@@ -97,7 +97,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
     def test_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
-        result = doctest.testfile("../heritability_spatial_correction.py")
+        result = doctest.testmod(sys.modules['fastlmm.association.heritability_spatial_correction'])
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 

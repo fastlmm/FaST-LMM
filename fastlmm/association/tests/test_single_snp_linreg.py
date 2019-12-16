@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+import sys
 import numpy as np
 import logging
 import unittest
@@ -80,7 +81,7 @@ class TestSingleSnpLinReg(unittest.TestCase):
     def test_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
-        result = doctest.testfile("../single_snp_linreg.py")
+        result = doctest.testmod(sys.modules['fastlmm.association.single_snp_linreg'])
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 
