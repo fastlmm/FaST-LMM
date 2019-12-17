@@ -151,7 +151,6 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([
                                     #getDebugTestSuite(),
 
-                                    ###!!!cmk 16 tests pass (marked out) 1 fails - compare with py2 TEST: test_blocking_cov_pcs
                                     fastlmm.feature_selection.test.getTestSuite(),
                                     fastlmm.association.tests.test_single_snp_select.getTestSuite(),
                                     tests.test.getTestSuite(),

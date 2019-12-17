@@ -328,7 +328,6 @@ class TestFeatureSelection(unittest.TestCase):
         random_state = 42
 
 
-
         # case 1
         fss_1 = FeatureSelectionStrategy(snpreader, self.pheno_fn, num_folds, cov_fn=cov_fn, random_state=random_state, num_pcs=num_pcs, interpolate_delta=True, num_snps_in_memory=20000,count_A1=False)
         best_k_1, best_delta_1, best_obj_1, best_snps_1 = fss_1.perform_selection(k_values, delta_values, output_prefix=output_prefix, select_by_ll=True, strategy=strategy,create_pdf=False)
