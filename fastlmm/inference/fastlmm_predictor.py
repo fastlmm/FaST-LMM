@@ -236,28 +236,27 @@ class FastLMM(object):
 
         :Example:
 
-        #!!!cmk
-        #>>> cmkmfrom __future__ import print_function
-        #>>> from pysnptools.util import print2 # Makes ascii strings look the same under Python2/Python3
-        #>>> import numpy as np
-        #>>> import logging
-        #>>> from pysnptools.snpreader import Bed, Pheno
-        #>>> from fastlmm.inference import FastLMM
-        #>>> logging.basicConfig(level=logging.INFO)
-        #>>> snpreader = Bed('../feature_selection/examples/toydata.bed',count_A1=False)
-        #>>> cov_fn = "../feature_selection/examples/toydata.cov"
-        #>>> pheno_fn = "../feature_selection/examples/toydata.phe"
-        #>>> train_idx = np.r_[10:snpreader.iid_count] # iids 10 and on
-        #>>> test_idx  = np.r_[0:10] # the first 10 iids
-        #>>> fastlmm = FastLMM(GB_goal=2)
-        #>>> #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
-        #>>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
-        #>>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
-        #>>> print2((list(mean.iid[0]), round(mean.val[0,0],7), round(covariance.val[0,0],7)))
-        #(['per0', 'per0'], 0.1791958, 0.8995209)
-        #>>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
-        #>>> print(round(nll,7))
-        #13.4623234
+        >>> cmkmfrom __future__ import print_function
+        >>> from pysnptools.util import print2 # Makes ascii strings look the same under Python2/Python3
+        >>> import numpy as np
+        >>> import logging
+        >>> from pysnptools.snpreader import Bed, Pheno
+        >>> from fastlmm.inference import FastLMM
+        >>> logging.basicConfig(level=logging.INFO)
+        >>> snpreader = Bed('../feature_selection/examples/toydata.bed',count_A1=False)
+        >>> cov_fn = "../feature_selection/examples/toydata.cov"
+        >>> pheno_fn = "../feature_selection/examples/toydata.phe"
+        >>> train_idx = np.r_[10:snpreader.iid_count] # iids 10 and on
+        >>> test_idx  = np.r_[0:10] # the first 10 iids
+        >>> fastlmm = FastLMM(GB_goal=2)
+        >>> #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
+        >>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
+        >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
+        >>> print2((list(mean.iid[0]), round(mean.val[0,0],7), round(covariance.val[0,0],7)))
+        (['per0', 'per0'], 0.1791958, 0.8995209)
+        >>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
+        >>> print(round(nll,7))
+        13.4623234
 
 
         '''
@@ -569,28 +568,6 @@ class FastLMM(object):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-
-    #!!!cmk
-    import numpy as np
-    import logging
-    from pysnptools.snpreader import Bed, Pheno
-    from fastlmm.inference import FastLMM
-    logging.basicConfig(level=logging.INFO)
-    snpreader = Bed('../feature_selection/examples/toydata.bed',count_A1=False)
-    cov_fn = "../feature_selection/examples/toydata.cov"
-    pheno_fn = "../feature_selection/examples/toydata.phe"
-    train_idx = np.r_[10:snpreader.iid_count] # iids 10 and on
-    test_idx  = np.r_[0:10] # the first 10 iids
-    fastlmm = FastLMM(GB_goal=2)
-    #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
-    _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
-    mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
-    print(mean.iid[0], round(mean.val[0,0],7), round(covariance.val[0,0],7))
-    #['per0' 'per0'] 0.1791958 0.8995209
-    nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
-    print(round(nll,7))
-    #13.4623234
-
 
     import doctest
     doctest.testmod()

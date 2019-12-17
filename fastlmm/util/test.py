@@ -4,6 +4,7 @@ import numpy as np
 import scipy as sp
 import logging
 import doctest
+import sys
 
 import unittest
 import os.path
@@ -37,9 +38,10 @@ class TestDocStrings(unittest.TestCase):
         assert result.failed == 0, "failed doc test: " + __file__
 
     def test_compute_auto_pcs(self):
+        import fastlmm.util.compute_auto_pcs
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
-        result = doctest.testfile("compute_auto_pcs.py")
+        result = doctest.testmod(sys.modules['fastlmm.util.compute_auto_pcs'])
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 

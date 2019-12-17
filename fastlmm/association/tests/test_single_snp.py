@@ -409,10 +409,7 @@ class TestSingleSnp(unittest.TestCase):
         assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
         for _, row in reference.iterrows():
             sid = row.SNP
-            try:
-                pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
-            except:
-                print('!!!cmk')
+            pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
             assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
 
     def test_doctest(self):

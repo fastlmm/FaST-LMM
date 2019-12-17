@@ -139,3 +139,4 @@ def _snp_fixup(snp_input, count_A1=None):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+    print('done')

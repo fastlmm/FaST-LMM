@@ -151,28 +151,23 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([
                                     #getDebugTestSuite(),
 
-                                    
-
-
-                                    ###!!!16 tests pass (marked out) 1 fails - compare with py2 TEST: test_blocking_cov_pcs
+                                    ###!!!cmk 16 tests pass (marked out) 1 fails - compare with py2 TEST: test_blocking_cov_pcs
                                     fastlmm.feature_selection.test.getTestSuite(),
-
-                                    #!!!cmk
                                     fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-                                    tests.test.getTestSuite(),#!!!cmkOK
-                                    fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),#!!!cmkOK
-                                    fastlmm.association.tests.test_gwas.getTestSuite(),  #!!!cmkOK                                   
-                                    fastlmm.association.tests.test_snp_set.getTestSuite(), #!!!cmkOK
-                                    fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(), #!!!cmkOK
-                                    fastlmm.inference.tests.test_linear_regression.getTestSuite(), #!!!cmkOK
-                                    fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.testepistasis.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_single_snp_scale.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.util.test.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.inference.tests.test.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_single_snp.getTestSuite(),#!!!cmkOK 
-                                    fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),#!!!cmkOK 
+                                    tests.test.getTestSuite(),
+                                    fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
+                                    fastlmm.association.tests.test_gwas.getTestSuite(),                                     
+                                    fastlmm.association.tests.test_snp_set.getTestSuite(), 
+                                    fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(), 
+                                    fastlmm.inference.tests.test_linear_regression.getTestSuite(), 
+                                    fastlmm.inference.tests.test.getTestSuite(), 
+                                    fastlmm.association.tests.testepistasis.getTestSuite(), 
+                                    fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(), 
+                                    fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
+                                    fastlmm.util.test.getTestSuite(), 
+                                    fastlmm.inference.tests.test.getTestSuite(), 
+                                    fastlmm.association.tests.test_single_snp.getTestSuite(), 
+                                    fastlmm.association.tests.test_single_snp_linreg.getTestSuite(), 
                                     ])
 
     
