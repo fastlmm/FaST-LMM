@@ -152,9 +152,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         for _, row in reference.iterrows():
             sid = row.SNP
             pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
-            if not(abs(row.PValue - pvalue) < 1e-5): #!!!cmk
-                logging.warning("pair {0} differs too much from file '{1}'".format(sid,reffile)) #!!!cmk
-            #!!!cmk assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
+            assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
 
     def test_doctest(self):
         old_dir = os.getcwd()

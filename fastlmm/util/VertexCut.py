@@ -82,7 +82,7 @@ class VertexCut(object):
         return best_node
 
     def _piece_count(self, graph):
-        unassigned = sorted(set(six.iterkeys(graph)))#!!!cmk is it OK to sort here?
+        unassigned = sorted(set(six.iterkeys(graph)))
         pieceCount = 0
         while len(unassigned) > 0:
             seed = unassigned.pop()

@@ -8,7 +8,7 @@ import numpy as np
 import scipy.linalg as LA
 import sys, os
 from fastlmm.pyplink.snpreader.Bed import Bed
-import fastlmm.feature_selection.PerformSelectionDistributable as dist   
+from fastlmm.feature_selection import PerformSelectionDistributable as dist
 
 if __name__ == '__main__':
     #filepath = r"\\erg00\Genetics\synthetic\alkes2013\large"

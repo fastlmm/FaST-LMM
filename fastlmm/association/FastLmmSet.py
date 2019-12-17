@@ -336,10 +336,7 @@ class FastLmmSet: # implements IDistributable
                 if result.iperm < 0:
                     result_dict[result.iset] = result
                     #iset is the index of the test (irrespective of permutation)
-                    try:
-                        lrt[result.iset] = self.test.lrt_method(result)
-                    except:
-                        print('!!!cmk')
+                    lrt[result.iset] = self.test.lrt_method(result)
                     alteqnull[result.iset] = result.alteqnull #equiv to result["alteqnull"]
                     #pv_adj[result.iset,:] = self.test.pv_adj_from_result(result)                
                     pv_adj[result.iset] = self.test.pv_adj_from_result(result)                
