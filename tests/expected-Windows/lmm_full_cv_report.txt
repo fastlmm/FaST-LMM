@@ -2,6 +2,6 @@ k_grid: [0, 1, 5, 10, 100, 500, 700, 10000]
 ln_delta_grid: [-3.0, -1.5, 0.0, 1.5, 3.0]
 best k=10
 best ln_delta=1.5e+00
-best objective=62.76
-best ln_delta_interp=1.1e+00
-best objective_interp=62.75
+best objective=66.13
+best ln_delta_interp=2.1e+00
+best objective_interp=66.11
