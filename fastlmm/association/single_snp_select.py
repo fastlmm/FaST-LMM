@@ -106,17 +106,16 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     :Example:
 
     >>> from __future__ import print_function
-    >>> print('snp495_m0_.01m1_.04',0.0,5000)
-    >>> #import logging#!!!cmk
-    >>> #import numpy as np
-    >>> #from fastlmm.association import single_snp_select
-    >>> #from pysnptools.snpreader import Bed
-    >>> #from fastlmm.util import compute_auto_pcs
-    >>> #bed_fn = "../../tests/datasets/synth/all.bed"
-    >>> #phen_fn = "../../tests/datasets/synth/pheno_10_causals.txt"
-    >>> #covar = compute_auto_pcs(bed_fn,count_A1=False)
-    >>> #results_dataframe = single_snp_select(test_snps=bed_fn, G=bed_fn, pheno=phen_fn, covar=covar, GB_goal=2, count_A1=False)
-    >>> #print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
+    >>> import logging
+    >>> import numpy as np
+    >>> from fastlmm.association import single_snp_select
+    >>> from pysnptools.snpreader import Bed
+    >>> from fastlmm.util import compute_auto_pcs
+    >>> bed_fn = "../../tests/datasets/synth/all.bed"
+    >>> phen_fn = "../../tests/datasets/synth/pheno_10_causals.txt"
+    >>> covar = compute_auto_pcs(bed_fn,count_A1=False)
+    >>> results_dataframe = single_snp_select(test_snps=bed_fn, G=bed_fn, pheno=phen_fn, covar=covar, GB_goal=2, count_A1=False)
+    >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     snp495_m0_.01m1_.04 0.0 5000
 
     """
@@ -210,3 +209,4 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
+    print('done')
