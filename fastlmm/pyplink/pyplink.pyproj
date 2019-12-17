@@ -6,8 +6,8 @@
     <ProjectGuid>{67dd0427-0316-415b-9144-8098a6abd371}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>snpreader\Bed.py</StartupFile>
-    <SearchPath>..\..\</SearchPath>
+    <StartupFile>test.py</StartupFile>
+    <SearchPath>..\..\;..\..\..\PySnpToolsPy3</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
@@ -56,6 +56,9 @@
     <Compile Include="altset_list\Subset.py" />
     <Compile Include="altset_list\__init__.py" />
     <Compile Include="plink.py" />
+    <Compile Include="test.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="vcfpy.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>

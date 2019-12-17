@@ -47,6 +47,11 @@ class Bed(object):
     def __repr__(self): 
         return "{0}('{1}')".format(self.__class__.__name__,self.basefilename)
 
+    @property
+    def snp_to_index(self):
+        self.run_once()
+        return self._snp_to_index
+
     def run_once(self):
         if (self._ran_once):
             return
@@ -62,12 +67,12 @@ class Bed(object):
         self.bimfields = pd.read_csv(bimfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
         self.rs = SP.array(self.bimfields[1].tolist(),dtype='str')
         self.pos = self.bimfields[[0,2,3]].values
-        self.snp_to_index = {}
+        self._snp_to_index = {}
         logging.info("indexing snps");
         for i in range(self.snp_count):
             snp = self.rs[i]
-            if snp in self.snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
-            self.snp_to_index[snp]=i
+            if snp in self._snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
+            self._snp_to_index[snp]=i
 
         bedfile = self.basefilename+ '.bed'
         self._filepointer = open(bedfile, "rb")
@@ -109,45 +114,36 @@ class Bed(object):
 
         Examples:
 
-        >>> cmkabed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
-        ... ret = bed.read()
-        ... len(ret['rs'])
-        ... ret = bed.read(AllSnps())
-        ... len(ret['rs'])
-        ... ret = bed.read(SnpAndSetName('someset',['23_9','23_2']))
-        ... ",".join(ret['rs'])
-        ... ret = bed.read(PositionRange(0,10))
-        ... ",".join(ret['rs'])
-        Loading fam file ../../tests/datasets/all_chr.maf0.001.N300.fam
-        Loading bim file ../../tests/datasets/all_chr.maf0.001.N300.bim
-        bed file is open ../../tests/datasets/all_chr.maf0.001.N300.bed
+        >>> bed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
+        >>> ret = bed.read()
+        >>> len(ret['rs'])
         1015
+        >>> ret = bed.read(AllSnps())
+        >>> len(ret['rs'])
         1015
+        >>> ret = bed.read(SnpAndSetName('someset',['23_9','23_2']))
+        >>> ",".join(ret['rs'])
         '23_9,23_2'
+        >>> ret = bed.read(PositionRange(0,10))
+        >>> ",".join(ret['rs'])
         '1_12,1_34,1_10,1_35,1_28,1_25,1_36,1_39,1_4,1_13'
-        closing bed file
 
 
         >>> altset_list1 = SnpAndSetNameCollection(r'../../tests/datasets/set_input.small.txt') # get the list of snpsets defined in the file
-        Reading ../../tests/datasets/set_input.small.txt
         >>> altset_list2 = Subset(altset_list1,['set1','set5'])                       # only use a subset of those snpsets
         >>> altset_list3 = MinMaxSetSize(altset_list2, minsetsize=2, maxsetsize=15)   # only use the subset of subsets that contain between 2 & 15 snps (inclusive)
         >>> bed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
-        ... altsetlist_plusbed = altset_list3.addbed(bed)                        # apply altset_list3 to this bed file
-        ... len(altsetlist_plusbed)                                              # tell how many snpsets there will be
-        ... for snpset_plusbed in altsetlist_plusbed:
-        ...      str(snpset_plusbed)                                             # the name of the snpset
-        ...      len(snpset_plusbed)                                             # the number of snps in the snpset
-        ...      ret = snpset_plusbed.read()
-        ...      ",".join(ret['rs'])
-        Loading fam file ../../tests/datasets/all_chr.maf0.001.N300.fam
-        Loading bim file ../../tests/datasets/all_chr.maf0.001.N300.bim
-        bed file is open ../../tests/datasets/all_chr.maf0.001.N300.bed
+        >>> altsetlist_plusbed = altset_list3.addbed(bed)                             # apply altset_list3 to this bed file
+        >>> len(altsetlist_plusbed)                                                   # tell how many snpsets there will be
         1
+        >>> snpset_plusbed = list(altsetlist_plusbed)[0]
+        >>> str(snpset_plusbed)                                                       # the name of the snpset
         'set5'
+        >>> len(snpset_plusbed)                                                       # the number of snps in the snpset
         13
+        >>> ret = snpset_plusbed.read()
+        >>> ",".join(ret['rs'])
         '5_12,5_28,5_32,5_5,5_11,5_1,5_9,5_3,5_19,5_7,5_21,5_15,5_23'
-        closing bed file
 
         '''
         self.run_once()

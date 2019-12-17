@@ -29,6 +29,10 @@ class Dat(object):
     def names_of_other_files(self):
         return Dat.names_of_other_files_static(self.dat_filename)
 
+    def snp_to_index(self):
+        self.run_once()
+        return self._snp_to_index
+
     @staticmethod
     def names_of_other_files_static(dat_filename):
         base_filename = (".").join(dat_filename.split(".")[:-1])
@@ -52,12 +56,12 @@ class Dat(object):
         self.bimfields = pd.read_csv(mapfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
         self.rs = SP.array(self.bimfields[1].tolist(),dtype='str')
         self.pos = self.bimfields[[0,2,3]].values
-        self.snp_to_index = {}
+        self._snp_to_index = {}
         logging.info("indexing snps");
         for i in range(self.snp_count):
             snp = self.rs[i]
-            if snp in self.snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
-            self.snp_to_index[snp]=i
+            if snp in self._snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
+            self._snp_to_index[snp]=i
 
         #!!could change to just create/find an index to the file position of each row. Instead, reading all into memory
         datfields = pd.read_csv(self.dat_filename,delimiter = '\s',header=None,index_col=False)

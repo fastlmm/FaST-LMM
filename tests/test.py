@@ -17,10 +17,8 @@ import pysnptools.test
 import shutil
 import logging
 import fastlmm.util.util as ut
-import fastlmm.pyplink.plink as plink
 from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
-from fastlmm.pyplink.snpreader.Hdf5 import Hdf5
 
 tolerance = 1e-4
 
@@ -146,11 +144,14 @@ if __name__ == '__main__':
     import fastlmm.inference.tests.test_linear_regression
     import fastlmm.inference.tests.test
     import fastlmm.util.test
+    import fastlmm.pyplink.test
     import tests.test
 
     suites = unittest.TestSuite([
                                     #getDebugTestSuite(),
 
+                                    fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
+                                    fastlmm.pyplink.test.getTestSuite(),
                                     fastlmm.feature_selection.test.getTestSuite(),
                                     fastlmm.association.tests.test_single_snp_select.getTestSuite(),
                                     tests.test.getTestSuite(),
@@ -162,7 +163,6 @@ if __name__ == '__main__':
                                     fastlmm.inference.tests.test.getTestSuite(), 
                                     fastlmm.association.tests.testepistasis.getTestSuite(), 
                                     fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(), 
-                                    fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
                                     fastlmm.util.test.getTestSuite(), 
                                     fastlmm.inference.tests.test.getTestSuite(), 
                                     fastlmm.association.tests.test_single_snp.getTestSuite(), 
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=False) #!!!cmk
+        r = unittest.TextTestRunner(failfast=False)
         r.run(suites)
     else: #Cluster test run
         #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first in the PYTHONPATH

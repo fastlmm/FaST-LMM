@@ -134,7 +134,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     :Example:
 
-    >>> cmkifrom __future__ import print_function
+    >>> from __future__ import print_function
     >>> import logging
     >>> from fastlmm.association import single_snp
     >>> from pysnptools.snpreader import Bed
@@ -143,6 +143,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     >>> pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
     >>> cov_fn = '../../tests/datasets/synth/cov.txt'
     >>> results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
+    -etc-
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     snp1200_m0_.37m1_.36 0.0 500
 
@@ -1237,60 +1238,13 @@ def map_reduceX(input_seq, mapper=_identity, reducer=list, runner=None,name=None
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    import doctest
 
-    if True:
-        import logging
-        import numpy as np
-        from fastlmm.association import single_snp_scale
-        from pysnptools.snpreader import Bed
-        from pysnptools.util.mapreduce1.runner import LocalMultiProc
-        logging.basicConfig(level=logging.INFO)
-
-        bed_fn = '../../tests/datasets/synth/all'
-        pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
-        cov_fn = '../../tests/datasets/synth/cov.txt'
-
-        if True:
-            results_df = single_snp_scale(Bed(bed_fn,count_A1=False)[::10,::10], pheno_fn, covar=cov_fn)
-        else:
+    import logging
+    #logging.getLogger().setLevel(logging.WARN)
 
 
-            #results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False, cache=r'm:\deldir\cacheTest')
-            #print results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe)
-
-            from pysnptools.util.filecache import PeerToPeer
-            from pysnptools.snpreader import Bed, DistributedBed
-
-            runner = LocalMultiProc(taskcount=5,just_one_process=False) #Run on 5 additional Python processes
-            #runner = None
-            #cache_top = r'm:\deldir'
-            cache_top = r'/mnt/m/deldir'
-
-            #Every Python process will get it's own local storage based its process id (and this computer's ipaddress)
-            def id_and_path_function():
-                from pysnptools.util.filecache import ip_address_pid
-                ip_pid = ip_address_pid()
-                return ip_pid, r'm:\deldir/peertopeer1/{0}'.format(ip_pid)
-
-            #Keep a directory of all files in "common" and copy files peer-to-peer.
-            file_cache = PeerToPeer(common_directory=cache_top+'/peertopeer1/common',id_and_path_function=id_and_path_function)
-
-            if True:
-                # Clear the file_cache
-                file_cache.rmtree()
-
-                #Move the SNPs information from file bed_fn into the file_cache as a set of Bed files.
-                test_snps = DistributedBed.write(file_cache.join('test_snps'), Bed(bed_fn,count_A1=False), piece_per_chrom_count=10)
-            else:
-                test_snps = DistributedBed(file_cache.join('test_snps'))
-
-
-            results_df = single_snp_scale(test_snps, pheno_fn, covar=cov_fn, count_A1=False, cache=file_cache, runner=runner)
-        print((results_df.head(n=10)))
-    #snp1200_m0_.37m1_.36 0.0 500
-
-
-    #import doctest
-    #doctest.testmod()
-
+    doctest.ELLIPSIS_MARKER = '-etc-'
+    doctest.testmod(optionflags=doctest.ELLIPSIS|doctest.NORMALIZE_WHITESPACE)
+    doctest.ELLIPSIS_MARKER = '...'
+    print('done')

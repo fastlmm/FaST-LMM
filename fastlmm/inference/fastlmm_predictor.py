@@ -250,7 +250,7 @@ class FastLMM(object):
         >>> test_idx  = np.r_[0:10] # the first 10 iids
         >>> fastlmm = FastLMM(GB_goal=2)
         >>> #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
-        >>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
+        ... fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
         >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
         >>> print2((list(mean.iid[0]), round(mean.val[0,0],7), round(covariance.val[0,0],7)))
         (['per0', 'per0'], 0.1791958, 0.8995209)

@@ -27,6 +27,10 @@ class Hdf5(object):
     def copyinputs(self, copier):
         copier.input(self.filename)
 
+    def snp_to_index(self):
+        self.run_once()
+        return self._snp_to_index
+
     def run_once(self):
         if (self._ran_once):
             return
@@ -42,11 +46,11 @@ class Hdf5(object):
         self.pos = sp.array(self.h5['pos'])
 
         ## similar code in bed
-        self.snp_to_index = {}
+        self._snp_to_index = {}
         logging.info("indexing snps");
         for i,snp in enumerate(self.rs):
-            if snp in self.snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
-            self.snp_to_index[snp]=i
+            if snp in self._snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
+            self._snp_to_index[snp]=i
 
         self.snpsInFile = self.h5['snps']
 
