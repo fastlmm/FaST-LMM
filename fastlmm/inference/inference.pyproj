@@ -6,7 +6,7 @@
     <ProjectGuid>6d8dcdf9-3776-4e1b-a713-e9b6f2a49865</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>fastlmm_predictor.py</StartupFile>
+    <StartupFile>tests\test_linear_regression.py</StartupFile>
     <SearchPath>..\..\;..\..\..\PySnpToolsPy3</SearchPath>
     <OutputPath>.</OutputPath>
     <Name>inference</Name>
@@ -1323,7 +1323,6 @@
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="CondaEnv|CondaEnv|py3" />
     <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda27-64" />
   </ItemGroup>
   <ItemGroup>

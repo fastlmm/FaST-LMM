@@ -27,6 +27,7 @@ class Hdf5(object):
     def copyinputs(self, copier):
         copier.input(self.filename)
 
+    @property
     def snp_to_index(self):
         self.run_once()
         return self._snp_to_index

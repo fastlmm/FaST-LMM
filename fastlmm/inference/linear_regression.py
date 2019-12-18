@@ -49,7 +49,7 @@ class LinearRegression(object):
         >>> test_idx  = np.r_[0:10] # the first 10 iids
         >>> linreg = LinearRegression()
         >>> #We give it phenotype information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
-        ... linreg.fit(X=cov[train_idx,:],y=pheno_fn) 
+        >>> _ = linreg.fit(X=cov[train_idx,:],y=pheno_fn) 
         >>> mean, covariance = linreg.predict(X=cov[test_idx,:])
         >>> print(mean.iid[0], round(mean.val[0,0],7), round(covariance.val[0,0],7))
         ['per0' 'per0'] 0.1518764 0.9043703

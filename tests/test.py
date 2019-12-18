@@ -151,6 +151,7 @@ if __name__ == '__main__':
                                     #getDebugTestSuite(),
 
                                     getTestSuiteX(),
+                                    fastlmm.inference.tests.test_linear_regression.getTestSuite(), 
                                     fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
                                     fastlmm.pyplink.test.getTestSuite(),
                                     fastlmm.feature_selection.test.getTestSuite(),
@@ -159,7 +160,6 @@ if __name__ == '__main__':
                                     fastlmm.association.tests.test_gwas.getTestSuite(),                                     
                                     fastlmm.association.tests.test_snp_set.getTestSuite(), 
                                     fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(), 
-                                    fastlmm.inference.tests.test_linear_regression.getTestSuite(), 
                                     fastlmm.inference.tests.test.getTestSuite(), 
                                     fastlmm.association.tests.testepistasis.getTestSuite(), 
                                     fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(), 

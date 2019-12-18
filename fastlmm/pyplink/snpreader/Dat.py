@@ -29,6 +29,7 @@ class Dat(object):
     def names_of_other_files(self):
         return Dat.names_of_other_files_static(self.dat_filename)
 
+    @property
     def snp_to_index(self):
         self.run_once()
         return self._snp_to_index
