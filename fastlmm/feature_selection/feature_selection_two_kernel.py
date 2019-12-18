@@ -315,9 +315,6 @@ class FeatureSelectionInSample(object):
         """
         visualize trained model, either measure="ll" or measure="mse"
         """
-
-        import matplotlib
-        matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
         import pylab
         if measure == "ll":
             pylab.plot(self.grid_k, self.ll.mean(axis=0).T, "-x", label=self.grid_k)

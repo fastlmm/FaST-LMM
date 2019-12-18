@@ -456,8 +456,6 @@ class FeatureSelectionStrategy(object):
             # save cv scores
             if create_pdf and (output_prefix != None):
                 # visualize results
-                import matplotlib
-                matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
                 import pylab
                 pylab.figure()
                 ax = pylab.subplot(111)
@@ -524,8 +522,6 @@ class FeatureSelectionStrategy(object):
                 df.to_csv(out_fn)
             if create_pdf and (output_prefix != None):
                 # visualize results
-                import matplotlib
-                matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
                 import pylab
                 pylab.figure()
                 ax = pylab.subplot(111)

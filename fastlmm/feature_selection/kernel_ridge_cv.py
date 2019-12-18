@@ -86,8 +86,6 @@ class KernelRidgeCV(): # implements IDistributable
             best regularization parameter delta for ridge regression
 
         """
-        import matplotlib
-        matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
         import matplotlib.pylab as PLT 
 
 

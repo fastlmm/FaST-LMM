@@ -31,8 +31,6 @@ class TestDocStrings(unittest.TestCase):
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
         import matplotlib.pyplot as plt
-        plt.switch_backend('agg') #Needed so can test manhanttan_plot on machine with no DISPLAY
-
         result = doctest.testmod(fastlmm.util.util)
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__

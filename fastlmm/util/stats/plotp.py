@@ -680,7 +680,7 @@ def qqplot(pvals, fileout = None, alphalevel = 0.05,legend=None,xlim=None,ylim=N
             xl = '-log10(P) observed'
             yl = '-log10(P) expected'
         if not (sp.isreal(qemp)).all(): raise Exception("imaginary qemp found")
-        if qnull.max>maxval:
+        if qnull.max()>maxval:
             maxval = qnull.max()                
         pl.plot(qnull, qemp, '.', markersize=2)
         #pl.plot([0,qemp.max()], [0,qemp.max()],'r')        

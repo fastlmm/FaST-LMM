@@ -11,9 +11,7 @@ import logging
 import io
 
 # common modules
-import matplotlib
 from six.moves import range
-matplotlib.use('Agg',warn=False) #This lets it work even on machines without graphics displays
 import scipy as sp
 import numpy as np
 import pandas as pd
