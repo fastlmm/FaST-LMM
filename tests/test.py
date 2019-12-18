@@ -19,6 +19,7 @@ import logging
 import fastlmm.util.util as ut
 from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+from fastlmm.pyplink.snpreader.Hdf5 import Hdf5 #Need by some *.py's that we eval
 
 tolerance = 1e-4
 
@@ -79,8 +80,8 @@ class WidgetTestCase(unittest.TestCase):
         runner = Local()
         try:
             distributable = eval(filecontent)
-        except:
-            raise Exception("Can't eval '{0}'".format(self._infile))
+        except Exception as e:
+            raise Exception("Can't eval '{0}' because of '{1}'".format(self._infile,e.message))
         runner.run(distributable)                               
                 
         out,msg=ut.compare_files(tmpOutfile, referenceOutfile, tolerance)                
@@ -110,7 +111,7 @@ class WidgetTestCase(unittest.TestCase):
 #    suite.addTest(WidgetTestCase('sc_davies_two_kernel_linear_qqfit.N300.needsReorder.py'))
 #    return suite
 
-def getTestSuite():
+def getTestSuiteX():
     suite = unittest.TestSuite()
     for f in os.listdir( 'inputs' ):
         if re.match(r'.*\.py$', f) is None:
@@ -145,16 +146,15 @@ if __name__ == '__main__':
     import fastlmm.inference.tests.test
     import fastlmm.util.test
     import fastlmm.pyplink.test
-    import tests.test
-
+    
     suites = unittest.TestSuite([
                                     #getDebugTestSuite(),
 
+                                    getTestSuiteX(),
                                     fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
                                     fastlmm.pyplink.test.getTestSuite(),
                                     fastlmm.feature_selection.test.getTestSuite(),
                                     fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-                                    tests.test.getTestSuite(),
                                     fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
                                     fastlmm.association.tests.test_gwas.getTestSuite(),                                     
                                     fastlmm.association.tests.test_snp_set.getTestSuite(), 
