@@ -1239,9 +1239,44 @@ def map_reduceX(input_seq, mapper=_identity, reducer=list, runner=None,name=None
 
 if __name__ == "__main__":
     import doctest
-
     import logging
     #logging.getLogger().setLevel(logging.WARN)
+
+    if True: #!!!cmk
+        from pysnptools.snpreader import Bed, DistributedBed
+        cache_top = r'm:\deldir'
+        from pysnptools.util.filecache import LocalCache
+        file_cache_top = LocalCache(cache_top)
+
+        seed = 1
+        iid_count = 250*1000 # number of individuals
+        sid_count = 10*1000 # number of SNPs
+        chrom_count = 10
+        piece_per_chrom_count = 25 #Number of pieces for each chromosome, e.g. 100
+        test_snps_cache = file_cache_top.join('testsnps_{0}_{1}_{2}_{3}'.format(seed,chrom_count,iid_count,sid_count))
+
+        if not next(test_snps_cache.walk(),None): #If no files in the test_snps folder, generate data (takes about 6 hours)
+            from pysnptools.snpreader import SnpGen
+            from pysnptools.util.mapreduce1.runner import LocalMultiProc
+    
+            snpgen = SnpGen(seed=seed,iid_count=iid_count,sid_count=sid_count,chrom_count=chrom_count) #Create an on-the-fly SNP generator
+            snp_gen_runner = LocalMultiProc(5)
+            #Write random SNP data to a DistributedBed
+            test_snps = DistributedBed.write(test_snps_cache,snpgen,piece_per_chrom_count=piece_per_chrom_count,runner=snp_gen_runner)
+        else:
+            test_snps = DistributedBed(test_snps_cache)
+        print(test_snps.iid)#!!!cmk
+
+        #Generate random pheno and covar
+        import numpy as np
+        from pysnptools.snpreader import SnpData
+        np.random.seed(seed)
+        pheno = SnpData(iid=test_snps.iid,sid=['pheno'],val=np.random.randn(test_snps.iid_count,1)*3+2)
+        covar = SnpData(iid=test_snps.iid,sid=['covar1','covar2'],val=np.random.randn(test_snps.iid_count,2)*2-3)
+
+        test_snps.shape
+        print('!!!cmk')
+
 
 
     doctest.ELLIPSIS_MARKER = '-etc-'

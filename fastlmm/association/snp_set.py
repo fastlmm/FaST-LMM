@@ -172,18 +172,6 @@ def snp_set(
 
 if __name__ == "__main__":
 
-
-    #import logging
-    #from fastlmm.association import snp_set
-    #logging.basicConfig(level=logging.INFO)
-    #result_dataframe = snp_set(
-    #     test_snps = '../../tests/datasets/all_chr.maf0.001.N300',
-    #     set_list = '../../tests/datasets/set_input.23.txt',
-    #     pheno = '../../tests/datasets/phenSynthFrom22.23.N300.txt')
-    #print result_dataframe.iloc[0].SetId, round(result_dataframe.iloc[0]['P-value_lrt'],15)
-    ##set23 0.0
-
-
     import doctest
     doctest.testmod()
 

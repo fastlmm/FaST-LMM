@@ -152,11 +152,14 @@ class _Epistasis(object) : #implements IDistributable
                  self.G0, self.G1_or_none, self.mixing, self.external_log_delta, self.min_log_delta, self.max_log_delta, output_file, cache_file)
         self.block_size = 1000
 
+    def order_by_test_snps(self, sid_sequence):
+        return self.test_snps.sid[sorted(self.test_snps.sid_to_index(sid_sequence))]
+
     def set_sid_sets(self):
         sid_set_0 = set(self.sid_list_0)
-        self.intersect = sid_set_0.intersection(self.sid_list_1)
-        self.just_sid_0 = sid_set_0.difference(self.intersect)
-        self.just_sid_1 = self.intersect.symmetric_difference(self.sid_list_1)
+        self.intersect = self.order_by_test_snps(sid_set_0.intersection(self.sid_list_1))
+        self.just_sid_0 = self.order_by_test_snps(sid_set_0.difference(self.intersect))
+        self.just_sid_1 = self.order_by_test_snps(set(self.intersect).symmetric_difference(self.sid_list_1))
         self._pair_count = len(self.just_sid_0)*len(self.intersect) + len(self.just_sid_0)*len(self.just_sid_1) + len(self.intersect)*len(self.just_sid_1) + len(self.intersect) * (len(self.intersect)-1)//2
         self.test_snps, self.pheno, self.covar, self.G0, self.G1_or_none = pstutil.intersect_apply([self.test_snps, self.pheno, self.covar, self.G0, self.G1_or_none]) #should put G0 and G1 first
 
@@ -553,7 +556,7 @@ class _Epistasis(object) : #implements IDistributable
         return dataframe
 
 if __name__ == "__main__":
-    
+
     import doctest
     doctest.testmod()
 

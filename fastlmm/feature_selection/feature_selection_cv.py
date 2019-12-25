@@ -831,7 +831,7 @@ def main():
     ##############################
     # set up grid
     ##############################
-    k_values = [int(x) if x != 'all' else sys.maxsize for x in args.k_values.lstrip('[').rstrip(']').lower().split(',')]
+    k_values = [int(x) if x != 'all' else 2147483647 for x in args.k_values.lstrip('[').rstrip(']').lower().split(',')] #old maxint
     delta_values = np.array([np.exp(float(x)) for x in args.ln_delta_values.lstrip('[').rstrip(']').split(',')])
 
     np.set_printoptions(precision=3, suppress=True, linewidth=150)

@@ -397,3 +397,4 @@ tests/tmp_extract_sim.txt
 /fastlmm/inference/out.txt
 /fastlmm/util/matrix/mmultfilex.cp37-win_amd64.pyd
 /fastlmm/util/matrix/cample.cp37-win_amd64.pyd
+/doc/ipynb/FaST-LMM-Copy1.ipynb

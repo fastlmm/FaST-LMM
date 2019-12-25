@@ -345,7 +345,7 @@ def generate_permutation(numbersamples,randomSeedOrState):
     if isinstance(randomSeedOrState,RandomState):
         randomstate = randomSeedOrState
     else:
-        randomstate = RandomState(int(randomSeedOrState % sys.maxsize))
+        randomstate = RandomState(int(randomSeedOrState % 2147483647)) #old maxint
 
     perm = randomstate.permutation(numbersamples)
     return perm
