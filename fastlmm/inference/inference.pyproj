@@ -6,7 +6,7 @@
     <ProjectGuid>6d8dcdf9-3776-4e1b-a713-e9b6f2a49865</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test_linear_regression.py</StartupFile>
+    <StartupFile>tests\test_fastlmm_predictor.py</StartupFile>
     <SearchPath>..\..\;..\..\..\PySnpToolsPy3</SearchPath>
     <OutputPath>.</OutputPath>
     <Name>inference</Name>
@@ -22,7 +22,7 @@
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
+    <InterpreterId>Global|PythonCore|2.7</InterpreterId>
     <TestFramework>unittest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -1324,6 +1324,7 @@
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda27-64" />
+    <InterpreterReference Include="Global|PythonCore|2.7" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fastlmmpy3\.gitattributes" />

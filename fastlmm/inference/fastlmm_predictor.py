@@ -252,7 +252,7 @@ class FastLMM(object):
         >>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
         >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
         >>> print(list(mean.iid[0]), round(mean.val[0,0],7), round(covariance.val[0,0],7))
-        ['per0', 'per0'] 0.1791958 0.8995209
+        (['per0', 'per0'], 0.1791958, 0.8995209)
         >>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
         >>> print(round(nll,7))
         13.4623234
