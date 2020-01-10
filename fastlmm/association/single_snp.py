@@ -136,7 +136,7 @@ def single_snp(test_snps, pheno, K0=None,
 
     :Example:
 
-    >>> from __future__ import print_function
+    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from fastlmm.association import single_snp
     >>> from pysnptools.snpreader import Bed

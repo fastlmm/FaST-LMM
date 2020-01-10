@@ -28,7 +28,7 @@
     </InterpreterArguments>
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <InterpreterId>CondaEnv|CondaEnv|py3</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
     <Environment>TEMP=m:\</Environment>
     <TestFramework>unittest</TestFramework>
   </PropertyGroup>

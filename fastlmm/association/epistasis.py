@@ -90,7 +90,7 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
 
     :Example:
 
-    >>> from pysnptools.util import print2 # Makes ascii strings look the same under Python2/Python3
+    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from pysnptools.snpreader import Bed
     >>> from fastlmm.association import epistasis
@@ -102,8 +102,8 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
     ...                                 sid_list_0=test_snps.sid[:10], #first 10 snps
     ...                                 sid_list_1=test_snps.sid[5:15], #Skip 5 snps, use next 10
     ...                                 count_A1=False)
-    >>> print2((results_dataframe.iloc[0].SNP0, results_dataframe.iloc[0].SNP1,round(results_dataframe.iloc[0].PValue,5),len(results_dataframe)))
-    ('1_12', '1_9', 0.07779, 85)
+    >>> print(results_dataframe.iloc[0].SNP0, results_dataframe.iloc[0].SNP1,round(results_dataframe.iloc[0].PValue,5),len(results_dataframe))
+    '1_12' '1_9' 0.07779 85
 
     """
 

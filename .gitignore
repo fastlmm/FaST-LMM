@@ -398,3 +398,8 @@ tests/tmp_extract_sim.txt
 /fastlmm/util/matrix/mmultfilex.cp37-win_amd64.pyd
 /fastlmm/util/matrix/cample.cp37-win_amd64.pyd
 /doc/ipynb/FaST-LMM-Copy1.ipynb
+/doc/ipynb/delmeFaST-LMM-Copy1.ipynb
+/doc/ipynb/FaST-LMM-Copy2.ipynb
+/doc/ipynb/heritability_si-Copy1.ipynb
+/doc/ipynb/SingleSnpScale-Copy1.ipynb
+/doc/ipynb/SingleSnpScale-Copy2.ipynb

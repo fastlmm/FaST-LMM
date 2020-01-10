@@ -105,7 +105,7 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
 
     :Example:
 
-    >>> from __future__ import print_function
+    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_select

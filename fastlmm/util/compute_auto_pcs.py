@@ -32,7 +32,7 @@ def compute_auto_pcs(snpreader, cutoff=.1, k_values=np.arange(11), output_file_n
 
     :Example:
 
-    >>> from __future__ import print_function
+    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from fastlmm.util import compute_auto_pcs
     >>> logging.basicConfig(level=logging.INFO)

@@ -236,8 +236,7 @@ class FastLMM(object):
 
         :Example:
 
-        >>> from __future__ import print_function
-        >>> from pysnptools.util import print2 # Makes ascii strings look the same under Python2/Python3
+        >>> from __future__ import print_function #Python 2 & 3 compatibility
         >>> import numpy as np
         >>> import logging
         >>> from pysnptools.snpreader import Bed, Pheno
@@ -252,8 +251,8 @@ class FastLMM(object):
         >>> #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used. 
         >>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn) 
         >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
-        >>> print2((list(mean.iid[0]), round(mean.val[0,0],7), round(covariance.val[0,0],7)))
-        (['per0', 'per0'], 0.1791958, 0.8995209)
+        >>> print(list(mean.iid[0]), round(mean.val[0,0],7), round(covariance.val[0,0],7))
+        ['per0', 'per0'] 0.1791958 0.8995209
         >>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
         >>> print(round(nll,7))
         13.4623234
