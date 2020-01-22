@@ -21,7 +21,7 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "feature_selection", "featur
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "ludicrous2", "ludicrous2\ludicrous2.pyproj", "{09D0E26F-6749-413B-9523-6D108100BC8E}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "pysnptools", "..\..\PySnpToolsPy3\pysnptools\pysnptools.pyproj", "{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "pysnptools", "..\..\pysnptools\pysnptools\pysnptools.pyproj", "{60F1CB4A-9DA3-47C2-9B89-60AC1CE93347}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

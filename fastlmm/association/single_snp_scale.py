@@ -56,7 +56,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
           `DistributedBed <http://fastlmm.github.io/PySnpTools/#snpreader-distributedbed>`__ format.
     :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
 
-    :param pheno: A single phenotype: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__, for example,
+    :param pheno: !!!cmk A single phenotype: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__, for example,
            `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__, or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__.
            If you give a string, it should be the name of a `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__-formatted file.
            Any individual with missing phenotype data will be removed from processing.
@@ -172,14 +172,14 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     # all in time and space 1M x 3
     #######################################
     G0 = G0 or K0 or test_snps
-    chrom_list, pheno1, RxY, test_snps1, X, Xdagger, G0 = preload(covar, G0, pheno, test_snps, count_A1=count_A1) #!!!y: Rxy
+    chrom_list, pheno1, RxY, test_snps1, X, Xdagger, G0 = preload(covar, G0, pheno, test_snps, count_A1=count_A1, multi_pheno_is_ok=True)
     cache_dict = _cache_dict_fixup(cache,chrom_list)
 
     G0_memmap_lambda, ss_per_snp = get_G0_memmap(G0, cache_dict[0], X, Xdagger, memory_factor)
 
     gtg_npz_lambda = get_gtg(cache_dict[0], G0.iid_count, G0.sid, G0_memmap_lambda, memory_factor, gtg_runner, min_work_count=gtg_min_work_count)
 
-    svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, RxY, X, svd_runner)
+    svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, X, svd_runner)
 
     postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=100)
 
@@ -366,7 +366,7 @@ def _internal_single2(G0_chrom, test_snps_chrom, pheno, covar):
 
     return frame
 
-def preload(covar, G0, pheno, test_snps, count_A1):
+def preload(covar, G0, pheno, test_snps, count_A1, multi_pheno_is_ok=False):
     """
     Load 'covar' and 'pheno' into memory. Remove and reorder iids as needed from all inputs.
     Compute some other values based on 'covar' and 'pheno'
@@ -374,8 +374,13 @@ def preload(covar, G0, pheno, test_snps, count_A1):
     test_snps = _snps_fixup(test_snps, count_A1=count_A1)
     G0 = _snps_fixup(G0, count_A1=count_A1)
     pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
-    assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-    pheno = pheno[(pheno.val==pheno.val)[:,0],:]
+
+    if not multi_pheno_is_ok:
+        assert pheno.sid_count == 1, "Expect pheno to be just one variable"
+        pheno = pheno[(pheno.val==pheno.val)[:,0],:]
+    else:
+        assert not np.isnan(pheno.val).any(), "cmk Expect no missing values"
+
     covar = _pheno_fixup(covar, iid_if_none=pheno.iid,count_A1=count_A1)
     chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
     G0, test_snps, pheno, covar  = pstutil.intersect_apply([G0, test_snps, pheno, covar]) #!!!is this time well spent?
@@ -389,12 +394,12 @@ def preload(covar, G0, pheno, test_snps, count_A1):
     #=============================================================
     Xdagger = la.pinv(X)       #SVD-based, and seems fast
     #=============================================================
-    # 3 x 1M x 1 => 3 x 1
+    # 3 x 1M x 2 => 3 x 2
     #  Move out of chrom loop
     #=============================================================
     beta_y = Xdagger.dot(y)
     #=============================================================
-    # 1M x 3 x 1 => 1M x 1
+    # 1M x 3 x 2 => 1M x 2
     #  Move out of chrom loop
     #=============================================================
     RxY = y - X.dot(beta_y)
@@ -572,7 +577,18 @@ def get_U(chrom, chrom_cache):
 
     return S, U_memmap, UY, UUY
 
-def apply_h2(h2,S,UYUY,UUYUUYsum0,N,k):
+def apply_h2(h2,S,UYUY,UUYUUYsum0,N,k): #!!!cmk make more matrix like (or multiproc???)
+    result_list = []
+    for pheno_index in range(len(UUYUUYsum0)):
+        result = apply_h2_inner(h2[pheno_index],S,UYUY[:,[pheno_index]],UUYUUYsum0[[pheno_index]],N,k)
+        result_list.append(result)
+    logdetK = np.array([logdetK for logdetK, YKY, Sd, denom in result_list])
+    YKY = np.array([YKY for logdetK, YKY, Sd, denom in result_list]).reshape(-1)
+    Sd = np.array([Sd for logdetK, YKY, Sd, denom in result_list]).transpose()
+    denom = np.array([denom for logdetK, YKY, Sd, denom in result_list])
+    return logdetK, YKY, Sd, denom
+
+def apply_h2_inner(h2,S,UYUY,UUYUUYsum0,N,k):
     Sd = (h2 * S + (1.0 - h2)) #25K
     denom = 1.0 - h2
     YKY = (UYUY / Sd.reshape(-1,1)).sum(0) + UUYUUYsum0 / denom #Can be done in blocks
@@ -580,11 +596,18 @@ def apply_h2(h2,S,UYUY,UUYUUYsum0,N,k):
     return logdetK, YKY, Sd, denom
 
 def find_h2(k, N, UUYUUYsum0, UYUY, S, chrom):
+    h2_list = []
+    for pheno_index in range(len(UUYUUYsum0)):
+        h2_inner = find_h2_inner(k, N, UUYUUYsum0[[pheno_index]],UYUY[:,[pheno_index]],S,chrom)
+        h2_list.append(h2_inner)
+    return np.array(h2_list)
+
+def find_h2_inner(k, N, UUYUUYsum0, UYUY, S, chrom):
 
     resmin = [None]
     def f(x,resmin=resmin):
         h2 = float(x)
-        logdetK, YKY, _, _ = apply_h2(h2,S,UYUY,UUYUUYsum0,N,k)
+        logdetK, YKY, _, _ = apply_h2_inner(h2,S,UYUY,UUYUUYsum0,N,k)
         sigma2 = YKY / N
         nLL = 0.5 * (logdetK + N * (np.log(2.0 * np.pi * sigma2) + 1))
         if (resmin[0] is None) or (nLL < resmin[0]['nLL']):
@@ -599,18 +622,18 @@ def find_h2(k, N, UUYUUYsum0, UYUY, S, chrom):
     h2 = resmin[0]['h2']
     logging.info("h2={0}".format(h2))
 
-    logdetK, YKY, Sd, denom = apply_h2(h2,S,UYUY,UUYUUYsum0,N,k)
+    logdetK, YKY, Sd, denom = apply_h2_inner(h2,S,UYUY,UUYUUYsum0,N,k)
     return h2
 
 def get_h2(k, N, UUYUUYsum0, UYUY, S, chrom_cache, chrom):
     fn_h2 = "3_PostSVD/chrom{0}/h2.npz".format(int(chrom)) #!!!const
     with chrom_cache.open_read(fn_h2) as local_fn_h2:
         with np.load(local_fn_h2) as data:
-            h2    = data['arr_0'][0]
+            h2    = data['arr_0']
     logdetK, YKY, Sd, denom = apply_h2(h2,S,UYUY,UUYUUYsum0,N,k)
     return h2, logdetK, YKY, Sd, denom
 
-def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_count, G0_pos, ss_per_snp, RxY, X, runner_svd):
+def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_count, G0_pos, ss_per_snp, X, runner_svd):
     """
     For the chromosomes listed, compute an SVD on a square matrix SNP-to-SNP matrix. Each SVD can be done on a different
     node in a cluster. The actual SVD is done with special version of the MKL/LAPACK DGESDD function.
@@ -841,11 +864,11 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
                 logging.info("Putting U together took {0}. Next creating UY & UUY files".format(format_delta(t0_U - t0_download)))
             
                 #=============================================================
-                # 25K x 1M x 1 -> 25K x 1
+                # 25K x 1M x 2 -> 25K x 2
                 #=============================================================
                 UY = U_snp_mem_map.val.T.dot(RxY)  #Note: This could be pushed into the 'map' step, with each step returning a UYi that would all be summed together.
                 #=============================================================
-                # 1M x 25K x 1 -> 1M x 1
+                # 1M x 25K x 2 -> 1M x 2
                 #=============================================================
                 UUY = RxY - U_snp_mem_map.val.dot(UY) #This is can't be pushed into the 'map' step because it depends on all of UY
 
@@ -863,13 +886,13 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
             UUYUUYsum0 = (UUY * UUY).sum(0)
             N = G0_iid_count - X.shape[1] #number of degrees of freedom
             k = S.shape[0]
-            h2 = find_h2(k, N, UUYUUYsum0, UYUY, S, chrom) #!!!y: h2 depends on y
+            h2 = find_h2(k, N, UUYUUYsum0, UYUY, S, chrom) #h2 depends on y
 
             t0_etc = time.time()
             logging.info("Creating related files took {0}. Next uploading files.".format(format_delta(t0_etc-t0_U)))
 
             with chrom_storage.open_write(fn_h2) as local_fn_h2:
-                np.savez(local_fn_h2, np.array([h2]))
+                np.savez(local_fn_h2, h2)
 
             if clear_local_lambda is not None:
                 chrom_storage.cloud_storage_only()
@@ -1061,28 +1084,36 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             logging.debug("U_data {0}x{1}. Usnps {2}x{3}. time={4}".format(U_memmap.iid_count,U_memmap.sid_count,Usnps.shape[0],Usnps.shape[1],datetime.now().strftime("%Y-%m-%d %H:%M")))
             logging.debug("UUsnps = Rxsnps - U_data.val.dot(Usnps)")
     
-            #==============================================================
-            # 25K x 4M -> 4M
-            #==============================================================
-            logging.debug("time={0}".format(datetime.now().strftime("%Y-%m-%d %H:%M")))
-            logging.debug("snpsKsnps = ((Usnps / Sd.reshape(-1,1) * Usnps).sum(0) + (UUsnps * UUsnps).sum(0) / denom).reshape(-1,1) #Can be done in blocks")
-            snpsKsnps = ((Usnps / Sd.reshape(-1,1) * Usnps).sum(0) + (UUsnps * UUsnps).sum(0) / denom).reshape(-1,1) #Can be done in blocks
-            #==============================================================
-            # 25K x 4M -> 25K x 4M
-            #==============================================================
-            logging.debug("UAS = Usnps / np.lib.stride_tricks.as_strided(Sd, (Sd.size,Usnps.shape[1]), (Sd.itemsize,0))")
-            UAS = Usnps / np.lib.stride_tricks.as_strided(Sd, (Sd.size,Usnps.shape[1]), (Sd.itemsize,0))
-            #==============================================================
-            # 4M x 25K x 1 + 4M x 1M x 1 => 4M
-            #==============================================================
-            logging.debug("snpsKY = UAS.T.dot(UY) + UUsnps.T.dot(UUY) / denom #!!!y: some y work")
-            snpsKY = UAS.T.dot(UY) + UUsnps.T.dot(UUY) / denom #!!!y: some y work
-            #==============================================================
-            # 4M
-            #==============================================================
-            assert test_snps_chrom.iid_count == U_memmap.iid_count
-            dataframe = compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK, snps_read.iid_count, snps_read.sid, snps_read.pos, h2, covar_bias_count=Xdagger.shape[0])
+            dataframe_list = []
+            #!!!cmk what does multipheno save in terms of time?
+            #!!!cmk does it make sense to do a plot of multiple phenos together?
+            for pheno_index in range(len(h2)): #!!!cmk make more matrix like (or multiprocess???)
+                #==============================================================
+                # 25K x 4M -> 4M
+                #==============================================================
+                logging.debug("time={0}".format(datetime.now().strftime("%Y-%m-%d %H:%M")))
+                logging.debug("snpsKsnps = ((Usnps / Sd.reshape(-1,1) * Usnps).sum(0) + (UUsnps * UUsnps).sum(0) / denom).reshape(-1,1) #Can be done in blocks")
+                snpsKsnps = ((Usnps / Sd[:,[pheno_index]] * Usnps).sum(0) + (UUsnps * UUsnps).sum(0) / denom[pheno_index]).reshape(-1,1) #Can be done in blocks
+                #==============================================================
+                # 25K x 4M -> 25K x 4M
+                #==============================================================
+                logging.debug("UAS = Usnps / np.lib.stride_tricks.as_strided(Sd, (Sd.size,Usnps.shape[1]), (Sd.itemsize,0))")
+                UAS = Usnps / np.lib.stride_tricks.as_strided(Sd[:,[pheno_index]], (Sd.shape[0],Usnps.shape[1]), (Sd.itemsize,0)) #!!!cmk make sure the stride_trick still works
+                #==============================================================
+                # 4M x 25K x 1 + 4M x 1M x 1 => 4M
+                #==============================================================
+                logging.debug("snpsKY = UAS.T.dot(UY) + UUsnps.T.dot(UUY) / denom #!!!y: some y work")
+                snpsKY = UAS.T.dot(UY[:,[pheno_index]]) + UUsnps.T.dot(UUY[:,[pheno_index]]) / denom[pheno_index] #!!!y: some y work
+                #==============================================================
+                # 4M
+                #==============================================================
+                assert test_snps_chrom.iid_count == U_memmap.iid_count
+                #!!!cmk really need to tell which pheno
+                dataframe_inner = compute_stats(start, stop, snpsKY, snpsKsnps, YKY[[pheno_index]], N, logdetK[[pheno_index]], snps_read.iid_count, snps_read.sid, 
+                                          snps_read.pos, h2[pheno_index], covar_bias_count=Xdagger.shape[0])
+                dataframe_list.append(dataframe_inner)
 
+            dataframe = pd.concat(dataframe_list)
             with results_storage.open_write(cache_file) as local_file:
                 dataframe.to_csv(local_file,sep = '\t',index=False)
 
@@ -1112,7 +1143,7 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             pstutil.create_directory_if_necessary(output_file_name)
             frame.to_csv(output_file_name, sep="\t", index=False)
 
-        logging.info("PhenotypeName\t{0}".format(pheno.sid[0]))
+        logging.info("PhenotypeName(s)\t{0}".format(pheno.sid))
         logging.info("SampleSize\t{0}".format(test_snps.iid_count))
         logging.info("SNPCount\t{0}".format(test_snps.sid_count))
     

@@ -6,8 +6,8 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>epistasis.py</StartupFile>
-    <SearchPath>..\..\..\PySnpToolsPy3;..\..\..\delfastlmm3</SearchPath>
+    <StartupFile>tests\test_single_snp_scale.py</StartupFile>
+    <SearchPath>..\..\..\flpheno;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
@@ -28,9 +28,10 @@
     </InterpreterArguments>
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
     <Environment>TEMP=m:\</Environment>
     <TestFramework>unittest</TestFramework>
+    <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -157,8 +158,7 @@
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="CondaEnv|CondaEnv|py3" />
-    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda27-64" />
+    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
