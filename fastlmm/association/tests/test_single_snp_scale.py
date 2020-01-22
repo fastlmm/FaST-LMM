@@ -9,9 +9,11 @@ import pandas as pd
 import tempfile
 import shutil
 import sys
+from numpy.random import RandomState
 
 import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed, DistributedBed
+from pysnptools.snpreader import Pheno, SnpData
 from pysnptools.util.filecache import LocalCache
 from pysnptools.util.filecache import PeerToPeer
 from pysnptools.snpreader import SnpGen
@@ -23,7 +25,6 @@ from six.moves import range
 
 class TestSingleSnpScale(unittest.TestCase):
     @classmethod
-
     def cmktest_snpgen(self):
         seed = 0
         snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000)
@@ -87,22 +88,33 @@ class TestSingleSnpScale(unittest.TestCase):
             results_df = single_snp_scale(test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, cache=storage, output_file_name=output_file)
             self.compare_files(results_df,"old")
 
-    #!!!cmktest: dup the pheno and see the expect results twice. Do two separately and together and see the same results
-    def test_pheno(self):
-        logging.info("test_pheno")
-        output_file = self.file_name("pheno")
+    #!!!cmk delete
+    #@staticmethod
+    #def sort_and_save(result_list2, output_file_name):
+    #    frame = pd.concat(result_list2)
+    #    frame.sort_values(by="PValue", inplace=True)
+    #    frame.index = np.arange(len(frame))
+    #    pstutil.create_directory_if_necessary(output_file_name)
+    #    frame.to_csv(output_file_name, sep="\t", index=False)
 
-        from pysnptools.snpreader import Pheno, SnpData
-        pheno1 = Pheno(self.phen_fn).read()
-        val2 = np.array([pheno1.val[:,0],pheno1.val[:,0]]).transpose()
-        pheno2 = SnpData(iid=pheno1.iid,sid=['pheno0','pheno2'],val=val2)
+    def test_multipheno(self):
+        logging.info("test_multipheno")
 
-        storage = LocalCache("local_cache/pheno")
-        for clear_cache in (True, False):
-            if clear_cache:
-                storage.rmtree()
-            results_df = single_snp_scale(test_snps=self.bed, pheno=pheno2, covar=self.cov_fn, cache=storage, output_file_name=output_file)
-            self.compare_files(results_df,"pheno")
+        random_state =  RandomState(29921)
+        pheno_reference = Pheno(self.phen_fn).read()
+        for pheno_count in [1,2,5]: #!!!cmk need to test missing data, too
+            val = random_state.normal(loc=pheno_count,scale=pheno_count,size=(pheno_reference.iid_count,pheno_count))
+            pheno_col = ['pheno{0}'.format(i) for i in range(pheno_count)]
+            pheno_multi = SnpData(iid=pheno_reference.iid,sid=pheno_col,val=val)
+
+            reference = pd.concat([single_snp(test_snps=self.bed, pheno=pheno_multi[:,pheno_index], covar=self.cov_fn) for pheno_index in range(pheno_count)])
+            frame = single_snp_scale(test_snps=self.bed, pheno=pheno_multi, covar=self.cov_fn)
+
+            assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
+            for sid in sorted(set(reference.SNP)): #This ignores which pheno produces which pvalue
+                pvalue_frame = np.array(sorted(frame[frame['SNP'] == sid].PValue))
+                pvalue_reference = np.array(sorted(reference[reference['SNP'] == sid].PValue))
+                assert (abs(pvalue_frame - pvalue_reference) < 1e-5).all, "pair {0} differs too much from reference".format(sid)
 
 
     def cmktest_local_distribute(self):
