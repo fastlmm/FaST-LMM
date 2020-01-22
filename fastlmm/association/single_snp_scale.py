@@ -56,7 +56,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
           `DistributedBed <http://fastlmm.github.io/PySnpTools/#snpreader-distributedbed>`__ format.
     :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
 
-    :param pheno: !!!cmk A single phenotype: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__, for example,
+    :param pheno: One or more phenotypes: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__, for example,
            `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__, or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__.
            If you give a string, it should be the name of a `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__-formatted file.
            Any individual with missing phenotype data will be removed from processing.
@@ -325,7 +325,7 @@ def _create_dataframe(row_count):
 
     return dataframe
 
-def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, sid, pos, h2, covar_bias_count):
+def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, sid, pos, h2, covar_bias_count, pheno_or_none):
     '''
     Computes the stats for the test SNPs. Contains no slow matrix work. All work is order #test SNPs
     '''
@@ -348,6 +348,8 @@ def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, s
     p_values = stats.f.sf(chi2stats,1,iid_count-(covar_bias_count+1))[:,0]#note that G.shape is the number of individuals
     
     dataframe = _create_dataframe(len(sid))
+    if pheno_or_none is not None:
+        dataframe['Pheno'] = pheno_or_none
     dataframe['sid_index'] = np.arange(start,stop)
     dataframe['SNP'] = np.array(sid,'str') #This will be ascii on Python2 and unicode on Python3
     dataframe['Chr'] = pos[:,0]
@@ -362,8 +364,6 @@ def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, s
     return dataframe
 
 def _internal_single2(G0_chrom, test_snps_chrom, pheno, covar):
-
-
     return frame
 
 def preload(covar, G0, pheno, test_snps, count_A1, multi_pheno_is_ok=False):
@@ -377,9 +377,11 @@ def preload(covar, G0, pheno, test_snps, count_A1, multi_pheno_is_ok=False):
 
     if not multi_pheno_is_ok:
         assert pheno.sid_count == 1, "Expect pheno to be just one variable"
+
+    if pheno.sid_count == 1:
         pheno = pheno[(pheno.val==pheno.val)[:,0],:]
     else:
-        assert not np.isnan(pheno.val).any(), "cmk Expect no missing values"
+        assert not np.isnan(pheno.val).any(), "When multiple phenotypes are given, they must not have any missing values."
 
     covar = _pheno_fixup(covar, iid_if_none=pheno.iid,count_A1=count_A1)
     chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
@@ -577,7 +579,7 @@ def get_U(chrom, chrom_cache):
 
     return S, U_memmap, UY, UUY
 
-def apply_h2(h2,S,UYUY,UUYUUYsum0,N,k): #!!!cmk make more matrix like (or multiproc???)
+def apply_h2(h2,S,UYUY,UUYUUYsum0,N,k): #!!!make more matrix like? (or multiproc???)
     result_list = []
     for pheno_index in range(len(UUYUUYsum0)):
         result = apply_h2_inner(h2[pheno_index],S,UYUY[:,[pheno_index]],UUYUUYsum0[[pheno_index]],N,k)
@@ -1085,32 +1087,31 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             logging.debug("UUsnps = Rxsnps - U_data.val.dot(Usnps)")
     
             dataframe_list = []
-            #!!!cmk what does multipheno save in terms of time?
-            #!!!cmk does it make sense to do a plot of multiple phenos together?
-            for pheno_index in range(len(h2)): #!!!cmk make more matrix like (or multiprocess???)
+            UUSnpsUUSnps_sum0 = (UUsnps * UUsnps).sum(0) 
+            for pheno_index in range(len(h2)): #!!!make more matrix like? (or multiprocess???)
                 #==============================================================
                 # 25K x 4M -> 4M
                 #==============================================================
                 logging.debug("time={0}".format(datetime.now().strftime("%Y-%m-%d %H:%M")))
                 logging.debug("snpsKsnps = ((Usnps / Sd.reshape(-1,1) * Usnps).sum(0) + (UUsnps * UUsnps).sum(0) / denom).reshape(-1,1) #Can be done in blocks")
-                snpsKsnps = ((Usnps / Sd[:,[pheno_index]] * Usnps).sum(0) + (UUsnps * UUsnps).sum(0) / denom[pheno_index]).reshape(-1,1) #Can be done in blocks
+                snpsKsnps = ((Usnps / Sd[:,[pheno_index]] * Usnps).sum(0) + UUSnpsUUSnps_sum0 / denom[pheno_index]).reshape(-1,1) #Can be done in blocks
                 #==============================================================
                 # 25K x 4M -> 25K x 4M
                 #==============================================================
                 logging.debug("UAS = Usnps / np.lib.stride_tricks.as_strided(Sd, (Sd.size,Usnps.shape[1]), (Sd.itemsize,0))")
-                UAS = Usnps / np.lib.stride_tricks.as_strided(Sd[:,[pheno_index]], (Sd.shape[0],Usnps.shape[1]), (Sd.itemsize,0)) #!!!cmk make sure the stride_trick still works
+                UAS = Usnps / np.lib.stride_tricks.as_strided(Sd[:,[pheno_index]], (Sd.shape[0],Usnps.shape[1]), (Sd.itemsize,0))
                 #==============================================================
                 # 4M x 25K x 1 + 4M x 1M x 1 => 4M
                 #==============================================================
                 logging.debug("snpsKY = UAS.T.dot(UY) + UUsnps.T.dot(UUY) / denom #!!!y: some y work")
-                snpsKY = UAS.T.dot(UY[:,[pheno_index]]) + UUsnps.T.dot(UUY[:,[pheno_index]]) / denom[pheno_index] #!!!y: some y work
+                snpsKY = UAS.T.dot(UY[:,[pheno_index]]) + UUsnps.T.dot(UUY[:,[pheno_index]]) / denom[pheno_index]
                 #==============================================================
                 # 4M
                 #==============================================================
                 assert test_snps_chrom.iid_count == U_memmap.iid_count
-                #!!!cmk really need to tell which pheno
+                pheno_or_none = None if pheno.sid_count == 1 else pheno.sid[pheno_index]
                 dataframe_inner = compute_stats(start, stop, snpsKY, snpsKsnps, YKY[[pheno_index]], N, logdetK[[pheno_index]], snps_read.iid_count, snps_read.sid, 
-                                          snps_read.pos, h2[pheno_index], covar_bias_count=Xdagger.shape[0])
+                                          snps_read.pos, h2[pheno_index], covar_bias_count=Xdagger.shape[0], pheno_or_none=pheno_or_none)
                 dataframe_list.append(dataframe_inner)
 
             dataframe = pd.concat(dataframe_list)

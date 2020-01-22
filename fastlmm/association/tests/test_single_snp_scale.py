@@ -25,7 +25,7 @@ from six.moves import range
 
 class TestSingleSnpScale(unittest.TestCase):
     @classmethod
-    def cmktest_snpgen(self):
+    def test_snpgen(self):
         seed = 0
         snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000)
         snpdata = snpgen[:,[0,1,200,2200,10]].read()
@@ -36,7 +36,7 @@ class TestSingleSnpScale(unittest.TestCase):
         snpdata3 = snpgen[::10,[0,1,200,2200,10]].read()
         np.testing.assert_equal(snpdata3.val,snpdata2.val[::10,:])
 
-    def cmktest_snpgen_cache(self):
+    def test_snpgen_cache(self):
         cache_file = tempfile.gettempdir() + "/test_snpgen_cache.snpgen.npz"
         if os.path.exists(cache_file):
             os.remove(cache_file)
@@ -59,7 +59,7 @@ class TestSingleSnpScale(unittest.TestCase):
 
     tempout_dir = "tempout/single_snp_scale"
 
-    def cmktest_old(self):
+    def test_old(self):
         logging.info("test_old")
 
         output_file = self.file_name("old")
@@ -76,7 +76,7 @@ class TestSingleSnpScale(unittest.TestCase):
         cache_dict={chrom:storage for chrom in range(23)}
         return cache_dict
         
-    def cmktest_low(self):
+    def test_low(self):
         logging.info("test_low")
 
         output_file = self.file_name("low")
@@ -88,21 +88,12 @@ class TestSingleSnpScale(unittest.TestCase):
             results_df = single_snp_scale(test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, cache=storage, output_file_name=output_file)
             self.compare_files(results_df,"old")
 
-    #!!!cmk delete
-    #@staticmethod
-    #def sort_and_save(result_list2, output_file_name):
-    #    frame = pd.concat(result_list2)
-    #    frame.sort_values(by="PValue", inplace=True)
-    #    frame.index = np.arange(len(frame))
-    #    pstutil.create_directory_if_necessary(output_file_name)
-    #    frame.to_csv(output_file_name, sep="\t", index=False)
-
     def test_multipheno(self):
         logging.info("test_multipheno")
 
         random_state =  RandomState(29921)
         pheno_reference = Pheno(self.phen_fn).read()
-        for pheno_count in [1,2,5]: #!!!cmk need to test missing data, too
+        for pheno_count in [2,5,1]:
             val = random_state.normal(loc=pheno_count,scale=pheno_count,size=(pheno_reference.iid_count,pheno_count))
             pheno_col = ['pheno{0}'.format(i) for i in range(pheno_count)]
             pheno_multi = SnpData(iid=pheno_reference.iid,sid=pheno_col,val=val)
@@ -117,7 +108,7 @@ class TestSingleSnpScale(unittest.TestCase):
                 assert (abs(pvalue_frame - pvalue_reference) < 1e-5).all, "pair {0} differs too much from reference".format(sid)
 
 
-    def cmktest_local_distribute(self):
+    def test_local_distribute(self):
         logging.info("test_local_distribute")
         force_python_only = False
 
@@ -139,7 +130,7 @@ class TestSingleSnpScale(unittest.TestCase):
                                     )
         self.compare_files(results_df,"old")
 
-    def cmktest_mapreduce1_runner(self):
+    def test_mapreduce1_runner(self):
         logging.info("test_mapreduce1_runner")
 
         output_file = self.file_name("mapreduce1_runner")
@@ -149,7 +140,7 @@ class TestSingleSnpScale(unittest.TestCase):
 
 
 
-    def cmktest_old_one(self):
+    def test_old_one(self):
         logging.info("test_old_one")
 
         output_file = self.file_name("old_one")
@@ -161,7 +152,7 @@ class TestSingleSnpScale(unittest.TestCase):
         self.compare_files(results_df,"old_one")
 
 
-    def cmktest_one_fast(self):
+    def test_one_fast(self):
         logging.info("test_one_fast")
 
         output_file = self.file_name("one_fast")
@@ -175,7 +166,7 @@ class TestSingleSnpScale(unittest.TestCase):
         results_df = single_snp_scale(test_snps=test_snps3_dist, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed, output_file_name=output_file)
         self.compare_files(results_df,"old_one")
     
-    def cmktest_one_chrom(self):
+    def test_one_chrom(self):
         logging.info("test_one_chrom")
 
         output_file = self.file_name("one_chrom")
@@ -200,7 +191,7 @@ class TestSingleSnpScale(unittest.TestCase):
             self.compare_files(results_df,ref)
 
 
-    def cmktest_peertopeer(self):
+    def test_peertopeer(self):
         logging.info("test_peertopeer")
 
         output_file = self.file_name("peertopeer")
@@ -262,7 +253,7 @@ class TestSingleSnpScale(unittest.TestCase):
                 logging.warning("comparing to Windows output even though found: %s" % os_string)
             return windows_fn 
 
-    def cmktest_doctest(self): #Can't get doc test to work so marked out.
+    def test_doctest(self): #Can't get doc test to work so marked out.
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         doctest.ELLIPSIS_MARKER = '-etc-'
