@@ -277,6 +277,55 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     suites = getTestSuite()
 
+    if True: #!!!cmk
+        from fastlmm.association import single_snp_scale
+
+        bed_fn = "../../tests/datasets/synth/all"
+        pheno_fn = "../../tests/datasets/synth/pheno_10_causals.txt"
+        cov_fn = "../../tests/datasets/synth/cov.txt"
+
+        #Generate random pheno and covar
+        import numpy as np
+        from pysnptools.snpreader import SnpData,Pheno
+
+
+        # We could read the pheno data into memory like this
+        #     pheno_data = Pheno(some_pheno_file_with_multiple_phenotypes).read()
+        # but for this example, we'll instead add 9 random phenotypes to the previous phenotype data
+        old_pheno = Pheno(pheno_fn)
+        seed = 1
+        np.random.seed(seed)
+        pheno_count = 10
+        pheno_data = SnpData(iid=old_pheno.iid,sid=['pheno{0}'.format(i) for i in range(pheno_count)],val=np.random.randn(old_pheno.iid_count,pheno_count)*3+2)
+        for missing_index in range(5000): #Add missing data to the random phenos #make 20
+            pheno_data.val[np.random.randint(pheno_data.iid_count),np.random.randint(pheno_data.sid_count)] = np.nan
+        pheno_data.val[:,0] = old_pheno.read().val[:,0] #Stick the old phenotype in the new
+
+        # Remove any individuals lacking even a single value in any phenotype
+        pheno_wo_bad_indivs = pheno_data[(pheno_data.val==pheno_data.val).any(1),:]
+        # Standardize the pheno data to std dev 1 and then fill any missing with 0
+        pheno = pheno_wo_bad_indivs.read().standardize()
+
+
+        # Run GWAS
+        results_df = single_snp_scale(bed_fn, pheno, covar=cov_fn, count_A1=False)
+
+        # manhattan plot
+        import pylab
+        import fastlmm.util.util as flutil
+        pylab.rcParams['figure.figsize'] = (10.0, 8.0)
+        flutil.manhattan_plot(results_df[["Chr", "ChrPos", "PValue"]].values,pvalue_line=1e-5,xaxis_unit_bp=False)
+        pylab.show()
+
+        # qq plot
+        from fastlmm.util.stats import plotp
+        plotp.qqplot(results_df["PValue"].values, xlim=[0,5], ylim=[0,5])
+
+        # print head of results data frame
+        import pandas as pd
+        pd.set_option('display.width', 1000)
+        results_df.head(n=10)
+
 
     if True:
         r = unittest.TextTestRunner(failfast=True)

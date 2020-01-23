@@ -143,6 +143,9 @@
     <Content Include="..\..\MANIFEST.in">
       <Link>setup\MANIFEST.in</Link>
     </Content>
+    <Content Include="..\..\pyproject.toml">
+      <Link>setup\pyproject.toml</Link>
+    </Content>
     <Content Include="..\..\README.md">
       <Link>setup\README.md</Link>
     </Content>
