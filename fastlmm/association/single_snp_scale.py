@@ -59,7 +59,9 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     :param pheno: One or more phenotypes: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__, for example,
            `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__, or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__.
            If you give a string, it should be the name of a `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__-formatted file.
-           Any individual with missing phenotype data will be removed from processing.
+           If only one phenotype is given, any individual with missing phenotype data will be removed from processing.
+           If multiple phenotypes are given, any missing data will raise an error. (Avoid this by removing missing values, perhaps via filling in
+           missing values.)
     :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
 
     :param G0: SNPs from which to create a similarity matrix. Defaults to ``test_snps``.
