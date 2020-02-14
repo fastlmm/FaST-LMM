@@ -68,7 +68,7 @@ class LaplaceGLMM(object):
         sig12 = [self._debugUACalls[i].sig12 for i in range(len(self._debugUACalls))]
         sign2 = [self._debugUACalls[i].sign2 for i in range(len(self._debugUACalls))]
         gradMeans = [NP.mean(abs(self._debugUACalls[i].lastGrad)) for i in range(len(self._debugUACalls))]
-        
+
         Pr.prin("*** Update approximation ***")
         Pr.prin("calls: %d" % (len(self._debugUACalls),))
 
@@ -97,7 +97,7 @@ class LaplaceGLMM(object):
         gradEpsStop = 1e-10
         objEpsStop = 1e-8
         gradEpsErr = 1e-3
-        
+
         self._mean = self._calculateMean()
         m = self._mean
 
@@ -157,7 +157,7 @@ class LaplaceGLMM(object):
             failed = True
             failedMsg = 'Gradient not too small in the Laplace update approximation.\n'
             failedMsg = failedMsg+"Problem in the f mode estimation. |grad|_{mean} = %.6f." % (err,)
-       
+
         if ii>=maxIter:
             failed = True
             failedMsg = 'Laplace update approximation did not converge in less than maxIter.'
@@ -275,7 +275,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
             - 2.0*sign2*dotd(G01, G01tV) + dotd(dkH.T, dkH)) * h
 
         ret = []
-        
+
         if optSig02:
             dK0a = dot(G0, dot(G0.T, a))
             t = V*dK0a - dot(H.T, dot(H, dK0a))
@@ -287,7 +287,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
             ret0 = dot(a, dF0) - 0.5*dot(a, dK0a) + dot(f-m, t)\
                 + 0.5*NP.sum( diags*dF0 )\
                 + -0.5*trace2(VG0, G0.T) + 0.5*trace2( LkG01VG0.T, LkG01VG0 )
-            
+
             ret.append(ret0)
 
         if optSig12:
@@ -301,7 +301,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
             ret1 = dot(a, dF1)- 0.5*dot(a, dK1a) + dot(f-m, t)\
                 + 0.5*NP.sum( diags*dF1 )\
                 + -0.5*trace2(VG1, G1.T) + 0.5*trace2( LkG01VG1.T, LkG01VG1 )
-            
+
             ret.append(ret1)
 
         if optSign2:
@@ -311,7 +311,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
             retn = dot(a, dFn)- 0.5*dot(a, a) + dot(f-m, t)\
                 + 0.5*NP.sum( diags*dFn )\
                 + -0.5*NP.sum(V) + 0.5*trace2( H.T, H )
-            
+
             ret.append(retn)
 
         if optBeta:
@@ -326,7 +326,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
 
         ret = NP.array(ret)
         assert NP.all(NP.isfinite(ret)), 'Not finite regular marginal loglikelihood gradient.'
-        
+
         return ret
 
     def _predict(self, meanstar, kstar, kstarstar, prob):
@@ -339,7 +339,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
         --------------------------------------------------------------------------
         Input:
         meanstar        : input mean.
-        kstar           : covariance between provided and prior latent variables. 
+        kstar           : covariance between provided and prior latent variables.
         xstarstar       : variance of the latent variable.
         prob            : True for probability calculation or False for returning
                           the most probable label.
@@ -370,9 +370,9 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
     def _updateApproximationBegin(self):
         self._K = NP.eye(self._N) * self._sign2
         if self._isK0Set:
-            self._K += self._sig02*(dot(self._G0, self._G0.T))
+            self._K += self._sig02*(self._K0 if self._K0 is not None else dot(self._G0, self._G0.T))
         if self._isK1Set:
-            self._K += self._sig12*(dot(self._G1, self._G1.T))
+            self._K += self._sig12*(self._K1 if self._K1 is not None else dot(self._G1, self._G1.T))
 
     def _calculateUAa(self, b, W):
         Wsq = NP.sqrt(W)
@@ -471,7 +471,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
 
         ret = NP.array(ret)
         assert NP.all(NP.isfinite(ret)), 'Not finite regular marginal loglikelihood gradient.'
-        
+
         return ret
 
     def _updateApproximation(self):
@@ -487,7 +487,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
         --------------------------------------------------------------------------
         Input:
         meanstar        : input mean.
-        kstar           : covariance between provided and prior latent variables. 
+        kstar           : covariance between provided and prior latent variables.
         xstarstar       : variance of the latent variable.
         prob            : True for probability calculation or False for returning
                           the most probable label.
