@@ -56,7 +56,7 @@ class EPGLMM(object):
         converged = False
         outeriter = 1
         iterMax = 1000
-        
+
         while outeriter <= iterMax and not converged:
 
             tau_ = 1.0/prevsig2 - ttau
@@ -156,7 +156,7 @@ class EPGLMM_N1K3(GLMM_N1K3, EPGLMM):
     def _rmll_gradient(self, optSig02=True, optSig12=True, optSign2=True, optBeta=True):
         self._updateConstants()
         self._updateApproximation()
-        
+
         m = self._mean
         H = self._H
         V = self._V
@@ -174,19 +174,19 @@ class EPGLMM_N1K3(GLMM_N1K3, EPGLMM):
         if optSig02:
             r = 0.5*(dot(b, dot(G0, dot(G0.T, b))) - trace2(ddot(V, G0, left=True), G0.T)\
                 + trace2(H.T, dot(dot(H, G0), G0.T)))
-            
+
             ret.append(r)
 
         if optSig12:
             r = 0.5*(dot(b, dot(G1, dot(G1.T, b))) - trace2(ddot(V, G1, left=True), G1.T)\
                 + trace2(H.T, dot(dot(H, G1), G1.T)))
-            
+
             ret.append(r)
 
         if optSign2:
             r = 0.5*(dot(b, b) - NP.sum(V)\
                 + trace2(H.T, H))
-            
+
             ret.append(r)
 
         if optBeta:
@@ -206,21 +206,21 @@ class EPGLMM_N1K3(GLMM_N1K3, EPGLMM):
 
         V = self._calculateV(ttau, sign2)
         G01 = self._G01
-    
+
         Lk = self._calculateLk(G01, V)
-    
+
         G01tV = ddot(G01.T, V, left=False)
         H = stl(Lk, G01tV)
 
         HK = self._ldotK(H)
-    
+
         sig2 = self._dKn() - sign2**2*V - dotd(G01, dot(dot(G01tV, G01), G01.T))\
             - 2.0*sign2*dotd(G01, G01tV) + dotd(HK.T, HK)
 
         assert NP.all(NP.isfinite(sig2)), 'sig2 should be finite.'
 
         u = self._mean + self._rdotK(tnu)
-    
+
         mu = u - self._rdotK(V*u) + self._rdotK(H.T.dot(H.dot(u)))
         assert NP.all(NP.isfinite(mu)), 'mu should be finite.'
 
@@ -262,9 +262,9 @@ class EPGLMM_N3K1(GLMM_N3K1, EPGLMM):
     def _updateApproximationBegin(self):
         self._K = NP.eye(self._N) * self._sign2
         if self._isK0Set:
-            self._K += self._sig02*(dot(self._G0, self._G0.T))
+            self._K += self._sig02*(self._K0 if self._K0 is not None else dot(self._G0, self._G0.T))
         if self._isK1Set:
-            self._K += self._sig12*(dot(self._G1, self._G1.T))
+            self._K += self._sig12*(self._K1 if self._K1 is not None else dot(self._G1, self._G1.T))
 
     def _regular_marginal_loglikelihood(self):
         self._updateConstants()
@@ -329,10 +329,10 @@ class EPGLMM_N3K1(GLMM_N3K1, EPGLMM):
         if optBeta:
             r = -dot(b, self._X)
             ret += list(r)
-            
+
         ret = NP.array(ret)
         assert NP.all(NP.isfinite(ret)), 'Not finite regular marginal loglikelihood gradient.'
-        
+
         return ret
 
     def _updateApproximation(self):
