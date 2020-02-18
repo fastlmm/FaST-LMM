@@ -9,6 +9,7 @@ from fastlmm.external.util.math import check_definite_positiveness,check_symmetr
 from fastlmm.external.util.math import stl, stu
 from fastlmm.inference.glmm import GLMM_N1K3, GLMM_N3K1
 from fastlmm.inference.likelihood import LogitLikelihood, ProbitLikelihood
+from fastlmm import Pr
 import sys
 from six.moves import range
 
