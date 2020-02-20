@@ -74,7 +74,7 @@ def single_snp(test_snps, pheno, K0=None,
 
     :param covar: covariate information, optional: Can be any `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-           (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
+           (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header') #!!!cmk raise error if has NaN
     :type covar: a `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
@@ -160,7 +160,7 @@ def single_snp(test_snps, pheno, K0=None,
     covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
     if not leave_out_one_chrom:
-        assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"
+        assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"#!!!cmk document covar_by_chrom
         K0 = _kernel_fixup(K0 or G0 or test_snps, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
         K1 = _kernel_fixup(K1 or G1, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
         K0, K1, test_snps, pheno, covar  = pstutil.intersect_apply([K0, K1, test_snps, pheno, covar])
@@ -737,19 +737,6 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-
-    #import os
-    #os.chdir(r'D:\OneDrive\programs\fastlmm\fastlmm\association')
-
-    #import logging
-    #logging.basicConfig(level=logging.DEBUG)
-
-    #from fastlmm.association import single_snp
-    #from pysnptools.snpreader import Bed
-    #logging.basicConfig(level=logging.INFO)
-    #pheno_fn = "../feature_selection/examples/toydata.phe"
-    #results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
-    #print results_dataframe
 
     import doctest
     doctest.testmod()

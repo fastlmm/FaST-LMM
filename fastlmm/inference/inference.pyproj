@@ -6,8 +6,8 @@
     <ProjectGuid>6d8dcdf9-3776-4e1b-a713-e9b6f2a49865</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test_fastlmm_predictor.py</StartupFile>
-    <SearchPath>..\..\;..\..\..\PySnpToolsPy3</SearchPath>
+    <StartupFile>tests\test.py</StartupFile>
+    <SearchPath>..\..\</SearchPath>
     <OutputPath>.</OutputPath>
     <Name>inference</Name>
     <RootNamespace>inference</RootNamespace>
@@ -22,7 +22,7 @@
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <InterpreterId>Global|PythonCore|2.7</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
     <TestFramework>unittest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -37,6 +37,7 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ep.py" />
     <Compile Include="fastlmmpy3\doc\source\conf.py" />
     <Compile Include="fastlmmpy3\external\fastlmmc\fastlmmc.py" />
     <Compile Include="fastlmmpy3\external\fastlmmc\__init__.py" />
@@ -355,8 +356,12 @@
     <Compile Include="fastlmmpy3\fastlmm\__init__.py" />
     <Compile Include="fastlmmpy3\setup.py" />
     <Compile Include="fastlmm_predictor.py" />
+    <Compile Include="glmm.py" />
+    <Compile Include="laplace.py" />
+    <Compile Include="likelihood.py" />
     <Compile Include="linear_regression.py" />
     <Compile Include="lmm.py" />
+    <Compile Include="lmm2k.py" />
     <Compile Include="lmm_cov.py" />
     <Compile Include="tests\test.py" />
     <Compile Include="tests\test_linear_regression.py">
@@ -1321,10 +1326,6 @@
     <Folder Include="fastlmmpy3\fastlmm\inference\fastlmmpy3\fastlmm\inference\fastlmmpy3\fastlmm\inference\fastlmmpy3\fastlmm\inference\fastlmmpy3\.git\lfs\objects\37\" />
     <Folder Include="fastlmmpy3\fastlmm\inference\fastlmmpy3\fastlmm\inference\fastlmmpy3\fastlmm\inference\fastlmmpy3\fastlmm\inference\fastlmmpy3\.git\lfs\objects\37\51\" />
     <Folder Include="tests\" />
-  </ItemGroup>
-  <ItemGroup>
-    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda27-64" />
-    <InterpreterReference Include="Global|PythonCore|2.7" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fastlmmpy3\.gitattributes" />
@@ -3747,6 +3748,9 @@
     <Content Include="fastlmmpy3\MANIFEST.in" />
     <Content Include="fastlmmpy3\README.md" />
     <Content Include="fastlmmpy3\setup.py.bak" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

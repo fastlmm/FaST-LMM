@@ -73,7 +73,7 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     :param covar: covariate information, optional: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__, for example, `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__,
            or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__,.
-           If you give a string, it should be the name of a `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__-formatted file.
+           If you give a string, it should be the name of a `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__-formatted file. #!!!cmk raise error if has NaN
     :type covar: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
 
     :param cache: Tells where to store intermediate results. Place the cache on an SSD drive for best performance.

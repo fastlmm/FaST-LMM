@@ -151,7 +151,7 @@ int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_cou
 		omp_set_num_threads(num_threads);
 		long long test_sid_index;
 		long long nThreads = 0;
-		#pragma omp parallel default(none) private(test_sid_index) shared(fs, nThreads,test_sid_count,train_sid_index,iid_count,aTb,ref_write,ref_read,b1,aaTb)
+		#pragma omp parallel private(test_sid_index) shared(fs, nThreads,test_sid_count,train_sid_index,iid_count,aTb,ref_write,ref_read,b1,aaTb) //default(none) removed to work around an 'error' on Linux and Python2
 		{
 			#pragma omp master
 			nThreads = omp_get_num_threads();

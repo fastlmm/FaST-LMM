@@ -9,7 +9,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.4.2'
+version = '0.4.5'
 
 
 def readme():
@@ -49,6 +49,7 @@ if platform.system() == "Darwin":
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
     mp5lib = 'iomp5'
     mkl_core = 'mkl_core'
+    extra_compile_args0 = []
     extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
     extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
 elif "win" in platform.system().lower():
@@ -185,7 +186,7 @@ setup(
                        "examples/toydataTrain.phe"
                        ]
                  },
-    install_requires = ['scipy>=0.15.1', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1', 'scikit-learn>=0.19.1', 'pysnptools>=0.4.9', 'dill>=0.2.9', 'mkl>=2019.0'],
+    install_requires = ['scipy>=0.15.1', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1', 'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9', 'mkl>=2019.0'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
   )
