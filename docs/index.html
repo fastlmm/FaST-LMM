@@ -73,30 +73,30 @@ list (or use <a class="reference external" href="https://mail.python.org/mailman
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>test_snps</strong> – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
+<li><p><strong>test_snps</strong> – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p></li>
-<li><p><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example,
-<a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+<li><p><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example,
+<a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 Any IIDs with missing values will be removed.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
 <li><p><strong>K0</strong> – <p>SNPs from which to create a similarity matrix. If not given, will use test_snps.
-Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
-or a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
+(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
+or a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
 </p></li>
 <li><p><strong>K1</strong> – <p>SNPs from which to create a second similarity matrix, optional. (Also, see ‘mixing’).
-Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
-or a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
+(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
+or a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
 </p></li>
 <li><p><strong>mixing</strong> (<em>number</em>) – Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1 relative to K0.
 If you give no mixing number and a K1 is given, the best weight will be learned.</p></li>
-<li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+<li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
@@ -123,7 +123,7 @@ default: None</p></li>
 <li><p><strong>force_low_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</p></li>
 <li><p><strong>G0</strong> – Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.</p></li>
 <li><p><strong>G1</strong> – Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.</p></li>
-<li><p><strong>runner</strong> – a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
+<li><p><strong>runner</strong> – a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</p></li>
 <li><p><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
 alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</p></li>
@@ -258,18 +258,18 @@ Will reorder and intersect IIDs as needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>test_snps</strong> – <p>SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+<li><p><strong>test_snps</strong> – <p>SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
-<li><p><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+<li><p><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 Any IIDs with missing values will be removed.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
 <li><p><strong>G</strong> – <p>SNPs from which to create a similarity matrix of the top <em>k</em> SNPs. If not given, will use test_snps.
-Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p>
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p>
 </p></li>
-<li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+<li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
@@ -286,7 +286,7 @@ If not given will search for best value.</p></li>
 <li><p><strong>h2</strong> (<em>number</em>) – A parameter to LMM learning that tells how much weight to give the K’s vs. the identity matrix, optional
 If not given will search for best value.</p></li>
 <li><p><strong>do_plot</strong> (<em>boolean</em>) – If true, will plot, for each chrom, the negative loglikelihood vs k.</p></li>
-<li><p><strong>runner</strong> – <p>a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
+<li><p><strong>runner</strong> – <p>a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</p>
 </p></li>
 <li><p><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
