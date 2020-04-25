@@ -12,6 +12,9 @@ matrix:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda info -a
+    - conda install pip
+    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - conda install --file r.nopysnptools.txt
     - pip install -r requirements.txt
 
   - name: linux_py2
@@ -27,14 +30,16 @@ matrix:
     - conda update -q conda
     - conda info -a
     - conda install pip
+    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - conda install --file r.nopysnptools.txt
     - pip install -r requirements.txt
 
-  - name: macosx_py2
+  - name: macosx_py3
     os: osx
     osx_image: xcode11.2
     language: shell
     before_install:
-    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
     - hash -r
@@ -42,6 +47,8 @@ matrix:
     - conda update -q conda
     - conda info -a
     - conda install pip
+    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - conda install --file r.nopysnptools.txt
     - pip install --user -r requirements.txt
 
   - name: win_py3
