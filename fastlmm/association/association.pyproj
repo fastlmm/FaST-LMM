@@ -6,7 +6,7 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>single_snp.py</StartupFile>
+    <StartupFile>tests\test_single_snp_scale.py</StartupFile>
     <SearchPath>..\..\..\pysnptools;..\..\..\fastlmm</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -113,6 +113,9 @@
     <Compile Include="score.py" />
     <Compile Include="_pipelines.py" />
     <Compile Include="__init__.py" />
+    <Content Include="..\..\.travis.yml">
+      <Link>setup\.travis.yml</Link>
+    </Content>
     <Content Include="..\..\AUTHORS.txt">
       <Link>setup\AUTHORS.txt</Link>
     </Content>
@@ -148,6 +151,9 @@
     </Content>
     <Content Include="..\..\README.md">
       <Link>setup\README.md</Link>
+    </Content>
+    <Content Include="..\..\requirements.txt">
+      <Link>setup\requirements.txt</Link>
     </Content>
     <Content Include="Fastlmm_autoselect\fastlmmc" />
     <Content Include="Fastlmm_autoselect\FastLmmC.exe" />

@@ -1,0 +1,75 @@
+language: python
+matrix:
+  include:
+  - name: linux_py3
+    python: 3.7
+    os: linux
+    before_install:
+    - pip install -r requirements.txt
+
+  - name: linux_py2
+    python: 2.7
+    os: linux
+    before_install:
+    - pip install -r requirements.txt
+
+  - name: macosx_py2
+    os: osx
+    osx_image: xcode11.2
+    language: shell
+    before_install:
+    - pip install --user -r requirements.txt
+
+  - name: win_py3
+    os: windows
+    language: shell
+    before_install:
+    - choco install python --version 3.7.3 --no-progress
+    - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+    - cp /c/Python37/python.exe /c/Python37/python3.exe
+    - pip install -r requirements.txt
+    - pip install wheel
+
+  - name: win_py2
+    os: windows
+    language: shell
+    before_install:
+    - choco install python2 --no-progress
+    - choco install --ignore-dependencies vcpython27
+    - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
+    - pip install -r requirements.txt
+    - pip install wheel
+
+install:
+- python setup.py build_ext --inplace
+- python setup.py sdist bdist_wheel
+
+script:
+- export PYTHONPATH=$TRAVIS_BUILD_DIR
+- python tests/test.py
+
+deploy:
+  provider: s3
+  access_key_id: AKIAIJGTUJPG2US6OIOQ
+  secret_access_key: $AWS_SECRET_KEY
+  bucket: "traviscibucket"
+  upload_dir: $TRAVIS_REPO_SLUG/$TRAVIS_BRANCH/$TRAVIS_BUILD_NUMBER.$TRAVIS_COMMIT/$TRAVIS_JOB_NAME
+  local_dir: $TRAVIS_BUILD_DIR/dist
+  skip_cleanup: true
+  on:
+    all_branches: true
+
+#deploy:
+#  provider: script
+# #script: bash -c "ls -las dist"
+#  script: bash -c "echo $NOT_NEEDED"
+#  skip_cleanup: true
+#  on:
+#    branch: dev
+
+notifications:
+  email:
+    recipients:
+    - carlk@msn.com
+    on_success: always
+    on_failure: always

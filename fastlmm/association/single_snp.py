@@ -31,51 +31,51 @@ from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kern
 import fastlmm.inference.linear_regression as lin_reg
 from six.moves import range
 
-def single_snp(test_snps, pheno, K0=None,
+def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count, might be a covar mix up.(but only if a SnpKernel
                  K1=None, mixing=None,
                  covar=None, covar_by_chrom=None, leave_out_one_chrom=True, output_file_name=None, h2=None, log_delta=None,
-                 cache_file = None, GB_goal=None, interact_with_snp=None, force_full_rank=False, force_low_rank=False, G0=None, G1=None, runner=None,
+                 cache_file=None, GB_goal=None, interact_with_snp=None, force_full_rank=False, force_low_rank=False, G0=None, G1=None, runner=None,
                  count_A1=None):
     """
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
     (For backwards compatibility, you may use 'leave_out_one_chrom=False' to skip cross validation, but that is not recommended.)
 
-    :param test_snps: SNPs to test. Can be any `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_. 
+    :param test_snps: SNPs to test. Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. 
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type test_snps: a `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+    :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param pheno: A single phenotype: Can be any `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
-           `Pheno <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata>`_.
+    :param pheno: A single phenotype: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
+           `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            Any IIDs with missing values will be removed.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
-    :type pheno: a `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+    :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param K0: SNPs from which to create a similarity matrix. If not given, will use test_snps.
-           Can be any `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_. 
+           Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. 
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-           (When leave_out_one_chrom is False, can be a `KernelReader <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader>`_
-           or a `KernelNpz <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
-    :type K0: `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
-           (or `KernelReader <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+           (When leave_out_one_chrom is False, can be a `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
+           or a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
+    :type K0: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+           (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
     :param K1: SNPs from which to create a second similarity matrix, optional. (Also, see 'mixing').
-           Can be any `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_.
+           Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-           (When leave_out_one_chrom is False, can be a `KernelReader <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader>`_
-           or a `KernelNpz <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
-    :type K1: `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
-           (or `KernelReader <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+           (When leave_out_one_chrom is False, can be a `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
+           or a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
+    :type K1: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+           (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
     :param mixing: Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1 relative to K0.
             If you give no mixing number and a K1 is given, the best weight will be learned.
     :type mixing: number
 
-    :param covar: covariate information, optional: Can be any `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata>`_.
+    :param covar: covariate information, optional: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-           (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header') #!!!cmk raise error if has NaN
-    :type covar: a `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+           (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header') #!!!LATER raise error if covar has NaN
+    :type covar: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
            (Warning: setting False can cause proximal contamination.)
@@ -116,14 +116,14 @@ def single_snp(test_snps, pheno, K0=None,
     :type force_low_rank: Boolean
 
     :param G0: Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.
-    :type G0: `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+    :type G0: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
     :param G1: Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.
-    :type G1: `SnpReader <http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://fastlmm.github.io.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+    :type G1: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
-    :param runner: a `Runner <http://fastlmm.github.io.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
+    :param runner: a `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
         If not given, the function is run locally.
-    :type runner: `Runner <http://fastlmm.github.io.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
+    :type runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
     :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
@@ -160,7 +160,7 @@ def single_snp(test_snps, pheno, K0=None,
     covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
     if not leave_out_one_chrom:
-        assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"#!!!cmk document covar_by_chrom
+        assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"#!!!LATER document covar_by_chrom
         K0 = _kernel_fixup(K0 or G0 or test_snps, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
         K1 = _kernel_fixup(K1 or G1, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
         K0, K1, test_snps, pheno, covar  = pstutil.intersect_apply([K0, K1, test_snps, pheno, covar])

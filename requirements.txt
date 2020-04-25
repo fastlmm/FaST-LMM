@@ -1,0 +1,8 @@
+scipy>=1.1.0
+numpy>=1.11.3
+pandas>=0.19.0
+matplotlib>=1.5.1
+scikit-learn>=0.19.1
+pysnptools>=0.4.10
+dill>=0.2.9
+mkl>=2019.0
