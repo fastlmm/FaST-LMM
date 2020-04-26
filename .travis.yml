@@ -61,7 +61,8 @@ matrix:
     os: windows
     language: shell
     before_install:
-    - choco install miniconda3
+    - choco install miniconda3 --params="'/AddToPath:1'"
+    - dir C:\Tools\
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda info -a
