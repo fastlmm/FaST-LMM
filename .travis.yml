@@ -38,7 +38,7 @@ matrix:
 
   - name: macosx_py3
     os: osx
-    osx_image: xcode11.2
+    osx_image: xcode11.3
     language: shell
     before_install:
     - brew install gcc@7
@@ -61,9 +61,8 @@ matrix:
     os: windows
     language: shell
     before_install:
-    - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
-    - dir
-    - ./Miniconda3-latest-Windows-x86_64.exe
+    - curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe --output miniconda.exe
+    - ./miniconda.exe
     - export PATH=$HOME/miniconda/bin:$PATH
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
