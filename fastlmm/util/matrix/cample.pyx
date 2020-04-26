@@ -5,7 +5,7 @@ cimport scipy.linalg.cython_lapack as cython_lapack
 
 cdef int ZERO = 0
 ctypedef cnp.float64_t REAL_t
-ctypedef cnp.int64_t MKL_INT 
+ctypedef long long int MKL_INT 
 
 def inverse(mat,identity,pivots,k):
     cdef int K = k
