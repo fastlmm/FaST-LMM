@@ -47,7 +47,7 @@ matrix:
     #- brew info gcc
     #- brew install gcc
     #- brew cleanup 
-    - brew install gcc
+    - brew install gcc7
     - export CC=gcc-7
     - export CXX=g++-7
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
