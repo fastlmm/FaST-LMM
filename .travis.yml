@@ -39,6 +39,7 @@ matrix:
   - name: macosx_py3
     os: osx
     osx_image: xcode11.2
+    compiler: gcc
     language: shell
     before_install:
     #- export HOMEBREW_NO_ANALYTICS=1
