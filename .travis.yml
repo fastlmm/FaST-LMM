@@ -41,12 +41,6 @@ matrix:
     osx_image: xcode11.2
     language: shell
     before_install:
-    #- export HOMEBREW_NO_ANALYTICS=1
-    #- brew update
-    #- brew upgrade
-    #- brew info gcc
-    #- brew install gcc
-    #- brew cleanup 
     - brew install gcc@7
     - export CC=gcc-7
     - export CXX=g++-7
@@ -67,12 +61,17 @@ matrix:
     os: windows
     language: shell
     before_install:
-    - choco install python --version 3.7.3 --no-progress
-    - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-    - cp /c/Python37/python.exe /c/Python37/python3.exe
-    - pip install -r requirements.txt
+    - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe -O miniconda.exe;
+    - miniconda.exe
+    - export PATH=$HOME/miniconda/bin:$PATH
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda info -a
+    - conda install pip
+    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - conda install --file r.nopysnptools.txt
     - conda install cython
-    - pip install wheel
+    - pip install -r requirements.txt
 
   - name: win_py2
     os: windows

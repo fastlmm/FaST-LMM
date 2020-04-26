@@ -7,3 +7,4 @@ pysnptools>=0.4.10
 dill>=0.2.9
 mkl>=2019.0
 statsmodels>=0.10.1
+psutil>=5.7.0
