@@ -16,7 +16,7 @@ def readme():
     with open('README.md') as f:
        return f.read()
 
-try:
+try: #cmk pip install cython
     from Cython.Distutils import build_ext
 except ImportError:
     use_cython = False
@@ -24,14 +24,17 @@ else:
     use_cython = True
 
 class CleanCommand(Clean):
+    print("clean cmk")
     description = "Remove build directories, and compiled files (including .pyc)"
 
     def run(self):
+        print("clean2 cmk")
         Clean.run(self)
         if os.path.exists('build'):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('.'):
             for filename in filenames:
+                print(filename)#!!!cmk Why doesn't clean clean the *.pyd?
                 if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))
                     or filename.endswith('.pyd')
                     or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
@@ -74,6 +77,7 @@ mkl_include_list = [intel_root+"/mkl/include"]
 runtime_library_dirs = None if "win" in platform.system().lower() else mkl_library_list
 
 #see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
+print("HELLO {0}".format(use_cython)) #!!!cmk
 if use_cython:
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
                              language="c++",

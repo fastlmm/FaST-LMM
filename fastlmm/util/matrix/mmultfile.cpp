@@ -46,7 +46,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 		cerr << "The file did not seek." << endl;
 		return -1;
 	}
-	if (fread((char*)&buffer_0[0], sizeof(double), iid_count*(stop - start), pFile) != iid_count*(stop - start))
+	if (fread((char*)&buffer_0[0], sizeof(double), iid_count*(stop - start), pFile) != (unsigned int) (iid_count*(stop - start)))
 	{
 		cerr << "buffer read failed" << endl;
 		return -1;
@@ -55,11 +55,11 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 	for (long long i = work_index; i < work_count; ++i) {
 		if (log_frequency > 0 && i % log_frequency == 0)
 		{
-			printf("For work_index=%d of %d, processing i=%d (in %d..%d) (iid_count=%d, sid_count=%d, num_threads=%d)\n", work_index, work_count, i, work_index, work_count, iid_count, sid_count, num_threads);
+			printf("For work_index=%lld of %lld, processing i=%lld (in %lld..%lld) (iid_count=%lld, sid_count=%lld, num_threads=%d)\n", work_index, work_count, i, work_index, work_count, iid_count, sid_count, num_threads);
 		}
 		else if (log_frequency == -2)
 		{
-			printf("For work_index=%d of %d, processing i=%d (in %d..%d) (iid_count=%d, sid_count=%d, num_threads=%d)\n", work_index, work_count, i, work_index, work_count, iid_count, sid_count, num_threads);
+			printf("For work_index=%lld of %lld, processing i=%lld (in %lld..%lld) (iid_count=%lld, sid_count=%lld, num_threads=%d)\n", work_index, work_count, i, work_index, work_count, iid_count, sid_count, num_threads);
 			printf("SKIPPING computation\n");
 		}
 
@@ -76,7 +76,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 			if (nexti < sid_count*work_count)
 			{
 				printf("reading next chunk\n");
-				if (fread((char*)&(*ref_next)[0], sizeof(double), iid_count*(nexti - stopi), pFile) != iid_count*(stop - start))
+				if (fread((char*)&(*ref_next)[0], sizeof(double), iid_count*(nexti - stopi), pFile) != (unsigned int) (iid_count*(stop - start)))
 				{
 					cerr << "buffer read failed" << endl;
 				}
@@ -88,7 +88,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 #pragma omp for schedule(dynamic)
 			for (long long j = 0; j < stopi - starti; ++j) {
 				if (log_frequency != -2) {
-					printf("Doing computation %d\n", j);
+					printf("Doing computation %lld\n", j);
 					long long j_iid_count = j*iid_count;
 					for (long long k = 0; k < stop - start; ++k) {
 						long long k_iid_count = k*iid_count;
@@ -98,7 +98,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 						}
 						ata_piece[(j + starti - start)*(stop - start) + k] = temp;
 					}
-					printf("done with computation %d\n", j);
+					printf("done with computation %lld\n", j);
 				}
 			}
 			printf("done with parallel loop\n");
@@ -145,7 +145,7 @@ int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_cou
 	for (long long train_sid_index = 0; train_sid_index < train_sid_count; ++train_sid_index) {
 		if (log_frequency>0 && train_sid_index % log_frequency == 0)
 		{
-			printf("\rProcessing column train_sid_index=%d of %d (iid_count=%d, test_sid_count=%d)               ", train_sid_index, train_sid_count, iid_count, test_sid_count);
+			printf("\rProcessing column train_sid_index=%lld of %lld (iid_count=%lld, test_sid_count=%lld)               ", train_sid_index, train_sid_count, iid_count, test_sid_count);
 		}
 
 		omp_set_num_threads(num_threads);
