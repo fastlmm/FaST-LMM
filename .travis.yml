@@ -38,15 +38,15 @@ matrix:
 
   - name: macosx_py3
     os: osx
-    osx_image: xcode11.2
+    osx_image: xcode9.4
     language: shell
     before_install:
-    - export HOMEBREW_NO_ANALYTICS=1
-    - brew update
-    - brew upgrade
-    - brew info gcc
-    - brew install gcc
-    - brew cleanup 
+    #- export HOMEBREW_NO_ANALYTICS=1
+    #- brew update
+    #- brew upgrade
+    #- brew info gcc
+    #- brew install gcc
+    #- brew cleanup 
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
