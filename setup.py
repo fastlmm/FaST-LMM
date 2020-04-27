@@ -191,7 +191,7 @@ setup(
                        ]
                  },
     install_requires = ['scipy>=0.15.1', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9', 'mkl>=2019.0',
+                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9', 'mkl==2019.0',
                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],#!!!cmk figure out which version of psutil to put in setup and re*.txt in fastlmm and pysnptools
     cmdclass = cmdclass,
     ext_modules = ext_modules,

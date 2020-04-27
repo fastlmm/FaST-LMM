@@ -61,6 +61,8 @@ matrix:
     os: windows
     language: shell
     before_install:
+    #git clone --depth=50 --branch=dev https://github.com/fastlmm/FaST-LMM.git fastlmm/FaST-LMM
+    #cd fastlmm/FaST-LMM
     - choco install miniconda3
     - echo $ChocolateyToolsLocation
     - export SYSP=/c/tools/miniconda3
