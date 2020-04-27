@@ -65,7 +65,7 @@ matrix:
     - echo $ChocolateyToolsLocation
     - export PATH=/c/tools/miniconda3:/c/tools/miniconda3/Scripts:$PATH
     - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
+    #- conda update -q conda
     - conda info -a
     - conda install pip
     - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
