@@ -69,6 +69,7 @@ matrix:
     - conda update -q conda
     - conda info -a
     - conda install pip
+    - choco install grep
     - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
     - conda install --file r.nopysnptools.txt
     - conda install cython
