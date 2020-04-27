@@ -62,7 +62,7 @@ matrix:
     language: shell
     before_install:
     - choco install miniconda3 --params="'/AddToPath:1'"
-    - echo %PATH%
+    - echo $PATH
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda info -a
