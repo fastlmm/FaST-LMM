@@ -16,7 +16,7 @@ def readme():
     with open('README.md') as f:
        return f.read()
 
-try: #cmk pip install cython
+try:
     from Cython.Distutils import build_ext
 except ImportError:
     use_cython = False
@@ -24,17 +24,14 @@ else:
     use_cython = True
 
 class CleanCommand(Clean):
-    print("clean cmk")
     description = "Remove build directories, and compiled files (including .pyc)"
 
     def run(self):
-        print("clean2 cmk")
         Clean.run(self)
         if os.path.exists('build'):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('.'):
             for filename in filenames:
-                print(filename)#!!!cmk Why doesn't clean clean the *.pyd?
                 if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))
                     or filename.endswith('.pyd')
                     or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
@@ -77,7 +74,7 @@ mkl_include_list = [intel_root+"/mkl/include"]
 runtime_library_dirs = None if "win" in platform.system().lower() else mkl_library_list
 
 #see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
-print("HELLO {0}".format(use_cython)) #!!!cmk
+print("use_cython? {0}".format(use_cython))
 if use_cython:
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
                              language="c++",
@@ -192,7 +189,7 @@ setup(
                  },
     install_requires = ['scipy>=0.15.1', 'numpy>=1.11.3', 'pandas>=0.19.0','matplotlib>=1.5.1',
                        'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9', 'mkl>=2019.0',
-                       'statsmodels>=0.10.1', 'psutil>=5.6.7'],#!!!cmk figure out which version of psutil to put in setup and re*.txt in fastlmm and pysnptools
+                       'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
   )

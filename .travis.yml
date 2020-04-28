@@ -19,25 +19,6 @@ matrix:
     - conda install cython
     - pip install -r r.pysnptools.txt 
 
-  - name: linux_py2
-    python: 2.7
-    os: linux
-    before_install:
-    #see https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html
-    - wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export PATH=$HOME/miniconda/bin:$PATH
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda info -a
-    - conda install pip
-    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
-    - fgrep pysnptools requirements.txt > r.pysnptools.txt
-    - conda install --file r.nopysnptools.txt
-    - conda install cython
-    - pip install -r r.pysnptools.txt 
-
   - name: macosx_py3
     os: osx
     osx_image: xcode11.3
@@ -82,25 +63,6 @@ matrix:
     #We don't do all of requirements.txt because it downgrades some mkl (for no good reason)
     - pip install -r r.pysnptools.txt 
 
-  - name: win_py2
-    os: windows
-    language: shell
-    before_install:
-    - choco install miniconda2
-    - echo $ChocolateyToolsLocation
-    - export SYSP=/c/tools/miniconda2
-    - export PATH=$SYSP:$SYSP/Library/bin:$SYSP/Scripts:$PATH
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda info -a
-    - conda install pip
-    - choco install grep
-    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
-    - fgrep pysnptools requirements.txt > r.pysnptools.txt
-    - conda install --file r.nopysnptools.txt
-    - conda install cython
-    #We don't do all of requirements.txt because it downgrades some mkl (for no good reason)
-    - pip install -r r.pysnptools.txt 
 
 install:
 - python setup.py build_ext --inplace
