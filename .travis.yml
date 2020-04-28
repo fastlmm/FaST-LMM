@@ -14,7 +14,7 @@ matrix:
     - conda info -a
     - conda install pip
     - conda install cython
-    - pip install requirements.txt
+    - pip install -f requirements.txt
 
   - name: macosx_py3
     os: osx
@@ -33,7 +33,7 @@ matrix:
     - conda info -a
     - conda install pip
     - conda install cython
-    - pip install requirements.txt
+    - pip install -f requirements.txt
 
   - name: win_py3
     os: windows
@@ -51,7 +51,7 @@ matrix:
     - conda info -a
     - conda install pip
     - conda install cython
-    - pip install requirements.txt
+    - pip install -f requirements.txt
 
 install:
 - python setup.py build_ext --inplace
