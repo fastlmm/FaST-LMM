@@ -46,39 +46,23 @@ Contacts
 Quick install:
 =================================
 
-If you have pip installed, installation is as easy as:
+If you have Anaconda installed, installation is as easy as:
 
+    conda install "mkl==2019.4" "scipy>=1.1.0" "numpy>=1.11.3"
     pip install fastlmm
-
-Detailed Package Install Instructions:
-==================================================================
-
-fastlmm has the following dependencies:
-
-python 3.7+ or python 2.7+
-
-Packages:
-
-* scipy
-* numpy
-* pandas
-* matplotlib
-* scikit.learn (sklearn)
-* dill
-* mkl
-* pysnptools
-* cython
-* optional: [statsmodels -- install only required for logistic-based tests, not the standard linear LRT]
-
 
 (1) Installation of dependent packages
 -------------------------------------------
 
+You must have the mkl 2019.4 (and related) packages installed. It is not available via pip,
+but the conda command above will install it.
+
 We recommend using a Python distribution such as 
 [Anaconda](https://www.anaconda.com/distribution/).
-This distribution can be used on Linux and Windows and is free.
+This distribution can be used on Linux, Windows, and Mac and is free.
 It is the easiest way to get all the required package
-dependencies.
+dependencies, especially the those related to the
+MKL library.
 
 
 (2) Installing from source
@@ -114,12 +98,6 @@ To build extension (from .\src dir), type the following at the OS prompt:
     python setup.py build_ext --inplace
 
 
-Note, if this fails with a gcc permission denied error, then specifying the correct compiler will
-likely fix the problem, e.g.
-
-    python setup.py build_ext --inplace --compiler=msvc
-
-
 Don't forget to set your PYTHONPATH to point to the directory above the one named fastlmm in
 the fastlmm source code. For e.g. if fastlmm is in the [somedir] directory, then
 in the unix shell use:
@@ -133,29 +111,7 @@ one can use:
 
 (or use the Windows GUI for env variables).
 
-Note for Windows: You must have Visual Studio installed. If you have VisualStudio2008 installed 
-(which was used to build python2.7) you need to nothing more. Otherwise, follow these instructions:
-
-If you have Visual Studio 2010 installed, execute:
-
-    SET VS90COMNTOOLS=%VS100COMNTOOLS%
-
-or with Visual Studio 2012 installed:
-
-    SET VS90COMNTOOLS=%VS110COMNTOOLS%
-
-or with Visual Studio 2013 installed:
-
-    SET VS90COMNTOOLS=%VS120COMNTOOLS%
-
-or with Visual Studio 2015 installed:
-
-    SET VS90COMNTOOLS=%VS130COMNTOOLS%
-
-or with Visual Studio 2017 installed:
-
-    SET VS90COMNTOOLS=%VS140COMNTOOLS%
-
+Note for Windows: You must have Visual Studio installed.
 
 Running regression tests
 --------------------------------------
