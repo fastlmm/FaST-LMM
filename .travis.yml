@@ -8,16 +8,6 @@ matrix:
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda info -a
-    - conda install pip
-    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
-    - fgrep pysnptools requirements.txt > r.pysnptools.txt
-    - conda install --file r.nopysnptools.txt
-    - conda install cython
-    - pip install -r r.pysnptools.txt 
 
   - name: macosx_py3
     os: osx
@@ -30,42 +20,28 @@ matrix:
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda info -a
-    - conda install pip
-    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
-    - fgrep pysnptools requirements.txt > r.pysnptools.txt
-    - conda install --file r.nopysnptools.txt
-    - conda install cython
-    - pip install -r r.pysnptools.txt 
 
   - name: win_py3
     os: windows
     language: shell
     before_install:
-    #git clone --depth=50 --branch=dev https://github.com/fastlmm/FaST-LMM.git fastlmm/FaST-LMM
-    #cd fastlmm/FaST-LMM
     - choco install miniconda3
+    - choco install grep
     - echo $ChocolateyToolsLocation
     - export SYSP=/c/tools/miniconda3
     - export PATH=$SYSP:$SYSP/Library/bin:$SYSP/Scripts:$PATH
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda info -a
-    - conda install pip
-    - choco install grep
-    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
-    - fgrep pysnptools requirements.txt > r.pysnptools.txt
-    - conda install --file r.nopysnptools.txt
-    - conda install cython
-    #We don't do all of requirements.txt because it downgrades some mkl (for no good reason)
-    - pip install -r r.pysnptools.txt 
-
 
 install:
+- hash -r
+- conda config --set always_yes yes --set changeps1 no
+- conda update -q conda
+- conda info -a
+- conda install pip
+- conda install cython
+- conda install --file conda_requirements.txt
+- pip install -r requirements.txt
 - python setup.py build_ext --inplace
+- python freeze
 - python setup.py sdist bdist_wheel
 
 script:

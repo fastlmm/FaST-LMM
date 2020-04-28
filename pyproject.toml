@@ -1,2 +1,2 @@
 [build-system]
-requires = ["numpy>=1.11.3", "setuptools"]
+requires = ["numpy>=1.11.3", "setuptools>=46.1.3"]
