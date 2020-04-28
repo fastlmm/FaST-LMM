@@ -14,9 +14,10 @@ matrix:
     - conda info -a
     - conda install pip
     - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - fgrep pysnptools requirements.txt > r.pysnptools.txt
     - conda install --file r.nopysnptools.txt
     - conda install cython
-    - pip install -r requirements.txt
+    - pip install -r r.pysnptools.txt 
 
   - name: linux_py2
     python: 2.7
@@ -32,9 +33,10 @@ matrix:
     - conda info -a
     - conda install pip
     - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - fgrep pysnptools requirements.txt > r.pysnptools.txt
     - conda install --file r.nopysnptools.txt
     - conda install cython
-    - pip install -r requirements.txt
+    - pip install -r r.pysnptools.txt 
 
   - name: macosx_py3
     os: osx
@@ -53,9 +55,10 @@ matrix:
     - conda info -a
     - conda install pip
     - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - fgrep pysnptools requirements.txt > r.pysnptools.txt
     - conda install --file r.nopysnptools.txt
     - conda install cython
-    - pip install --user -r requirements.txt
+    - pip install -r r.pysnptools.txt 
 
   - name: win_py3
     os: windows
@@ -73,20 +76,31 @@ matrix:
     - conda install pip
     - choco install grep
     - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - fgrep pysnptools requirements.txt > r.pysnptools.txt
     - conda install --file r.nopysnptools.txt
     - conda install cython
-    - pip install -r requirements.txt
+    #We don't do all of requirements.txt because it downgrades some mkl (for no good reason)
+    - pip install -r r.pysnptools.txt 
 
   - name: win_py2
     os: windows
     language: shell
     before_install:
-    - choco install python2 --no-progress
-    - choco install --ignore-dependencies vcpython27
-    - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
-    - pip install -r requirements.txt
+    - choco install miniconda2
+    - echo $ChocolateyToolsLocation
+    - export SYSP=/c/tools/miniconda2
+    - export PATH=$SYSP:$SYSP/Library/bin:$SYSP/Scripts:$PATH
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda info -a
+    - conda install pip
+    - choco install grep
+    - fgrep -v pysnptools requirements.txt > r.nopysnptools.txt
+    - fgrep pysnptools requirements.txt > r.pysnptools.txt
+    - conda install --file r.nopysnptools.txt
     - conda install cython
-    - pip install wheel
+    #We don't do all of requirements.txt because it downgrades some mkl (for no good reason)
+    - pip install -r r.pysnptools.txt 
 
 install:
 - python setup.py build_ext --inplace
