@@ -46,14 +46,16 @@ Contacts
 Quick install:
 =================================
 
-If you have pip installed, installation is as easy as:
+If you have Anaconda installed, installation is as easy as:
 
+    conda install "mkl==2019.4" "scipy>=1.1.0" "numpy>=1.11.3"
     pip install fastlmm
 
 (1) Installation of dependent packages
 -------------------------------------------
 
-The requirements.txt file lists dependent packages.
+You must have the mkl 2019.4 (and related) packages installed. It is not available via pip,
+but the conda command above will install it.
 
 We recommend using a Python distribution such as 
 [Anaconda](https://www.anaconda.com/distribution/).
