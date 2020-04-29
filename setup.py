@@ -9,7 +9,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.4.7'
+version = '0.4.8'
 
 
 def readme():
