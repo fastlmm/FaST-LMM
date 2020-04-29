@@ -46,7 +46,7 @@ install:
 script:
 - export PYTHONPATH=$TRAVIS_BUILD_DIR
 - cd tests
-- python minitest.py #!!!cmk
+- python test.py
 
 deploy:
   provider: s3
