@@ -9,7 +9,7 @@
 #include <omp.h>
 #include <ios>
 #include <sys/stat.h>
-#include "mkl.h"
+#include "lapack.h"
 using namespace std;
 
 // could add code so that if the two blocks are the same, then only do half the *'s in the dot product

@@ -46,32 +46,33 @@ class CleanCommand(Clean):
 # set up macros
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
-    mp5lib = 'iomp5'
-    mkl_core = 'mkl_core'
+    cmkintel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
+    cmkmp5lib = 'iomp5'
+    cmkmkl_core = 'mkl_core'
     extra_compile_args0 = []
-    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
+    cmkextra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
+    cmkextra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
 elif "win" in platform.system().lower():
     macros = [("_WIN32", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
-    mp5lib = 'libiomp5md'
-    mkl_core = 'mkl_core_dll'
+    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas/windows")
+    mp5lib = 'libiomp5md' #!!!cmk
+    blas_core = 'openblas_core_dll' #!!!cmk
     extra_compile_args0 = ['/EHsc']
-    extra_compile_args1 = ['/DMKL_ILP64']
-    extra_compile_args2 = ['/EHsc', '/openmp', '/DMKL_LP64']
+    extra_compile_args1 = ['/DLAPACK_ILP64', '/DHAVE_LAPACK_CONFIG_H'] #cmk LAPACK_ILP64 seems to be 'long' not 'long long int'
+    extra_compile_args2 = ['/EHsc', '/openmp', '/DLAPACK_LP64', '/DHAVE_LAPACK_CONFIG_H']
 else:
     macros = [("_UNIX", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
+    cmkintel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
     mp5lib = 'iomp5'
-    mkl_core = 'mkl_core'
+    cmkmkl_core = 'mkl_core'
     extra_compile_args0 = []
-    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
+    cmkextra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
+    cmkextra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
 
-mkl_library_list = [intel_root+"/mkl/lib/intel64",intel_root+"/compiler/lib/intel64"]
-mkl_include_list = [intel_root+"/mkl/include"]
-runtime_library_dirs = None if "win" in platform.system().lower() else mkl_library_list
+blas_library_list = [blas_root+"/lib"]
+print(blas_library_list)
+blas_include_list = [blas_root+"/include"]
+runtime_library_dirs = None if "win" in platform.system().lower() else blas_library_list
 
 #see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
 print("use_cython? {0}".format(use_cython))
@@ -85,24 +86,25 @@ if use_cython:
                    Extension(name="fastlmm.util.matrix.cample",
                             language="c++",
                             sources=["fastlmm/util/matrix/cample.pyx"],
-                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib], #!!!'mkl_core','mkl_core_dll'
-                            library_dirs = mkl_library_list,
+                            libraries = ['openblas'],
+                            library_dirs = blas_library_list,
                             runtime_library_dirs = runtime_library_dirs,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args1,
                             define_macros=macros),
                     Extension(name="fastlmm.util.matrix.mmultfilex",
                             language="c++",
                             sources=["fastlmm/util/matrix/mmultfilex.pyx","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['mkl_intel_lp64', mkl_core, 'mkl_intel_thread', mp5lib],
+                            libraries = ['openblas'],
+                            library_dirs = blas_library_list,
                             runtime_library_dirs = runtime_library_dirs,
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args2,
                             define_macros=macros)
                      ]
     cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
 else:
+    assert false, "!!!cmk Need to update"
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
                              language="c++",
                              sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.cpp", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],

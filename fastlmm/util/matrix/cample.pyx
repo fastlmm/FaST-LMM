@@ -5,7 +5,7 @@ cimport scipy.linalg.cython_lapack as cython_lapack
 
 cdef int ZERO = 0
 ctypedef cnp.float64_t REAL_t
-ctypedef long long int MKL_INT 
+ctypedef long long int lapack_int 
 
 def inverse(mat,identity,pivots,k):
     cdef int K = k
@@ -38,30 +38,30 @@ def dgesvd(jobu,jobvt,m,n,a,lda,s,u,ldu,vt,ldvt,work,lwork):
     return INFO
 
 
-cdef extern from "mkl.h":
-    void dgesdd( const char* jobz, const MKL_INT* m, const MKL_INT* n, double* a, 
-        const MKL_INT* lda, double* s, double* u, const MKL_INT* ldu, 
-        double* vt, const MKL_INT* ldvt, double* work, 
-        const MKL_INT* lwork, MKL_INT* iwork, MKL_INT* info );
+cdef extern from "lapack.h":
+    void dgesdd_( const char* jobz, const lapack_int * m, const lapack_int * n, double* a, 
+        const lapack_int * lda, double* s, double* u, const lapack_int * ldu, 
+        double* vt, const lapack_int * ldvt, double* work, 
+        const lapack_int * lwork, lapack_int * iwork, lapack_int * info );
 
 def pydgesdd(jobz,m,n,a,lda,s,u,ldu,vt,ldvt,work,lwork,iwork):
     #http://www.math.utah.edu/software/lapack/lapack-d/dgesvd.html
     #http://stackoverflow.com/questions/5047503/lapack-svd-singular-value-decomposition
     cdef char* JOBZ = jobz
-    cdef MKL_INT M = m
-    cdef MKL_INT N = n
+    cdef lapack_int  M = m
+    cdef lapack_int  N = n
     cdef REAL_t* A = <REAL_t *>cnp.PyArray_DATA(a)
-    cdef MKL_INT LDA = lda
+    cdef lapack_int  LDA = lda
     cdef REAL_t* S = <REAL_t *>cnp.PyArray_DATA(s)
     cdef REAL_t* U = <REAL_t *>cnp.PyArray_DATA(u)
-    cdef MKL_INT LDU = ldu
+    cdef lapack_int  LDU = ldu
     cdef REAL_t* VT = <REAL_t *>cnp.PyArray_DATA(vt)
-    cdef MKL_INT LDVT = ldvt
+    cdef lapack_int  LDVT = ldvt
     cdef REAL_t* WORK = <REAL_t *>cnp.PyArray_DATA(work)
-    cdef MKL_INT LWORK = lwork
-    cdef MKL_INT* IWORK = <MKL_INT *>cnp.PyArray_DATA(iwork)
-    cdef MKL_INT INFO = 0
+    cdef lapack_int  LWORK = lwork
+    cdef lapack_int * IWORK = <lapack_int  *>cnp.PyArray_DATA(iwork)
+    cdef lapack_int  INFO = 0
 	
-    dgesdd(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)
+    dgesdd_(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)
 
     return INFO
