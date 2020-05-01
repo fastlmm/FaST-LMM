@@ -7,7 +7,7 @@
     <ProjectHome>
     </ProjectHome>
     <StartupFile>tests\test_single_snp_scale.py</StartupFile>
-    <SearchPath>..\..\..\pysnptools;..\..\..\fastlmm</SearchPath>
+    <SearchPath>..\..\..\fastlmm</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
@@ -118,9 +118,6 @@
     </Content>
     <Content Include="..\..\AUTHORS.txt">
       <Link>setup\AUTHORS.txt</Link>
-    </Content>
-    <Content Include="..\..\conda_requirements.txt">
-      <Link>setup\conda_requirements.txt</Link>
     </Content>
     <Content Include="..\..\doc\ipynb\FaST-LMM.ipynb">
       <Link>docsource\FaST-LMM.ipynb</Link>

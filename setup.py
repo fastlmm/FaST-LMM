@@ -28,11 +28,14 @@ class CleanCommand(Clean):
 
     def run(self):
         Clean.run(self)
-        if os.path.exists('build'):
+        print("exists build? {0}".format(os.path.exists('build')))#!!!cmk
+        if os.path.exists('build'): #!!!cmk why doesn't build get remove on unbuntu?
+            print('removing build') #!!!cmk
             shutil.rmtree('build')
+            print("is it there now? build? {0}".format(os.path.exists('build')))#!!!cmk
         for dirpath, dirnames, filenames in os.walk('.'):
             for filename in filenames:
-                if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))
+                if (   (filename.endswith('.so') and not filename.startswith('libopenblas.'))
                     or filename.endswith('.pyd')
                     or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
                     or (use_cython and filename.find("cample.cpp") != -1) # remove automatically generated source file
@@ -46,32 +49,30 @@ class CleanCommand(Clean):
 # set up macros
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
+    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
     mp5lib = 'iomp5'
-    mkl_core = 'mkl_core'
     extra_compile_args0 = []
-    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
+    extra_compile_args1 = ['-DLAPACK_ILP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
+    extra_compile_args2 = ['-fopenmp', '-DLAPACK_LP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
 elif "win" in platform.system().lower():
     macros = [("_WIN32", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
+    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
     mp5lib = 'libiomp5md'
-    mkl_core = 'mkl_core_dll'
     extra_compile_args0 = ['/EHsc']
-    extra_compile_args1 = ['/DMKL_ILP64']
-    extra_compile_args2 = ['/EHsc', '/openmp', '/DMKL_LP64']
+    extra_compile_args1 = ['/DLAPACK_ILP64', '/DHAVE_LAPACK_CONFIG_H']
+    extra_compile_args2 = ['/EHsc', '/openmp', '/DLAPACK_LP64', '/DHAVE_LAPACK_CONFIG_H']
 else:
     macros = [("_UNIX", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
+    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
     mp5lib = 'iomp5'
-    mkl_core = 'mkl_core'
     extra_compile_args0 = []
-    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
+    extra_compile_args1 = ['-DLAPACK_ILP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
+    extra_compile_args2 = ['-fopenmp', '-DLAPACK_LP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
 
-mkl_library_list = [intel_root+"/mkl/lib/intel64",intel_root+"/compiler/lib/intel64"]
-mkl_include_list = [intel_root+"/mkl/include"]
-runtime_library_dirs = None if "win" in platform.system().lower() else mkl_library_list
+blas_library_list = [blas_root+"/lib"]
+print(blas_library_list)
+blas_include_list = [blas_root+"/include"]
+runtime_library_dirs = None if "win" in platform.system().lower() else blas_library_list
 
 #see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
 print("use_cython? {0}".format(use_cython))
@@ -85,50 +86,51 @@ if use_cython:
                    Extension(name="fastlmm.util.matrix.cample",
                             language="c++",
                             sources=["fastlmm/util/matrix/cample.pyx"],
-                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib], #!!!'mkl_core','mkl_core_dll'
-                            library_dirs = mkl_library_list,
+                            libraries = ['openblas'],
+                            library_dirs = blas_library_list,
                             runtime_library_dirs = runtime_library_dirs,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args1,
                             define_macros=macros),
                     Extension(name="fastlmm.util.matrix.mmultfilex",
                             language="c++",
                             sources=["fastlmm/util/matrix/mmultfilex.pyx","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['mkl_intel_lp64', mkl_core, 'mkl_intel_thread', mp5lib],
+                            libraries = ['openblas',mp5lib],
+                            library_dirs = blas_library_list,
                             runtime_library_dirs = runtime_library_dirs,
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args2,
                             define_macros=macros)
                      ]
     cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
-else:
+else: #!!!cmk test
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
                              language="c++",
-                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.cpp", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
+                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
                              include_dirs=[numpy.get_include()],
                              extra_compile_args = extra_compile_args0,
                              define_macros=macros),
                    Extension(name="fastlmm.util.matrix.cample",
                             language="c++",
                             sources=["fastlmm/util/matrix/cample.cpp"],
-                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib],
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            libraries = ['openblas'],
+                            library_dirs = blas_library_list,
+                            runtime_library_dirs = runtime_library_dirs,
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args1,
                             define_macros=macros),
                     Extension(name="fastlmm.util.matrix.mmultfilex",
                             language="c++",
                             sources=["fastlmm/util/matrix/mmultfilex.cpp","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['mkl_intel_lp64', mkl_core, 'mkl_intel_thread', mp5lib],
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            libraries = ['openblas',mp5lib],
+                            library_dirs = blas_library_list,
+                            runtime_library_dirs = runtime_library_dirs,
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args2,
-                            define_macros=macros) 
+                            define_macros=macros)
                     ]
     cmdclass = {}
 
-#python setup.py sdist bdist_wininst upload
 setup(
     name='fastlmm',
     version=version,
@@ -185,11 +187,19 @@ setup(
                        "examples/toydata.sim",
                        "examples/toydataTest.phe",
                        "examples/toydataTrain.phe"
-                       ]
+                       ],
+                  "fastlmm/util/matrix": [
+                      "flang.dll",
+                      "flangrti.dll",
+                      "libiomp5md.dll",
+                      "libomp.dll",
+                      "openblas.dll"
+                      ]
                  },
-    install_requires = ['pandas>=0.19.0','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9',
-                       'statsmodels>=0.10.1', 'psutil>=5.6.7'],
+    install_requires = ['scipy>=1.1.0', 'numpy>=1.11.3',
+                        'pandas>=0.19.0','matplotlib>=1.5.1',
+                        'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9',
+                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
   )

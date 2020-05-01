@@ -611,7 +611,7 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include <stdio.h>
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
-#include "mkl.h"
+#include "lapack.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -1058,7 +1058,7 @@ typedef double __pyx_t_5scipy_6linalg_13cython_lapack_d;
  * 
  * cdef int ZERO = 0
  * ctypedef cnp.float64_t REAL_t             # <<<<<<<<<<<<<<
- * ctypedef long long int MKL_INT
+ * ctypedef long long int lapack_int
  * 
  */
 typedef __pyx_t_5numpy_float64_t __pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t;
@@ -1066,11 +1066,11 @@ typedef __pyx_t_5numpy_float64_t __pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t;
 /* "fastlmm/util/matrix/cample.pyx":8
  * cdef int ZERO = 0
  * ctypedef cnp.float64_t REAL_t
- * ctypedef long long int MKL_INT             # <<<<<<<<<<<<<<
+ * ctypedef long long int lapack_int             # <<<<<<<<<<<<<<
  * 
  * def inverse(mat,identity,pivots,k):
  */
-typedef PY_LONG_LONG __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT;
+typedef PY_LONG_LONG __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int;
 /* Declarations.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1832,7 +1832,7 @@ static PyObject *__pyx_codeobj__13;
 /* Late includes */
 
 /* "fastlmm/util/matrix/cample.pyx":10
- * ctypedef long long int MKL_INT
+ * ctypedef long long int lapack_int
  * 
  * def inverse(mat,identity,pivots,k):             # <<<<<<<<<<<<<<
  *     cdef int K = k
@@ -1983,7 +1983,7 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_inverse(CYTHON_UNUSED P
   __pyx_f_5scipy_6linalg_13cython_lapack_dgesv((&__pyx_v_K), (&__pyx_v_K), __pyx_v_mat_pointer, (&__pyx_v_K), __pyx_v_piv_pointer, __pyx_v_iden_pointer, (&__pyx_v_K), (&__pyx_v_7fastlmm_4util_6matrix_6cample_ZERO));
 
   /* "fastlmm/util/matrix/cample.pyx":10
- * ctypedef long long int MKL_INT
+ * ctypedef long long int lapack_int
  * 
  * def inverse(mat,identity,pivots,k):             # <<<<<<<<<<<<<<
  *     cdef int K = k
@@ -2397,7 +2397,7 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_2dgesvd(CYTHON_UNUSED P
 }
 
 /* "fastlmm/util/matrix/cample.pyx":47
- *         const MKL_INT* lwork, MKL_INT* iwork, MKL_INT* info );
+ *         const lapack_int * lwork, lapack_int * iwork, lapack_int * info );
  * 
  * def pydgesdd(jobz,m,n,a,lda,s,u,ldu,vt,ldvt,work,lwork,iwork):             # <<<<<<<<<<<<<<
  *     #http://www.math.utah.edu/software/lapack/lapack-d/dgesvd.html
@@ -2589,23 +2589,23 @@ static PyObject *__pyx_pw_7fastlmm_4util_6matrix_6cample_5pydgesdd(PyObject *__p
 
 static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_4pydgesdd(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_jobz, PyObject *__pyx_v_m, PyObject *__pyx_v_n, PyObject *__pyx_v_a, PyObject *__pyx_v_lda, PyObject *__pyx_v_s, PyObject *__pyx_v_u, PyObject *__pyx_v_ldu, PyObject *__pyx_v_vt, PyObject *__pyx_v_ldvt, PyObject *__pyx_v_work, PyObject *__pyx_v_lwork, PyObject *__pyx_v_iwork) {
   char *__pyx_v_JOBZ;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_v_M;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_v_N;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_v_M;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_v_N;
   __pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *__pyx_v_A;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_v_LDA;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_v_LDA;
   __pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *__pyx_v_S;
   __pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *__pyx_v_U;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_v_LDU;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_v_LDU;
   __pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *__pyx_v_VT;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_v_LDVT;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_v_LDVT;
   __pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *__pyx_v_WORK;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_v_LWORK;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT *__pyx_v_IWORK;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_v_INFO;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_v_LWORK;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int *__pyx_v_IWORK;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_v_INFO;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   char *__pyx_t_1;
-  __pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT __pyx_t_2;
+  __pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int __pyx_t_2;
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("pydgesdd", 0);
 
@@ -2613,8 +2613,8 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_4pydgesdd(CYTHON_UNUSED
  *     #http://www.math.utah.edu/software/lapack/lapack-d/dgesvd.html
  *     #http://stackoverflow.com/questions/5047503/lapack-svd-singular-value-decomposition
  *     cdef char* JOBZ = jobz             # <<<<<<<<<<<<<<
- *     cdef MKL_INT M = m
- *     cdef MKL_INT N = n
+ *     cdef lapack_int  M = m
+ *     cdef lapack_int  N = n
  */
   __pyx_t_1 = __Pyx_PyObject_AsWritableString(__pyx_v_jobz); if (unlikely((!__pyx_t_1) && PyErr_Occurred())) __PYX_ERR(0, 50, __pyx_L1_error)
   __pyx_v_JOBZ = __pyx_t_1;
@@ -2622,8 +2622,8 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_4pydgesdd(CYTHON_UNUSED
   /* "fastlmm/util/matrix/cample.pyx":51
  *     #http://stackoverflow.com/questions/5047503/lapack-svd-singular-value-decomposition
  *     cdef char* JOBZ = jobz
- *     cdef MKL_INT M = m             # <<<<<<<<<<<<<<
- *     cdef MKL_INT N = n
+ *     cdef lapack_int  M = m             # <<<<<<<<<<<<<<
+ *     cdef lapack_int  N = n
  *     cdef REAL_t* A = <REAL_t *>cnp.PyArray_DATA(a)
  */
   __pyx_t_2 = __Pyx_PyInt_As_PY_LONG_LONG(__pyx_v_m); if (unlikely((__pyx_t_2 == (PY_LONG_LONG)-1) && PyErr_Occurred())) __PYX_ERR(0, 51, __pyx_L1_error)
@@ -2631,28 +2631,28 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_4pydgesdd(CYTHON_UNUSED
 
   /* "fastlmm/util/matrix/cample.pyx":52
  *     cdef char* JOBZ = jobz
- *     cdef MKL_INT M = m
- *     cdef MKL_INT N = n             # <<<<<<<<<<<<<<
+ *     cdef lapack_int  M = m
+ *     cdef lapack_int  N = n             # <<<<<<<<<<<<<<
  *     cdef REAL_t* A = <REAL_t *>cnp.PyArray_DATA(a)
- *     cdef MKL_INT LDA = lda
+ *     cdef lapack_int  LDA = lda
  */
   __pyx_t_2 = __Pyx_PyInt_As_PY_LONG_LONG(__pyx_v_n); if (unlikely((__pyx_t_2 == (PY_LONG_LONG)-1) && PyErr_Occurred())) __PYX_ERR(0, 52, __pyx_L1_error)
   __pyx_v_N = __pyx_t_2;
 
   /* "fastlmm/util/matrix/cample.pyx":53
- *     cdef MKL_INT M = m
- *     cdef MKL_INT N = n
+ *     cdef lapack_int  M = m
+ *     cdef lapack_int  N = n
  *     cdef REAL_t* A = <REAL_t *>cnp.PyArray_DATA(a)             # <<<<<<<<<<<<<<
- *     cdef MKL_INT LDA = lda
+ *     cdef lapack_int  LDA = lda
  *     cdef REAL_t* S = <REAL_t *>cnp.PyArray_DATA(s)
  */
   if (!(likely(((__pyx_v_a) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_a, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 53, __pyx_L1_error)
   __pyx_v_A = ((__pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *)PyArray_DATA(((PyArrayObject *)__pyx_v_a)));
 
   /* "fastlmm/util/matrix/cample.pyx":54
- *     cdef MKL_INT N = n
+ *     cdef lapack_int  N = n
  *     cdef REAL_t* A = <REAL_t *>cnp.PyArray_DATA(a)
- *     cdef MKL_INT LDA = lda             # <<<<<<<<<<<<<<
+ *     cdef lapack_int  LDA = lda             # <<<<<<<<<<<<<<
  *     cdef REAL_t* S = <REAL_t *>cnp.PyArray_DATA(s)
  *     cdef REAL_t* U = <REAL_t *>cnp.PyArray_DATA(u)
  */
@@ -2661,19 +2661,19 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_4pydgesdd(CYTHON_UNUSED
 
   /* "fastlmm/util/matrix/cample.pyx":55
  *     cdef REAL_t* A = <REAL_t *>cnp.PyArray_DATA(a)
- *     cdef MKL_INT LDA = lda
+ *     cdef lapack_int  LDA = lda
  *     cdef REAL_t* S = <REAL_t *>cnp.PyArray_DATA(s)             # <<<<<<<<<<<<<<
  *     cdef REAL_t* U = <REAL_t *>cnp.PyArray_DATA(u)
- *     cdef MKL_INT LDU = ldu
+ *     cdef lapack_int  LDU = ldu
  */
   if (!(likely(((__pyx_v_s) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_s, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 55, __pyx_L1_error)
   __pyx_v_S = ((__pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *)PyArray_DATA(((PyArrayObject *)__pyx_v_s)));
 
   /* "fastlmm/util/matrix/cample.pyx":56
- *     cdef MKL_INT LDA = lda
+ *     cdef lapack_int  LDA = lda
  *     cdef REAL_t* S = <REAL_t *>cnp.PyArray_DATA(s)
  *     cdef REAL_t* U = <REAL_t *>cnp.PyArray_DATA(u)             # <<<<<<<<<<<<<<
- *     cdef MKL_INT LDU = ldu
+ *     cdef lapack_int  LDU = ldu
  *     cdef REAL_t* VT = <REAL_t *>cnp.PyArray_DATA(vt)
  */
   if (!(likely(((__pyx_v_u) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_u, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 56, __pyx_L1_error)
@@ -2682,83 +2682,83 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_4pydgesdd(CYTHON_UNUSED
   /* "fastlmm/util/matrix/cample.pyx":57
  *     cdef REAL_t* S = <REAL_t *>cnp.PyArray_DATA(s)
  *     cdef REAL_t* U = <REAL_t *>cnp.PyArray_DATA(u)
- *     cdef MKL_INT LDU = ldu             # <<<<<<<<<<<<<<
+ *     cdef lapack_int  LDU = ldu             # <<<<<<<<<<<<<<
  *     cdef REAL_t* VT = <REAL_t *>cnp.PyArray_DATA(vt)
- *     cdef MKL_INT LDVT = ldvt
+ *     cdef lapack_int  LDVT = ldvt
  */
   __pyx_t_2 = __Pyx_PyInt_As_PY_LONG_LONG(__pyx_v_ldu); if (unlikely((__pyx_t_2 == (PY_LONG_LONG)-1) && PyErr_Occurred())) __PYX_ERR(0, 57, __pyx_L1_error)
   __pyx_v_LDU = __pyx_t_2;
 
   /* "fastlmm/util/matrix/cample.pyx":58
  *     cdef REAL_t* U = <REAL_t *>cnp.PyArray_DATA(u)
- *     cdef MKL_INT LDU = ldu
+ *     cdef lapack_int  LDU = ldu
  *     cdef REAL_t* VT = <REAL_t *>cnp.PyArray_DATA(vt)             # <<<<<<<<<<<<<<
- *     cdef MKL_INT LDVT = ldvt
+ *     cdef lapack_int  LDVT = ldvt
  *     cdef REAL_t* WORK = <REAL_t *>cnp.PyArray_DATA(work)
  */
   if (!(likely(((__pyx_v_vt) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_vt, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 58, __pyx_L1_error)
   __pyx_v_VT = ((__pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *)PyArray_DATA(((PyArrayObject *)__pyx_v_vt)));
 
   /* "fastlmm/util/matrix/cample.pyx":59
- *     cdef MKL_INT LDU = ldu
+ *     cdef lapack_int  LDU = ldu
  *     cdef REAL_t* VT = <REAL_t *>cnp.PyArray_DATA(vt)
- *     cdef MKL_INT LDVT = ldvt             # <<<<<<<<<<<<<<
+ *     cdef lapack_int  LDVT = ldvt             # <<<<<<<<<<<<<<
  *     cdef REAL_t* WORK = <REAL_t *>cnp.PyArray_DATA(work)
- *     cdef MKL_INT LWORK = lwork
+ *     cdef lapack_int  LWORK = lwork
  */
   __pyx_t_2 = __Pyx_PyInt_As_PY_LONG_LONG(__pyx_v_ldvt); if (unlikely((__pyx_t_2 == (PY_LONG_LONG)-1) && PyErr_Occurred())) __PYX_ERR(0, 59, __pyx_L1_error)
   __pyx_v_LDVT = __pyx_t_2;
 
   /* "fastlmm/util/matrix/cample.pyx":60
  *     cdef REAL_t* VT = <REAL_t *>cnp.PyArray_DATA(vt)
- *     cdef MKL_INT LDVT = ldvt
+ *     cdef lapack_int  LDVT = ldvt
  *     cdef REAL_t* WORK = <REAL_t *>cnp.PyArray_DATA(work)             # <<<<<<<<<<<<<<
- *     cdef MKL_INT LWORK = lwork
- *     cdef MKL_INT* IWORK = <MKL_INT *>cnp.PyArray_DATA(iwork)
+ *     cdef lapack_int  LWORK = lwork
+ *     cdef lapack_int * IWORK = <lapack_int  *>cnp.PyArray_DATA(iwork)
  */
   if (!(likely(((__pyx_v_work) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_work, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 60, __pyx_L1_error)
   __pyx_v_WORK = ((__pyx_t_7fastlmm_4util_6matrix_6cample_REAL_t *)PyArray_DATA(((PyArrayObject *)__pyx_v_work)));
 
   /* "fastlmm/util/matrix/cample.pyx":61
- *     cdef MKL_INT LDVT = ldvt
+ *     cdef lapack_int  LDVT = ldvt
  *     cdef REAL_t* WORK = <REAL_t *>cnp.PyArray_DATA(work)
- *     cdef MKL_INT LWORK = lwork             # <<<<<<<<<<<<<<
- *     cdef MKL_INT* IWORK = <MKL_INT *>cnp.PyArray_DATA(iwork)
- *     cdef MKL_INT INFO = 0
+ *     cdef lapack_int  LWORK = lwork             # <<<<<<<<<<<<<<
+ *     cdef lapack_int * IWORK = <lapack_int  *>cnp.PyArray_DATA(iwork)
+ *     cdef lapack_int  INFO = 0
  */
   __pyx_t_2 = __Pyx_PyInt_As_PY_LONG_LONG(__pyx_v_lwork); if (unlikely((__pyx_t_2 == (PY_LONG_LONG)-1) && PyErr_Occurred())) __PYX_ERR(0, 61, __pyx_L1_error)
   __pyx_v_LWORK = __pyx_t_2;
 
   /* "fastlmm/util/matrix/cample.pyx":62
  *     cdef REAL_t* WORK = <REAL_t *>cnp.PyArray_DATA(work)
- *     cdef MKL_INT LWORK = lwork
- *     cdef MKL_INT* IWORK = <MKL_INT *>cnp.PyArray_DATA(iwork)             # <<<<<<<<<<<<<<
- *     cdef MKL_INT INFO = 0
+ *     cdef lapack_int  LWORK = lwork
+ *     cdef lapack_int * IWORK = <lapack_int  *>cnp.PyArray_DATA(iwork)             # <<<<<<<<<<<<<<
+ *     cdef lapack_int  INFO = 0
  * 
  */
   if (!(likely(((__pyx_v_iwork) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_iwork, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 62, __pyx_L1_error)
-  __pyx_v_IWORK = ((__pyx_t_7fastlmm_4util_6matrix_6cample_MKL_INT *)PyArray_DATA(((PyArrayObject *)__pyx_v_iwork)));
+  __pyx_v_IWORK = ((__pyx_t_7fastlmm_4util_6matrix_6cample_lapack_int *)PyArray_DATA(((PyArrayObject *)__pyx_v_iwork)));
 
   /* "fastlmm/util/matrix/cample.pyx":63
- *     cdef MKL_INT LWORK = lwork
- *     cdef MKL_INT* IWORK = <MKL_INT *>cnp.PyArray_DATA(iwork)
- *     cdef MKL_INT INFO = 0             # <<<<<<<<<<<<<<
+ *     cdef lapack_int  LWORK = lwork
+ *     cdef lapack_int * IWORK = <lapack_int  *>cnp.PyArray_DATA(iwork)
+ *     cdef lapack_int  INFO = 0             # <<<<<<<<<<<<<<
  * 
- *     dgesdd(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)
+ *     dgesdd_(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)
  */
   __pyx_v_INFO = 0;
 
   /* "fastlmm/util/matrix/cample.pyx":65
- *     cdef MKL_INT INFO = 0
+ *     cdef lapack_int  INFO = 0
  * 
- *     dgesdd(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)             # <<<<<<<<<<<<<<
+ *     dgesdd_(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)             # <<<<<<<<<<<<<<
  * 
  *     return INFO
  */
-  dgesdd(__pyx_v_JOBZ, (&__pyx_v_M), (&__pyx_v_N), __pyx_v_A, (&__pyx_v_LDA), __pyx_v_S, __pyx_v_U, (&__pyx_v_LDU), __pyx_v_VT, (&__pyx_v_LDVT), __pyx_v_WORK, (&__pyx_v_LWORK), __pyx_v_IWORK, (&__pyx_v_INFO));
+  dgesdd_(__pyx_v_JOBZ, (&__pyx_v_M), (&__pyx_v_N), __pyx_v_A, (&__pyx_v_LDA), __pyx_v_S, __pyx_v_U, (&__pyx_v_LDU), __pyx_v_VT, (&__pyx_v_LDVT), __pyx_v_WORK, (&__pyx_v_LWORK), __pyx_v_IWORK, (&__pyx_v_INFO));
 
   /* "fastlmm/util/matrix/cample.pyx":67
- *     dgesdd(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)
+ *     dgesdd_(JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO)
  * 
  *     return INFO             # <<<<<<<<<<<<<<
  */
@@ -2770,7 +2770,7 @@ static PyObject *__pyx_pf_7fastlmm_4util_6matrix_6cample_4pydgesdd(CYTHON_UNUSED
   goto __pyx_L0;
 
   /* "fastlmm/util/matrix/cample.pyx":47
- *         const MKL_INT* lwork, MKL_INT* iwork, MKL_INT* info );
+ *         const lapack_int * lwork, lapack_int * iwork, lapack_int * info );
  * 
  * def pydgesdd(jobz,m,n,a,lda,s,u,ldu,vt,ldvt,work,lwork,iwork):             # <<<<<<<<<<<<<<
  *     #http://www.math.utah.edu/software/lapack/lapack-d/dgesvd.html
@@ -5409,7 +5409,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__7);
 
   /* "fastlmm/util/matrix/cample.pyx":10
- * ctypedef long long int MKL_INT
+ * ctypedef long long int lapack_int
  * 
  * def inverse(mat,identity,pivots,k):             # <<<<<<<<<<<<<<
  *     cdef int K = k
@@ -5433,7 +5433,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(13, 0, 27, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_fastlmm_util_matrix_cample_pyx, __pyx_n_s_dgesvd, 18, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 18, __pyx_L1_error)
 
   /* "fastlmm/util/matrix/cample.pyx":47
- *         const MKL_INT* lwork, MKL_INT* iwork, MKL_INT* info );
+ *         const lapack_int * lwork, lapack_int * iwork, lapack_int * info );
  * 
  * def pydgesdd(jobz,m,n,a,lda,s,u,ldu,vt,ldvt,work,lwork,iwork):             # <<<<<<<<<<<<<<
  *     #http://www.math.utah.edu/software/lapack/lapack-d/dgesvd.html
@@ -5772,12 +5772,12 @@ if (!__Pyx_RefNanny) {
  * 
  * cdef int ZERO = 0             # <<<<<<<<<<<<<<
  * ctypedef cnp.float64_t REAL_t
- * ctypedef long long int MKL_INT
+ * ctypedef long long int lapack_int
  */
   __pyx_v_7fastlmm_4util_6matrix_6cample_ZERO = 0;
 
   /* "fastlmm/util/matrix/cample.pyx":10
- * ctypedef long long int MKL_INT
+ * ctypedef long long int lapack_int
  * 
  * def inverse(mat,identity,pivots,k):             # <<<<<<<<<<<<<<
  *     cdef int K = k
@@ -5801,7 +5801,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "fastlmm/util/matrix/cample.pyx":47
- *         const MKL_INT* lwork, MKL_INT* iwork, MKL_INT* info );
+ *         const lapack_int * lwork, lapack_int * iwork, lapack_int * info );
  * 
  * def pydgesdd(jobz,m,n,a,lda,s,u,ldu,vt,ldvt,work,lwork,iwork):             # <<<<<<<<<<<<<<
  *     #http://www.math.utah.edu/software/lapack/lapack-d/dgesvd.html

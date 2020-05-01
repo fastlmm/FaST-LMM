@@ -407,3 +407,15 @@ tests/tmp_extract_sim.txt
 /r.nopysnptools.txt
 /5.6.7
 /r.no.txt
+/fastlmm/.vs
+/cample.i
+/ignore.cpp
+/external/openblas/windows/lib/hideflang.dll
+/fastlmm/util/matrix/hideompstub.dll
+/fastlmm/association/tests/local_cache
+/fastlmm/association/tests/peertopeer
+/tests/tslog.txt
+/tests/dekne.txt
+/tests/tslog2.txt
+/tests/testlog3b.txt
+/dockers/linuxbuild/dist

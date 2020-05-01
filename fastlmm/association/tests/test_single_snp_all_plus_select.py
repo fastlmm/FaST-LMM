@@ -21,7 +21,7 @@ def mf_to_runner_function(mf):
     clean_up=False
 
     if mf == "debug":
-        runner_function = lambda ignore: LocalInParts(215,215,mkl_num_threads=20,result_file="result.p",run_dir=r"C:\deldir\test\outputx") 
+        runner_function = lambda ignore: LocalInParts(215,215,mkl_num_threads=20,result_file="result.p",run_dir=r"C:\deldir\test\outputx")
     elif mf == "local":
         runner_function = lambda ignore: Local()
     elif mf == "local1":
@@ -225,14 +225,14 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def test_notebook(self):
+    def cmktest_notebook(self): #cmk too slow
         do_plot = False
         mf_name = "lmp" #"local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
         runner = mf_to_runner_function(mf_name)(4)
         output_file_name = self.file_name("notebook")
 
 
-        logging.info("TestSingleSnpAllPlusSelect test_one")
+        logging.info("TestSingleSnpAllPlusSelect test_notebook")
         # define file names
         snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
@@ -247,7 +247,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         self.compare_files(results,"notebook")
 
-    def test_one(self):
+    def test_one(self): #!!!cmk fast enough
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 
         logging.info("TestSingleSnpAllPlusSelect test_one")
@@ -269,7 +269,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         self.compare_files(results,"one")
 
-    def test_three(self): #!!! rather a big test case
+    def cmktest_three(self): #!!! rather a big test case SLOW
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_three")
 
@@ -296,7 +296,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         logging.info(results)
         self.compare_files(results,"three")
 
-    def test_two(self): #!!! rather a big test case
+    def cmktest_two(self): #!!! rather a big test case slow
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_two")
         do_plot = False
@@ -329,7 +329,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             logging.info(results.head())
             self.compare_files(results,"two")
 
-    def test_old(self):
+    def test_old(self): # fast enough
         do_plot = False
         from fastlmm.feature_selection.feature_selection_two_kernel import FeatureSelectionInSample
         from pysnptools.util import intersect_apply
@@ -415,7 +415,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
             assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
 
-    def test_doctest(self):
+    def cmktest_doctest(self): #!!!cmk slow
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         result = doctest.testmod(sys.modules['fastlmm.association.single_snp_all_plus_select'])
@@ -432,14 +432,15 @@ def getTestSuite():
 
 
 if __name__ == '__main__':
-
+    logging.basicConfig(level=logging.INFO)
     # this import is needed for the runner
     from fastlmm.association.tests.test_single_snp_all_plus_select import TestSingleSnpAllPlusSelect
     suites = unittest.TestSuite([getTestSuite()])
 
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=True)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
 
 

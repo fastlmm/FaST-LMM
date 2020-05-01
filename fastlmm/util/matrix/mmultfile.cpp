@@ -9,7 +9,7 @@
 #include <omp.h>
 #include <ios>
 #include <sys/stat.h>
-#include "mkl.h"
+#include "lapack.h"
 using namespace std;
 
 // could add code so that if the two blocks are the same, then only do half the *'s in the dot product
@@ -75,20 +75,20 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 #pragma omp master
 			if (nexti < sid_count*work_count)
 			{
-				printf("reading next chunk\n");
+				if (log_frequency > 0) { printf("reading next chunk\n"); }
 				if (fread((char*)&(*ref_next)[0], sizeof(double), iid_count*(nexti - stopi), pFile) != (unsigned int) (iid_count*(stop - start)))
 				{
 					cerr << "buffer read failed" << endl;
 				}
 
-				printf("finished reading next chunk======================================\n");
+				if (log_frequency > 0) { printf("finished reading next chunk======================================\n"); }
 			}
 
 
 #pragma omp for schedule(dynamic)
 			for (long long j = 0; j < stopi - starti; ++j) {
 				if (log_frequency != -2) {
-					printf("Doing computation %lld\n", j);
+					if (log_frequency > 0) { printf("Doing computation %lld\n", j); }
 					long long j_iid_count = j*iid_count;
 					for (long long k = 0; k < stop - start; ++k) {
 						long long k_iid_count = k*iid_count;
@@ -98,12 +98,12 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 						}
 						ata_piece[(j + starti - start)*(stop - start) + k] = temp;
 					}
-					printf("done with computation %lld\n", j);
+					if (log_frequency > 0) { printf("done with computation %lld\n", j); }
 				}
 			}
-			printf("done with parallel loop\n");
+			if (log_frequency > 0) { printf("done with parallel loop\n"); }
 		}
-		printf("done with parallel computation\n");
+		if (log_frequency > 0) { printf("done with parallel computation\n"); }
 
 		if (i == work_index) {  // We just finished the first loop, so before the swap, point at buffer #0
 			ref_cur = &buffer_1;
@@ -116,8 +116,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 	}
 
 	fclose(pFile);
-	printf("finished all computation\n");
-
+	if (log_frequency > 0) {printf("finished all computation\n");}
 
 	return 0;
 }
@@ -125,7 +124,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_count, long long train_sid_count, long long test_sid_count, double* b1, double* aaTb, double* aTb, int num_threads, long long log_frequency)
 {
 	//speed idea: compile for release (and optimize)
-	//use MKL to multiply???
+	//use MKL or OpenBLAS to multiply???
 	//remove the assert???
 	//Are copies really needed?
 	//is F, vc C order the best?

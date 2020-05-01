@@ -14,15 +14,14 @@ from pysnptools.snpreader import SnpMemMap
 from six.moves import range
 
 def get_num_threads():
-    if 'MKL_NUM_THREADS' in os.environ:
-        return int(os.environ['MKL_NUM_THREADS'])
-    else:
-        return multiprocessing.cpu_count()
+    max_threads = multiprocessing.cpu_count()
+    num_threads = min(os.environ.get('OPENPLAS_NUM_THREADS',max_threads),os.environ.get('MLK_NUM_THREADS',max_threads))
+    return num_threads
 
 def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_only=False):
     sid_count = len(sid)
     piece_count = work_count * 2
-    log_frequency = 1
+    log_frequency = 0 #!!!cmk figure out how to set this well
 
     def debatch_closure(piece_index):
         return sid_count * piece_index // piece_count

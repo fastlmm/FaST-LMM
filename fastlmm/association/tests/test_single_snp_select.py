@@ -178,7 +178,8 @@ if __name__ == '__main__':
 
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=False)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
 
 
@@ -196,7 +197,7 @@ if __name__ == '__main__':
         runner = Local()
         #runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
         #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
-        #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
+        #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
         print(runner.run(distributable_test))
 

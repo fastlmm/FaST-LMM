@@ -726,15 +726,20 @@ class TestFastLMM(unittest.TestCase):
             #make pheno  # pheno = 2*covar+100+normal(0,1)*2.5+normal(0,K)*7.5
             #######################################################################
             #random.multivariate_normal is sensitive to mkl_num_thread, so we control it.
-            if 'MKL_NUM_THREADS' in os.environ:
-                mkl_num_thread = os.environ['MKL_NUM_THREADS']
-            else:
-                mkl_num_thread = None
+            openblas_num_thread = os.environ.get('OPENBLAS_NUM_THREADS')
+            mkl_num_thread = os.environ.get('MKL_NUM_THREADS')
+            os.environ['OPENBLAS_NUM_THREADS'] = '1'
             os.environ['MKL_NUM_THREADS'] = '1'
+
             np.random.seed(seed)
             p1 = covar.val * 2.0 + 100
             p2 = np.random.normal(size=covar.val.shape)*np.sqrt(vare)
             p3 = (np.random.multivariate_normal(np.zeros(iid_count),K0.val)*np.sqrt(varg)).reshape(-1,1)
+
+            if openblas_num_thread is not None:
+                os.environ['OPENBLAS_NUM_THREADS'] = openblas_num_thread
+            else:
+                del os.environ['OPENBLAS_NUM_THREADS']
             if mkl_num_thread is not None:
                 os.environ['MKL_NUM_THREADS'] = mkl_num_thread
             else:
@@ -1046,7 +1051,8 @@ if __name__ == '__main__':
 
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=False)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
