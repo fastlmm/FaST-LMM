@@ -640,7 +640,7 @@ def get_h2(k, N, UUYUUYsum0, UYUY, S, chrom_cache, chrom):
 def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_count, G0_pos, ss_per_snp, X, runner_svd):
     """
     For the chromosomes listed, compute an SVD on a square matrix SNP-to-SNP matrix. Each SVD can be done on a different
-    node in a cluster. The actual SVD is done with special version of the MKL/LAPACK DGESDD function.
+    node in a cluster. The actual SVD is done with special version of the MKL/LAPACK DGESDD function. !!!cmk
 
     Results are stored at a known location in the cluster storage.
     """
@@ -749,7 +749,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
     Finally, find search for the best h2, which tells how much weight to give to person-to-person similarity vs. pure noise.
 
     This function uses two levels of map-reduce that are run as a single cluster job. The top level loops across the chromosomes, the
-    second level does a matrix multiple in blocks. At the lowest level, the matrix multiple is done with numpy's multithreaded MKL library.
+    second level does a matrix multiple in blocks. At the lowest level, the matrix multiple is done with numpy's multithreaded MKL library.#!!!cmk
 
     Save the results under a known name in the cluster storage.
     """

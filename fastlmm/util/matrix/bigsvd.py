@@ -104,7 +104,7 @@ if __name__ == '__main__':
     assert np.allclose(np.linalg.inv(x),lapack_inverse(x))
 
 
-    for m_row in  [6, 1, 2, 4,10,500]:#[6,50000,100000]: #300,500,1000,2000,4000,6000,9000,15000]:# [6, 1, 2, 4,10,500]:#,15000,20000,50000]: #50000,500,100000,15000,9000,2000]:#
+    for m_row in  [6, 1, 2, 4,10,40*1000]:#[6,50000,100000]: #300,500,1000,2000,4000,6000,9000,15000]:# [6, 1, 2, 4,10,500]:#,15000,20000,50000]: #50000,500,100000,15000,9000,2000]:#
         #row_count, col_count = (9000,9000) -> 1G, 87%, 30 min
 
         if m_row == 6:
@@ -136,7 +136,7 @@ if __name__ == '__main__':
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
 
-        if True:
+        if False:
             now = datetime.datetime.now()
             logging.info("doing lapack_svd")
             ux, sx, vtx = lapack_svd(np.array(a,order="F"))
@@ -145,7 +145,7 @@ if __name__ == '__main__':
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
 
-        if True:
+        if False:
             now = datetime.datetime.now()
             logging.info("doing small np.linalg.svd")
             U, s, V = np.linalg.svd(a, full_matrices=False,compute_uv=True)

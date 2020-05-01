@@ -816,7 +816,7 @@ class FastLmmSet: # implements IDistributable
             #call C++ version of FaST-LMM select to determine background Covariance matrix of the LMM
             osname = sys.platform
             dir = os.path.split(__file__)[0] #__file__ is the pathname of the file from which the module
-            os.environ["FastLmmUseAnyMklLib"] = "1"
+            os.environ["FastLmmUseAnyMklLib"] = "1" #!!!cmk
             if (osname.find("win") >= 0):    #         was loaded, if it was loaded from a file
                 fastlmmpath = os.path.join(dir,"Fastlmm_autoselect", "fastlmmc.exe")
             elif (osname.find("linux") >= 0):
