@@ -54,7 +54,7 @@ if platform.system() == "Darwin":
     cmkextra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
 elif "win" in platform.system().lower():
     macros = [("_WIN32", "1")]
-    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas/windows")
+    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
     mp5lib = 'libiomp5md' #!!!cmk
     blas_core = 'openblas_core_dll' #!!!cmk
     extra_compile_args0 = ['/EHsc']
