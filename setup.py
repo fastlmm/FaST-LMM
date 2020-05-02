@@ -32,7 +32,7 @@ class CleanCommand(Clean):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('.'):
             for filename in filenames:
-                if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))
+                if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))#!!!cmk
                     or filename.endswith('.pyd')
                     or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
                     or (use_cython and filename.find("cample.cpp") != -1) # remove automatically generated source file
@@ -130,7 +130,6 @@ else:
                     ]
     cmdclass = {}
 
-#python setup.py sdist bdist_wininst upload
 setup(
     name='fastlmm',
     version=version,

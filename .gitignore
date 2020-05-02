@@ -410,3 +410,5 @@ tests/tmp_extract_sim.txt
 /fastlmm/.vs
 /cample.i
 /ignore.cpp
+/external/openblas/windows/lib/hideflang.dll
+/fastlmm/util/matrix/hideompstub.dll
