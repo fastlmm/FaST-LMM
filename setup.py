@@ -32,7 +32,7 @@ class CleanCommand(Clean):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('.'):
             for filename in filenames:
-                if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))#!!!cmk
+                if (   (filename.endswith('.so') and not filename.startswith('libopenblas.'))#!!!cmk
                     or filename.endswith('.pyd')
                     or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
                     or (use_cython and filename.find("cample.cpp") != -1) # remove automatically generated source file
@@ -95,7 +95,7 @@ if use_cython:
                     Extension(name="fastlmm.util.matrix.mmultfilex",
                             language="c++",
                             sources=["fastlmm/util/matrix/mmultfilex.pyx","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['openblas'],
+                            libraries = ['openblas','iomp5'],
                             library_dirs = blas_library_list,
                             runtime_library_dirs = runtime_library_dirs,
                             include_dirs = blas_include_list+[numpy.get_include()],
