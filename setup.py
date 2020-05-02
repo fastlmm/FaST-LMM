@@ -32,7 +32,7 @@ class CleanCommand(Clean):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('.'):
             for filename in filenames:
-                if (   (filename.endswith('.so') and not filename.startswith('libopenblas.'))#!!!cmk
+                if (   (filename.endswith('.so') and not filename.startswith('libopenblas.'))
                     or filename.endswith('.pyd')
                     or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
                     or (use_cython and filename.find("cample.cpp") != -1) # remove automatically generated source file
@@ -47,24 +47,21 @@ class CleanCommand(Clean):
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
     blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
-    #cmk mp5lib = 'iomp5'
-    #cmk cmkmkl_core = 'mkl_core'
+    mp5lib = 'iomp5'
     extra_compile_args0 = []
     extra_compile_args1 = ['-DLAPACK_ILP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
     extra_compile_args2 = ['-fopenmp', '-DLAPACK_LP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
 elif "win" in platform.system().lower():
     macros = [("_WIN32", "1")]
     blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
-    #cmk mp5lib = 'libiomp5md' #!!!cmk
-    #cmk blas_core = 'openblas_core_dll' #!!!cmk
+    mp5lib = 'libiomp5md'
     extra_compile_args0 = ['/EHsc']
     extra_compile_args1 = ['/DLAPACK_ILP64', '/DHAVE_LAPACK_CONFIG_H'] #cmk LAPACK_ILP64 seems to be 'long' not 'long long int'
     extra_compile_args2 = ['/EHsc', '/openmp', '/DLAPACK_LP64', '/DHAVE_LAPACK_CONFIG_H']
 else:
     macros = [("_UNIX", "1")]
     blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
-    #cmk mp5lib = 'iomp5'
-    #cmk cmkmkl_core = 'mkl_core'
+    mp5lib = 'iomp5'
     extra_compile_args0 = []
     extra_compile_args1 = ['-DLAPACK_ILP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
     extra_compile_args2 = ['-fopenmp', '-DLAPACK_LP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
@@ -95,7 +92,7 @@ if use_cython:
                     Extension(name="fastlmm.util.matrix.mmultfilex",
                             language="c++",
                             sources=["fastlmm/util/matrix/mmultfilex.pyx","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['openblas','iomp5'],
+                            libraries = ['openblas',mp5lib],
                             library_dirs = blas_library_list,
                             runtime_library_dirs = runtime_library_dirs,
                             include_dirs = blas_include_list+[numpy.get_include()],
