@@ -14,8 +14,8 @@ from pysnptools.snpreader import SnpMemMap
 from six.moves import range
 
 def get_num_threads():
-    if 'MKL_NUM_THREADS' in os.environ:
-        return int(os.environ['MKL_NUM_THREADS'])
+    if 'mkl_num_threads' in os.environ: #!!!cmk
+        return int(os.environ['mkl_num_threads'])
     else:
         return multiprocessing.cpu_count()
 

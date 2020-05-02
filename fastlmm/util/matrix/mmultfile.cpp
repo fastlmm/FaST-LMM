@@ -125,7 +125,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_count, long long train_sid_count, long long test_sid_count, double* b1, double* aaTb, double* aTb, int num_threads, long long log_frequency)
 {
 	//speed idea: compile for release (and optimize)
-	//use MKL to multiply???
+	//use MKL or OpenBLAS to multiply???
 	//remove the assert???
 	//Are copies really needed?
 	//is F, vc C order the best?

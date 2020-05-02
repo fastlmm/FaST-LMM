@@ -572,9 +572,9 @@ if __name__ == '__main__':
                                                     max = 10
                                                     )
         #runner = Local()
-        #runner = LocalMultiProc(taskcount=2,mkl_num_threads=5,just_one_process=False)#!!!cmk
-        #runner = LocalInParts(0,2,mkl_num_threads=1) # For debugging the cluster runs#!!!cmk
-        #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")#!!!cmk
+        #runner = LocalMultiProc(taskcount=2,mkl_num_threads=5,just_one_process=False)
+        #runner = LocalInParts(0,2,mkl_num_threads=1) # For debugging the cluster runs
+        #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
         print(runner.run(distributable_test))
 

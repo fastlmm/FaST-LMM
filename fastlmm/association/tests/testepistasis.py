@@ -401,11 +401,11 @@ if __name__ == '__main__':
         runner = HPC(10, 'RR1-N13-09-H44',r'\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond',
                      remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
                      update_remote_python_parent=True,
-                     priority="AboveNormal",mkl_num_threads=1)#!!!cmk
+                     priority="AboveNormal",mkl_num_threads=1)
         runner = Local()
-        #runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)#!!!cmk
-        #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs#!!!cmk
-        #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")#!!!cmk
+        #runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
+        #runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
+        #runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites,"temp_test")
         print(runner.run(distributable_test))
 

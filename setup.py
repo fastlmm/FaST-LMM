@@ -46,28 +46,28 @@ class CleanCommand(Clean):
 # set up macros
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
-    cmkintel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
-    cmkmp5lib = 'iomp5'
-    cmkmkl_core = 'mkl_core'
+    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
+    #cmk mp5lib = 'iomp5'
+    #cmk cmkmkl_core = 'mkl_core'
     extra_compile_args0 = []
-    cmkextra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    cmkextra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
+    extra_compile_args1 = ['-DLAPACK_ILP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
+    extra_compile_args2 = ['-fopenmp', '-DLAPACK_LP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
 elif "win" in platform.system().lower():
     macros = [("_WIN32", "1")]
     blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
-    mp5lib = 'libiomp5md' #!!!cmk
-    blas_core = 'openblas_core_dll' #!!!cmk
+    #cmk mp5lib = 'libiomp5md' #!!!cmk
+    #cmk blas_core = 'openblas_core_dll' #!!!cmk
     extra_compile_args0 = ['/EHsc']
     extra_compile_args1 = ['/DLAPACK_ILP64', '/DHAVE_LAPACK_CONFIG_H'] #cmk LAPACK_ILP64 seems to be 'long' not 'long long int'
     extra_compile_args2 = ['/EHsc', '/openmp', '/DLAPACK_LP64', '/DHAVE_LAPACK_CONFIG_H']
 else:
     macros = [("_UNIX", "1")]
-    cmkintel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
-    mp5lib = 'iomp5'
-    cmkmkl_core = 'mkl_core'
+    blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
+    #cmk mp5lib = 'iomp5'
+    #cmk cmkmkl_core = 'mkl_core'
     extra_compile_args0 = []
-    cmkextra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    cmkextra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
+    extra_compile_args1 = ['-DLAPACK_ILP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
+    extra_compile_args2 = ['-fopenmp', '-DLAPACK_LP64','-DHAVE_LAPACK_CONFIG_H','-fpermissive']
 
 blas_library_list = [blas_root+"/lib"]
 print(blas_library_list)
@@ -186,11 +186,19 @@ setup(
                        "examples/toydata.sim",
                        "examples/toydataTest.phe",
                        "examples/toydataTrain.phe"
-                       ]
+                       ],
+                  "fastlmm/util/matrix": [ #!!!cmk
+                      "flang.dll",
+                      "flangrti.dll",
+                      "libiomp5md.dll",
+                      "libomp.dll",
+                      "openblas.dll"
+                      ]
                  },
-    install_requires = ['pandas>=0.19.0','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9',
-                       'statsmodels>=0.10.1', 'psutil>=5.6.7'],
+    install_requires = ['scipy>=1.1.0', 'numpy>=1.11.3',
+                        'pandas>=0.19.0','matplotlib>=1.5.1',
+                        'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9',
+                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
   )

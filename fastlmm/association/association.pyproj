@@ -119,9 +119,6 @@
     <Content Include="..\..\AUTHORS.txt">
       <Link>setup\AUTHORS.txt</Link>
     </Content>
-    <Content Include="..\..\conda_requirements.txt">
-      <Link>setup\conda_requirements.txt</Link>
-    </Content>
     <Content Include="..\..\doc\ipynb\FaST-LMM.ipynb">
       <Link>docsource\FaST-LMM.ipynb</Link>
     </Content>

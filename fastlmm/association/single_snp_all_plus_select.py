@@ -237,7 +237,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     >>> pheno_fn = "../feature_selection/examples/toydata.phe"
     >>> snps = Bed("../feature_selection/examples/toydata.5chrom.bed",count_A1=False)[:,::100] #To make example faster, run on only 1/100th of the data
     >>> chrom5_snps = snps[:,snps.pos[:,0]==5] # Test on only chrom5
-    >>> results_dataframe = single_snp_all_plus_select(test_snps=chrom5_snps,G=snps,pheno=pheno_fn,GB_goal=2,runner=LocalMultiProc(20,mkl_num_threads=5), count_A1=False) #Run multiproc #!!!cmk
+    >>> results_dataframe = single_snp_all_plus_select(test_snps=chrom5_snps,G=snps,pheno=pheno_fn,GB_goal=2,runner=LocalMultiProc(20,mkl_num_threads=5), count_A1=False) #Run multiproc
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_9800 0.0793385 4
 

@@ -21,7 +21,7 @@ def mf_to_runner_function(mf):
     clean_up=False
 
     if mf == "debug":
-        runner_function = lambda ignore: LocalInParts(215,215,mkl_num_threads=20,result_file="result.p",run_dir=r"C:\deldir\test\outputx") #!!!cmk and others in file
+        runner_function = lambda ignore: LocalInParts(215,215,mkl_num_threads=20,result_file="result.p",run_dir=r"C:\deldir\test\outputx")
     elif mf == "local":
         runner_function = lambda ignore: Local()
     elif mf == "local1":

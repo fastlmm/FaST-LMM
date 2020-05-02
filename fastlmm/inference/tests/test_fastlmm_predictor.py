@@ -726,7 +726,7 @@ class TestFastLMM(unittest.TestCase):
             #make pheno  # pheno = 2*covar+100+normal(0,1)*2.5+normal(0,K)*7.5
             #######################################################################
             #random.multivariate_normal is sensitive to mkl_num_thread, so we control it.
-            if 'MKL_NUM_THREADS' in os.environ:
+            if 'MKL_NUM_THREADS' in os.environ:#!!!cmk
                 mkl_num_thread = os.environ['MKL_NUM_THREADS']
             else:
                 mkl_num_thread = None
@@ -736,7 +736,7 @@ class TestFastLMM(unittest.TestCase):
             p2 = np.random.normal(size=covar.val.shape)*np.sqrt(vare)
             p3 = (np.random.multivariate_normal(np.zeros(iid_count),K0.val)*np.sqrt(varg)).reshape(-1,1)
             if mkl_num_thread is not None:
-                os.environ['MKL_NUM_THREADS'] = mkl_num_thread
+                os.environ['MKL_NUM_THREADS'] = mkl_num_thread #!!!cmk
             else:
                 del os.environ['MKL_NUM_THREADS']
             pheno = SnpData(iid=iid,sid=["pheno0"],val= p1 + p2 + p3)
