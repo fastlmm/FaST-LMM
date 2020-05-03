@@ -47,7 +47,7 @@ script:
 - export PYTHONPATH=$TRAVIS_BUILD_DIR
 #- cd tests
 #- python test.py
-- cd fastlmm\association\tests
+- cd fastlmm/association/tests
 - python test_single_snp_scale.py
 
 deploy:
