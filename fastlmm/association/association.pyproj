@@ -7,7 +7,7 @@
     <ProjectHome>
     </ProjectHome>
     <StartupFile>tests\test_single_snp_scale.py</StartupFile>
-    <SearchPath>..\..\..\pysnptools;..\..\..\fastlmm</SearchPath>
+    <SearchPath>..\..\..\fastlmm</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>

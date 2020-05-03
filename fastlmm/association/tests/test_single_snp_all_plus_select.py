@@ -232,7 +232,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         output_file_name = self.file_name("notebook")
 
 
-        logging.info("TestSingleSnpAllPlusSelect test_one")
+        logging.info("TestSingleSnpAllPlusSelect test_notebook")
         # define file names
         snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"

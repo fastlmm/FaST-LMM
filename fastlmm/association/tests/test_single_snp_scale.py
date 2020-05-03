@@ -29,7 +29,10 @@ class TestSingleSnpScale(unittest.TestCase):
         seed = 0
         snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000)
         snpdata = snpgen[:,[0,1,200,2200,10]].read()
-        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
+
+        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([ 0.00253807,  0.00127877,  0.16644993,  0.00131406,  0.00529101]),rtol=1e-5)
+        #!!!cmk this will change with new PySnpTools Batching????
+        #np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
 
         snpdata2 = snpgen[:,[0,1,200,2200,10]].read()
         np.testing.assert_equal(snpdata.val,snpdata2.val)
@@ -45,7 +48,9 @@ class TestSingleSnpScale(unittest.TestCase):
         snpgen2 = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file)
         os.remove(cache_file)
         snpdata = snpgen2[:,[0,1,200,2200,10]].read()
-        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
+        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([ 0.00253807,  0.00127877,  0.16644993,  0.00131406,  0.00529101]),rtol=1e-5)
+        #!!!cmk this will change with new PySnpTools Batching????
+        #np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
 
     @classmethod
     def setUpClass(self):

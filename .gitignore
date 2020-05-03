@@ -412,3 +412,5 @@ tests/tmp_extract_sim.txt
 /ignore.cpp
 /external/openblas/windows/lib/hideflang.dll
 /fastlmm/util/matrix/hideompstub.dll
+/fastlmm/association/tests/local_cache
+/fastlmm/association/tests/peertopeer
