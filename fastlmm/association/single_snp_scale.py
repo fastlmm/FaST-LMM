@@ -676,7 +676,7 @@ def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_c
         # 25K x 25K x 25K -> 25K x 25K
         #=============================================================
         num_threads = get_num_threads()
-        logging.info("About to svd on square {0}. Expected time ({2} procs)={1}".format(ata.iid_count,format_delta((ata.iid_count*.000707)**3*20.0/num_threads),mkl_num_threads))
+        logging.info("About to svd on square {0}. Expected time ({2} procs)={1}".format(ata.iid_count,format_delta((ata.iid_count*.000707)**3*20.0/num_threads),num_threads))
         t0 = time.time()
         [Uata3,Sata3,_] = big_sdd(ata.val) #wrecks ata.val
         logging.info("Actual time for svd on square={0}".format(format_delta(time.time()-t0)))
