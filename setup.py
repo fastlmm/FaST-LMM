@@ -101,29 +101,30 @@ if use_cython:
                      ]
     cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
 else:
-    assert false, "!!!cmk Need to update"
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
                              language="c++",
-                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.cpp", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
+                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
                              include_dirs=[numpy.get_include()],
                              extra_compile_args = extra_compile_args0,
                              define_macros=macros),
                    Extension(name="fastlmm.util.matrix.cample",
                             language="c++",
                             sources=["fastlmm/util/matrix/cample.cpp"],
-                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib],
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            libraries = ['openblas'],
+                            library_dirs = blas_library_list,
+                            runtime_library_dirs = runtime_library_dirs,
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args1,
                             define_macros=macros),
                     Extension(name="fastlmm.util.matrix.mmultfilex",
                             language="c++",
                             sources=["fastlmm/util/matrix/mmultfilex.cpp","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['mkl_intel_lp64', mkl_core, 'mkl_intel_thread', mp5lib],
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            libraries = ['openblas',mp5lib],
+                            library_dirs = blas_library_list,
+                            runtime_library_dirs = runtime_library_dirs,
+                            include_dirs = blas_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args2,
-                            define_macros=macros) 
+                            define_macros=macros)
                     ]
     cmdclass = {}
 
