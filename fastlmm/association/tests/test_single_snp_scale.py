@@ -280,7 +280,9 @@ if __name__ == '__main__':
 
     if True:
         r = unittest.TextTestRunner(failfast=True)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
+
     else: #runner test run
         logging.basicConfig(level=logging.INFO)
 

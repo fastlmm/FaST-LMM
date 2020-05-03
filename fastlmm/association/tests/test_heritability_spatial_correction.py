@@ -118,5 +118,6 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([getTestSuite()])
 
     r = unittest.TextTestRunner(failfast=False)
-    r.run(suites)
+    ret = r.run(suites)
     logging.info("done with testing")
+    assert ret.wasSuccessful()
