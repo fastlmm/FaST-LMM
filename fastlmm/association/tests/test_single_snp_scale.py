@@ -196,7 +196,7 @@ class TestSingleSnpScale(unittest.TestCase):
             self.compare_files(results_df,ref)
 
 
-    def test_peertopeer(self):
+    def cmkTooSlowQtest_peertopeer(self):
         logging.info("test_peertopeer")
 
         output_file = self.file_name("peertopeer")

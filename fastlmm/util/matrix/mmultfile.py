@@ -22,7 +22,7 @@ def get_num_threads():
 def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_only=False):
     sid_count = len(sid)
     piece_count = work_count * 2
-    log_frequency = 1
+    log_frequency = -2 #!!!cmk figure out how to set this well
 
     def debatch_closure(piece_index):
         return sid_count * piece_index // piece_count

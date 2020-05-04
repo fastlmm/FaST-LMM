@@ -414,3 +414,6 @@ tests/tmp_extract_sim.txt
 /fastlmm/util/matrix/hideompstub.dll
 /fastlmm/association/tests/local_cache
 /fastlmm/association/tests/peertopeer
+/tests/tslog.txt
+/tests/dekne.txt
+/tests/tslog2.txt
