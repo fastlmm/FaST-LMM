@@ -28,8 +28,11 @@ class CleanCommand(Clean):
 
     def run(self):
         Clean.run(self)
-        if os.path.exists('build'):
+        print("exists build? {0}".format(os.path.exists('build')))#!!!cmk
+        if os.path.exists('build'): #!!!cmk why doesn't build get remove on unbuntu?
+            print('removing build') #!!!cmk
             shutil.rmtree('build')
+            print("is it there now? build? {0}".format(os.path.exists('build')))#!!!cmk
         for dirpath, dirnames, filenames in os.walk('.'):
             for filename in filenames:
                 if (   (filename.endswith('.so') and not filename.startswith('libopenblas.'))
@@ -56,7 +59,7 @@ elif "win" in platform.system().lower():
     blas_root = os.path.join(os.path.dirname(__file__),"external/openblas")
     mp5lib = 'libiomp5md'
     extra_compile_args0 = ['/EHsc']
-    extra_compile_args1 = ['/DLAPACK_ILP64', '/DHAVE_LAPACK_CONFIG_H'] #cmk LAPACK_ILP64 seems to be 'long' not 'long long int'
+    extra_compile_args1 = ['/DLAPACK_ILP64', '/DHAVE_LAPACK_CONFIG_H']
     extra_compile_args2 = ['/EHsc', '/openmp', '/DLAPACK_LP64', '/DHAVE_LAPACK_CONFIG_H']
 else:
     macros = [("_UNIX", "1")]
@@ -100,7 +103,7 @@ if use_cython:
                             define_macros=macros)
                      ]
     cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
-else:
+else: #!!!cmk test
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
                              language="c++",
                              sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
@@ -185,7 +188,7 @@ setup(
                        "examples/toydataTest.phe",
                        "examples/toydataTrain.phe"
                        ],
-                  "fastlmm/util/matrix": [ #!!!cmk
+                  "fastlmm/util/matrix": [
                       "flang.dll",
                       "flangrti.dll",
                       "libiomp5md.dll",

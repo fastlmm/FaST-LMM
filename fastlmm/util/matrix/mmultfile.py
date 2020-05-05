@@ -14,10 +14,9 @@ from pysnptools.snpreader import SnpMemMap
 from six.moves import range
 
 def get_num_threads():
-    if 'mkl_num_threads' in os.environ: #!!!cmk
-        return int(os.environ['mkl_num_threads'])
-    else:
-        return multiprocessing.cpu_count()
+    max_threads = multiprocessing.cpu_count()
+    num_threads = min(os.environ.get('OPENPLAS_NUM_THREADS',max_threads),os.environ.get('MLK_NUM_THREADS',max_threads))
+    return num_threads
 
 def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_only=False):
     sid_count = len(sid)
