@@ -1046,7 +1046,8 @@ if __name__ == '__main__':
 
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=False)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
