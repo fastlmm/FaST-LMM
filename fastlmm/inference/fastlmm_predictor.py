@@ -241,11 +241,12 @@ class FastLMM(object):
         >>> import numpy as np
         >>> import logging
         >>> from pysnptools.snpreader import Bed, Pheno
+        >>> from fastlmm.util import example_file # Download and return local file name
         >>> from fastlmm.inference import FastLMM
         >>> logging.basicConfig(level=logging.INFO)
-        >>> snpreader = Bed('../feature_selection/examples/toydata.bed',count_A1=False)
-        >>> cov_fn = "../feature_selection/examples/toydata.cov"
-        >>> pheno_fn = "../feature_selection/examples/toydata.phe"
+        >>> snpreader = Bed(example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed"),count_A1=False) #!!!cmk check that switch from plain to 5chrom doesn't change answers
+        >>> cov_fn = example_file("fastlmm/feature_selection/examples/toydata.cov")
+        >>> pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
         >>> train_idx = np.r_[10:snpreader.iid_count] # iids 10 and on
         >>> test_idx  = np.r_[0:10] # the first 10 iids
         >>> fastlmm = FastLMM(GB_goal=2)
@@ -567,6 +568,10 @@ class FastLMM(object):
         return ret0, ret1
 
 if __name__ == "__main__":
+    if True:
+        from fastlmm.util import example_file # Download and return local file name
+        snpreader = Bed(example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed"),count_A1=False)
+
     logging.basicConfig(level=logging.INFO)
 
     import doctest

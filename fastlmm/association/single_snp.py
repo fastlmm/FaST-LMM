@@ -25,7 +25,6 @@ from pysnptools.kernelreader import SnpKernel
 from pysnptools.kernelreader import KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util import create_directory_if_necessary
-from pysnptools.snpreader import wrap_matrix_subset
 from pysnptools.util.intrangeset import IntRangeSet
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
 import fastlmm.inference.linear_regression as lin_reg
@@ -139,15 +138,18 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from fastlmm.association import single_snp
+    >>> from fastlmm.util import example_file # Download and return local file name
     >>> from pysnptools.snpreader import Bed
     >>> logging.basicConfig(level=logging.INFO)
-    >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-    >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
+    >>> pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
+    >>> test_snps = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
+    >>> results_dataframe = single_snp(test_snps=test_snps, pheno=pheno_fn, count_A1=False)
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_576 1e-07 10000
 
 
-    """
+    """#!!!cmk see 10/11/19 email "found a gap"
+    #!!!update web page to drop support for Python 2.8
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
@@ -580,7 +582,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     if interact_with_snp is not None:
         logging.info("interaction with %i" % interact_with_snp)
-        assert 0 <= interact_with_snp and interact_with_snp < covar.shape[1]-1, "interact_with_snp is out of range"
+        assert 0 <= interact_with_snp < covar.shape[1]-1, "interact_with_snp is out of range"
         interact = covar[:,interact_with_snp].copy()
         interact -=interact.mean()
         interact /= interact.std()
@@ -736,6 +738,19 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
     K[:,:] = K0_val * (1.0-mixing) + K1_val * mixing
 
 if __name__ == "__main__":
+    if False:
+        import logging
+        from fastlmm.association import single_snp
+        from fastlmm.util import example_file # Download and return local file name
+        from pysnptools.snpreader import Bed
+        logging.basicConfig(level=logging.INFO)
+        pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
+        test_snps = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
+        results_dataframe = single_snp(test_snps=test_snps, pheno=pheno_fn, count_A1=False)
+        print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
+
+
+
     logging.basicConfig(level=logging.INFO)
 
     import doctest

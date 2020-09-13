@@ -41,7 +41,7 @@ class TestSingleSnp(unittest.TestCase):
 
         '''
         logging.info("TestSingleSnp test_match_cpp")
-        snps = Bed(os.path.join(self.pythonpath, "tests/datasets/selecttest/snps"), count_A1=False)
+        snps = Bed(os.path.join(self.pythonpath, "tests/datasets/selecttest/snps.bed"), count_A1=False)
         pheno = os.path.join(self.pythonpath, "tests/datasets/selecttest/pheno.txt")
         covar = os.path.join(self.pythonpath, "tests/datasets/selecttest/covariate.txt")
         sim_sid = ["snp26250_m0_.19m1_.19","snp82500_m0_.28m1_.28","snp63751_m0_.23m1_.23","snp48753_m0_.4m1_.4","snp45001_m0_.26m1_.26","snp52500_m0_.05m1_.05","snp75002_m0_.39m1_.39","snp41253_m0_.07m1_.07","snp11253_m0_.2m1_.2","snp86250_m0_.33m1_.33","snp3753_m0_.23m1_.23","snp75003_m0_.32m1_.32","snp30002_m0_.25m1_.25","snp26252_m0_.19m1_.19","snp67501_m0_.15m1_.15","snp63750_m0_.28m1_.28","snp30001_m0_.28m1_.28","snp52502_m0_.35m1_.35","snp33752_m0_.31m1_.31","snp37503_m0_.37m1_.37","snp15002_m0_.11m1_.11","snp3751_m0_.34m1_.34","snp7502_m0_.18m1_.18","snp52503_m0_.3m1_.3","snp30000_m0_.39m1_.39","isnp4457_m0_.11m1_.11","isnp23145_m0_.2m1_.2","snp60001_m0_.39m1_.39","snp33753_m0_.16m1_.16","isnp60813_m0_.2m1_.2","snp82502_m0_.34m1_.34","snp11252_m0_.13m1_.13"]
@@ -426,7 +426,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         from pysnptools.util import create_directory_if_necessary
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
-        self.bedbase = os.path.join(self.pythonpath, 'fastlmm/feature_selection/examples/toydata.5chrom')
+        self.bedbase = os.path.join(self.pythonpath, 'fastlmm/feature_selection/examples/toydata.5chrom.bed')
         self.phen_fn = os.path.join(self.pythonpath, 'fastlmm/feature_selection/examples/toydata.phe')
         self.cov_fn = os.path.join(self.pythonpath,  'fastlmm/feature_selection/examples/toydata.cov')
 

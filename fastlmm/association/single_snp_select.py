@@ -110,9 +110,10 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_select
     >>> from pysnptools.snpreader import Bed
+    >>> from fastlmm.util import example_file # Download and return local file name
     >>> from fastlmm.util import compute_auto_pcs
-    >>> bed_fn = "../../tests/datasets/synth/all.bed"
-    >>> phen_fn = "../../tests/datasets/synth/pheno_10_causals.txt"
+    >>> bed_fn = example_file("tests/datasets/synth/all.bed")
+    >>> phen_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
     >>> covar = compute_auto_pcs(bed_fn,count_A1=False)
     >>> results_dataframe = single_snp_select(test_snps=bed_fn, G=bed_fn, pheno=phen_fn, covar=covar, GB_goal=2, count_A1=False)
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
@@ -132,7 +133,7 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     test_snps, G, pheno, covar = _fixup(test_snps, G, pheno, covar, count_A1=count_A1)
     common_input_files = [test_snps, G, pheno, covar]
 
-    k_list_in = [0] + [int(k) for k in k_list if 0 < k and k <= G.sid_count]
+    k_list_in = [0] + [int(k) for k in k_list if 0 < k <= G.sid_count]
 
     def top_snps_for_each_fold_nested(kfold_item):
         fold_index, (train_idx, test_idx) = kfold_item

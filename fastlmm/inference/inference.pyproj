@@ -6,8 +6,8 @@
     <ProjectGuid>6d8dcdf9-3776-4e1b-a713-e9b6f2a49865</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test.py</StartupFile>
-    <SearchPath>..\..\</SearchPath>
+    <StartupFile>tests\test_linear_regression.py</StartupFile>
+    <SearchPath>..\..\;..\..\..\pstsgkit</SearchPath>
     <OutputPath>.</OutputPath>
     <Name>inference</Name>
     <RootNamespace>inference</RootNamespace>
@@ -24,6 +24,7 @@
     <IsWindowsApplication>False</IsWindowsApplication>
     <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
     <TestFramework>unittest</TestFramework>
+    <WorkingDirectory>D:\OneDrive\programs\fastlmm\tests</WorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

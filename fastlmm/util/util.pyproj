@@ -6,7 +6,7 @@
     <ProjectGuid>{9144f8b5-632b-4a72-bd8e-01d453affb5a}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <StartupFile>test.py</StartupFile>
-    <SearchPath>..\..\..\PySnpToolsPy3;..\..\..\fastlmmpy3</SearchPath>
+    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>
     </WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -27,7 +27,7 @@
     <InterpreterArguments />
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
     <TestFramework>unittest</TestFramework>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>
@@ -54,6 +54,9 @@
     <Compile Include="matrix\mmultfile.py" />
     <Compile Include="matrix\__init__.py" />
     <Compile Include="mingrid.py" />
+    <Compile Include="_example_file.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="NearBronze.py" />
     <Compile Include="pickle_io.py" />
     <Compile Include="preprocess.py" />
@@ -79,6 +82,7 @@
     <Folder Include="stats\quadform\qfc_src\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="fastlmm.hashdown.json" />
     <Content Include="matrix\cample.cpp" />
     <Content Include="matrix\cample.pyx" />
     <Content Include="matrix\mmultfile.cpp" />
@@ -91,8 +95,7 @@
     <Content Include="stats\quadform\qfc_src\wrap_qfc.pyx" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="CondaEnv|CondaEnv|py37" />
-    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda27-64" />
+    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

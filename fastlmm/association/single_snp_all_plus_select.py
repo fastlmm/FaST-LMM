@@ -232,10 +232,12 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_all_plus_select
     >>> from pysnptools.snpreader import Bed
+    >>> from fastlmm.util import example_file # Download and return local file name
     >>> from pysnptools.util.mapreduce1.runner import LocalMultiProc
     >>> logging.basicConfig(level=logging.INFO)
-    >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-    >>> snps = Bed("../feature_selection/examples/toydata.5chrom.bed",count_A1=False)[:,::100] #To make example faster, run on only 1/100th of the data
+    >>> pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
+    >>> test_snps = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
+    >>> snps = Bed(test_snps,count_A1=False)[:,::100] #To make example faster, run on only 1/100th of the data
     >>> chrom5_snps = snps[:,snps.pos[:,0]==5] # Test on only chrom5
     >>> results_dataframe = single_snp_all_plus_select(test_snps=chrom5_snps,G=snps,pheno=pheno_fn,GB_goal=2,runner=LocalMultiProc(20,mkl_num_threads=5), count_A1=False) #Run multiproc
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
@@ -276,7 +278,7 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
 
                 is_all = (i_fold == n_folds) if n_folds > 1 else True
 
-                k_list_in =  [0] + [int(k) for k in k_list if 0 < k and k < len(single_snp_result)]
+                k_list_in =  [0] + [int(k) for k in k_list if 0 < k < len(single_snp_result)]
 
                 if is_all:
                     top_snps = list(single_snp_result.SNP[:max_k])

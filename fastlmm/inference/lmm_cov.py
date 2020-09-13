@@ -949,7 +949,7 @@ if __name__ == "__main__":
     #bed_fn = "../data/autosomes.genic"
     #pheno_fn = "../all-ldlsiu02.phe"
 
-    bed_fn = "../feature_selection/examples/toydata"
+    bed_fn = "../feature_selection/examples/toydata.5chrom.bed"
     pheno_fn = "../feature_selection/examples/toydata.phe"
 
     selected_snp_pos_fn = "../feature_selection/examples/test_snps.txt"

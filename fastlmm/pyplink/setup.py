@@ -50,7 +50,7 @@ class CleanCommand(Clean):
 # set up macro
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
-elif "win" in platform.system().lower():
+elif "win" in platform.system().lower(): #!!!cmk fix to be "Windows"
     macros = [("_WIN32", "1")]
 
 ext = [Extension("fastlmm.util.stats.quadform.qfc_src.wrap_qfc", ["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"], language="c++", define_macros=macros)]

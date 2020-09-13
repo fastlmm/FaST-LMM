@@ -47,8 +47,10 @@
     <Compile Include="inputs\buggy\lrt_one_kernel_fixed_mixed_effect_laplace_logistic_qqfit.N30.py" />
     <Compile Include="inputs\lrt_one_kernel_fixed_mixed_effect_linear_qqfit.N300.py" />
     <Compile Include="inputs\buggy\lrt_one_kernel_mixed_effect_laplace_l2_logistic_qqfit.N30.py" />
+    <Compile Include="inputs\lrt_two_kernel_mixed_effect_linear_qqfit.N300.fullrank.py" />
     <Compile Include="inputs\lrt_two_kernel_mixed_effect_linear_qqfit.N300.hdf5.py" />
     <Compile Include="inputs\lrt_two_kernel_mixed_effect_linear_qqfit.N300.py" />
+    <Compile Include="inputs\lrt_up_two_kernel_mixed_effect_linear_qqfit.N300.fullrank.py" />
     <Compile Include="inputs\lrt_up_two_kernel_mixed_effect_linear_qqfit.N300.hdf5.py" />
     <Compile Include="inputs\lrt_up_two_kernel_mixed_effect_linear_qqfit.N300.py" />
     <Compile Include="inputs\sc_davies_two_kernel_linear_qqfit.N300.needsReorder.py" />

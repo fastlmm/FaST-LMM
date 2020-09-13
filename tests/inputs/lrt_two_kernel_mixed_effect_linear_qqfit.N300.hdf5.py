@@ -1,6 +1,6 @@
 ##how the input file was created
 #from fastlmm.pyplink.snpreader.Bed import Bed
-#bed = Bed('datasets/all_chr.maf0.001.N300')
+#bed = Bed('datasets/all_chr.maf0.001.N300.bed')
 #snpMatrix = bed.read()
 #Hdf5.write(snpMatrix, 'datasets/all_chr.maf0.001.N300.hdf5')
 

@@ -6,8 +6,8 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test_single_snp_scale.py</StartupFile>
-    <SearchPath>..\..\..\pysnptools;..\..\..\fastlmm</SearchPath>
+    <StartupFile>tests\test_snp_set.py</StartupFile>
+    <SearchPath>..\..\..\fastlmm;..\..\..\pstsgkit</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
@@ -29,7 +29,8 @@
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
-    <Environment>TEMP=m:\</Environment>
+    <Environment>
+    </Environment>
     <TestFramework>unittest</TestFramework>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>

@@ -151,6 +151,7 @@ if __name__ == '__main__':
                                     #getDebugTestSuite(),
 
                                     getTestSuiteX(),
+
                                     fastlmm.inference.tests.test_linear_regression.getTestSuite(), 
                                     fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
                                     fastlmm.pyplink.test.getTestSuite(),
@@ -171,7 +172,7 @@ if __name__ == '__main__':
 
     
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=False)
+        r = unittest.TextTestRunner(failfast=False) #!!!cmk
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else: #Cluster test run

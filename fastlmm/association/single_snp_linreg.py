@@ -25,7 +25,6 @@ from pysnptools.kernelreader import SnpKernel
 from pysnptools.kernelreader import KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util import create_directory_if_necessary
-from pysnptools.snpreader import wrap_matrix_subset
 from pysnptools.util.intrangeset import IntRangeSet
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
 import fastlmm.inference.linear_regression as lin_reg
@@ -80,9 +79,11 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_linreg
     >>> from pysnptools.snpreader import Bed
+    >>> from fastlmm.util import example_file # Download and return local file name
     >>> logging.basicConfig(level=logging.INFO)
-    >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-    >>> results_dataframe = single_snp_linreg(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, count_A1=False)
+    >>> pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
+    >>> test_snps = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
+    >>> results_dataframe = single_snp_linreg(test_snps=test_snps, pheno=pheno_fn, count_A1=False)
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_576 1e-07 10000
 

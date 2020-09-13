@@ -10,7 +10,7 @@ import numpy
 
 # Version number
 version = '0.4.8'
-
+#!!!cmk update read me to say 3.7 (or 3.8?) remove 2.7 from web page
 
 def readme():
     with open('README.md') as f:
@@ -52,7 +52,7 @@ if platform.system() == "Darwin":
     extra_compile_args0 = []
     extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
     extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
-elif "win" in platform.system().lower():
+elif "win" in platform.system().lower(): #!!!cmk Fix to be "Windows"
     macros = [("_WIN32", "1")]
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
     mp5lib = 'libiomp5md'
@@ -71,7 +71,7 @@ else:
 
 mkl_library_list = [intel_root+"/mkl/lib/intel64",intel_root+"/compiler/lib/intel64"]
 mkl_include_list = [intel_root+"/mkl/include"]
-runtime_library_dirs = None if "win" in platform.system().lower() else mkl_library_list
+runtime_library_dirs = None if "win" in platform.system().lower() else mkl_library_list #!!!cmk fix to be "Windows"
 
 #see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
 print("use_cython? {0}".format(use_cython))
@@ -174,11 +174,8 @@ setup(
                        "examples/toydata.5chrom.bed",
                        "examples/toydata.5chrom.bim",
                        "examples/toydata.5chrom.fam",
-                       "examples/toydata.bed",
-                       "examples/toydata.bim",
                        "examples/toydata.cov",
                        "examples/toydata.dat",
-                       "examples/toydata.fam",
                        "examples/toydata.map",
                        "examples/toydata.phe",
                        "examples/toydata.shufflePlus.phe",
@@ -188,7 +185,7 @@ setup(
                        ]
                  },
     install_requires = ['pandas>=0.19.0','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9',
+                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9',#!!!cmk update
                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,

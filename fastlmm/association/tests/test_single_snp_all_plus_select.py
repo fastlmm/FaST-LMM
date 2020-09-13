@@ -225,7 +225,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def cmktest_notebook(self): #!!!cmk too slow
+    def cmkslowtest_notebook(self): #!!!cmk too slow
         do_plot = False
         mf_name = "lmp" #"local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
         runner = mf_to_runner_function(mf_name)(4)
@@ -234,7 +234,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         logging.info("TestSingleSnpAllPlusSelect test_notebook")
         # define file names
-        snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
+        snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all.bed",count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
         cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
 
@@ -269,7 +269,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         self.compare_files(results,"one")
 
-    def cmktest_three(self): #!!! rather a big test case #!!!cmk too slow
+    def cmkslowtest_three(self): #!!! rather a big test case #!!!cmk too slow
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_three")
 
@@ -296,7 +296,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         logging.info(results)
         self.compare_files(results,"three")
 
-    def cmktest_two(self): #!!! rather a big test case #!!!cmk too slow
+    def cmkslowtest_two(self): #!!! rather a big test case #!!!cmk too slow
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_two")
         do_plot = False
@@ -415,7 +415,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
             assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
 
-    def cmktest_doctest(self): #!!!cmk too slow
+    def cmkslowtest_doctest(self): #!!!cmk too slow
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         result = doctest.testmod(sys.modules['fastlmm.association.single_snp_all_plus_select'])
