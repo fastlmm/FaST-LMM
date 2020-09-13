@@ -2,7 +2,7 @@ FastLmmSet(
     test="sc_mom",
     outfile = 'tmp/sc_mom_two_kernel_linear_qqfit.N300.txt',
     phenofile = 'datasets/phenSynthFrom22.23.N300.txt',
-    alt_snpreader = 'datasets/all_chr.maf0.001.N300',
+    alt_snpreader = 'datasets/all_chr.maf0.001.N300.bed',
     altset_list = 'datasets/set_input.small.txt',
     covarfile  =  None,
     filenull = 'datasets/all_chr.maf0.001.chr22.23.N300.bed',

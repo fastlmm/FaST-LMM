@@ -35,8 +35,9 @@ def compute_auto_pcs(snpreader, cutoff=.1, k_values=np.arange(11), output_file_n
     >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from fastlmm.util import compute_auto_pcs
+    >>> from fastlmm.util import example_file # Download and return local file name
     >>> logging.basicConfig(level=logging.INFO)
-    >>> file_name = "../feature_selection/examples/toydata"
+    >>> file_name = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
     >>> best_pcs = compute_auto_pcs(file_name,count_A1=False)
     >>> print(int(best_pcs['vals'].shape[0]),int(best_pcs['vals'].shape[1]))
     500 0

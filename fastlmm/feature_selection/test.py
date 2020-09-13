@@ -92,7 +92,7 @@ class TestFeatureSelection(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
-        self.snpreader_bed = Bed(currentFolder + "/examples/toydata",count_A1=False)
+        self.snpreader_bed = Bed(currentFolder + "/examples/toydata.5chrom.bed",count_A1=False)
         #Creating Hdf5 data ...
         #snpData = self.snpreader_bed.read()
         #Hdf5.write(snpData, currentFolder + "/examples/toydata.snpmajor.hdf5")
@@ -211,7 +211,7 @@ class TestFeatureSelection(unittest.TestCase):
 
     def test_blocking_bed(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
-        self.blocking(currentFolder + "/examples/toydata") # use string instead of reader, to test that strings work
+        self.blocking(currentFolder + "/examples/toydata.5chrom.bed") # use string instead of reader, to test that strings work
 
     def test_blocking_hdf5(self):
         self.blocking(self.snpreader_hdf5)

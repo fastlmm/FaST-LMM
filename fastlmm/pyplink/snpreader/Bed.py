@@ -114,7 +114,9 @@ class Bed(object):
 
         Examples:
 
-        >>> bed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
+        >>> from fastlmm.util import example_file # Download and return local file name
+        >>> bed_file = example_file('tests/datasets/all_chr.maf0.001.N300.*','*.bed').replace('.bed','')
+        >>> bed = Bed(bed_file)
         >>> ret = bed.read()
         >>> len(ret['rs'])
         1015
@@ -129,10 +131,11 @@ class Bed(object):
         '1_12,1_34,1_10,1_35,1_28,1_25,1_36,1_39,1_4,1_13'
 
 
-        >>> altset_list1 = SnpAndSetNameCollection(r'../../tests/datasets/set_input.small.txt') # get the list of snpsets defined in the file
+        >>> altset_list1 = SnpAndSetNameCollection(example_file('tests/datasets/set_input.small.txt')) # get the list of snpsets defined in the file
         >>> altset_list2 = Subset(altset_list1,['set1','set5'])                       # only use a subset of those snpsets
         >>> altset_list3 = MinMaxSetSize(altset_list2, minsetsize=2, maxsetsize=15)   # only use the subset of subsets that contain between 2 & 15 snps (inclusive)
-        >>> bed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
+        >>> bed_file = example_file('tests/datasets/all_chr.maf0.001.N300.*','*.bed').replace('.bed','')
+        >>> bed = Bed(bed_file)
         >>> altsetlist_plusbed = altset_list3.addbed(bed)                             # apply altset_list3 to this bed file
         >>> len(altsetlist_plusbed)                                                   # tell how many snpsets there will be
         1
@@ -253,18 +256,24 @@ class Bed(object):
         return ret
 
 if __name__ == "__main__":
+    if False:
+        from fastlmm.util import example_file # Download and return local file name
+        bed_file = example_file('tests/datasets/all_chr.maf0.001.N300.*','*.bed')
+        bed = Bed(bed_file)
+        ret = bed.read()
+        len(ret['rs'])
+        #1015
+        ret = bed.read(AllSnps())
+        len(ret['rs'])
+        #1015
+        ret = bed.read(SnpAndSetName('someset',['23_9','23_2']))
+        ",".join(ret['rs'])
+        #'23_9,23_2'
+        ret = bed.read(PositionRange(0,10))
+        ",".join(ret['rs'])
+        #'1_12,1_34,1_10,1_35,1_28,1_25,1_36,1_39,1_4,1_13'
 
-    #bed = Bed(r'../../tests/datasets/all_chr.maf0.001.N300')
-    #ret = bed.read()
-    #len(ret['rs'])
-    #ret = bed.read(AllSnps())
-    #len(ret['rs'])
-    #ret = bed.read(SnpAndSetName('someset',['23_9','23_2']))
-    #",".join(ret['rs'])
-    #ret = bed.read(PositionRange(0,10))
-    #",".join(ret['rs'])
 
-
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     import doctest
     doctest.testmod()

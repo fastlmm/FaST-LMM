@@ -228,7 +228,7 @@ def main():
 
     # set up data
     phen_fn = "../feature_selection/examples/toydata.phe"
-    snp_fn = "../feature_selection/examples/toydata.5chrom"
+    snp_fn = "../feature_selection/examples/toydata.5chrom.bed"
     #chrom_count = 5
     
     # load data

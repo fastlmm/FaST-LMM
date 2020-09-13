@@ -27,11 +27,9 @@ class TestSingleSnpScale(unittest.TestCase):
     @classmethod
     def test_snpgen(self):
         seed = 0
-        snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000)
+        snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000,block_size=100)
         snpdata = snpgen[:,[0,1,200,2200,10]].read()
-        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([ 0.00253807,  0.00127877,  0.16644993,  0.00131406,  0.00529101]),rtol=1e-5)
-        #!!!cmk this will change with new PySnpTools Batching????
-        #np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
+        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
 
         snpdata2 = snpgen[:,[0,1,200,2200,10]].read()
         np.testing.assert_equal(snpdata.val,snpdata2.val)
@@ -42,14 +40,12 @@ class TestSingleSnpScale(unittest.TestCase):
         cache_file = tempfile.gettempdir() + "/test_snpgen_cache.snpgen.npz"
         if os.path.exists(cache_file):
             os.remove(cache_file)
-        snpgen = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file)
+        snpgen = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file,block_size=100)
         assert os.path.exists(cache_file)
-        snpgen2 = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file)
+        snpgen2 = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file,block_size=100)
         os.remove(cache_file)
         snpdata = snpgen2[:,[0,1,200,2200,10]].read()
-        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([ 0.00253807,  0.00127877,  0.16644993,  0.00131406,  0.00529101]),rtol=1e-5)
-        #!!!cmk this will change with new PySnpTools Batching????
-        #np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
+        np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
 
     @classmethod
     def setUpClass(self):
@@ -57,7 +53,7 @@ class TestSingleSnpScale(unittest.TestCase):
         import fastlmm as fastlmm
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(fastlmm.__file__)),".."))
-        self.bed = Bed(os.path.join(self.pythonpath, 'tests/datasets/synth/all'),count_A1=True)[:,::10]
+        self.bed = Bed(os.path.join(self.pythonpath, 'tests/datasets/synth/all.bed'),count_A1=True)[:,::10]
         self.phen_fn = os.path.join(self.pythonpath, 'tests/datasets/synth/pheno_10_causals.txt')
         self.cov_fn = os.path.join(self.pythonpath,  'tests/datasets/synth/cov.txt')
 
@@ -195,7 +191,7 @@ class TestSingleSnpScale(unittest.TestCase):
             self.compare_files(results_df,ref)
 
 
-    def cmktest_peertopeer(self): #!!!cmk too slow
+    def cmkslowtest_peertopeer(self): #!!!cmk too slow
         logging.info("test_peertopeer")
 
         output_file = self.file_name("peertopeer")

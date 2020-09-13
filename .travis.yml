@@ -51,7 +51,7 @@ script:
 
 deploy:
   provider: s3
-  access_key_id: AKIAIJGTUJPG2US6OIOQ
+  access_key_id: AKIAIH6I45BAJIHWYAAQ
   secret_access_key: $AWS_SECRET_KEY
   bucket: "traviscibucket"
   upload_dir: $TRAVIS_REPO_SLUG/$TRAVIS_BRANCH/$TRAVIS_BUILD_NUMBER.$TRAVIS_COMMIT/$TRAVIS_JOB_NAME

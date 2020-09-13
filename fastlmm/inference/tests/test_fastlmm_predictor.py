@@ -36,7 +36,7 @@ class TestFastLMM(unittest.TestCase):
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
 
-        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
+        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all.bed",count_A1=False)
         self.covariate_whole = Pheno(self.pythonpath + "/tests/datasets/synth/cov.txt")
         self.pheno_whole = Pheno(self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt")
 
@@ -108,7 +108,7 @@ class TestFastLMM(unittest.TestCase):
 
         import matplotlib.pyplot as plt
         from pysnptools.snpreader import Pheno,Bed
-        bed = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
+        bed = Bed(self.pythonpath + "/tests/datasets/synth/all.bed",count_A1=False)
         cov = Pheno(self.pythonpath + "/tests/datasets/synth/cov.txt")
         pheno = Pheno(self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt").read()
 
@@ -178,7 +178,7 @@ class TestFastLMM(unittest.TestCase):
     def test_str(self):
         logging.info("TestLmmTrain test_str")
 
-        G0_train = self.pythonpath + "/tests/datasets/synth/all"
+        G0_train = self.pythonpath + "/tests/datasets/synth/all.bed"
         covariate_train = None
         pheno_train = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
 

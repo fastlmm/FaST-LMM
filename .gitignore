@@ -407,3 +407,10 @@ tests/tmp_extract_sim.txt
 /r.nopysnptools.txt
 /5.6.7
 /r.no.txt
+/doc/ipynb/tempChrNot1.fam
+/doc/ipynb/tempChrNot1.bim
+/doc/ipynb/tempChrNot1.bed
+/doc/ipynb/tempChrNot1.fam
+/doc/ipynb/tempChrNot1.bim
+/doc/ipynb/tempChrNot1.bed
+/fastlmm/association/tests/local_cache
