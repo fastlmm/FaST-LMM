@@ -107,7 +107,7 @@ class TestGwas(unittest.TestCase):
         #dat_fn = prefix + "/jax_M_expression.1-18.dat"
         #pheno_fn = prefix + "/jax_M_expression.19.phe.txt"
         
-        bed_fn = os.path.join(currentFolder, "../../feature_selection/examples/toydata.5chrom.bed")
+        bed_fn = os.path.join(currentFolder, "../../feature_selection/examples/toydata.5chrom")
         pheno_fn = os.path.join(currentFolder, "../../feature_selection/examples/toydata.phe")
 
         #prefix = "../../../tests\datasets\mouse"

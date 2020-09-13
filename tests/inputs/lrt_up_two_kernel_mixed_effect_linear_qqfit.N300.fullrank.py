@@ -1,6 +1,6 @@
 FastLmmSet(
     phenofile = 'datasets/phenSynthFrom22.23.N300.txt',
-    alt_snpreader = 'datasets/all_chr.maf0.001.N300.bed',
+    alt_snpreader = 'datasets/all_chr.maf0.001.N300',
     altset_list = 'datasets/set_input.23.txt',
     covarfile  =  None,
     filenull = 'datasets/all_chr.maf0.001.chr22.23.N300.bed',

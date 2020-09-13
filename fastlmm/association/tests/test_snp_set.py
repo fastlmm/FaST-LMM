@@ -46,7 +46,7 @@ class TestSnpSet(unittest.TestCase):
         referenceOutfile = self._referenceOutfile(fn)
 
         result_dataframe = snp_set(
-            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300.bed',
+            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300',
             set_list = self.currentFolder+'/../../../tests/datasets/set_input.23.txt',
             pheno = self.currentFolder+'/../../../tests/datasets/phenSynthFrom22.23.N300.txt',
             output_file_name = tmpOutfile
@@ -64,7 +64,7 @@ class TestSnpSet(unittest.TestCase):
         referenceOutfile = self._referenceOutfile(fn)
 
         result_dataframe = snp_set(
-            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300.bed',
+            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300',
             set_list = self.currentFolder+'/../../../tests/datasets/set_input.23.txt',
             pheno = self.currentFolder+'/../../../tests/datasets/phenSynthFrom22.23.N300.txt',
             G0 = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.chr22.23.N300.bed',
@@ -85,7 +85,7 @@ class TestSnpSet(unittest.TestCase):
         referenceOutfile = self._referenceOutfile(fn)
 
         result_dataframe = snp_set(
-            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300.bed',
+            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300',
             set_list = self.currentFolder+'/../../../tests/datasets/set_input.small.txt',
             pheno = self.currentFolder+'/../../../tests/datasets/phenSynthFrom22.23.N300.txt',
             test = "sc_davies",
@@ -105,7 +105,7 @@ class TestSnpSet(unittest.TestCase):
         referenceOutfile = self._referenceOutfile(fn)
 
         result_dataframe = snp_set(
-            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300.bed',
+            test_snps = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.N300',
             set_list = self.currentFolder+'/../../../tests/datasets/set_input.small.txt',
             pheno = self.currentFolder+'/../../../tests/datasets/phenSynthFrom22.23.N300.randcidorder.txt',
             G0 = self.currentFolder+'/../../../tests/datasets/all_chr.maf0.001.chr22.23.N300.bed',

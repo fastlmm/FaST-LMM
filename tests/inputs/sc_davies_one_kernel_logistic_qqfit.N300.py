@@ -2,7 +2,7 @@ FastLmmSet(
     test="sc_davies",
     outfile = 'tmp/sc_davies_one_kernel_logistic_qqfit.N300.txt',
     phenofile = 'datasets/phenSynthFrom22.23.bin.N300.txt',
-    alt_snpreader = 'datasets/all_chr.maf0.001.N300.bed',
+    alt_snpreader = 'datasets/all_chr.maf0.001.N300',
     altset_list = 'datasets/set_input.small.txt',
     covarfile  =  None,
     filenull = None,

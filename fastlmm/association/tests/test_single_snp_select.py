@@ -107,7 +107,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         from fastlmm.util import compute_auto_pcs
 
         # define file names
-        bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
+        bed_fn = self.pythonpath + "/tests/datasets/synth/all"
         cov_fn = "pcs_cov.txt"
 
         # run PCgeno
