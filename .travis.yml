@@ -2,12 +2,13 @@ language: python
 matrix:
   include:
   - name: linux_py3
-    python: 3.7
+    python: 3.8
     os: linux
     before_install:
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
+    - export LD_PRELOAD=$HOME/miniconda3/pkgs/mkl-2019.4-243/lib/libmkl_core.so:$HOME/miniconda3/pkgs/mkl-2019.4-243/lib/libmkl_sequential.so
 
   - name: macosx_py37
     os: osx
