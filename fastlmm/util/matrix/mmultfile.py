@@ -85,7 +85,7 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
                     slicei = np.fromfile(fp, dtype=np.float64, count=a.iid_count*(stopi-starti)).reshape(a.iid_count,stopi-starti,order="F")
                 else:
                     slicei = slice
-                if i%log_frequency == 0 and log_frequency > 0:
+                if log_frequency > 0 and i%log_frequency == 0:
                     logging.info("{0}/{1}".format(i,work_count))
                 ata_piece[starti-start:stopi-start,:] = np.dot(slicei.T,slice)
     else:
@@ -108,7 +108,7 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=
             U_fp.seek(a_snp_mem_map.offset)
             for i in range(a_snp_mem_map.sid_count):
                 a_mem = np.fromfile(U_fp, dtype=np.float64, count=a_snp_mem_map.iid_count)
-                if i%log_frequency == 0 and log_frequency > 0:
+                if log_frequency > 0 and i%log_frequency == 0:
                     logging.info("{0}/{1}".format(i,a_snp_mem_map.sid_count))
                 aTb[i,:] = np.dot(a_mem,b_mem)
                 aaTb -= np.dot(a_mem.reshape(-1,1),aTb[i:i+1,:])

@@ -52,7 +52,7 @@ if platform.system() == "Darwin":
     extra_compile_args0 = []
     extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
     extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
-elif "win" in platform.system().lower(): #!!!cmk Fix to be "Windows"
+elif platform.system() == "Windows":
     macros = [("_WIN32", "1")]
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
     mp5lib = 'libiomp5md'

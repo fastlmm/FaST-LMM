@@ -282,7 +282,7 @@ real   qf_swig(real* lb1, int len_lb1, real* nc1, int len_nc1, int* n1, int len_
 
 	if ((len_lb1!=len_nc1) || (len_lb1!=len_n1) || (len_trace!=7) ||(len_ifault!=1))
 	{
-		printf("Error, sizes: lb: %i, nc %i, n: %i, trace: %i, ifault: %i \n",(len_lb1,len_nc1,len_n1,len_trace,len_ifault));
+		printf("Error, sizes: lb: %i, nc %i, n: %i, trace: %i, ifault: %i \n",len_lb1,len_nc1,len_n1,len_trace,len_ifault);
 		return -1.0;
 	}
 
