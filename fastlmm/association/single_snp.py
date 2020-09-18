@@ -149,7 +149,6 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
 
 
     """#!!!cmk see 10/11/19 email "found a gap"
-    #!!!update web page to drop support for Python 2.8
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")

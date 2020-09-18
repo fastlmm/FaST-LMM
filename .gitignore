@@ -414,3 +414,5 @@ tests/tmp_extract_sim.txt
 /doc/ipynb/tempChrNot1.bim
 /doc/ipynb/tempChrNot1.bed
 /fastlmm/association/tests/local_cache
+/fastlmm/util/matrix/mmultfilex.cp38-win_amd64.pyd
+/fastlmm/util/matrix/cample.cp38-win_amd64.pyd

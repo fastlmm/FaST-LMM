@@ -225,7 +225,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def cmkslowtest_notebook(self): #!!!cmk too slow
+    def slowtest_notebook(self): # too slow
         do_plot = False
         mf_name = "lmp" #"local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
         runner = mf_to_runner_function(mf_name)(4)

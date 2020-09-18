@@ -184,8 +184,8 @@ setup(
                        "examples/toydataTrain.phe"
                        ]
                  },
-    install_requires = ['pandas>=0.19.0','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.10', 'dill>=0.2.9',#!!!cmk update
+    install_requires = ['pandas>=1.1.1','matplotlib>=1.5.1',
+                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.22', 'dill>=0.2.9',#!!!cmk update
                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
