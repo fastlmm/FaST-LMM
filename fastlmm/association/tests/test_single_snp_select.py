@@ -125,7 +125,7 @@ class TestSingleSnpSelect(unittest.TestCase):
 
         # consists of two fastlmmc calls, one that does feature selection and one that runs GWAS
         for suffix,logdelta in [("h2IsHalf",0),("h2Search",None)]:
-            result_file_name = "sel_plus_pc_old_{0}".format("h2IsHalf" if logdelta is 0 else "h2Search")
+            result_file_name = "sel_plus_pc_old_{0}".format("h2IsHalf" if logdelta == 0 else "h2Search")
             runLMMSELECT(bed_fn, phen_fn, out_dir, result_file_name, bfileSim=bed_fn, covar=cov_fn, fastlmm_path=fastlmm_path,autoSelectCriterionMSE=False,excludeByGeneticDistance=1000,optLogdelta=logdelta)
             # compare sel_plus_pc_old_h2*.LMMSELECT.out.txt
             short = result_file_name+".LMMSELECT.out"

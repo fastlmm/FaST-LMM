@@ -225,7 +225,7 @@ class TestFastLMM(unittest.TestCase):
         filename = self.tempout_dir + "/model3.flm.p"
         #cmk joblib.dump(fastlmm3x, filename) 
         #cmk fastlmm3 = joblib.load(filename)
-        fastlmm3 = fastlm3x
+        fastlmm3 = fastlmm3x
 
 
         #Predict with model (test on train)
