@@ -71,8 +71,8 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
     stop = debatch_closure(work_index+1)
 
     ata_piece = np.zeros((a.sid_count-start,stop-start),order='C')
-    do_both = True #!!!cmk
 
+    do_both = False
     if force_python_only or do_both:
         with open(a.filename,"rb") as fp:
             fp.seek(a.offset+start*a.iid_count*8)

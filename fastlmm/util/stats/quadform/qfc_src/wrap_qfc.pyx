@@ -14,19 +14,19 @@ def qf(np.ndarray[np.float64_t, ndim=1] lb1, np.ndarray[np.float64_t, ndim=1] nc
 	#http://wiki.cython.org/tutorials/NumpyPointerToC
 
 	qfval = _qf_swig(<double*> lb1.data, 
-	len_lb1, 
+	<int> len_lb1, 
 	<double*> nc1.data, 
-	len_nc1, 
+	<int> len_nc1, 
 	<int*> n1.data, 
-	len_n1, 
+	<int> len_n1, 
 	sigma, 
 	c1, 
-	lim1, 
+	<int> lim1, 
 	acc, 
 	<double*> trace.data, 
-	len_trace, 
+	<int> len_trace, 
 	<int*> ifault.data, 
-	len_ifault)
+	<int> len_ifault)
 	return qfval
 
 

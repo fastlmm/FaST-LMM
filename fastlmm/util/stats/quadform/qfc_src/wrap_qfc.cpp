@@ -9,7 +9,7 @@
 #else
 #define CYTHON_ABI "0_29_21"
 #define CYTHON_HEX_VERSION 0x001D15F0
-#define CYTHON_FUTURE_DIVISION 0
+#define CYTHON_FUTURE_DIVISION 1
 #include <stddef.h>
 #ifndef offsetof
   #define offsetof(type, member) ( (size_t) & ((type*)0) -> member )
@@ -1726,8 +1726,8 @@ static PyObject *__pyx_kp_u_ndarray_is_not_C_contiguous;
 static PyObject *__pyx_kp_u_ndarray_is_not_Fortran_contiguou;
 static PyObject *__pyx_n_s_np;
 static PyObject *__pyx_n_s_numpy;
-static PyObject *__pyx_kp_s_numpy_core_multiarray_failed_to;
-static PyObject *__pyx_kp_s_numpy_core_umath_failed_to_impor;
+static PyObject *__pyx_kp_u_numpy_core_multiarray_failed_to;
+static PyObject *__pyx_kp_u_numpy_core_umath_failed_to_impor;
 static PyObject *__pyx_n_s_qf;
 static PyObject *__pyx_n_s_qfval;
 static PyObject *__pyx_n_s_range;
@@ -2029,18 +2029,18 @@ static PyObject *__pyx_pf_7fastlmm_4util_5stats_8quadform_7qfc_src_8wrap_qfc_qf(
 
   /* "fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx":22
  * 	<int*> n1.data,
- * 	len_n1,
+ * 	<int> len_n1,
  * 	sigma,             # <<<<<<<<<<<<<<
  * 	c1,
- * 	lim1,
+ * 	<int> lim1,
  */
   __pyx_t_1 = __pyx_PyFloat_AsDouble(__pyx_v_sigma); if (unlikely((__pyx_t_1 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
 
   /* "fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx":23
- * 	len_n1,
+ * 	<int> len_n1,
  * 	sigma,
  * 	c1,             # <<<<<<<<<<<<<<
- * 	lim1,
+ * 	<int> lim1,
  * 	acc,
  */
   __pyx_t_2 = __pyx_PyFloat_AsDouble(__pyx_v_c1); if (unlikely((__pyx_t_2 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 23, __pyx_L1_error)
@@ -2048,7 +2048,7 @@ static PyObject *__pyx_pf_7fastlmm_4util_5stats_8quadform_7qfc_src_8wrap_qfc_qf(
   /* "fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx":24
  * 	sigma,
  * 	c1,
- * 	lim1,             # <<<<<<<<<<<<<<
+ * 	<int> lim1,             # <<<<<<<<<<<<<<
  * 	acc,
  * 	<double*> trace.data,
  */
@@ -2056,10 +2056,10 @@ static PyObject *__pyx_pf_7fastlmm_4util_5stats_8quadform_7qfc_src_8wrap_qfc_qf(
 
   /* "fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx":25
  * 	c1,
- * 	lim1,
+ * 	<int> lim1,
  * 	acc,             # <<<<<<<<<<<<<<
  * 	<double*> trace.data,
- * 	len_trace,
+ * 	<int> len_trace,
  */
   __pyx_t_4 = __pyx_PyFloat_AsDouble(__pyx_v_acc); if (unlikely((__pyx_t_4 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 25, __pyx_L1_error)
 
@@ -2067,14 +2067,14 @@ static PyObject *__pyx_pf_7fastlmm_4util_5stats_8quadform_7qfc_src_8wrap_qfc_qf(
  * 	#http://wiki.cython.org/tutorials/NumpyPointerToC
  * 
  * 	qfval = _qf_swig(<double*> lb1.data,             # <<<<<<<<<<<<<<
- * 	len_lb1,
+ * 	<int> len_lb1,
  * 	<double*> nc1.data,
  */
-  __pyx_v_qfval = qf_swig(((double *)__pyx_v_lb1->data), __pyx_v_len_lb1, ((double *)__pyx_v_nc1->data), __pyx_v_len_nc1, ((int *)__pyx_v_n1->data), __pyx_v_len_n1, __pyx_t_1, __pyx_t_2, __pyx_t_3, __pyx_t_4, ((double *)__pyx_v_trace->data), __pyx_v_len_trace, ((int *)__pyx_v_ifault->data), __pyx_v_len_ifault);
+  __pyx_v_qfval = qf_swig(((double *)__pyx_v_lb1->data), ((int)__pyx_v_len_lb1), ((double *)__pyx_v_nc1->data), ((int)__pyx_v_len_nc1), ((int *)__pyx_v_n1->data), ((int)__pyx_v_len_n1), __pyx_t_1, __pyx_t_2, ((int)__pyx_t_3), __pyx_t_4, ((double *)__pyx_v_trace->data), ((int)__pyx_v_len_trace), ((int *)__pyx_v_ifault->data), ((int)__pyx_v_len_ifault));
 
   /* "fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx":30
  * 	<int*> ifault.data,
- * 	len_ifault)
+ * 	<int> len_ifault)
  * 	return qfval             # <<<<<<<<<<<<<<
  * 
  * 
@@ -4644,8 +4644,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_ndarray_is_not_Fortran_contiguou, __pyx_k_ndarray_is_not_Fortran_contiguou, sizeof(__pyx_k_ndarray_is_not_Fortran_contiguou), 0, 1, 0, 0},
   {&__pyx_n_s_np, __pyx_k_np, sizeof(__pyx_k_np), 0, 0, 1, 1},
   {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
-  {&__pyx_kp_s_numpy_core_multiarray_failed_to, __pyx_k_numpy_core_multiarray_failed_to, sizeof(__pyx_k_numpy_core_multiarray_failed_to), 0, 0, 1, 0},
-  {&__pyx_kp_s_numpy_core_umath_failed_to_impor, __pyx_k_numpy_core_umath_failed_to_impor, sizeof(__pyx_k_numpy_core_umath_failed_to_impor), 0, 0, 1, 0},
+  {&__pyx_kp_u_numpy_core_multiarray_failed_to, __pyx_k_numpy_core_multiarray_failed_to, sizeof(__pyx_k_numpy_core_multiarray_failed_to), 0, 1, 0, 0},
+  {&__pyx_kp_u_numpy_core_umath_failed_to_impor, __pyx_k_numpy_core_umath_failed_to_impor, sizeof(__pyx_k_numpy_core_umath_failed_to_impor), 0, 1, 0, 0},
   {&__pyx_n_s_qf, __pyx_k_qf, sizeof(__pyx_k_qf), 0, 0, 1, 1},
   {&__pyx_n_s_qfval, __pyx_k_qfval, sizeof(__pyx_k_qfval), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
@@ -4731,7 +4731,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * 
  * cdef inline int import_umath() except -1:
  */
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(1, 1037, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(1, 1037, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
@@ -4742,7 +4742,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * 
  * cdef inline int import_ufunc() except -1:
  */
-  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(1, 1043, __pyx_L1_error)
+  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(1, 1043, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
@@ -5074,7 +5074,7 @@ if (!__Pyx_RefNanny) {
  * 
  * cimport numpy as np
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;

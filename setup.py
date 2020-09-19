@@ -77,7 +77,7 @@ runtime_library_dirs = None if "win" in platform.system().lower() else mkl_libra
 print("use_cython? {0}".format(use_cython))
 if use_cython:
     ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
-                             language="c++",
+                             language="c++",                             
                              sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
                              include_dirs=[numpy.get_include()],
                              extra_compile_args = extra_compile_args0,
@@ -127,6 +127,9 @@ else:
                             define_macros=macros) 
                     ]
     cmdclass = {}
+
+for e in ext_modules:
+    e.cython_directives = {'language_level': "3"} #all are Python-3
 
 #python setup.py sdist bdist_wininst upload
 setup(
