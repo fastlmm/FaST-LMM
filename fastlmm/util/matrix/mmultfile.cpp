@@ -52,6 +52,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 		return -1;
 	}
 
+	int return_code = 0;
 	for (long long i = work_index; i < work_count; ++i) {
 		if (log_frequency > 0 && i % log_frequency == 0)
 		{
@@ -67,18 +68,21 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 		long long stopi = sid_count * (i + 1) / work_count;
 		long long nexti = sid_count * (i + 2) / work_count;
 
-
 		//ata_piece[starti - start:stopi - start, : ] = np.dot(ref_cur.T, buffer_0)
-#pragma omp parallel default(none) shared(stop,start,iid_count,cerr,ref_cur,buffer_0,ata_piece,sid_count,pFile,ref_next,work_count,log_frequency,work_index,num_threads,buffer_1,starti,stopi,nexti)
+#pragma omp parallel default(none) shared(stop,start,iid_count,cerr,ref_cur,buffer_0,ata_piece,sid_count,pFile,ref_next,work_count,log_frequency,work_index,num_threads,buffer_1,starti,stopi,nexti, return_code)
 		{
 
 #pragma omp master
-			if (nexti < sid_count * work_count)
+			if (nexti <= sid_count)
 			{
 				if (log_frequency > 0) printf("reading next chunk\n");
-				if (fread((char*)&(*ref_next)[0], sizeof(double), iid_count * (nexti - stopi), pFile) != (unsigned int)(iid_count * (stop - start)))
+				unsigned int num_read = fread((char*)&(*ref_next)[0], sizeof(double), iid_count * (nexti - stopi), pFile);
+				cerr << "buffer read report cmk. Tried to read " << iid_count * (nexti - stopi) << ", but actually read " << num_read << "." << endl;
+				if (num_read != (unsigned int)(iid_count * (stop - start)))
 				{
-					cerr << "buffer read failed" << endl;
+					cerr << "buffer read failed. Tried to read " << iid_count * (nexti - stopi) << ", but actually read " << num_read << "." << endl;
+					cerr << "feof(pFile) is " << feof(pFile) << endl;
+					return_code = -1; //!!!cmk
 				}
 
 				if (log_frequency > 0) printf("finished reading next chunk======================================\n");
@@ -117,7 +121,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 	if (log_frequency > 0) printf("finished all computation\n");
 
 
-	return 0;
+	return return_code;//CMK0
 }
 
 int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_count, long long train_sid_count, long long test_sid_count, double* b1, double* aaTb, double* aTb, int num_threads, long long log_frequency)

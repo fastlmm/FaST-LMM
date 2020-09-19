@@ -183,7 +183,8 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, X, svd_runner)
 
-    postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=100)
+    log_frequency = 200 if logging.getLogger().level <= logging.INFO else 0
+    postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=log_frequency)
 
     test_snps_memory_factor = memory_factor
 

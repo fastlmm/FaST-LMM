@@ -273,8 +273,8 @@ def getTestSuite():
 
 
 if __name__ == '__main__':
-    #from fastlmm.ludicrous.test import getTestSuite, TestOneMil
-    logging.basicConfig(level=logging.INFO)
+    #logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(logging.WARN)
     suites = getTestSuite()
 
 
