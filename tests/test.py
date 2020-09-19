@@ -74,7 +74,7 @@ class WidgetTestCase(unittest.TestCase):
         os.chdir( os.path.dirname( os.path.realpath(__file__) ) )
         tmpOutfile = self._tmpOutfile()
         referenceOutfile = self._referenceOutfile()
-        print(f"cmk {'inputs/'+self._infile}")
+        logging.info(f"{'inputs/'+self._infile}")
         with open('inputs/'+self._infile) as f:
             filecontent = f.read()
 

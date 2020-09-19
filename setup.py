@@ -10,7 +10,6 @@ import numpy
 
 # Version number
 version = '0.4.8'
-#!!!cmk update read me to say 3.7 (or 3.8?) remove 2.7 from web page
 
 def readme():
     with open('README.md') as f:
@@ -71,7 +70,7 @@ else:
 
 mkl_library_list = [intel_root+"/mkl/lib/intel64",intel_root+"/compiler/lib/intel64"]
 mkl_include_list = [intel_root+"/mkl/include"]
-runtime_library_dirs = None if "win" in platform.system().lower() else mkl_library_list #!!!cmk fix to be "Windows"
+runtime_library_dirs = None if platform.system() == "Windows" else mkl_library_list
 
 #see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
 print("use_cython? {0}".format(use_cython))
@@ -138,11 +137,22 @@ setup(
     description='Fast GWAS',
     long_description=readme(),
     long_description_content_type = 'text/markdown',
-    keywords='gwas bioinformatics LMMs MLMs linear mixed models',
+    keywords='gwas bioinformatics LMMs MLMs linear mixed models genomics genetics python',
     url="https://fastlmm.github.io/",
     author='FaST-LMM Team',
     author_email='fastlmm-dev@python.org',
+    project_urls={
+        "Bug Tracker": "https://github.com/fastlmm/FaST-LMM/issues",
+        "Documentation": "http://fastlmm.github.io/FaST-LMM",
+        "Source Code": "https://github.com/fastlmm/FaST-LMM",
+    },
     license='Apache 2.0',
+    classifiers=[
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python",
+    ],
     packages=[ #basically, everything with a __init__.py
         "fastlmm",
         "fastlmm/association",
@@ -188,7 +198,7 @@ setup(
                        ]
                  },
     install_requires = ['pandas>=1.1.1','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.22', 'dill>=0.2.9',#!!!cmk update
+                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.22', 'dill>=0.2.9',
                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,

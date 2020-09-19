@@ -416,3 +416,4 @@ tests/tmp_extract_sim.txt
 /fastlmm/association/tests/local_cache
 /fastlmm/util/matrix/mmultfilex.cp38-win_amd64.pyd
 /fastlmm/util/matrix/cample.cp38-win_amd64.pyd
+/fastlmm-0.4.8

@@ -48,8 +48,8 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 		return -1;
 	}
 
-	fread((char*)&buffer_0[0], sizeof(double), iid_count * (stop - start), pFile);
-	if (ferror(pFile) || feof(pFile))
+	size_t byte_count = fread((char*)&buffer_0[0], sizeof(double), iid_count * (stop - start), pFile);
+	if (ferror(pFile) || feof(pFile) || byte_count==0)
 	{
 		PyErr_SetString(PyExc_IOError, "Buffer read failed.");
 		return -1;
@@ -88,8 +88,8 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 			{
 				if (log_frequency > 0) printf("reading next chunk\n");
 
-				fread((char*)&(*ref_next)[0], sizeof(double), iid_count * (nexti - stopi), pFile);
-				if (ferror(pFile) || feof(pFile))
+				size_t byte_count = fread((char*)&(*ref_next)[0], sizeof(double), iid_count * (nexti - stopi), pFile);
+				if (ferror(pFile) || feof(pFile) || byte_count==0)
 				{
 					PyErr_SetString(PyExc_IOError, "Buffer read failed.");
 					return_value = -1;

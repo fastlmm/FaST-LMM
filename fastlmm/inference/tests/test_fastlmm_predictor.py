@@ -26,9 +26,6 @@ from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData, SnpKernel
 from pysnptools.standardizer import DiagKtoN
 
-#cmk from sklearn.externals import joblib
-
-
 class TestFastLMM(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -155,8 +152,6 @@ class TestFastLMM(unittest.TestCase):
         fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=G0_train, X=covariate_train, y=pheno_train)
         filename = self.tempout_dir + "/model_one.flm.p"
         pstutil.create_directory_if_necessary(filename)
-        #cmk joblib.dump(fastlmm1, filename) 
-        #cmk fastlmm2 = joblib.load(filename)
         fastlmm2 = fastlmm1
                 
         # predict on test set
@@ -186,9 +181,6 @@ class TestFastLMM(unittest.TestCase):
         fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=G0_train, X=covariate_train, y=pheno_train,count_A1=False)
         filename = self.tempout_dir + "/model_str.flm.p"
         pstutil.create_directory_if_necessary(filename)
-
-        #cmk joblib.dump(fastlmm1, filename) 
-        #cmk fastlmm2 = joblib.load(filename)
         fastlmm2 = fastlmm1
                 
         # predict on same
@@ -223,10 +215,7 @@ class TestFastLMM(unittest.TestCase):
         #Learn model, save, load
         fastlmm3x = FastLMM(GB_goal=2).fit(X=covariate_train3, y=pheno_train3)
         filename = self.tempout_dir + "/model3.flm.p"
-        #cmk joblib.dump(fastlmm3x, filename) 
-        #cmk fastlmm3 = joblib.load(filename)
         fastlmm3 = fastlmm3x
-
 
         #Predict with model (test on train)
         predicted_pheno, covariance = fastlmm3.predict(K0_whole_test=KernelIdentity(pheno_train3.iid), X=covariate_train3,count_A1=False) #test on train
@@ -309,10 +298,7 @@ class TestFastLMM(unittest.TestCase):
                 
                 filename = self.tempout_dir + "/model_lr_as_lmm.flm.p"
                 pstutil.create_directory_if_necessary(filename)
-                #cmk joblib.dump(fastlmmx, filename) 
-                #cmk fastlmm = joblib.load(filename)
                 fastlmm = fastlmmx
-
 
                 do_test_on_train = True
                 if do_test_on_train:
@@ -434,10 +420,7 @@ class TestFastLMM(unittest.TestCase):
                 
                 
             filename = self.tempout_dir + "/model_lr2.flm.p"
-            #cmk joblib.dump(fastlmmx, filename) 
-            #cmk fastlmm = joblib.load(filename)
             fastlmm = fastlmmx
-
 
             do_test_on_train = True
             if do_test_on_train:
@@ -507,10 +490,7 @@ class TestFastLMM(unittest.TestCase):
         fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=K0_train_filename, X=covariate_train, y=pheno_train)
         filename = self.tempout_dir + "/model_str2.flm.p"
         pstutil.create_directory_if_necessary(filename)
-        #cmk joblib.dump(fastlmm1, filename) 
-        #cmk fastlmm2 = joblib.load(filename)
         fastlmm2 = fastlmm1
-
                 
         # predict on test set
         G0_test = self.snpreader_whole[test_idx,:]
@@ -560,8 +540,6 @@ class TestFastLMM(unittest.TestCase):
 
         filename = self.tempout_dir + "/model_fasttwoK.flm.p"
         pstutil.create_directory_if_necessary(filename)
-        #cmk joblib.dump(fastlmm1, filename) 
-        #cmk fastlmm2 = joblib.load(filename)
         fastlmm2 = fastlmm1
                 
         # predict on test set
@@ -618,8 +596,6 @@ class TestFastLMM(unittest.TestCase):
         fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=G0_train, K1_train=G0_train, X=covariate_train, y=pheno_train)
         filename = self.tempout_dir + "/model_one.flm.p"
         pstutil.create_directory_if_necessary(filename)
-        #cmk joblib.dump(fastlmm1, filename) 
-        #cmk fastlmm2 = joblib.load(filename)
         fastlmm2 = fastlmm1
 
                 
@@ -666,8 +642,6 @@ class TestFastLMM(unittest.TestCase):
             fastlmm3x = FastLMM(force_full_rank=force_full_rank,force_low_rank=force_low_rank,GB_goal=2).fit(K0_train=G0_train, X=covariate_train3, y=pheno_train3)
             filename = self.tempout_dir + "/model_lr.flm.p"
             pstutil.create_directory_if_necessary(filename)
-            #cmk joblib.dump(fastlmm3x, filename) 
-            #cmk fastlmm3 = joblib.load(filename)
             fastlmm3 = fastlmm3x
 
 
@@ -800,10 +774,7 @@ class TestFastLMM(unittest.TestCase):
                 
                 filename = self.tempout_dir + "/model_lmm.flm.p"
                 pstutil.create_directory_if_necessary(filename)
-                #cmk joblib.dump(fastlmmx, filename) 
-                #cmk fastlmm = joblib.load(filename)
                 fastlmm = fastlmmx
-
 
                 do_test_on_train = True
                 if do_test_on_train:
@@ -900,8 +871,6 @@ class TestFastLMM(unittest.TestCase):
         fastlmm3x = FastLMM(GB_goal=2).fit(K0_train=G0_train, X=covariate_train3, y=pheno_train3)
         filename = self.tempout_dir + "/model_snps.flm.p"
         pstutil.create_directory_if_necessary(filename)
-        #cmk joblib.dump(fastlmm3x, filename) 
-        #cmk fastlmm3 = joblib.load(filename)
         fastlmm3 = fastlmm3x
 
 
@@ -943,8 +912,6 @@ class TestFastLMM(unittest.TestCase):
         fastlmm3x = FastLMM(GB_goal=2).fit(K0_train=K0_train, X=covariate_train3, y=pheno_train3)
         filename = self.tempout_dir + "/model_snps.flm.p"
         pstutil.create_directory_if_necessary(filename)
-        #cmk joblib.dump(fastlmm3x, filename) 
-        #cmk fastlmm3 = joblib.load(filename)
         fastlmm3 = fastlmm3x
 
 
@@ -980,8 +947,6 @@ class TestFastLMM(unittest.TestCase):
         fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=K0_train, X=covariate_train, y=pheno_train)
         filename = self.tempout_dir + "/model_kernel_one.flm.p"
         pstutil.create_directory_if_necessary(filename)
-        #cmk joblib.dump(fastlmm1, filename) 
-        #cmk fastlmm2 = joblib.load(filename)
         fastlmm2 = fastlmm1
 
                 

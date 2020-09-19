@@ -128,10 +128,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
     :type count_A1: bool
 
-
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
-
-
 
     :Example:
 
@@ -148,7 +145,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     null_576 1e-07 10000
 
 
-    """#!!!cmk see 10/11/19 email "found a gap"
+    """#!!!cmk see 10/11/19 email "found a gap" -- allow a dictionary from chrom to precomputed kernel
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
