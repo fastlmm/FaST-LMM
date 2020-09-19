@@ -1,3 +1,4 @@
+#include "Python.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -29,7 +30,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 	FILE* pFile;
 	if ((pFile = fopen(a_filename, "rb")) == NULL)
 	{
-		cerr << "The file did not open." << endl;
+		PyErr_SetString(PyExc_IOError, "The file did not open.");
 		return -1;
 	}
 
@@ -43,16 +44,18 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 #endif
 		!= 0)
 	{
-		cerr << "The file did not seek." << endl;
-		return -1;
-	}
-	if (fread((char*)&buffer_0[0], sizeof(double), iid_count * (stop - start), pFile) != (unsigned int)(iid_count * (stop - start)))
-	{
-		cerr << "buffer read failed" << endl;
+		PyErr_SetString(PyExc_IOError, "The file did not seek.");
 		return -1;
 	}
 
-	int return_code = 0;
+	fread((char*)&buffer_0[0], sizeof(double), iid_count * (stop - start), pFile);
+	if (ferror(pFile) || feof(pFile))
+	{
+		PyErr_SetString(PyExc_IOError, "Buffer read failed.");
+		return -1;
+	}
+
+	int return_value = 0;
 	for (long long i = work_index; i < work_count; ++i) {
 		if (log_frequency > 0 && i % log_frequency == 0)
 		{
@@ -69,20 +72,27 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 		long long nexti = sid_count * (i + 2) / work_count;
 
 		//ata_piece[starti - start:stopi - start, : ] = np.dot(ref_cur.T, buffer_0)
-#pragma omp parallel default(none) shared(stop,start,iid_count,cerr,ref_cur,buffer_0,ata_piece,sid_count,pFile,ref_next,work_count,log_frequency,work_index,num_threads,buffer_1,starti,stopi,nexti, return_code)
+#pragma omp parallel default(none) shared(stop,start,iid_count,cerr,ref_cur,buffer_0,ata_piece,sid_count,pFile,ref_next,work_count,log_frequency,work_index,num_threads,buffer_1,starti,stopi,nexti,PyExc_IOError,return_value)
 		{
 
+			// See the equivalent Python code for a full explanation of the algorithm. In summary:
+			// We are taking the matrix multiplication of one chunk against itself and all later chunks.
+			// We loop on variable i, the index to the second chunk. Inside the loop we do
+			// this in parallel:
+			//        * On the main thread, read the data for the i+1 chunk, unless already at end of the file.
+			//               This means our reading is always one chunk ahead. This works because the first
+			//               matrix multiply is the first chunk with itself.
+			//        * On all threads, do the matrix multiply (in parallel) for the first chuck with chunk i.
 #pragma omp master
 			if (nexti <= sid_count)
 			{
 				if (log_frequency > 0) printf("reading next chunk\n");
-				unsigned int num_read = fread((char*)&(*ref_next)[0], sizeof(double), iid_count * (nexti - stopi), pFile);
-				cerr << "buffer read report cmk. Tried to read " << iid_count * (nexti - stopi) << ", but actually read " << num_read << "." << endl;
-				if (num_read != (unsigned int)(iid_count * (stop - start)))
+
+				fread((char*)&(*ref_next)[0], sizeof(double), iid_count * (nexti - stopi), pFile);
+				if (ferror(pFile) || feof(pFile))
 				{
-					cerr << "buffer read failed. Tried to read " << iid_count * (nexti - stopi) << ", but actually read " << num_read << "." << endl;
-					cerr << "feof(pFile) is " << feof(pFile) << endl;
-					return_code = -1; //!!!cmk
+					PyErr_SetString(PyExc_IOError, "Buffer read failed.");
+					return_value = -1;
 				}
 
 				if (log_frequency > 0) printf("finished reading next chunk======================================\n");
@@ -120,8 +130,7 @@ int mmultfile_atax(char* a_filename, long long offset, long long iid_count, long
 	fclose(pFile);
 	if (log_frequency > 0) printf("finished all computation\n");
 
-
-	return return_code;//CMK0
+	return return_value;
 }
 
 int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_count, long long train_sid_count, long long test_sid_count, double* b1, double* aaTb, double* aTb, int num_threads, long long log_frequency)
@@ -142,8 +151,13 @@ int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_cou
 	std::vector<double>* ref_write = &buffer0;
 	std::vector<double>* ref_read = &buffer1;
 	fs.read((char*)&buffer1[0], sizeof(double) * iid_count);
-	assert(fs.gcount() == sizeof(double) * iid_count); //real assert
+	if (!fs.good())
+	{
+		PyErr_SetString(PyExc_IOError, "Buffer read failed.");
+		return -1;
+	}
 
+	int return_value = 0;
 	for (long long train_sid_index = 0; train_sid_index < train_sid_count; ++train_sid_index) {
 		if (log_frequency > 0 && train_sid_index % log_frequency == 0)
 		{
@@ -156,9 +170,16 @@ int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_cou
 		{
 #pragma omp for
 			for (test_sid_index = -1; test_sid_index < test_sid_count; ++test_sid_index) {
-				if (test_sid_index == -1) { //While most threads calculate, the first thread fills the next buffer.
-					fs.read((char*)&(*ref_write)[0], sizeof(double) * iid_count);
-					assert(fs.gcount() == sizeof(double) * iid_count); //real assert
+				if (test_sid_index == -1) { //While most work items calculate, the first fills the next buffer.
+					if (train_sid_index + 1 < train_sid_count)
+					{
+						fs.read((char*)&(*ref_write)[0], sizeof(double) * iid_count);
+						if (!fs.good())
+						{
+							PyErr_SetString(PyExc_IOError, "Buffer read failed.");
+							return_value = -1;
+						}
+					}
 				}
 				else {
 					long long i = train_sid_index * test_sid_count + test_sid_index;
@@ -181,5 +202,5 @@ int mmultfile_b_less_aatbx(char* a_filename, long long offset, long long iid_cou
 		(*ref_write) = buffer_temp;
 	}
 	if (log_frequency > 0) printf("\n");
-	return 0;
+	return return_value;
 }

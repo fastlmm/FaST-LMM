@@ -91,13 +91,16 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
             ata_piece_python = ata_piece
             ata_piece = np.zeros((a.sid_count-start,stop-start),order='C')
     if not force_python_only or do_both:
-        retval = mmultfile_atax(a_filename.encode('ascii'),a.offset,a.iid_count,a.sid_count,
-                        work_index,work_count,
-                        ata_piece,
-                        num_threads = get_num_threads(),
-                        log_frequency=log_frequency)
-        if retval != 0: #!!!cmk
-            print("cmk")
+        try:
+            retval = mmultfile_atax(a_filename.encode('ascii'),a.offset,a.iid_count,a.sid_count,
+                            work_index,work_count,
+                            ata_piece,
+                            num_threads = get_num_threads(),
+                            log_frequency=log_frequency)
+            assert retval==0
+        except SystemError as system_error:
+            raise system_error.__cause__
+
     if do_both:
         if not np.abs(ata_piece_python-ata_piece).max() > 1e-13:
            raise AssertionError("Expect Python and C++ to get the same mmultfile_atax answer")
@@ -124,18 +127,21 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=
         b1 = np.array(b,order="F")
         aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1]))
         aaTb = np.array(b1,order="F")
-        mmultfile_b_less_aatbx(
-                        a_snp_mem_map.filename.encode('ascii'),
-                        a_snp_mem_map.offset,
-                        a_snp_mem_map.iid_count, #row count
-                        a_snp_mem_map.sid_count, #col count
-                        b.shape[1], #col count
-                        b1,   #B copy 1 in "F" order
-                        aaTb, #B copy 2 in "F" order
-                        aTb, # result
-                        num_threads = get_num_threads(),
-                        log_frequency=log_frequency,
-                        )
+        try:
+            mmultfile_b_less_aatbx(
+                            a_snp_mem_map.filename.encode('ascii'),
+                            a_snp_mem_map.offset,
+                            a_snp_mem_map.iid_count, #row count
+                            a_snp_mem_map.sid_count, #col count
+                            b.shape[1], #col count
+                            b1,   #B copy 1 in "F" order
+                            aaTb, #B copy 2 in "F" order
+                            aTb, # result
+                            num_threads = get_num_threads(),
+                            log_frequency=log_frequency,
+                            )
+        except SystemError as system_error:
+            raise system_error.__cause__
         return aTb, aaTb
 
 if __name__ == '__main__':
