@@ -63,6 +63,7 @@ install:
 - conda install pip
 - conda install cython
 - conda install --file conda_requirements.txt
+- ls -las /$HOME/miniconda/lib
 - pip install -r requirements.txt
 - python setup.py build_ext --inplace
 - pip freeze
