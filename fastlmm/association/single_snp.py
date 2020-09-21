@@ -51,21 +51,19 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
     :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param K0: SNPs from which to create a similarity matrix. If not given, will use test_snps.
+    :param K0: similarity matrix or SNPs from which to create a similarity matrix. If not given, will use test_snps.
            Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. 
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-           (When leave_out_one_chrom is False, can be a `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
-           or a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
+           If leave_out_one_chrom is True, can be a dictionary from chromosome number to any `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
+           or the name a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file.
+           If leave_out_one_chrom is False, can be any `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_ or
+           name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file.
     :type K0: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
-           (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+           or dictionary or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
-    :param K1: SNPs from which to create a second similarity matrix, optional. (Also, see 'mixing').
-           Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
-           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-           (When leave_out_one_chrom is False, can be a `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
-           or a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file name.)
+    :param K1: second similarity matrix or SNPs from which to create a second similarity matrix, optional. (Also, see 'mixing').
     :type K1: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
-           (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+           or dictionary or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_.
 
     :param mixing: Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1 relative to K0.
             If you give no mixing number and a K1 is given, the best weight will be learned.
@@ -75,6 +73,13 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header') #!!!LATER raise error if covar has NaN
     :type covar: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+
+    :param covar_by_chrom: covariate information, optional:
+           A dictionary from chromosome number to covariate information. The covariate information
+           can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
+           If given, leave_out_one_chrom must be True.
+           Both covar and covar_by_chrom can be given.
+    :type covar_by_chrom: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
            (Warning: setting False can cause proximal contamination.)
@@ -115,10 +120,10 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     :type force_low_rank: Boolean
 
     :param G0: Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.
-    :type G0: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+    :type G0: Same as K0.
 
     :param G1: Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.
-    :type G1: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string (or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
+    :type G1: Same as K1.
 
     :param runner: a `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
         If not given, the function is run locally.
@@ -144,7 +149,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     null_576 1e-07 10000
 
 
-    """#!!!cmk see 10/11/19 email "found a gap" -- allow a dictionary from chrom to precomputed kernel
+    """
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
@@ -175,7 +180,12 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     else: 
         chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
         assert not np.isnan(chrom_list).any(), "chrom list should not contain NaN"
-        input_files = [test_snps, pheno, K0, G0, K1, G1, covar] + ([] if covar_by_chrom is None else list(covar_by_chrom.values()))
+        input_files = [test_snps, pheno, covar] + ([] if covar_by_chrom is None else list(covar_by_chrom.values()))
+        for Ki in [K0, G0, K1, G1]:
+            if isinstance(Ki,dict):
+                input_files += list(Ki.values())
+            else:
+                input_files.append(Ki)
 
         def nested_closure(chrom):
             test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
@@ -266,11 +276,14 @@ def _K_per_chrom(K, chrom, iid,count_A1=None):
     if K is None:
         return KernelIdentity(iid)
     else:
-        K_all = _kernel_fixup(K, iid_if_none=iid, standardizer=Unit(),count_A1=count_A1) 
-        if isinstance(K_all, SnpKernel):
-            return SnpKernel(K_all.snpreader[:,K_all.pos[:,0] != chrom],K_all.standardizer)
+        if isinstance(K,dict):
+            return _kernel_fixup(K[chrom], iid_if_none=iid, standardizer=Unit(),count_A1=count_A1)
         else:
-            raise Exception("Don't know how to make '{0}' work per chrom".format(K_all))
+            K_all = _kernel_fixup(K, iid_if_none=iid, standardizer=Unit(),count_A1=count_A1) 
+            if not isinstance(K_all, SnpKernel):
+                raise Exception("Don't know how to make '{0}' work per chrom".format(K_all))
+            return SnpKernel(K_all.snpreader[:,K_all.pos[:,0] != chrom],K_all.standardizer)
+                
 
 #!!!move to own file?
 class _Mixer(object):

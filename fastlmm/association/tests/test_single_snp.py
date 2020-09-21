@@ -162,6 +162,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
+
     def test_gb_goal(self):
         logging.info("TestSingleSnp test_gb_goal")
         test_snps = Bed(self.bedbase, count_A1=False)
@@ -437,6 +438,28 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         if os.path.exists(temp_fn):
             os.remove(temp_fn)
         return temp_fn
+
+    def test_leave_one_out_with_prekernels(self):
+        logging.info("TestSingleSnpLeaveOutOneChrom test_leave_one_out_with_prekernels")
+        from pysnptools.kernelstandardizer import DiagKtoN
+        test_snps = Bed(self.bedbase, count_A1=False)
+        pheno = self.phen_fn
+        covar = self.cov_fn
+
+        chrom_to_kernel = {}
+        for chrom in np.unique(test_snps.pos[:,0]):
+            other_snps = test_snps[:,test_snps.pos[:,0]!=chrom]
+            kernel = other_snps.read_kernel(standardizer=Unit(),block_size=500) #Create a kernel from the SNPs not used in testing
+            chrom_to_kernel[chrom] = kernel.standardize(DiagKtoN()) #improves the kernel numerically by making its diagonal sum to iid_count
+
+        output_file = self.file_name("one_looc_prekernel")
+        frame = single_snp(test_snps, pheno,
+                                  covar=covar,
+                                  K0 = chrom_to_kernel,
+                                  output_file_name=output_file,count_A1=False
+                                  )
+
+        self.compare_files(frame,"one_looc")
 
     def test_one_looc(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_one_looc")
