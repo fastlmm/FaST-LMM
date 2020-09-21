@@ -74,8 +74,8 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header') #!!!LATER raise error if covar has NaN
     :type covar: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param covar_by_chrom: covariate information, optional:
-           A dictionary from chromosome number to covariate information. The covariate information
+    :param covar_by_chrom: dictionary from chromosome number to covariate information, optional:
+           The covariate information
            can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
            If given, leave_out_one_chrom must be True.
            Both covar and covar_by_chrom can be given.

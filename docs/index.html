@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>fastlmm API Documentation &#8212; fastlmm 0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -23,7 +24,8 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation</a></li> 
       </ul>
     </div>  
 
@@ -65,9 +67,9 @@ list (or use <a class="reference external" href="https://mail.python.org/mailman
 </ul>
 <div class="section" id="single-snp">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp</span></code><a class="headerlink" href="#single-snp" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.single_snp">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp</code><span class="sig-paren">(</span><em class="sig-param">test_snps</em>, <em class="sig-param">pheno</em>, <em class="sig-param">K0=None</em>, <em class="sig-param">K1=None</em>, <em class="sig-param">mixing=None</em>, <em class="sig-param">covar=None</em>, <em class="sig-param">covar_by_chrom=None</em>, <em class="sig-param">leave_out_one_chrom=True</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">h2=None</em>, <em class="sig-param">log_delta=None</em>, <em class="sig-param">cache_file=None</em>, <em class="sig-param">GB_goal=None</em>, <em class="sig-param">interact_with_snp=None</em>, <em class="sig-param">force_full_rank=False</em>, <em class="sig-param">force_low_rank=False</em>, <em class="sig-param">G0=None</em>, <em class="sig-param">G1=None</em>, <em class="sig-param">runner=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">K0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar_by_chrom</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">leave_out_one_chrom</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_delta</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">interact_with_snp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">G0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">G1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
 (For backwards compatibility, you may use ‘leave_out_one_chrom=False’ to skip cross validation, but that is not recommended.)</p>
 <dl class="field-list simple">
@@ -82,23 +84,26 @@ If you give a string, it should be the file name of a PLINK phenotype-formatted 
 Any IIDs with missing values will be removed.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
-<li><p><strong>K0</strong> – <p>SNPs from which to create a similarity matrix. If not given, will use test_snps.
+<li><p><strong>K0</strong> – <p>similarity matrix or SNPs from which to create a similarity matrix. If not given, will use test_snps.
 Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
-or a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
+If leave_out_one_chrom is True, can be a dictionary from chromosome number to any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
+or the name a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file.
+If leave_out_one_chrom is False, can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a> or
+name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file.</p>
 </p></li>
-<li><p><strong>K1</strong> – <p>SNPs from which to create a second similarity matrix, optional. (Also, see ‘mixing’).
-Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
-If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
-(When leave_out_one_chrom is False, can be a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
-or a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file name.)</p>
-</p></li>
+<li><p><strong>K1</strong> – second similarity matrix or SNPs from which to create a second similarity matrix, optional. (Also, see ‘mixing’).</p></li>
 <li><p><strong>mixing</strong> (<em>number</em>) – Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to K1 relative to K0.
 If you give no mixing number and a K1 is given, the best weight will be learned.</p></li>
 <li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’) #!!!LATER raise error if covar has NaN</p>
+</p></li>
+<li><p><strong>covar_by_chrom</strong> – <p>dictionary from chromosome number to covariate information, optional:
+The covariate information
+can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
+If given, leave_out_one_chrom must be True.
+Both covar and covar_by_chrom can be given.</p>
 </p></li>
 <li><p><strong>leave_out_one_chrom</strong> (<em>boolean</em>) – Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
 (Warning: setting False can cause proximal contamination.)</p></li>
@@ -121,8 +126,8 @@ Allows for interaction testing (interact_with_snp x snp will be tested)
 default: None</p></li>
 <li><p><strong>force_full_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</p></li>
 <li><p><strong>force_low_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.</p></li>
-<li><p><strong>G0</strong> – Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.</p></li>
-<li><p><strong>G1</strong> – Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.</p></li>
+<li><p><strong>G0</strong> (<em>Same as K0.</em>) – Same as K0. Provided for backwards compatibility. Cannot be given if K0 is given.</p></li>
+<li><p><strong>G1</strong> (<em>Same as K1.</em>) – Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.</p></li>
 <li><p><strong>runner</strong> – a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</p></li>
 <li><p><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
@@ -135,13 +140,14 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">))</span>
 <span class="go">null_576 1e-07 10000</span>
 </pre></div>
@@ -151,9 +157,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="single-snp-scale">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_scale</span></code><a class="headerlink" href="#single-snp-scale" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.single_snp_scale">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_scale</code><span class="sig-paren">(</span><em class="sig-param">test_snps</em>, <em class="sig-param">pheno</em>, <em class="sig-param">G0=None</em>, <em class="sig-param">covar=None</em>, <em class="sig-param">cache=None</em>, <em class="sig-param">memory_factor=1</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">K0=None</em>, <em class="sig-param">runner=None</em>, <em class="sig-param">min_work_count=1</em>, <em class="sig-param">gtg_runner=None</em>, <em class="sig-param">gtg_min_work_count=None</em>, <em class="sig-param">svd_runner=None</em>, <em class="sig-param">postsvd_runner=None</em>, <em class="sig-param">postsvd_min_work_count=None</em>, <em class="sig-param">test_snps_runner=None</em>, <em class="sig-param">test_snps_min_work_count=None</em>, <em class="sig-param">count_A1=False</em>, <em class="sig-param">clear_local_lambda=None</em>, <em class="sig-param">force_python_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_scale" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_scale</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">G0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">memory_factor</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">min_work_count</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">gtg_runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">gtg_min_work_count</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">svd_runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">postsvd_runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">postsvd_min_work_count</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">test_snps_runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">test_snps_min_work_count</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">clear_local_lambda</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_python_only</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_scale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using REML and cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
 It gives the same results as <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
 runs require appropriate modules for parameters <code class="docutils literal notranslate"><span class="pre">cache</span></code> and <code class="docutils literal notranslate"><span class="pre">runner</span></code>.)</p>
@@ -220,14 +226,14 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s1">&#39;../../tests/datasets/synth/all&#39;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:,::</span><span class="mi">10</span><span class="p">]</span> <span class="c1">#use every 10th SNP</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/synth/pheno_10_causals.txt&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/synth/cov.txt&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="n">example_file</span><span class="p">(</span><span class="s1">&#39;tests/datasets/synth/all.*&#39;</span><span class="p">,</span><span class="s1">&#39;*.bed&#39;</span><span class="p">),</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:,::</span><span class="mi">10</span><span class="p">]</span> <span class="c1">#use every 10th SNP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;tests/datasets/synth/pheno_10_causals.txt&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;tests/datasets/synth/cov.txt&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_scale</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">cov_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="go">-etc-</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">))</span>
@@ -248,9 +254,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="single-snp-all-plus-select">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_all_plus_select</span></code><a class="headerlink" href="#single-snp-all-plus-select" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.single_snp_all_plus_select">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_all_plus_select</code><span class="sig-paren">(</span><em class="sig-param">test_snps</em>, <em class="sig-param">pheno</em>, <em class="sig-param">G=None</em>, <em class="sig-param">covar=None</em>, <em class="sig-param">k_list=None</em>, <em class="sig-param">n_folds=10</em>, <em class="sig-param">seed=0</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">GB_goal=None</em>, <em class="sig-param">force_full_rank=False</em>, <em class="sig-param">force_low_rank=False</em>, <em class="sig-param">mixing=None</em>, <em class="sig-param">h2=None</em>, <em class="sig-param">do_plot=False</em>, <em class="sig-param">runner=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_all_plus_select" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_all_plus_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">G</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">k_list</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_folds</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">do_plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_all_plus_select" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS based on two kernels. The first kernel is based on all SNPs. The second kernel is a similarity matrix
 constructed of the top <em>k</em> SNPs where the SNPs are ordered via the PValue from <code class="xref py py-meth docutils literal notranslate"><span class="pre">single_snp()</span></code> and <em>k</em> is determined via out-of-sample prediction.
 All work is done via ‘leave_out_one_chrom’, that one chromosome is tested and the kernels are constructed from the other chromosomes.
@@ -258,18 +264,18 @@ Will reorder and intersect IIDs as needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>test_snps</strong> – <p>SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
+<li><p><strong>test_snps</strong> – <p>SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
-<li><p><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+<li><p><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 Any IIDs with missing values will be removed.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
 <li><p><strong>G</strong> – <p>SNPs from which to create a similarity matrix of the top <em>k</em> SNPs. If not given, will use test_snps.
-Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p>
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p>
 </p></li>
-<li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
+<li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
@@ -286,7 +292,7 @@ If not given will search for best value.</p></li>
 <li><p><strong>h2</strong> (<em>number</em>) – A parameter to LMM learning that tells how much weight to give the K’s vs. the identity matrix, optional
 If not given will search for best value.</p></li>
 <li><p><strong>do_plot</strong> (<em>boolean</em>) – If true, will plot, for each chrom, the negative loglikelihood vs k.</p></li>
-<li><p><strong>runner</strong> – <p>a <a class="reference external" href="http://fastlmm.github.io.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
+<li><p><strong>runner</strong> – <p>a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</p>
 </p></li>
 <li><p><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
@@ -299,15 +305,16 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp_all_plus_select</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.util.mapreduce1.runner</span> <span class="k">import</span> <span class="n">LocalMultiProc</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp_all_plus_select</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.util.mapreduce1.runner</span> <span class="kn">import</span> <span class="n">LocalMultiProc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom.bed&quot;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)[:,::</span><span class="mi">100</span><span class="p">]</span> <span class="c1">#To make example faster, run on only 1/100th of the data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="n">test_snps</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)[:,::</span><span class="mi">100</span><span class="p">]</span> <span class="c1">#To make example faster, run on only 1/100th of the data</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chrom5_snps</span> <span class="o">=</span> <span class="n">snps</span><span class="p">[:,</span><span class="n">snps</span><span class="o">.</span><span class="n">pos</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">5</span><span class="p">]</span> <span class="c1"># Test on only chrom5</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_all_plus_select</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">chrom5_snps</span><span class="p">,</span><span class="n">G</span><span class="o">=</span><span class="n">snps</span><span class="p">,</span><span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span><span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">runner</span><span class="o">=</span><span class="n">LocalMultiProc</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="n">mkl_num_threads</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1">#Run multiproc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">))</span>
@@ -319,9 +326,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="single-snp-linreg">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_linreg</span></code><a class="headerlink" href="#single-snp-linreg" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.single_snp_linreg">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_linreg</code><span class="sig-paren">(</span><em class="sig-param">test_snps</em>, <em class="sig-param">pheno</em>, <em class="sig-param">covar=None</em>, <em class="sig-param">max_output_len=None</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">GB_goal=None</em>, <em class="sig-param">runner=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_linreg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_linreg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_output_len</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_linreg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using linear regression. Will reorder and intersect IIDs as needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -351,14 +358,15 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp_linreg</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp_linreg</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_linreg</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_linreg</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">))</span>
 <span class="go">null_576 1e-07 10000</span>
 </pre></div>
@@ -368,9 +376,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="single-snp-select">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_select</span></code><a class="headerlink" href="#single-snp-select" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.single_snp_select">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_select</code><span class="sig-paren">(</span><em class="sig-param">test_snps</em>, <em class="sig-param">pheno</em>, <em class="sig-param">G=None</em>, <em class="sig-param">covar=None</em>, <em class="sig-param">k_list=None</em>, <em class="sig-param">n_folds=10</em>, <em class="sig-param">just_return_selected_snps=False</em>, <em class="sig-param">seed=0</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">GB_goal=None</em>, <em class="sig-param">force_full_rank=False</em>, <em class="sig-param">force_low_rank=False</em>, <em class="sig-param">h2=None</em>, <em class="sig-param">runner=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_select" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp_select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">G</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">k_list</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_folds</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">just_return_selected_snps</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp_select" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS based on covariates (often PCs) and a similarity matrix constructed of the top <em>k</em> SNPs where
 SNPs are ordered via the PValue from <code class="xref py py-meth docutils literal notranslate"><span class="pre">single_snp_linreg()</span></code> and <em>k</em> is determined via out-of-sample prediction. Will reorder and intersect IIDs as needed.</p>
 <dl class="field-list simple">
@@ -410,14 +418,14 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp_select</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="k">import</span> <span class="n">compute_auto_pcs</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">bed_fn</span> <span class="o">=</span> <span class="s2">&quot;../../tests/datasets/synth/all.bed&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">phen_fn</span> <span class="o">=</span> <span class="s2">&quot;../../tests/datasets/synth/pheno_10_causals.txt&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp_select</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">compute_auto_pcs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bed_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;tests/datasets/synth/all.bed&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">phen_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;tests/datasets/synth/pheno_10_causals.txt&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">bed_fn</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp_select</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">bed_fn</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="n">bed_fn</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">phen_fn</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">covar</span><span class="p">,</span> <span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">SNP</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">results_dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">PValue</span><span class="p">,</span><span class="mi">7</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">))</span>
@@ -429,9 +437,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="epistasis">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">epistasis</span></code><a class="headerlink" href="#epistasis" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.epistasis">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">epistasis</code><span class="sig-paren">(</span><em class="sig-param">test_snps</em>, <em class="sig-param">pheno</em>, <em class="sig-param">G0</em>, <em class="sig-param">G1=None</em>, <em class="sig-param">mixing=0.0</em>, <em class="sig-param">covar=None</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">sid_list_0=None</em>, <em class="sig-param">sid_list_1=None</em>, <em class="sig-param">log_delta=None</em>, <em class="sig-param">min_log_delta=-5</em>, <em class="sig-param">max_log_delta=10</em>, <em class="sig-param">cache_file=None</em>, <em class="sig-param">runner=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.epistasis" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">epistasis</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">G0</span></em>, <em class="sig-param"><span class="n">G1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sid_list_0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sid_list_1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_delta</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">min_log_delta</span><span class="o">=</span><span class="default_value">- 5</span></em>, <em class="sig-param"><span class="n">max_log_delta</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">cache_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.epistasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing epistasis GWAS with ML (never REML).  See <a class="reference external" href="http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html">http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html</a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -478,14 +486,15 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">epistasis</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">epistasis</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s1">&#39;../../tests/datasets/all_chr.maf0.001.N300&#39;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/phenSynthFrom22.23.N300.randcidorder.txt&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/all_chr.maf0.001.covariates.N300.txt&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bed_file</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s1">&#39;tests/datasets/all_chr.maf0.001.N300.*&#39;</span><span class="p">,</span><span class="s1">&#39;*.bed&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="n">bed_file</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s1">&#39;tests/datasets/phenSynthFrom22.23.N300.randcidorder.txt&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s1">&#39;tests/datasets/all_chr.maf0.001.covariates.N300.txt&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">epistasis</span><span class="p">(</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">covar</span><span class="o">=</span><span class="n">covar</span><span class="p">,</span> 
 <span class="gp">... </span>                                <span class="n">sid_list_0</span><span class="o">=</span><span class="n">test_snps</span><span class="o">.</span><span class="n">sid</span><span class="p">[:</span><span class="mi">10</span><span class="p">],</span> <span class="c1">#first 10 snps</span>
 <span class="gp">... </span>                                <span class="n">sid_list_1</span><span class="o">=</span><span class="n">test_snps</span><span class="o">.</span><span class="n">sid</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">15</span><span class="p">],</span> <span class="c1">#Skip 5 snps, use next 10</span>
@@ -499,9 +508,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="snp-set">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">snp_set</span></code><a class="headerlink" href="#snp-set" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.snp_set">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">snp_set</code><span class="sig-paren">(</span><em class="sig-param">test_snps</em>, <em class="sig-param">set_list</em>, <em class="sig-param">pheno</em>, <em class="sig-param">covar=None</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">G0=None</em>, <em class="sig-param">test='lrt'</em>, <em class="sig-param">write_lrtperm=False</em>, <em class="sig-param">nperm=10</em>, <em class="sig-param">npermabs=None</em>, <em class="sig-param">mpheno=1</em>, <em class="sig-param">G0_fit='qq'</em>, <em class="sig-param">qmax=0.1</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">minsetsize=None</em>, <em class="sig-param">maxsetsize=None</em>, <em class="sig-param">mindist=0</em>, <em class="sig-param">idist=1</em>, <em class="sig-param">show_pvalue_5050=False</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.snp_set" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">snp_set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">set_list</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">G0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">test</span><span class="o">=</span><span class="default_value">'lrt'</span></em>, <em class="sig-param"><span class="n">write_lrtperm</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">nperm</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">npermabs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mpheno</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">G0_fit</span><span class="o">=</span><span class="default_value">'qq'</span></em>, <em class="sig-param"><span class="n">qmax</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">minsetsize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">maxsetsize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mindist</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">idist</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">show_pvalue_5050</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.snp_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing GWAS on sets of snps</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -536,9 +545,8 @@ Provided for backwards compatibility.</p></li>
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">snp_set</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">snp_set</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">result_dataframe</span> <span class="o">=</span> <span class="n">snp_set</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">test_snps</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/all_chr.maf0.001.N300&#39;</span><span class="p">,</span>
@@ -553,9 +561,9 @@ Provided for backwards compatibility.</p></li>
 </div>
 <div class="section" id="fastlmm">
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code><a class="headerlink" href="#fastlmm" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
+<dl class="py class">
 <dt id="fastlmm.inference.FastLMM">
-<em class="property">class </em><code class="sig-prename descclassname">fastlmm.inference.</code><code class="sig-name descname">FastLMM</code><span class="sig-paren">(</span><em class="sig-param">GB_goal=None</em>, <em class="sig-param">force_full_rank=False</em>, <em class="sig-param">force_low_rank=False</em>, <em class="sig-param">snp_standardizer=Unit()</em>, <em class="sig-param">covariate_standardizer=Unit()</em>, <em class="sig-param">kernel_standardizer=DiagKtoN()</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">fastlmm.inference.</code><code class="sig-name descname">FastLMM</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">snp_standardizer</span><span class="o">=</span><span class="default_value">Unit()</span></em>, <em class="sig-param"><span class="n">covariate_standardizer</span><span class="o">=</span><span class="default_value">Unit()</span></em>, <em class="sig-param"><span class="n">kernel_standardizer</span><span class="o">=</span><span class="default_value">DiagKtoN()</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM" title="Permalink to this definition">¶</a></dt>
 <dd><p>A predictor, somewhat in the style of scikit-learn, for learning and predicting with linear mixed models.</p>
 <dl>
 <dt><strong>Constructor:</strong></dt><dd><dl class="field-list simple">
@@ -572,15 +580,15 @@ Provided for backwards compatibility.</p></li>
 <dt class="field-even">Example</dt>
 <dd class="field-even"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span><span class="p">,</span> <span class="n">Pheno</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="k">import</span> <span class="n">FastLMM</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span><span class="p">,</span> <span class="n">Pheno</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="kn">import</span> <span class="n">FastLMM</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">snpreader</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="s1">&#39;../feature_selection/examples/toydata.bed&#39;</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.cov&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">snpreader</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">),</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.cov&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="n">snpreader</span><span class="o">.</span><span class="n">iid_count</span><span class="p">]</span> <span class="c1"># iids 10 and on</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_idx</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span> <span class="c1"># the first 10 iids</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fastlmm</span> <span class="o">=</span> <span class="n">FastLMM</span><span class="p">(</span><span class="n">GB_goal</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -596,9 +604,9 @@ Provided for backwards compatibility.</p></li>
 </div>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="fastlmm.inference.FastLMM.fit">
-<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">X=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">K0_train=None</em>, <em class="sig-param">K1_train=None</em>, <em class="sig-param">h2raw=None</em>, <em class="sig-param">mixing=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.fit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K0_train</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1_train</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2raw</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for training a <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -635,9 +643,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="fastlmm.inference.FastLMM.predict">
-<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">X=None</em>, <em class="sig-param">K0_whole_test=None</em>, <em class="sig-param">K1_whole_test=None</em>, <em class="sig-param">iid_if_none=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.predict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K0_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">iid_if_none</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for predicting from a fitted <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor.
 If the examples in X, K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <dl class="field-list simple">
@@ -662,9 +670,9 @@ Can be PySnpTools <a class="reference external" href="http://fastlmm.github.io/P
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="fastlmm.inference.FastLMM.score">
-<code class="sig-name descname">score</code><span class="sig-paren">(</span><em class="sig-param">X=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">K0_whole_test=None</em>, <em class="sig-param">K1_whole_test=None</em>, <em class="sig-param">iid_if_none=None</em>, <em class="sig-param">return_mse_too=False</em>, <em class="sig-param">return_per_iid=False</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.score" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">score</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K0_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">iid_if_none</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">return_mse_too</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_per_iid</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM.score" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for calculating the negative log likelihood of testing examples.
 If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <dl class="field-list simple">
@@ -701,9 +709,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="linearregression">
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearRegression</span></code><a class="headerlink" href="#linearregression" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
+<dl class="py class">
 <dt id="fastlmm.inference.LinearRegression">
-<em class="property">class </em><code class="sig-prename descclassname">fastlmm.inference.</code><code class="sig-name descname">LinearRegression</code><span class="sig-paren">(</span><em class="sig-param">covariate_standardizer=Unit()</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">fastlmm.inference.</code><code class="sig-name descname">LinearRegression</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">covariate_standardizer</span><span class="o">=</span><span class="default_value">Unit()</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression" title="Permalink to this definition">¶</a></dt>
 <dd><p>A linear regression predictor, that works like the FastLMM in fastlmm_predictor.py, but that expects all similarity matrices to be identity.</p>
 <dl>
 <dt><strong>Constructor:</strong></dt><dd><dl class="field-list simple">
@@ -715,14 +723,14 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-even">Example</dt>
 <dd class="field-even"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Pheno</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="k">import</span> <span class="n">LinearRegression</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Pheno</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">Pheno</span><span class="p">(</span><span class="s2">&quot;../feature_selection/examples/toydata.cov&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">Pheno</span><span class="p">(</span><span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.cov&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="n">cov</span><span class="o">.</span><span class="n">iid_count</span><span class="p">]</span> <span class="c1"># iids 10 and on</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_idx</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span> <span class="c1"># the first 10 iids</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">linreg</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span>
@@ -738,9 +746,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="fastlmm.inference.LinearRegression.fit">
-<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">X=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">K0_train=None</em>, <em class="sig-param">K1_train=None</em>, <em class="sig-param">h2=None</em>, <em class="sig-param">mixing=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.fit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K0_train</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1_train</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for training a <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor. If the examples in X, y, K0_train, K1_train are not the same, they will be reordered and intersected.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -763,9 +771,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="fastlmm.inference.LinearRegression.predict">
-<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">X=None</em>, <em class="sig-param">K0_whole_test=None</em>, <em class="sig-param">K1_whole_test=None</em>, <em class="sig-param">iid_if_none=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.predict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K0_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">iid_if_none</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for predicting from a fitted <a class="reference internal" href="#fastlmm.inference.FastLMM" title="fastlmm.inference.FastLMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code></a> predictor.
 If the examples in X, K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <dl class="field-list simple">
@@ -786,9 +794,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="fastlmm.inference.LinearRegression.score">
-<code class="sig-name descname">score</code><span class="sig-paren">(</span><em class="sig-param">X=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">K0_whole_test=None</em>, <em class="sig-param">K1_whole_test=None</em>, <em class="sig-param">iid_if_none=None</em>, <em class="sig-param">return_mse_too=False</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.score" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">score</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K0_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1_whole_test</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">iid_if_none</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">return_mse_too</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression.score" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for calculating the negative log likelihood of testing examples.
 If the examples in X,y,  K0_whole_test, K1_whole_test are not the same, they will be reordered and intersected.</p>
 <dl class="field-list simple">
@@ -817,7 +825,7 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="heritability-spatial-correction">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">heritability_spatial_correction</span></code><a class="headerlink" href="#heritability-spatial-correction" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.association.heritability_spatial_correction">
 <code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">heritability_spatial_correction</code><span class="sig-paren">(</span><em class="sig-param">G_kernel</em>, <em class="sig-param">spatial_coor</em>, <em class="sig-param">spatial_iid</em>, <em class="sig-param">alpha_list</em>, <em class="sig-param">alpha_power</em>, <em class="sig-param">pheno</em>, <em class="sig-param">map_function=&lt;class 'map'&gt;</em>, <em class="sig-param">cache_folder=None</em>, <em class="sig-param">jackknife_count=500</em>, <em class="sig-param">permute_plus_count=10000</em>, <em class="sig-param">permute_times_count=10000</em>, <em class="sig-param">seed=0</em>, <em class="sig-param">just_testing=False</em>, <em class="sig-param">always_remote=False</em>, <em class="sig-param">allow_gxe2=True</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.heritability_spatial_correction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function measuring heritability with correction for spatial location.</p>
@@ -863,9 +871,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">util</span></code> Module<a class="headerlink" href="#util-module" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="util-compute-auto-pcs">
 <h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.compute_auto_pcs</span></code><a class="headerlink" href="#util-compute-auto-pcs" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.util.compute_auto_pcs">
-<code class="sig-prename descclassname">fastlmm.util.</code><code class="sig-name descname">compute_auto_pcs</code><span class="sig-paren">(</span><em class="sig-param">snpreader</em>, <em class="sig-param">cutoff=0.1</em>, <em class="sig-param">k_values=array([ 0</em>, <em class="sig-param">1</em>, <em class="sig-param">2</em>, <em class="sig-param">3</em>, <em class="sig-param">4</em>, <em class="sig-param">5</em>, <em class="sig-param">6</em>, <em class="sig-param">7</em>, <em class="sig-param">8</em>, <em class="sig-param">9</em>, <em class="sig-param">10])</em>, <em class="sig-param">output_file_name=None</em>, <em class="sig-param">count_A1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.compute_auto_pcs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.util.</code><code class="sig-name descname">compute_auto_pcs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">snpreader</span></em>, <em class="sig-param"><span class="n">cutoff</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">k_values</span><span class="o">=</span><span class="default_value">array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.compute_auto_pcs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function automatically finds the best principle components (PCs)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -885,11 +893,11 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span> <span class="c1">#Python 2 &amp; 3 compatibility</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="k">import</span> <span class="n">compute_auto_pcs</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">compute_auto_pcs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">file_name</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_name</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">best_pcs</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">best_pcs</span><span class="p">[</span><span class="s1">&#39;vals&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="nb">int</span><span class="p">(</span><span class="n">best_pcs</span><span class="p">[</span><span class="s1">&#39;vals&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
 <span class="go">500 0</span>
@@ -900,9 +908,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 <div class="section" id="util-manhattan-plot">
 <h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.manhattan_plot</span></code><a class="headerlink" href="#util-manhattan-plot" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
+<dl class="py function">
 <dt id="fastlmm.util.manhattan_plot">
-<code class="sig-prename descclassname">fastlmm.util.</code><code class="sig-name descname">manhattan_plot</code><span class="sig-paren">(</span><em class="sig-param">chr_pos_pvalue_array</em>, <em class="sig-param">pvalue_line=None</em>, <em class="sig-param">plot_threshold=1.0</em>, <em class="sig-param">vline_significant=False</em>, <em class="sig-param">marker='o'</em>, <em class="sig-param">chromosome_starts=None</em>, <em class="sig-param">xaxis_unit_bp=True</em>, <em class="sig-param">alpha=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.manhattan_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.util.</code><code class="sig-name descname">manhattan_plot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chr_pos_pvalue_array</span></em>, <em class="sig-param"><span class="n">pvalue_line</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_threshold</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">vline_significant</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">marker</span><span class="o">=</span><span class="default_value">'o'</span></em>, <em class="sig-param"><span class="n">chromosome_starts</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">xaxis_unit_bp</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.util.manhattan_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to create a Manhattan plot.  See <a class="reference external" href="http://en.wikipedia.org/wiki/Manhattan_plot">http://en.wikipedia.org/wiki/Manhattan_plot</a>.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -926,12 +934,14 @@ use rank of SNP positions. (default: True)</p></li>
 cumulative chromosome starts used in plotting.</p>
 </dd>
 <dt class="field-odd">Example</dt>
-<dd class="field-odd"><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="k">import</span> <span class="n">single_snp</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="k">import</span> <span class="n">Bed</span>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">fastlmm.util.util</span> <span class="k">as</span> <span class="nn">flutil</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="s2">&quot;../feature_selection/examples/toydata.phe&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="s2">&quot;../feature_selection/examples/toydata.5chrom&quot;</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">h2</span><span class="o">=.</span><span class="mi">2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">h2</span><span class="o">=.</span><span class="mi">2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chromosome_starts</span> <span class="o">=</span> <span class="n">flutil</span><span class="o">.</span><span class="n">manhattan_plot</span><span class="p">(</span><span class="n">results_dataframe</span><span class="p">[[</span><span class="s2">&quot;Chr&quot;</span><span class="p">,</span> <span class="s2">&quot;ChrPos&quot;</span><span class="p">,</span> <span class="s2">&quot;PValue&quot;</span><span class="p">]],</span><span class="n">pvalue_line</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1">#plt.show()</span>
 </pre></div>
@@ -955,6 +965,7 @@ cumulative chromosome starts used in plotting.</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -999,7 +1010,7 @@ cumulative chromosome starts used in plotting.</p>
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1010,12 +1021,13 @@ cumulative chromosome starts used in plotting.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright .
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.2.
     </div>
   </body>
 </html>

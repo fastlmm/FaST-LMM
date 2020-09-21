@@ -13,7 +13,6 @@ import doctest
 import os.path
 from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_select
-from fastlmm.association.tests.test_single_snp_all_plus_select import mf_to_runner_function
 from fastlmm.feature_selection.test import TestFeatureSelection
 import platform
 
@@ -79,9 +78,7 @@ class TestSingleSnpSelect(unittest.TestCase):
             logging.info("Using top pcs's cache")
             covar=Pheno(pcs_fn)
 
-
-        mf_name = "lmp" #"lmpl" "local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
-        runner = mf_to_runner_function(mf_name)(20)
+        runner = LocalMultiProc(multiprocessing.cpu_count(),mkl_num_threads=2)
 
         logging.info("Working on h2={0},force_low_rank={1},force_full_rank={2}".format(h2,force_low_rank,force_full_rank))
         result_file_name = "sel_plus_pc_{0}".format("h2IsHalf" if h2 == .5 else "h2Search")
