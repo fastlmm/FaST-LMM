@@ -14,6 +14,7 @@ import unittest
 import os.path
 import time
 from six.moves import range
+import platform
 
 currentFolder = os.path.dirname(os.path.realpath(__file__))
 
@@ -99,6 +100,8 @@ class TestGwas(unittest.TestCase):
         """
         make sure gwas yields same results as fastlmmC
         """
+        if platform.system() == "Darwin": #Don't run old C code on Mac
+            return
 
         currentFolder = os.path.dirname(os.path.realpath(__file__))
 

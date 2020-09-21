@@ -15,6 +15,7 @@ from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_select
 from fastlmm.association.tests.test_single_snp_all_plus_select import mf_to_runner_function
 from fastlmm.feature_selection.test import TestFeatureSelection
+import platform
 
 class TestSingleSnpSelect(unittest.TestCase): 
 
@@ -101,6 +102,9 @@ class TestSingleSnpSelect(unittest.TestCase):
 
 
     def test_old_sel_plus_pc(self): #!!! rather a big test case
+        if platform.system() == "Darwin": #Don't run old C code on Mac
+            return
+
         logging.info("TestSingleSnpSelect old_sel_plus_pc")
 
         from pysnptools.snpreader import Bed
