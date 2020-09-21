@@ -277,7 +277,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.WARN)
     suites = getTestSuite()
 
-    if False: #cmk
+    if False:
         from fastlmm.util.matrix.mmultfilex import mmultfile_b_less_aatbx, mmultfile_atax
         ata_piece = np.zeros((100,100),order='C')
         try:

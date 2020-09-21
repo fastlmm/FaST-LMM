@@ -74,7 +74,6 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
 
     :Example:
 
-    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> import numpy as np
     >>> from fastlmm.association import single_snp_linreg

@@ -1,7 +1,16 @@
 language: python
 matrix:
   include:
-  - name: linux_py3
+  - name: linux_py37
+    python: 3.7
+    os: linux
+    before_install:
+    - wget https://repo.continuum.io/miniconda/Miniconda3-py37_4.8.3-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH=$HOME/miniconda/bin:$PATH
+    - ls -las /home/travis/miniconda/lib/
+
+  - name: linux_py38
     python: 3.8
     os: linux
     before_install:

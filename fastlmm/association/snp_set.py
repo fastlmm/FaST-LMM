@@ -101,7 +101,6 @@ def snp_set(
 
     :Example:
 
-    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from fastlmm.association import snp_set
     >>> logging.basicConfig(level=logging.INFO)

@@ -132,7 +132,6 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
 
     :Example:
 
-    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from fastlmm.association import single_snp
     >>> from fastlmm.util import example_file # Download and return local file name

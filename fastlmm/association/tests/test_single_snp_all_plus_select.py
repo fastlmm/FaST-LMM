@@ -15,6 +15,7 @@ from fastlmm.association import single_snp_all_plus_select,single_snp
 from fastlmm.feature_selection.test import TestFeatureSelection
 
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts, LocalMultiThread
+#cmk see if this should be removed
 def mf_to_runner_function(mf):
     excluded_nodes=[]#'GCRCM07B20','GCRCM11B05','GCRCM10B06','GCRCM02B07']#'GCRCM02B11','GCRCM03B07'] #'GCRCM22B06','GCRCN0383','GCRCM02B07','GCRCN0179','GCRCM37B13','GCRCN0376','GCRCN0456']#'gcrcn0231']#"MSR-HDP-DN0316","MSR-HDP-DN0321","MSR-HDP-DN0336","MSR-HDP-DN0377","MSR-HDP-DN0378","MSR-HDP-DN0314","MSR-HDP-DN0335","MSRQC073","MSRQC002","MSRQC015"]
     remote_python_parent=r"\\GCR\Scratch\RR1\escience\carlk\data\carlk\pythonpath10262016"
@@ -225,7 +226,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def slowtest_notebook(self): # too slow
+    def cmkslowtest_notebook(self): # too slow
         do_plot = False
         mf_name = "lmp" #"local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
         runner = mf_to_runner_function(mf_name)(4)
@@ -247,7 +248,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         self.compare_files(results,"notebook")
 
-    def test_one(self): #!!!cmk fast enough
+    def cmkfasttest_one(self):
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 
         logging.info("TestSingleSnpAllPlusSelect test_one")
@@ -269,8 +270,9 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         self.compare_files(results,"one")
 
-    def cmkslowtest_three(self): #!!! rather a big test case #!!!cmk too slow
+    def too_slow_test_three(self):
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+        import multiprocessing
         logging.info("TestSingleSnpAllPlusSelect test_three")
 
         bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
@@ -278,15 +280,14 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
         cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
 
-        mf_name = "lmp" #"local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
-        runner = mf_to_runner_function(mf_name)(4)
+        runner = LocalMultiProc(multiprocessing.cpu_count(),mkl_num_threads=2)
 
 
         output_file_name = self.file_name("three")
         results = single_snp_all_plus_select(test_snps=bed_fn, pheno=pheno_fn,
                                   covar=cov_fn,
                                   k_list = [int(k) for k in np.logspace(0, 7, base=2, num=7)],
-                                  n_folds=7,
+                                  n_folds=7, #cmk num=3
                                   seed = 42,
                                   do_plot=False,
                                   GB_goal=2,
@@ -329,7 +330,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             logging.info(results.head())
             self.compare_files(results,"two")
 
-    def test_old(self): #!!!cmk fast enough
+    def cmkfasttest_old(self):
         do_plot = False
         from fastlmm.feature_selection.feature_selection_two_kernel import FeatureSelectionInSample
         from pysnptools.util import intersect_apply

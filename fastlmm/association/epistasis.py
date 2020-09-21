@@ -90,7 +90,6 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
 
     :Example:
 
-    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from pysnptools.snpreader import Bed
     >>> from fastlmm.util import example_file # Download and return local file name

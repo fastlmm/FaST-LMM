@@ -37,7 +37,6 @@ class LinearRegression(object):
 
         :Example:
 
-        >>> from __future__ import print_function #Python 2 & 3 compatibility
         >>> import numpy as np
         >>> import logging
         >>> from pysnptools.snpreader import Pheno
