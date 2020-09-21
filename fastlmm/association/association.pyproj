@@ -159,12 +159,23 @@
     <Content Include="..\..\requirements.txt">
       <Link>setup\requirements.txt</Link>
     </Content>
+    <Content Include="dockers\linuxbuild\clone.sh" />
+    <Content Include="dockers\linuxbuild\clone_and_test.sh" />
+    <Content Include="dockers\linuxbuild\dist\fastlmm-0.4.8-cp37-cp37m-linux_x86_64.whl" />
+    <Content Include="dockers\linuxbuild\Dockerfile" />
+    <Content Include="dockers\linuxinstall\Dockerfile" />
+    <Content Include="dockers\travislike\Dockerfile" />
     <Content Include="Fastlmm_autoselect\fastlmmc" />
     <Content Include="Fastlmm_autoselect\FastLmmC.exe" />
     <Content Include="Fastlmm_autoselect\libiomp5md.dll" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="altset_list\" />
+    <Folder Include="dockers\" />
+    <Folder Include="dockers\linuxbuild\" />
+    <Folder Include="dockers\linuxbuild\dist\" />
+    <Folder Include="dockers\linuxinstall\" />
+    <Folder Include="dockers\travislike\" />
     <Folder Include="Fastlmm_autoselect" />
     <Folder Include="docsource\" />
     <Folder Include="setup\" />
