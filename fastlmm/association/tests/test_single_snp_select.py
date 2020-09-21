@@ -15,6 +15,9 @@ from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_select
 from fastlmm.feature_selection.test import TestFeatureSelection
 import platform
+import multiprocessing
+from pysnptools.util.mapreduce1.runner import LocalMultiProc
+
 
 class TestSingleSnpSelect(unittest.TestCase): 
 
