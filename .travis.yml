@@ -80,7 +80,7 @@ install:
 script:
 - export PYTHONPATH=$TRAVIS_BUILD_DIR
 - cd tests
-- #cmk remove test for now python test.py
+- python test.py
 
 deploy:
   provider: s3
