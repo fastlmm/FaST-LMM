@@ -9,7 +9,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.4.10'
+version = '0.4.11'
 
 def readme():
     with open('README.md') as f:
@@ -195,8 +195,10 @@ setup(
                        "examples/toydata.sim",
                        "examples/toydataTest.phe",
                        "examples/toydataTrain.phe"
-                       ]
+                       ],
+                  "fastlmm" : ["util/fastlmm.hashdown.json"]
                  },
+
     install_requires = ['pandas>=1.1.1','matplotlib>=1.5.1',
                        'scikit-learn>=0.19.1', 'pysnptools>=0.4.22', 'dill>=0.2.9',
                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
