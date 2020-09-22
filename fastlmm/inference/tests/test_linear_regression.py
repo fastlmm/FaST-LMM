@@ -7,7 +7,6 @@ import os.path
 import doctest
 import pandas as pd
 import pysnptools.util as pstutil
-from sklearn.externals import joblib
 import sys
 
 from fastlmm.inference import LinearRegression
@@ -28,7 +27,7 @@ class TestLinRegTrain(unittest.TestCase):
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
 
-        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
+        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all.bed",count_A1=False)
         self.covariate_whole = Pheno(self.pythonpath + "/tests/datasets/synth/cov.txt")
         self.pheno_whole = Pheno(self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt")
 
@@ -106,8 +105,7 @@ class TestLinRegTrain(unittest.TestCase):
                 
             filename = self.tempout_dir + "/model_lr_real.flm.p"
             pstutil.create_directory_if_necessary(filename)
-            joblib.dump(modelx, filename) 
-            model = joblib.load(filename)
+            model = modelx
 
             do_test_on_train = True
             if do_test_on_train:
@@ -191,7 +189,8 @@ if __name__ == '__main__':
 
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=False)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 

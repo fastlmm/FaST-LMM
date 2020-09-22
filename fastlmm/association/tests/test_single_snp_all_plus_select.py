@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-#import matplotlib
-#matplotlib.use("TKAgg",warn=False)
-#import pylab
 import pandas as pd
 import sys
 import numpy as np
@@ -13,198 +8,8 @@ import os.path
 from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_all_plus_select,single_snp
 from fastlmm.feature_selection.test import TestFeatureSelection
-
+import multiprocessing
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts, LocalMultiThread
-def mf_to_runner_function(mf):
-    excluded_nodes=[]#'GCRCM07B20','GCRCM11B05','GCRCM10B06','GCRCM02B07']#'GCRCM02B11','GCRCM03B07'] #'GCRCM22B06','GCRCN0383','GCRCM02B07','GCRCN0179','GCRCM37B13','GCRCN0376','GCRCN0456']#'gcrcn0231']#"MSR-HDP-DN0316","MSR-HDP-DN0321","MSR-HDP-DN0336","MSR-HDP-DN0377","MSR-HDP-DN0378","MSR-HDP-DN0314","MSR-HDP-DN0335","MSRQC073","MSRQC002","MSRQC015"]
-    remote_python_parent=r"\\GCR\Scratch\RR1\escience\carlk\data\carlk\pythonpath10262016"
-    clean_up=False
-
-    if mf == "debug":
-        runner_function = lambda ignore: LocalInParts(215,215,mkl_num_threads=20,result_file="result.p",run_dir=r"C:\deldir\test\outputx") 
-    elif mf == "local":
-        runner_function = lambda ignore: Local()
-    elif mf == "local1":
-        runner_function = lambda ignore: Local(1)
-    elif mf == "lmp":
-        runner_function = lambda ignore: LocalMultiProc(22,5)
-    elif mf == "lmt":
-        runner_function = lambda ignore: LocalMultiThread(22,5)
-    elif mf == "lmtl":
-        runner_function = lambda ignore: LocalMultiThread(22,5,just_one_process=True)
-    elif mf == "lmp4":
-        runner_function = lambda ignore: LocalMultiProc(4,5)
-    elif mf == "lmpl":
-        runner_function = lambda taskcount: LocalMultiProc(taskcount,taskcount,just_one_process=True)
-    elif mf == "nodeP":
-        runner_function = lambda taskcount: HPC(min(taskcount,30100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='node', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Preemptable",
-                                            priority="Lowest",
-                                            excluded_nodes=excluded_nodes,
-                                            #mkl_num_threads=20,
-                                            nodegroups="Preemptable",
-                                            runtime="0:11:0", # day:hour:min
-                                            #min = 10 #max(1,min(taskcount,110)//20)
-                                            #max = min(taskcount,500),
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "nodeP99":
-        runner_function = lambda taskcount: HPC(min(taskcount,30100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='node', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Preemptable",
-                                            priority="Lowest",
-                                            excluded_nodes=excluded_nodes,
-                                            #mkl_num_threads=20,
-                                            nodegroups="Preemptable,B99",
-                                            runtime="0:11:0", # day:hour:min
-                                            #min = 10 #max(1,min(taskcount,110)//20)
-                                            #max = min(taskcount,500),
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "nodeL99":
-        runner_function = lambda taskcount: HPC(min(taskcount,30100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='node', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="LongRunQ",
-                                            priority="Lowest",
-                                            excluded_nodes=excluded_nodes,
-                                            #mkl_num_threads=20,
-                                            nodegroups="LongRunQ,B99",
-                                            runtime="11:0:0", # day:hour:min
-                                            #min = 10 #max(1,min(taskcount,110)//20)
-                                            #max = min(taskcount,500),
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "socketP":
-        runner_function = lambda taskcount: HPC(min(taskcount,30100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='socket', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Preemptable",
-                                            priority="Lowest",
-                                            excluded_nodes=excluded_nodes,
-                                            mkl_num_threads=10,
-                                            nodegroups="Preemptable",
-                                            runtime="0:11:0", # day:hour:min
-                                            #min = max(1,min(taskcount,110)//20),
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "coreP":
-        runner_function = lambda taskcount: HPC(min(taskcount,1000), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='core', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Preemptable",
-                                            priority="Lowest",
-                                            excluded_nodes=excluded_nodes,
-                                            mkl_num_threads=1,
-                                            runtime="0:11:0", # day:hour:min
-                                            nodegroups="Preemptable",
-                                            #min = min(taskcount,1100)
-                                            min = 1,
-                                            max = 200 * 20,
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "coreP99":
-        runner_function = lambda taskcount: HPC(min(taskcount,1000), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='core', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Preemptable",
-                                            priority="Lowest",
-                                            excluded_nodes=excluded_nodes,
-                                            mkl_num_threads=1,
-                                            runtime="0:11:0", # day:hour:min
-                                            nodegroups="Preemptable,B99",
-                                            #min = min(taskcount,1100)
-                                            min = 1,
-                                            max = 200 * 20,
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "coreAz":
-        runner_function = lambda taskcount: HPC(min(taskcount,1000), 'GCR',r"\\GCR\Scratch\AZ-USCentral\escience",
-                                            remote_python_parent=r"\\GCR\Scratch\AZ-USCentral\escience\carlk\data\carlk\pythonpath",
-                                            unit='core', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Azure IaaS USCentral",
-                                            mkl_num_threads=1,
-                                            runtime="0:8:0", # day:hour:min,
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "nodeE":
-        runner_function = lambda taskcount: HPC(min(taskcount,10100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='node', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="ExpressQ",
-                                            priority="Normal",
-                                            #node_local = False,
-                                            #mkl_num_threads=20,
-                                            runtime="0:4:0", # day:hour:min
-                                            #min = min(taskcount,100),
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "50tasks":
-        runner_function = lambda taskcount: HPC(50, 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='node', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="ExpressQ",
-                                            priority="Normal",
-                                            #mkl_num_threads=20,
-                                            runtime="0:4:0", # day:hour:min
-                                            #min = min(taskcount,100),
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "coreE":
-        runner_function = lambda taskcount: HPC(min(taskcount,10100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='core', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="ExpressQ",
-                                            priority="Normal",
-                                            mkl_num_threads=1,
-                                            runtime="0:4:0", # day:hour:min
-                                            #min = min(taskcount,100),
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "nodeA":
-        runner_function = lambda taskcount: HPC(min(taskcount,30100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='node', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Admin Template",
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "socketA":
-        runner_function = lambda taskcount: HPC(min(taskcount,30100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='socket', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Admin Template",
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "coreA":
-        runner_function = lambda taskcount: HPC(min(taskcount,30100), 'GCR',r"\\GCR\Scratch\RR1\escience",
-                                            remote_python_parent=remote_python_parent,
-                                            unit='core', #core, socket, node
-                                            update_remote_python_parent=True,
-                                            template="Admin Template",
-                                            clean_up=clean_up,
-                                            )
-    elif mf == "nodeH":
-        runner_function = lambda taskcount: Hadoop2(min(taskcount,100000), mapmemory=58*1024, reducememory=8*1024, min_alloc=2048, xmx=3072, mkl_num_threads=14, queue="shared",skipdatacheck=True,skipsourcecheck=True)
-    elif mf == "coreH":
-        runner_function = lambda taskcount: Hadoop2(min(taskcount,100000), mapmemory=8*1024, reducememory=8*1024, min_alloc=2048, xmx=3072, mkl_num_threads=1, queue="shared",skipdatacheck=True,skipsourcecheck=True)
-    else:
-        raise Exception("don't find mf="+mf)
-    return runner_function
 
 class TestSingleSnpAllPlusSelect(unittest.TestCase): 
 
@@ -225,16 +30,15 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def test_notebook(self):
+    def too_slow_test_notebook(self):
         do_plot = False
-        mf_name = "lmp" #"local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
-        runner = mf_to_runner_function(mf_name)(4)
+        runner = LocalMultiProc(multiprocessing.cpu_count(),mkl_num_threads=2)
         output_file_name = self.file_name("notebook")
 
 
-        logging.info("TestSingleSnpAllPlusSelect test_one")
+        logging.info("TestSingleSnpAllPlusSelect test_notebook")
         # define file names
-        snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
+        snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all.bed",count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
         cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
 
@@ -248,8 +52,6 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"notebook")
 
     def test_one(self):
-        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
-
         logging.info("TestSingleSnpAllPlusSelect test_one")
         snps = self.bedbase
         pheno = self.phen_fn
@@ -269,18 +71,14 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
         self.compare_files(results,"one")
 
-    def test_three(self): #!!! rather a big test case
-        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+    def too_slow_test_three(self):
         logging.info("TestSingleSnpAllPlusSelect test_three")
 
         bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
         bed_fn = Bed(bed_fn,count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
         cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
-
-        mf_name = "lmp" #"local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
-        runner = mf_to_runner_function(mf_name)(4)
-
+        runner = LocalMultiProc(multiprocessing.cpu_count(),mkl_num_threads=2)
 
         output_file_name = self.file_name("three")
         results = single_snp_all_plus_select(test_snps=bed_fn, pheno=pheno_fn,
@@ -296,7 +94,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         logging.info(results)
         self.compare_files(results,"three")
 
-    def test_two(self): #!!! rather a big test case
+    def too_slowtest_two(self): #!!! rather a big test case
         from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_two")
         do_plot = False
@@ -309,9 +107,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         test_chr = 5
         snp_reader = Bed(bed_fn,count_A1=False)
         test_snps = snp_reader[:,snp_reader.pos[:,0] == test_chr]
-
-        mf_name = "lmpl" #"lmpl" "local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
-        runner = mf_to_runner_function(mf_name)(20)
+        runner = LocalMultiProc(multiprocessing.cpu_count(),mkl_num_threads=2)
 
         output_file_name = self.file_name("two")
         for GB_goal in [None,2]:
@@ -415,7 +211,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
             assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
 
-    def test_doctest(self):
+    def too_slow_test_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         result = doctest.testmod(sys.modules['fastlmm.association.single_snp_all_plus_select'])
@@ -432,14 +228,15 @@ def getTestSuite():
 
 
 if __name__ == '__main__':
-
+    logging.basicConfig(level=logging.INFO)
     # this import is needed for the runner
     from fastlmm.association.tests.test_single_snp_all_plus_select import TestSingleSnpAllPlusSelect
     suites = unittest.TestSuite([getTestSuite()])
 
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=True)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
 
 

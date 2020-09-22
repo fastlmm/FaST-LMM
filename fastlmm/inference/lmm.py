@@ -743,7 +743,7 @@ class LMM(object):
         return ystar
 
     def predict_mean_and_variance(lmm, beta, sigma2, h2, Kstar_star):
-        assert 0 <= h2 and h2 <= 1, "By definition, h2 must be between 0 and 1 (inclusive)"
+        assert 0 <= h2 <= 1, "By definition, h2 must be between 0 and 1 (inclusive)"
         varg = h2 * sigma2
         vare = (1.-h2) * sigma2
         if lmm.G is not None:

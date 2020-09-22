@@ -258,7 +258,7 @@ class NearBronze:
     #                if bim_chrom != bronze_chrom :
     #                    f.write("\t0\n") # in range #chrom is difference, so can't match
     #                else :
-    #                    if bronze_value_pair[0] - allowed_diff <= bim_value and bim_value <= bronze_value_pair[1] + allowed_diff:
+    #                    if bronze_value_pair[0] - allowed_diff <= bim_value <= bronze_value_pair[1] + allowed_diff:
     #                        f.write("\t1\n") # in range
     #                    else:
     #                        f.write("\t0\n") # not in range

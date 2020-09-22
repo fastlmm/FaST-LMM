@@ -25,7 +25,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         from pysnptools.util import create_directory_if_necessary
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..","..",".."))
-        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all",count_A1=False)
+        self.snpreader_whole = Bed(self.pythonpath + "/tests/datasets/synth/all.bed",count_A1=False)
         self.pheno_whole = Pheno(self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt")
 
     tempout_dir = "tempout/heritability_spatial_correction"
@@ -118,5 +118,6 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([getTestSuite()])
 
     r = unittest.TextTestRunner(failfast=False)
-    r.run(suites)
+    ret = r.run(suites)
+    assert ret.wasSuccessful()
     logging.info("done with testing")

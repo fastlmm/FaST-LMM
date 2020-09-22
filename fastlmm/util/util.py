@@ -466,10 +466,12 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
 
         >>> from fastlmm.association import single_snp
         >>> from pysnptools.snpreader import Bed
+        >>> from fastlmm.util import example_file # Download and return local file name
         >>> import matplotlib.pyplot as plt
         >>> import fastlmm.util.util as flutil
-        >>> pheno_fn = "../feature_selection/examples/toydata.phe"
-        >>> results_dataframe = single_snp(test_snps="../feature_selection/examples/toydata.5chrom", pheno=pheno_fn, h2=.2, count_A1=False)
+        >>> test_snps = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
+        >>> pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
+        >>> results_dataframe = single_snp(test_snps=test_snps, pheno=pheno_fn, h2=.2, count_A1=False)
         >>> chromosome_starts = flutil.manhattan_plot(results_dataframe[["Chr", "ChrPos", "PValue"]],pvalue_line=1e-7)
         >>> #plt.show()
 

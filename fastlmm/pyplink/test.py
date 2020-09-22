@@ -38,5 +38,6 @@ if __name__ == '__main__':
 
     suites = getTestSuite()
     r = unittest.TextTestRunner(failfast=False)
-    r.run(suites)
+    ret = r.run(suites)
+    assert ret.wasSuccessful()
     print("done")

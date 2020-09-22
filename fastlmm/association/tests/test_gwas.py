@@ -14,6 +14,7 @@ import unittest
 import os.path
 import time
 from six.moves import range
+import platform
 
 currentFolder = os.path.dirname(os.path.realpath(__file__))
 
@@ -21,7 +22,7 @@ currentFolder = os.path.dirname(os.path.realpath(__file__))
 class TestGwas(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        #self.snpreader_bed = Bed(currentFolder + "../feature_selection/examples/toydata")
+        #self.snpreader_bed = Bed(currentFolder + "../feature_selection/examples/toydata.5chrom.bed")
         #self.pheno_fn = currentFolder + "../feature_selection/examples/toydata.phe"
  
         self.meh = True
@@ -99,6 +100,8 @@ class TestGwas(unittest.TestCase):
         """
         make sure gwas yields same results as fastlmmC
         """
+        if platform.system() == "Darwin": #Don't run old C code on Mac
+            return
 
         currentFolder = os.path.dirname(os.path.realpath(__file__))
 
@@ -107,7 +110,7 @@ class TestGwas(unittest.TestCase):
         #dat_fn = prefix + "/jax_M_expression.1-18.dat"
         #pheno_fn = prefix + "/jax_M_expression.19.phe.txt"
         
-        bed_fn = os.path.join(currentFolder, "../../feature_selection/examples/toydata")
+        bed_fn = os.path.join(currentFolder, "../../feature_selection/examples/toydata.5chrom")
         pheno_fn = os.path.join(currentFolder, "../../feature_selection/examples/toydata.phe")
 
         #prefix = "../../../tests\datasets\mouse"
@@ -456,7 +459,7 @@ class GwasTest(object):
         self.sorted_p_values = table["Pvalue"].tolist()
         self.sorted_snps = table["SNP"].tolist()
         
-        self.p_values = table.sort_values(["Chromosome", "Position"])["Pvalue"].tolist()
+        self.p_values = table.sort_values(["Chromosome", "Position"])["Pvalue"].tolist() 
 
 
 def getTestSuite():

@@ -6,11 +6,11 @@
     <ProjectGuid>{67dd0427-0316-415b-9144-8098a6abd371}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>test.py</StartupFile>
-    <SearchPath>..\..\;..\..\..\PySnpToolsPy3</SearchPath>
+    <StartupFile>snpreader\Bed.py</StartupFile>
+    <SearchPath>..\..\;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
     <Name>pyplink</Name>
     <RootNamespace>pyplink</RootNamespace>
     <SccProjectName>
@@ -69,7 +69,7 @@
     <Folder Include="snpset" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda27-64" />
+    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

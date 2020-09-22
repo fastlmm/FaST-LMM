@@ -74,6 +74,7 @@ class WidgetTestCase(unittest.TestCase):
         os.chdir( os.path.dirname( os.path.realpath(__file__) ) )
         tmpOutfile = self._tmpOutfile()
         referenceOutfile = self._referenceOutfile()
+        logging.info(f"{'inputs/'+self._infile}")
         with open('inputs/'+self._infile) as f:
             filecontent = f.read()
 
@@ -151,6 +152,7 @@ if __name__ == '__main__':
                                     #getDebugTestSuite(),
 
                                     getTestSuiteX(),
+
                                     fastlmm.inference.tests.test_linear_regression.getTestSuite(), 
                                     fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
                                     fastlmm.pyplink.test.getTestSuite(),
@@ -172,7 +174,8 @@ if __name__ == '__main__':
     
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=False)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
         #Because both pysnptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first in the PYTHONPATH
 

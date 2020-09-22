@@ -27,7 +27,7 @@ class TestSingleSnpScale(unittest.TestCase):
     @classmethod
     def test_snpgen(self):
         seed = 0
-        snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000)
+        snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000,block_size=100)
         snpdata = snpgen[:,[0,1,200,2200,10]].read()
         np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
 
@@ -40,9 +40,9 @@ class TestSingleSnpScale(unittest.TestCase):
         cache_file = tempfile.gettempdir() + "/test_snpgen_cache.snpgen.npz"
         if os.path.exists(cache_file):
             os.remove(cache_file)
-        snpgen = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file)
+        snpgen = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file,block_size=100)
         assert os.path.exists(cache_file)
-        snpgen2 = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file)
+        snpgen2 = SnpGen(seed=0,iid_count=1000,sid_count=5000,cache_file=cache_file,block_size=100)
         os.remove(cache_file)
         snpdata = snpgen2[:,[0,1,200,2200,10]].read()
         np.testing.assert_allclose(np.nanmean(snpdata.val,axis=0),np.array([0.0013089005235602095, 0.0012953367875647669,0.014084507042253521, 0.0012422360248447205, 0.0012674271229404308]),rtol=1e-5)
@@ -53,7 +53,7 @@ class TestSingleSnpScale(unittest.TestCase):
         import fastlmm as fastlmm
         create_directory_if_necessary(self.tempout_dir, isfile=False)
         self.pythonpath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(fastlmm.__file__)),".."))
-        self.bed = Bed(os.path.join(self.pythonpath, 'tests/datasets/synth/all'),count_A1=True)[:,::10]
+        self.bed = Bed(os.path.join(self.pythonpath, 'tests/datasets/synth/all.bed'),count_A1=True)[:,::10]
         self.phen_fn = os.path.join(self.pythonpath, 'tests/datasets/synth/pheno_10_causals.txt')
         self.cov_fn = os.path.join(self.pythonpath,  'tests/datasets/synth/cov.txt')
 
@@ -191,7 +191,7 @@ class TestSingleSnpScale(unittest.TestCase):
             self.compare_files(results_df,ref)
 
 
-    def test_peertopeer(self):
+    def too_slow_test_peertopeer(self):
         logging.info("test_peertopeer")
 
         output_file = self.file_name("peertopeer")
@@ -273,14 +273,28 @@ def getTestSuite():
 
 
 if __name__ == '__main__':
-    #from fastlmm.ludicrous.test import getTestSuite, TestOneMil
-    logging.basicConfig(level=logging.INFO)
+    #logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(logging.WARN)
     suites = getTestSuite()
+
+    if False:
+        from fastlmm.util.matrix.mmultfilex import mmultfile_b_less_aatbx, mmultfile_atax
+        ata_piece = np.zeros((100,100),order='C')
+        try:
+            mmultfile_atax(r"m:\deldir\nofile.txt".encode('ascii'),0,10,10,
+                            1,10,
+                            ata_piece,
+                            num_threads = 2,
+                            log_frequency=1)
+        except Exception as exception:
+            raise exception.__cause__
+
 
 
     if True:
         r = unittest.TextTestRunner(failfast=True)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #runner test run
         logging.basicConfig(level=logging.INFO)
 

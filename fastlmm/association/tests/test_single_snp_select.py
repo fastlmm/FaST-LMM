@@ -13,8 +13,11 @@ import doctest
 import os.path
 from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_select
-from fastlmm.association.tests.test_single_snp_all_plus_select import mf_to_runner_function
 from fastlmm.feature_selection.test import TestFeatureSelection
+import platform
+import multiprocessing
+from pysnptools.util.mapreduce1.runner import LocalMultiProc
+
 
 class TestSingleSnpSelect(unittest.TestCase): 
 
@@ -78,9 +81,7 @@ class TestSingleSnpSelect(unittest.TestCase):
             logging.info("Using top pcs's cache")
             covar=Pheno(pcs_fn)
 
-
-        mf_name = "lmp" #"lmpl" "local", "coreP", "nodeP", "socketP", "nodeE", "lmp"
-        runner = mf_to_runner_function(mf_name)(20)
+        runner = LocalMultiProc(multiprocessing.cpu_count(),mkl_num_threads=2)
 
         logging.info("Working on h2={0},force_low_rank={1},force_full_rank={2}".format(h2,force_low_rank,force_full_rank))
         result_file_name = "sel_plus_pc_{0}".format("h2IsHalf" if h2 == .5 else "h2Search")
@@ -101,6 +102,9 @@ class TestSingleSnpSelect(unittest.TestCase):
 
 
     def test_old_sel_plus_pc(self): #!!! rather a big test case
+        if platform.system() == "Darwin": #Don't run old C code on Mac
+            return
+
         logging.info("TestSingleSnpSelect old_sel_plus_pc")
 
         from pysnptools.snpreader import Bed
@@ -125,7 +129,7 @@ class TestSingleSnpSelect(unittest.TestCase):
 
         # consists of two fastlmmc calls, one that does feature selection and one that runs GWAS
         for suffix,logdelta in [("h2IsHalf",0),("h2Search",None)]:
-            result_file_name = "sel_plus_pc_old_{0}".format("h2IsHalf" if logdelta is 0 else "h2Search")
+            result_file_name = "sel_plus_pc_old_{0}".format("h2IsHalf" if logdelta == 0 else "h2Search")
             runLMMSELECT(bed_fn, phen_fn, out_dir, result_file_name, bfileSim=bed_fn, covar=cov_fn, fastlmm_path=fastlmm_path,autoSelectCriterionMSE=False,excludeByGeneticDistance=1000,optLogdelta=logdelta)
             # compare sel_plus_pc_old_h2*.LMMSELECT.out.txt
             short = result_file_name+".LMMSELECT.out"
@@ -178,7 +182,8 @@ if __name__ == '__main__':
 
     if True: #Standard test run
         r = unittest.TextTestRunner(failfast=False)
-        r.run(suites)
+        ret = r.run(suites)
+        assert ret.wasSuccessful()
     else: #Cluster test run
 
 

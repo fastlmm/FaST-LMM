@@ -22,7 +22,7 @@ def get_num_threads():
 def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_only=False):
     sid_count = len(sid)
     piece_count = work_count * 2
-    log_frequency = 1
+    log_frequency = 1 if logging.getLogger().level <= logging.INFO else 0
 
     def debatch_closure(piece_index):
         return sid_count * piece_index // piece_count
@@ -47,8 +47,6 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
                 gtg_data.val[start:,start:stop] = gtg_piece
                 gtg_data.val[start:stop,start+gtg_piece.shape[1]:] = gtg_piece[gtg_piece.shape[1]:,:].T
         result = writer(gtg_data)
-
-        
         return result
 
     gtg_npz_lambda = map_reduce(range(work_count),
@@ -74,7 +72,8 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
 
     ata_piece = np.zeros((a.sid_count-start,stop-start),order='C')
 
-    if force_python_only:
+    do_both = False
+    if force_python_only or do_both:
         with open(a.filename,"rb") as fp:
             fp.seek(a.offset+start*a.iid_count*8)
             slice = np.fromfile(fp, dtype=np.float64, count=a.iid_count*(stop-start)).reshape(a.iid_count,stop-start,order="F")
@@ -85,15 +84,26 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
                     slicei = np.fromfile(fp, dtype=np.float64, count=a.iid_count*(stopi-starti)).reshape(a.iid_count,stopi-starti,order="F")
                 else:
                     slicei = slice
-                if i%log_frequency == 0 and log_frequency > 0:
+                if log_frequency > 0 and i%log_frequency == 0:
                     logging.info("{0}/{1}".format(i,work_count))
                 ata_piece[starti-start:stopi-start,:] = np.dot(slicei.T,slice)
-    else:
-        mmultfile_atax(a_filename.encode('ascii'),a.offset,a.iid_count,a.sid_count,
-                        work_index,work_count,
-                        ata_piece,
-                        num_threads = get_num_threads(),
-                        log_frequency=log_frequency)
+        if do_both:
+            ata_piece_python = ata_piece
+            ata_piece = np.zeros((a.sid_count-start,stop-start),order='C')
+    if not force_python_only or do_both:
+        try:
+            retval = mmultfile_atax(a_filename.encode('ascii'),a.offset,a.iid_count,a.sid_count,
+                            work_index,work_count,
+                            ata_piece,
+                            num_threads = get_num_threads(),
+                            log_frequency=log_frequency)
+            assert retval==0
+        except SystemError as system_error:
+            raise system_error.__cause__
+
+    if do_both:
+        if not np.abs(ata_piece_python-ata_piece).max() > 1e-13:
+           raise AssertionError("Expect Python and C++ to get the same mmultfile_atax answer")
 
     if log_frequency > 0:
         logging.info("ata_piece {0} of {1}: clocktime {2}".format(work_index, work_count,format_delta(time.time()-t0_gtg)))
@@ -108,7 +118,7 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=
             U_fp.seek(a_snp_mem_map.offset)
             for i in range(a_snp_mem_map.sid_count):
                 a_mem = np.fromfile(U_fp, dtype=np.float64, count=a_snp_mem_map.iid_count)
-                if i%log_frequency == 0 and log_frequency > 0:
+                if log_frequency > 0 and i%log_frequency == 0:
                     logging.info("{0}/{1}".format(i,a_snp_mem_map.sid_count))
                 aTb[i,:] = np.dot(a_mem,b_mem)
                 aaTb -= np.dot(a_mem.reshape(-1,1),aTb[i:i+1,:])
@@ -117,18 +127,21 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=
         b1 = np.array(b,order="F")
         aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1]))
         aaTb = np.array(b1,order="F")
-        mmultfile_b_less_aatbx(
-                        a_snp_mem_map.filename.encode('ascii'),
-                        a_snp_mem_map.offset,
-                        a_snp_mem_map.iid_count, #row count
-                        a_snp_mem_map.sid_count, #col count
-                        b.shape[1], #col count
-                        b1,   #B copy 1 in "F" order
-                        aaTb, #B copy 2 in "F" order
-                        aTb, # result
-                        num_threads = get_num_threads(),
-                        log_frequency=log_frequency,
-                        )
+        try:
+            mmultfile_b_less_aatbx(
+                            a_snp_mem_map.filename.encode('ascii'),
+                            a_snp_mem_map.offset,
+                            a_snp_mem_map.iid_count, #row count
+                            a_snp_mem_map.sid_count, #col count
+                            b.shape[1], #col count
+                            b1,   #B copy 1 in "F" order
+                            aaTb, #B copy 2 in "F" order
+                            aTb, # result
+                            num_threads = get_num_threads(),
+                            log_frequency=log_frequency,
+                            )
+        except SystemError as system_error:
+            raise system_error.__cause__
         return aTb, aaTb
 
 if __name__ == '__main__':

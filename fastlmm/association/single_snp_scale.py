@@ -136,14 +136,14 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     :Example:
 
-    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from fastlmm.association import single_snp
     >>> from pysnptools.snpreader import Bed
+    >>> from fastlmm.util import example_file # Download and return local file name
     >>> logging.basicConfig(level=logging.INFO)
-    >>> test_snps = Bed('../../tests/datasets/synth/all',count_A1=True)[:,::10] #use every 10th SNP
-    >>> pheno_fn = '../../tests/datasets/synth/pheno_10_causals.txt'
-    >>> cov_fn = '../../tests/datasets/synth/cov.txt'
+    >>> test_snps = Bed(example_file('tests/datasets/synth/all.*','*.bed'),count_A1=True)[:,::10] #use every 10th SNP
+    >>> pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
+    >>> cov_fn = example_file("tests/datasets/synth/cov.txt")
     >>> results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
     -etc-
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
@@ -158,9 +158,8 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     * 4: TestSNPs - For each test SNP, read its data, regress out covariates, use the appropriate U and compute a Pvalue.
 
     All stages cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.
-
-
     """
+
     #Fill in with the default runner and default min_work_count
     gtg_runner = gtg_runner or runner
     gtg_min_work_count = gtg_min_work_count or min_work_count
@@ -183,7 +182,8 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, X, svd_runner)
 
-    postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=100)
+    log_frequency = 200 if logging.getLogger().level <= logging.INFO else 0
+    postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=log_frequency)
 
     test_snps_memory_factor = memory_factor
 
@@ -640,7 +640,7 @@ def get_h2(k, N, UUYUUYsum0, UYUY, S, chrom_cache, chrom):
 def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_count, G0_pos, ss_per_snp, X, runner_svd):
     """
     For the chromosomes listed, compute an SVD on a square matrix SNP-to-SNP matrix. Each SVD can be done on a different
-    node in a cluster. The actual SVD is done with special version of the MKL/LAPACK DGESDD function.
+    node in a cluster. The actual SVD is done with special version of the LAPACK DGESDD function.
 
     Results are stored at a known location in the cluster storage.
     """
@@ -749,7 +749,7 @@ def postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0_iid, G0_si
     Finally, find search for the best h2, which tells how much weight to give to person-to-person similarity vs. pure noise.
 
     This function uses two levels of map-reduce that are run as a single cluster job. The top level loops across the chromosomes, the
-    second level does a matrix multiple in blocks. At the lowest level, the matrix multiple is done with numpy's multithreaded MKL library.
+    second level does a matrix multiple in blocks. At the lowest level, the matrix multiple is multithreaded.
 
     Save the results under a known name in the cluster storage.
     """
@@ -1221,9 +1221,9 @@ def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer)
 def _cache_dict_fixup(cache_dict,chrom_list):
     #If a dictionary, then fix up the values. Else, fix up the value and create a dictionary.
     if isinstance(cache_dict, collections.Mapping):
-        return {k:FileCache._fixup(v) for k,v in six.iteritems(cache_dict)}
+        return {k:FileCache._fixup(v,default_subfolder='single_snp_scale') for k,v in six.iteritems(cache_dict)}
     else:
-        cache_value = FileCache._fixup(cache_dict)
+        cache_value = FileCache._fixup(cache_dict,default_subfolder='single_snp_scale')
         return {chrom:cache_value for chrom in [0]+chrom_list}
 
 

@@ -90,14 +90,15 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
 
     :Example:
 
-    >>> from __future__ import print_function #Python 2 & 3 compatibility
     >>> import logging
     >>> from pysnptools.snpreader import Bed
+    >>> from fastlmm.util import example_file # Download and return local file name
     >>> from fastlmm.association import epistasis
     >>> logging.basicConfig(level=logging.INFO)
-    >>> test_snps = Bed('../../tests/datasets/all_chr.maf0.001.N300',count_A1=True)
-    >>> pheno = '../../tests/datasets/phenSynthFrom22.23.N300.randcidorder.txt'
-    >>> covar = '../../tests/datasets/all_chr.maf0.001.covariates.N300.txt'
+    >>> bed_file = example_file('tests/datasets/all_chr.maf0.001.N300.*','*.bed')
+    >>> test_snps = Bed(bed_file,count_A1=True)
+    >>> pheno = example_file('tests/datasets/phenSynthFrom22.23.N300.randcidorder.txt')
+    >>> covar = example_file('tests/datasets/all_chr.maf0.001.covariates.N300.txt')
     >>> results_dataframe = epistasis(test_snps, pheno, G0=test_snps, covar=covar, 
     ...                                 sid_list_0=test_snps.sid[:10], #first 10 snps
     ...                                 sid_list_1=test_snps.sid[5:15], #Skip 5 snps, use next 10
@@ -294,7 +295,7 @@ class _Epistasis(object) : #implements IDistributable
     
     def pair_block_sequence_range(self,block_start,block_end):
         self._run_once()
-        assert 0 <= block_start and block_start <= block_end and block_end <= self.work_count, "real assert"
+        assert 0 <= block_start  <= block_end <= self.work_count, "real assert"
 
         block_index = block_start
         start = block_index * self.pair_count // self.work_count
@@ -322,7 +323,7 @@ class _Epistasis(object) : #implements IDistributable
     #If start == end, then returns without yielding anything 
     def pair_sequence_range(self,start,end):
         self._run_once()
-        assert 0 <= start and start <= end and end <= self._pair_count, "real assert"
+        assert 0 <= start <= end <= self._pair_count, "real assert"
 
         i = start
         for sid0, sid1 in self.pair_sequence_with_start(start):

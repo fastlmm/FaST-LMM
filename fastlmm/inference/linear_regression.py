@@ -37,14 +37,14 @@ class LinearRegression(object):
 
         :Example:
 
-        >>> from __future__ import print_function #Python 2 & 3 compatibility
         >>> import numpy as np
         >>> import logging
         >>> from pysnptools.snpreader import Pheno
         >>> from fastlmm.inference import LinearRegression
+        >>> from fastlmm.util import example_file # Download and return local file name
         >>> logging.basicConfig(level=logging.INFO)
-        >>> cov = Pheno("../feature_selection/examples/toydata.cov")
-        >>> pheno_fn = "../feature_selection/examples/toydata.phe"
+        >>> cov = Pheno(example_file("fastlmm/feature_selection/examples/toydata.cov"))
+        >>> pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
         >>> train_idx = np.r_[10:cov.iid_count] # iids 10 and on
         >>> test_idx  = np.r_[0:10] # the first 10 iids
         >>> linreg = LinearRegression()
@@ -262,7 +262,7 @@ https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/feature_selecti
 #    fn_pheno = dat["phenoFile"]
 #    """
 
-#    fn_bed = "../featureSelection/examples/toydata"
+#    fn_bed = "../featureSelection/examples/toydata.5chrom.bed"
 #    fn_pheno = "../feature_selection/examples/toydata.phe"
 
 #    import pysnptools.util.pheno as pstpheno
