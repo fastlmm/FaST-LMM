@@ -43,7 +43,7 @@ matrix:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
 
-    name: win_py37
+  - name: win_py37
     os: windows
     language: shell
     before_install:
