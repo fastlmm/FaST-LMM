@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import doctest
 import unittest
 import numpy as np
@@ -15,7 +13,7 @@ import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed, DistributedBed
 from pysnptools.snpreader import Pheno, SnpData
 from pysnptools.util.filecache import LocalCache
-from pysnptools.util.filecache import PeerToPeer
+from pysnptools.util.filecache import PeerToPeer, S3
 from pysnptools.snpreader import SnpGen
 
 from fastlmm.association import single_snp
@@ -25,7 +23,7 @@ from six.moves import range
 
 class TestSingleSnpScale(unittest.TestCase):
     @classmethod
-    def test_snpgen(self):
+    def cmktest_snpgen(self):
         seed = 0
         snpgen = SnpGen(seed=seed,iid_count=1000,sid_count=5000,block_size=100)
         snpdata = snpgen[:,[0,1,200,2200,10]].read()
@@ -36,7 +34,7 @@ class TestSingleSnpScale(unittest.TestCase):
         snpdata3 = snpgen[::10,[0,1,200,2200,10]].read()
         np.testing.assert_equal(snpdata3.val,snpdata2.val[::10,:])
 
-    def test_snpgen_cache(self):
+    def cmktest_snpgen_cache(self):
         cache_file = tempfile.gettempdir() + "/test_snpgen_cache.snpgen.npz"
         if os.path.exists(cache_file):
             os.remove(cache_file)
@@ -59,7 +57,7 @@ class TestSingleSnpScale(unittest.TestCase):
 
     tempout_dir = "tempout/single_snp_scale"
 
-    def test_old(self):
+    def cmktest_old(self):
         logging.info("test_old")
 
         output_file = self.file_name("old")
@@ -76,7 +74,7 @@ class TestSingleSnpScale(unittest.TestCase):
         cache_dict={chrom:storage for chrom in range(23)}
         return cache_dict
         
-    def test_low(self):
+    def cmktest_low(self):
         logging.info("test_low")
 
         output_file = self.file_name("low")
@@ -88,7 +86,7 @@ class TestSingleSnpScale(unittest.TestCase):
             results_df = single_snp_scale(test_snps=self.bed, pheno=self.phen_fn, covar=self.cov_fn, cache=storage, output_file_name=output_file)
             self.compare_files(results_df,"old")
 
-    def test_multipheno(self):
+    def cmktest_multipheno(self):
         logging.info("test_multipheno")
 
         random_state =  RandomState(29921)
@@ -108,7 +106,7 @@ class TestSingleSnpScale(unittest.TestCase):
                 assert (abs(pvalue_frame - pvalue_reference) < 1e-5).all, "pair {0} differs too much from reference".format(sid)
 
 
-    def test_local_distribute(self):
+    def cmktest_local_distribute(self):
         logging.info("test_local_distribute")
         force_python_only = False
 
@@ -130,7 +128,7 @@ class TestSingleSnpScale(unittest.TestCase):
                                     )
         self.compare_files(results_df,"old")
 
-    def test_mapreduce1_runner(self):
+    def cmktest_mapreduce1_runner(self):
         logging.info("test_mapreduce1_runner")
 
         output_file = self.file_name("mapreduce1_runner")
@@ -140,7 +138,7 @@ class TestSingleSnpScale(unittest.TestCase):
 
 
 
-    def test_old_one(self):
+    def cmktest_old_one(self):
         logging.info("test_old_one")
 
         output_file = self.file_name("old_one")
@@ -152,7 +150,7 @@ class TestSingleSnpScale(unittest.TestCase):
         self.compare_files(results_df,"old_one")
 
 
-    def test_one_fast(self):
+    def cmktest_one_fast(self):
         logging.info("test_one_fast")
 
         output_file = self.file_name("one_fast")
@@ -166,7 +164,7 @@ class TestSingleSnpScale(unittest.TestCase):
         results_df = single_snp_scale(test_snps=test_snps3_dist, pheno=self.phen_fn, covar=self.cov_fn, G0=self.bed, output_file_name=output_file)
         self.compare_files(results_df,"old_one")
     
-    def test_one_chrom(self):
+    def cmktest_one_chrom(self):
         logging.info("test_one_chrom")
 
         output_file = self.file_name("one_chrom")
@@ -191,7 +189,7 @@ class TestSingleSnpScale(unittest.TestCase):
             self.compare_files(results_df,ref)
 
 
-    def too_slow_test_peertopeer(self):
+    def test_peertopeer(self):
         logging.info("test_peertopeer")
 
         output_file = self.file_name("peertopeer")
@@ -207,6 +205,31 @@ class TestSingleSnpScale(unittest.TestCase):
         test_snps = DistributedBed.write(test_snps_cache, self.bed, piece_per_chrom_count=2)
 
         runner = LocalMultiProc(taskcount=5) #Run on 5 additional Python processes
+
+        for clear_cache in (True, False):
+            if clear_cache:
+                storage.join('cache').rmtree()
+            results_df = single_snp_scale(test_snps=test_snps, pheno=self.phen_fn, covar=self.cov_fn, cache=storage.join('cache'), output_file_name=output_file, runner=runner)
+            self.compare_files(results_df,"old")
+
+
+    def cmktest_s3(self):
+        logging.info("test_s3")
+
+        output_file = self.file_name("s3")
+
+        def id_and_path_function():
+             from pysnptools.util.filecache import ip_address_pid
+             ip_pid = ip_address_pid()
+             #Need to put the 'cache_top' here explicitly.
+             return ip_pid, 's3/{0}'.format(ip_pid)
+        storage = S3(folder='/traviscibucket/deldir',id_and_path_function=id_and_path_function)#Not a good name for bucket. What if doesn't have account?
+        test_snps_cache = storage.join('test_snps')
+        test_snps_cache.rmtree()
+        test_snps = DistributedBed.write(test_snps_cache, self.bed, piece_per_chrom_count=2)
+
+        #runner = LocalMultiProc(taskcount=5) #Run on 5 additional Python processes
+        runner = LocalMultiProc(taskcount=3,just_one_process=False) #cmk gets stuck on Computing G0.T x G0
 
         for clear_cache in (True, False):
             if clear_cache:
@@ -253,7 +276,7 @@ class TestSingleSnpScale(unittest.TestCase):
                 logging.warning("comparing to Windows output even though found: %s" % os_string)
             return windows_fn 
 
-    def test_doctest(self): #Can't get doc test to work so marked out.
+    def cmktest_doctest(self): #Can't get doc test to work so marked out.
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         doctest.ELLIPSIS_MARKER = '-etc-'
@@ -292,6 +315,7 @@ if __name__ == '__main__':
 
 
     if True:
+        logging.getLogger().setLevel(logging.INFO)
         r = unittest.TextTestRunner(failfast=True)
         ret = r.run(suites)
         assert ret.wasSuccessful()
