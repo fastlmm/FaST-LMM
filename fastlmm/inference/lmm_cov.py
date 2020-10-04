@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 import numpy.linalg as la
 import scipy.optimize as opt
@@ -9,7 +7,7 @@ from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
 import time
 from fastlmm.util.matrix.bigsvd import big_sdd
-from six.moves import range
+from fastlmm.util.util import array_module_from_env
 
 class LMM(object):
     '''
@@ -85,12 +83,14 @@ class LMM(object):
         """
         compute the spectral decomposition from full kernel (full rank computations).
         """
+        #import cupy #!!!cmk
+
         N = self.K.shape[0]
         D = self.linreg.D
         self.K.flat[::N+1]+=1.0
         K_ = self.linreg.regress(Y=self.K)
         K_ = self.linreg.regress(Y=K_.T)
-        [self.S,self.U] = la.eigh(K_)
+        [self.S,self.U] = la.eigh(K_)#cupy.linalg.eigh(cupy.asarray(K_))#cmk la.eigh(K_)
         if np.any(self.S < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
 
@@ -103,14 +103,18 @@ class LMM(object):
         compute the spectral decomposition from design matrix G for linear kernel
                 (allows low rank computations, if G has more rows than columns) 
         """
+        xp = array_module_from_env()
         N = self.G.shape[0]
         k = self.G.shape[1]
         if k:
             if ((not self.forcefullrank) and (k < N)):
                 PxG = self.linreg.regress(Y=self.G)
-                #was [self.U,self.S,V] = la.svd(PxG,full_matrices=False,compute_uv=True), N x min, min, min x k
-                [self.U,self.S,V] = big_sdd(PxG) #destroys PxG, returns NxN, min, kxk
-                inonzero = np.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
+                #was
+                if xp is np:
+                    [self.U,self.S,V] = big_sdd(PxG) #destroys PxG, returns NxN, min, kxk
+                else:
+                    [self.U,self.S,V] = xp.linalg.svd(xp.asarray(PxG),full_matrices=False,compute_uv=True) #, N x min, min, min x k
+                inonzero = xp.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
                 self.S = self.S[inonzero]
                 self.U = self.U[:,inonzero]
                 #V = V[inonzero,:] #If we cared about V, this is what we would do.
@@ -152,16 +156,18 @@ class LMM(object):
                    U.T.dot(A)
                A - U.dot(U.T.dot(A))    (if kernel is full rank this is None)
         """
+        xp = array_module_from_env()
+
         S,U = self.getSU()
         N = A.shape[0]
         D = self.linreg.D
-        A = self.linreg.regress(A)
+        A = xp.asarray(self.linreg.regress(A))
         # treat pathological case where a variable is explained by the covariates
         A_std = A.std(0)
         A[:,A_std<=1e-10] = 0.0
         if (S.shape[0] < N - D):#lowrank case
             # A = self.linreg.regress(A)
-            UA = self.U.T.dot(A)
+            UA = U.T.dot(A)
             UUA = A - U.dot(UA)
         else:
             #A=self.linreg.regress(A)
@@ -868,7 +874,9 @@ def computeAKB(Sd, denom, UA, UB, UUA=None, UUB=None):
 
     A.T.dot( f(K) ).dot(B)
     """
-    UAS = UA / np.lib.stride_tricks.as_strided(Sd, (Sd.size,UA.shape[1]), (Sd.itemsize,0))
+    xp = array_module_from_env()
+
+    UAS = UA / xp.lib.stride_tricks.as_strided(Sd, (Sd.size,UA.shape[1]), (Sd.itemsize,0))
     AKB = UAS.T.dot(UB)
     if UUA is not None:
         AKB += UUA.T.dot(UUB) / denom
@@ -880,10 +888,13 @@ def computeAKA(Sd, denom, UA, UUA=None):
     
     A.T.dot( f(K) ).dot(A)
     """
+    xp = array_module_from_env()
+
     #To save memory divide the work into 10 pieces
     piece_count = 10 if UA.shape[0] > 10 and UA.shape[1] > 1 else 1
 
-    AKA = np.zeros(UA.shape[1])
+
+    AKA = xp.zeros(UA.shape[1])
     start0, start1 = 0, 0
     for piece_index in range(piece_count):
         end0 = UA.shape[0] * (piece_index+1) // piece_count
@@ -900,7 +911,7 @@ def computeAKA(Sd, denom, UA, UUA=None):
 #    return s
 
 
-if 0:
+if False:
     N = 7
     D = 2
     X = np.randn(N,D)

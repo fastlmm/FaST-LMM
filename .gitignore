@@ -423,3 +423,11 @@ tests/tmp_extract_sim.txt
 /fastlmm/util/matrix/cample.cpython-36m-x86_64-linux-gnu.so
 /tempreq.txt
 /doc/make2.bat
+/fastlmm/association/s3/172.21.144.1.14092.18388/traviscibucket/deldir
+/fastlmm/association/s3
+/fastlmm/association/tests/test.profile
+/fastlmm/association/testnp2.profile
+/fastlmm/association/testnp.profile
+/fastlmm/association/testcp2.profile
+/fastlmm/association/testcp.profile
+/fastlmm/association/testcnp.profile

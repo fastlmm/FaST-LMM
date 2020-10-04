@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import logging
 import collections
@@ -1084,7 +1082,9 @@ def do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, memory_factor, G0_iid_c
             #U_data = U_memmap.read(order='K',view_ok=True) #in the work loop so it can be run on cluster
             #UUsnps = Rxsnps - U_data.val.dot(Usnps)
 
-            Usnps, UUsnps = mmultfile_b_less_aatb(U_memmap, Rxsnps, log_frequency=10 if logging.getLogger().level <= logging.INFO else -1)
+            log_frequency = 10 if logging.getLogger().level <= logging.INFO else -1
+            force_python_only = True #!!!cmk
+            Usnps, UUsnps = mmultfile_b_less_aatb(U_memmap, Rxsnps, force_python_only=force_python_only, log_frequency=log_frequency)
             logging.debug("U_data {0}x{1}. Usnps {2}x{3}. time={4}".format(U_memmap.iid_count,U_memmap.sid_count,Usnps.shape[0],Usnps.shape[1],datetime.now().strftime("%Y-%m-%d %H:%M")))
             logging.debug("UUsnps = Rxsnps - U_data.val.dot(Usnps)")
     

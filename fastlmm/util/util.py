@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import print_function
+import os
 import numpy as np
 import warnings
 import logging
@@ -538,6 +537,21 @@ def _compute_x_positions_snps(positions, chromosome_starts):
         idx_chr = positions[:,0]==chromosome_start[0]
         cumulative_pos[idx_chr] = positions[idx_chr][:,1] + chromosome_start[1]
     return cumulative_pos
+
+def array_module_from_env():
+    xp = os.environ.get('ARRAY_MODULE','numpy')
+    if xp == 'numpy':
+        return np
+    if xp == 'cupy':
+        import cupy as cp
+        return cp
+    raise ValueError(f"Don't know ARRAY_MODULE '{xp}'")
+
+def asnumpy(a):
+    xp = array_module_from_env()
+    if xp is np:
+        return a
+    return xp.asnumpy(a)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)

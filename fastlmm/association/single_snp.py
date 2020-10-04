@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import print_function
+import os
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -26,9 +25,9 @@ from pysnptools.kernelreader import KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util import create_directory_if_necessary
 from pysnptools.util.intrangeset import IntRangeSet
+from fastlmm.util.util import array_module_from_env, asnumpy
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
 import fastlmm.inference.linear_regression as lin_reg
-from six.moves import range
 
 def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count, might be a covar mix up.(but only if a SnpKernel
                  K1=None, mixing=None,
@@ -546,6 +545,8 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                  mixing, h2, log_delta,
                  cache_file, force_full_rank, force_low_rank,
                  output_file_name, block_size, interact_with_snp, runner):
+    xp = array_module_from_env()
+
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
     assert block_size is not None, "real assert"
@@ -618,7 +619,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         beta = res['beta']
         
-        chi2stats = beta*beta/res['variance_beta']
+        chi2stats = asnumpy(beta*beta/res['variance_beta'])
         #p_values = stats.chi2.sf(chi2stats,1)[:,0]
         assert test_snps.iid_count == lmm.U.shape[0]
         p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))[:,0]#note that G.shape is the number of individuals#
@@ -630,11 +631,11 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         dataframe['GenDist'] = snps_read.pos[:,1]
         dataframe['ChrPos'] = snps_read.pos[:,2] 
         dataframe['PValue'] = p_values
-        dataframe['SnpWeight'] = beta[:,0]
-        dataframe['SnpWeightSE'] = np.sqrt(res['variance_beta'][:,0])
-        dataframe['SnpFractVarExpl'] = np.sqrt(res['fraction_variance_explained_beta'][:,0])
+        dataframe['SnpWeight'] = asnumpy(beta[:,0])
+        dataframe['SnpWeightSE'] = asnumpy(xp.sqrt(res['variance_beta'][:,0]))
+        dataframe['SnpFractVarExpl'] = asnumpy(xp.sqrt(res['fraction_variance_explained_beta'][:,0]))
         dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + mixing
-        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + h2
+        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + asnumpy(h2)
 
         logging.info("time={0}".format(time.time()-do_work_time))
 
@@ -746,6 +747,61 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
     K[:,:] = K0_val * (1.0-mixing) + K1_val * mixing
 
 if __name__ == "__main__":
+    if True:
+        logging.basicConfig(level=logging.INFO)
+
+        if True:
+            from pysnptools.util.filecache import LocalCache
+            from pysnptools.snpreader import Bed, DistributedBed
+            from unittest.mock import patch
+
+            seed = 1
+            iid_count = 10*1000 # number of individuals
+            sid_count = 10*1000 # number of SNPs
+            chrom_count = 10
+            piece_per_chrom_count = 5 #Number of pieces for each chromosome
+            cache_top = r'm:\deldir'
+            file_cache_top = LocalCache(cache_top)
+
+            test_snps_cache = file_cache_top.join('testsnps_{0}_{1}_{2}_{3}'.format(seed,chrom_count,iid_count,sid_count))
+
+            if not next(test_snps_cache.walk(),None): #If no files in the test_snps folder, generate data (takes about 6 hours)
+                from pysnptools.snpreader import SnpGen
+                from pysnptools.util.mapreduce1.runner import LocalMultiProc
+    
+                snpgen = SnpGen(seed=seed,iid_count=iid_count,sid_count=sid_count,chrom_count=chrom_count,block_size=1000) #cmkbatch_sizeCreate an on-the-fly SNP generator
+                snp_gen_runner = None#LocalMultiProc(5)
+                #Write random SNP data to a DistributedBed
+                test_snps = DistributedBed.write(test_snps_cache,snpgen,piece_per_chrom_count=piece_per_chrom_count,runner=snp_gen_runner)
+            else:
+                test_snps = DistributedBed(test_snps_cache)
+
+            #Generate random pheno and covar
+            import numpy as np
+            from pysnptools.snpreader import SnpData
+            np.random.seed(seed)
+            pheno = SnpData(iid=test_snps.iid,sid=['pheno'],val=np.random.randn(test_snps.iid_count,1)*3+2)
+            covar = SnpData(iid=test_snps.iid,sid=['covar1','covar2'],val=np.random.randn(test_snps.iid_count,2)*2-3)
+
+            test_snps.shape
+            #both directions SVD
+            # of say 5000 and more test snps than SVD snps
+            # then add features (h2 search, multi kernel, crossval etc)
+            from fastlmm.association import single_snp
+            from pysnptools.snpreader import Bed
+            leave_out_one_chrom = False
+
+            for array_module_name in ['numpy','cupy']:
+                for every in [1000,100,50,10,5,1]:
+                    with patch.dict('os.environ', {'ARRAY_MODULE': array_module_name}) as patched_environ: #!!!cmk make this a utility
+                        K0 = test_snps[:,::every]
+                        start = time.time()
+                        results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
+                                                      leave_out_one_chrom=leave_out_one_chrom, count_A1=False)
+                        #print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
+                        total = time.time()-start
+                        print(f"{iid_count}\t{sid_count}\t{array_module_name}\t{every}\t{total}")
+
     if False:
         import logging
         from fastlmm.association import single_snp
@@ -757,10 +813,12 @@ if __name__ == "__main__":
         results_dataframe = single_snp(test_snps=test_snps, pheno=pheno_fn, count_A1=False)
         print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
 
+    if False: #!!!cmk
 
+        logging.basicConfig(level=logging.INFO)
+        import doctest
 
-    logging.basicConfig(level=logging.INFO)
-
-    import doctest
-    doctest.testmod()
+        from unittest.mock import patch
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as patched_environ: #!!!cmk make this a utility
+            doctest.testmod()
 
