@@ -559,8 +559,10 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         h2 = 1.0/(np.exp(log_delta)+1)
 
     covar = np.c_[covar.read(view_ok=True,order='A').val,np.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
+    covar = xp.asarray(covar)
 
     y =  pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
+    y = xp.asarray(y)
 
     if cache_file is not None and os.path.exists(cache_file):
         lmm = lmm_cov(X=covar, Y=y, G=None, K=None)
@@ -574,7 +576,8 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         mixing = mixer.mixing
 
         if mixer.do_g:
-            lmm = lmm_cov(X=covar, Y=y, K=None, G=K.snpreader.val, inplace=True)
+            G = xp.asarray(K.snpreader.val)
+            lmm = lmm_cov(X=covar, Y=y, K=None, G=G, inplace=True)
         else:
             #print(covar.sum(),y.sum(),K.val.sum(),covar[0],y[0],K.val[0,0])
             lmm = lmm_cov(X=covar, Y=y, K=K.val, G=None, inplace=True)
@@ -606,15 +609,18 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     def mapper_closure(work_index):
         if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
+        xp = array_module_from_env()
+
         do_work_time = time.time()
         start = debatch_closure(work_index)
         end = debatch_closure(work_index+1)
 
-        snps_read = test_snps[:,start:end].read().standardize()
+        snps_read = test_snps[:,start:end].read().standardize()#!!!cmk cupy??
+        val = xp.asarray(snps_read.val)
         if interact_with_snp is not None:
-            variables_to_test = snps_read.val * interact[:,np.newaxis]
+            variables_to_test = val * interact[:,np.newaxis]
         else:
-            variables_to_test = snps_read.val
+            variables_to_test = val
         res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test)
 
         beta = res['beta']
@@ -791,28 +797,30 @@ if __name__ == "__main__":
             from pysnptools.snpreader import Bed
             leave_out_one_chrom = False
 
-            logging.getLogger().setLevel(logging.WARN)
+            logging.getLogger().setLevel(logging.INFO)
             print(logging.getLogger().level)
 
 
-            for every in [500,100,50,25, 10,5,4,3,2]:
-                for array_module_name in ['numpy','cupy']:
-                    with patch.dict('os.environ', {
-                        'ARRAY_MODULE': array_module_name,
-                        }
-                                    ) as patched_environ: #!!!cmk make this a utility
-                        # There are multiple ways to limit the # of threads and they must be set before 'import np'
-                        # See https://stackoverflow.com/questions/30791550/limit-number-of-threads-in-numpy
-                        # Here we just spot check that one has been set as expected.
-                        assert os.environ['MKL_NUM_THREADS']=='1'
+            for every in [1000]:#[500,100,50,25, 10,5,4,3,2]:
+                for array_module_name in ['cupy']:# ['numpy','cupy']:
+                    for GB_goal in [4]:#.25,.5,1,2,4]:
+                        with patch.dict('os.environ', {
+                            'ARRAY_MODULE': array_module_name,
+                            }
+                                        ) as patched_environ: #!!!cmk make this a utility
+                            # There are multiple ways to limit the # of threads and they must be set before 'import np'
+                            # See https://stackoverflow.com/questions/30791550/limit-number-of-threads-in-numpy
+                            # Here we just spot check that one has been set as expected.
+                            assert os.environ['MKL_NUM_THREADS']=='12'
 
-                        K0 = test_snps[:,::every]
-                        start = time.time()
-                        results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
-                                                      leave_out_one_chrom=leave_out_one_chrom, count_A1=False)
-                        #print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
-                        total = time.time()-start
-                        print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{array_module_name}\t{every}\t{os.environ.get('MKL_NUM_THREADS',12)}\t{total}")
+                            K0 = test_snps[:,::every]
+                            start = time.time()
+                            results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
+                                                          leave_out_one_chrom=leave_out_one_chrom, count_A1=False,
+                                                          GB_goal=GB_goal)
+                            #print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
+                            total = time.time()-start
+                            print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{array_module_name}\t{every}\t{os.environ.get('MKL_NUM_THREADS',12)}\t{GB_goal}\t{total}")
 
     if False:
         import logging

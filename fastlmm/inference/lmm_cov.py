@@ -847,6 +847,8 @@ class Linreg(object):
             self.D = 1
 
     def set_beta(self,Y):
+        xp = array_module_from_env()
+
         self.N = Y.shape[0]
         if Y.ndim == 1:
             P = 1
@@ -857,9 +859,9 @@ class Linreg(object):
         else:        
             if self.Xdagger is None:
                 if self.X.shape[1]:
-                    self.Xdagger = la.pinv(self.X)       #SVD-based, and seems fast
+                    self.Xdagger = xp.linalg.pinv(self.X)       #SVD-based, and seems fast
                 else:
-                    self.Xdagger = np.zeros_like(self.X.T)
+                    self.Xdagger = xp.zeros_like(self.X.T)
             self.beta = self.Xdagger.dot(Y)#!!!cmkcupy
 
     def regress(self, Y):
