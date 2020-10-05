@@ -748,7 +748,9 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
 
 if __name__ == "__main__":
     if True:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.WARN)
+        logging.getLogger().setLevel(logging.WARN)
+        print(logging.getLogger().level)
 
         if True:
             from pysnptools.util.filecache import LocalCache
@@ -791,8 +793,8 @@ if __name__ == "__main__":
             from pysnptools.snpreader import Bed
             leave_out_one_chrom = False
 
-            for array_module_name in ['numpy','cupy']:
-                for every in [1000,100,50,10,5,1]:
+            for every in [4,3,2]:#[1000,100,50,10,5,1]:
+                for array_module_name in ['numpy','cupy']:
                     with patch.dict('os.environ', {'ARRAY_MODULE': array_module_name}) as patched_environ: #!!!cmk make this a utility
                         K0 = test_snps[:,::every]
                         start = time.time()
@@ -800,7 +802,7 @@ if __name__ == "__main__":
                                                       leave_out_one_chrom=leave_out_one_chrom, count_A1=False)
                         #print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
                         total = time.time()-start
-                        print(f"{iid_count}\t{sid_count}\t{array_module_name}\t{every}\t{total}")
+                        print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{array_module_name}\t{every}\t{total}")
 
     if False:
         import logging
