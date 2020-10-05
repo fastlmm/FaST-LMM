@@ -749,7 +749,7 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
 if __name__ == "__main__":
     if True:
         logging.basicConfig(level=logging.WARN)
-        logging.getLogger().setLevel(logging.WARN)
+        logging.getLogger().setLevel(logging.INFO)
         print(logging.getLogger().level)
 
         if True:
@@ -759,7 +759,7 @@ if __name__ == "__main__":
 
             seed = 1
             iid_count = 10*1000 # number of individuals
-            sid_count = 10*1000 # number of SNPs
+            sid_count = 50*1000 # number of SNPs
             chrom_count = 10
             piece_per_chrom_count = 5 #Number of pieces for each chromosome
             cache_top = r'm:\deldir'
@@ -793,8 +793,8 @@ if __name__ == "__main__":
             from pysnptools.snpreader import Bed
             leave_out_one_chrom = False
 
-            for every in [4,3,2]:#[1000,100,50,10,5,1]:
-                for array_module_name in ['numpy','cupy']:
+            for every in [10]:#[1000,100,50,10,5,4,3,2]:
+                for array_module_name in ['cupy']:# ['numpy','cupy']:
                     with patch.dict('os.environ', {'ARRAY_MODULE': array_module_name}) as patched_environ: #!!!cmk make this a utility
                         K0 = test_snps[:,::every]
                         start = time.time()

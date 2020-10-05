@@ -110,10 +110,12 @@ class LMM(object):
             if ((not self.forcefullrank) and (k < N)):
                 PxG = self.linreg.regress(Y=self.G)
                 #was
+                logging.info("Starting SVD")
                 if xp is np:
                     [self.U,self.S,V] = big_sdd(PxG) #destroys PxG, returns NxN, min, kxk
                 else:
                     [self.U,self.S,V] = xp.linalg.svd(xp.asarray(PxG),full_matrices=False,compute_uv=True) #, N x min, min, min x k
+                logging.info("Ending SVD")
                 inonzero = xp.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
                 self.S = self.S[inonzero]
                 self.U = self.U[:,inonzero]
@@ -634,7 +636,7 @@ class LMM(object):
                 'scale'     : Scale parameter that multiplies the Covariance matrix (default 1.0)
         --------------------------------------------------------------------------
         '''
-
+        logging.info("Starting nLLeval")
         #N = self.Y.shape[0] - self.linreg.D #number of degrees of freedom - commented out because not use and misleading name for dof
         S,U = self.getSU()
         k = S.shape[0]
@@ -667,6 +669,7 @@ class LMM(object):
 
         result = self.nLLcore(Sd=Sd, dof=dof, scale=scale, penalty=penalty, UW=UW, UUW=UUW, weightW=weightW, denom=denom, Usnps=Usnps, UUsnps=UUsnps, idx_pheno=idx_pheno)
         result['h2'] = h2
+        logging.info("Ending nLLeval")
         return result
 
     def nLLcore(self, Sd=None, dof=None, scale=1.0, penalty=0.0, UW=None, UUW=None, weightW=None, denom=1.0, Usnps=None, UUsnps=None, idx_pheno=None):
@@ -700,7 +703,7 @@ class LMM(object):
                 'scale'     : Scale parameter that multiplies the Covariance matrix (default 1.0)
         --------------------------------------------------------------------------
         '''
-
+        logging.info("Starting self.nLLcore")
         N = self.Y.shape[0] - self.linreg.D
         
         S,U = self.getSU()#not used, as provided from outside. Remove???
@@ -821,6 +824,8 @@ class LMM(object):
                         'fraction_variance_explained_beta':fraction_variance_explained_beta,
                         'scale':scale
                 }
+
+        logging.info("Ending self.nLLcore")
         return result
 
 
@@ -855,7 +860,7 @@ class Linreg(object):
                     self.Xdagger = la.pinv(self.X)       #SVD-based, and seems fast
                 else:
                     self.Xdagger = np.zeros_like(self.X.T)
-            self.beta = self.Xdagger.dot(Y)
+            self.beta = self.Xdagger.dot(Y)#!!!cmkcupy
 
     def regress(self, Y):
         self.set_beta(Y=Y)
@@ -863,7 +868,7 @@ class Linreg(object):
             RxY = Y - self.beta
         else:
             RxY = Y - self.X.dot(self.beta)
-        return RxY
+        return RxY #!!!cmkcupy
 
     def predict(self,Xstar):
         return Xstar.dot(self.beta)
