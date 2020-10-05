@@ -29,8 +29,12 @@
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
-    <Environment>
-    </Environment>
+    <Environment>MKL_NUM_THREADS=1
+OMP_NUM_THREADS=1
+OPENBLAS_NUM_THREADS=1
+VECLIB_MAXIMUM_THREADS=1
+NUMEXPR_NUM_THREADS=1
+</Environment>
     <TestFramework>unittest</TestFramework>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>

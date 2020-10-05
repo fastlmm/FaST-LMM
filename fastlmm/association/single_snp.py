@@ -749,8 +749,6 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
 if __name__ == "__main__":
     if True:
         logging.basicConfig(level=logging.WARN)
-        logging.getLogger().setLevel(logging.INFO)
-        print(logging.getLogger().level)
 
         if True:
             from pysnptools.util.filecache import LocalCache
@@ -793,16 +791,28 @@ if __name__ == "__main__":
             from pysnptools.snpreader import Bed
             leave_out_one_chrom = False
 
-            for every in [10]:#[1000,100,50,10,5,4,3,2]:
-                for array_module_name in ['cupy']:# ['numpy','cupy']:
-                    with patch.dict('os.environ', {'ARRAY_MODULE': array_module_name}) as patched_environ: #!!!cmk make this a utility
+            logging.getLogger().setLevel(logging.WARN)
+            print(logging.getLogger().level)
+
+
+            for every in [500,100,50,25, 10,5,4,3,2]:
+                for array_module_name in ['numpy','cupy']:
+                    with patch.dict('os.environ', {
+                        'ARRAY_MODULE': array_module_name,
+                        }
+                                    ) as patched_environ: #!!!cmk make this a utility
+                        # There are multiple ways to limit the # of threads and they must be set before 'import np'
+                        # See https://stackoverflow.com/questions/30791550/limit-number-of-threads-in-numpy
+                        # Here we just spot check that one has been set as expected.
+                        assert os.environ['MKL_NUM_THREADS']=='1'
+
                         K0 = test_snps[:,::every]
                         start = time.time()
                         results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
                                                       leave_out_one_chrom=leave_out_one_chrom, count_A1=False)
                         #print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
                         total = time.time()-start
-                        print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{array_module_name}\t{every}\t{total}")
+                        print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{array_module_name}\t{every}\t{os.environ.get('MKL_NUM_THREADS',12)}\t{total}")
 
     if False:
         import logging
