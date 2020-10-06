@@ -618,15 +618,6 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
          # 1-thread C++ standardize is 3.5 faster than cupy standardize
         snps_read = test_snps[:,start:end].read().read.standardize()
         val = xp.asarray(snps_read.val)
-        else:
-            val = xp.array(snps_read.val) #!!!cmk a version of READ for this???
-            start_time = time.time() #!!!cmk
-            _standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=None)
-            print(f"cmk cupy standardize {time.time()-start_time} s")
-            if True: #!!!cmk
-                start_time = time.time() #!!!cmk
-                snps_read.standardize()
-                print(f"cmk c++ standardize {time.time()-start_time} s")
 
         if interact_with_snp is not None:
             variables_to_test = val * interact[:,np.newaxis]
@@ -678,32 +669,6 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                        name="single_snp(output_file={0})".format(output_file_name),
                        runner=runner)
     return frame
-
-#!!!cmk very similar code in PySnpTools
-def _standardize_unit_python(snps,apply_in_place,use_stats,stats):
-    '''
-    standardize snps to zero-mean and unit variance
-    '''
-    assert snps.dtype in [np.float64,np.float32], "snps must be a float in order to standardize in place."
-
-    xp = array_module_from_env()
-
-    imissX = xp.isnan(snps)
-    snp_sum =  xp.nansum(snps,axis=0)
-    n_obs_sum = (~imissX).sum(0)
-    
-    snp_mean = (snp_sum*1.0)/n_obs_sum
-    snp_std = xp.sqrt(xp.nansum((snps-snp_mean)**2, axis=0)/n_obs_sum)
-    # avoid div by 0 when standardizing
-    if 0.0 in snp_std:
-        #Don't need this warning because SNCs are still meaning full in QQ plots because they should be thought of as SNPs without enough data.
-        #logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
-        snp_std[snp_std == 0.0] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
-
-    if apply_in_place:
-        snps -= snp_mean
-        snps /= snp_std
-        snps[imissX] = 0
 
 def _create_covar_chrom(covar, covar_by_chrom, chrom,count_A1=None):
     if covar_by_chrom is not None:
