@@ -7,7 +7,7 @@
     <ProjectHome>
     </ProjectHome>
     <StartupFile>single_snp.py</StartupFile>
-    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
+    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools;..\..\..\bed-reader</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
@@ -29,11 +29,11 @@
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
-    <Environment>MKL_NUM_THREADS=12
-OMP_NUM_THREADS=12
-OPENBLAS_NUM_THREADS=12
-VECLIB_MAXIMUM_THREADS=12
-NUMEXPR_NUM_THREADS=12
+    <Environment>MKL_NUM_THREADS=1
+OMP_NUM_THREADS=1
+OPENBLAS_NUM_THREADS=1
+VECLIB_MAXIMUM_THREADS=1
+NUMEXPR_NUM_THREADS=1
 </Environment>
     <TestFramework>unittest</TestFramework>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>

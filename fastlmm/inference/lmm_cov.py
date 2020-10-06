@@ -83,8 +83,6 @@ class LMM(object):
         """
         compute the spectral decomposition from full kernel (full rank computations).
         """
-        #import cupy #!!!cmk
-
         N = self.K.shape[0]
         D = self.linreg.D
         self.K.flat[::N+1]+=1.0
@@ -862,7 +860,7 @@ class Linreg(object):
                     self.Xdagger = xp.linalg.pinv(self.X)       #SVD-based, and seems fast
                 else:
                     self.Xdagger = xp.zeros_like(self.X.T)
-            self.beta = self.Xdagger.dot(Y)#!!!cmkcupy
+            self.beta = self.Xdagger.dot(Y)
 
     def regress(self, Y):
         self.set_beta(Y=Y)
@@ -870,7 +868,7 @@ class Linreg(object):
             RxY = Y - self.beta
         else:
             RxY = Y - self.X.dot(self.beta)
-        return RxY #!!!cmkcupy
+        return RxY
 
     def predict(self,Xstar):
         return Xstar.dot(self.beta)
