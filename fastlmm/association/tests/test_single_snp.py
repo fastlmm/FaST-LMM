@@ -248,7 +248,7 @@ class TestSingleSnp(unittest.TestCase):
         covar = pstpheno.loadPhen(self.cov_fn)
         bed = Bed(test_snps, count_A1=False)
         snc = bed.read()
-        snc.val[:,2] = [0] * snc.iid_count # make SNP #2 have constant values (aka a SNC)
+        snc.val[:,2] = 0 # make SNP #2 have constant values (aka a SNC)
 
         output_file_name = self.file_name("snc")
 
@@ -411,7 +411,10 @@ class TestSingleSnp(unittest.TestCase):
         for _, row in reference.iterrows():
             sid = row.SNP
             pvalue = frame[frame['SNP'] == sid].iloc[0].PValue
-            assert abs(row.PValue - pvalue) < 1e-5, "pair {0} differs too much from file '{1}'".format(sid,reffile)
+            diff = abs(row.PValue - pvalue)
+            if diff > 1e-5 or np.isnan(diff):
+                raise Exception("pair {0} differs too much from file '{1}'".format(sid,reffile))
+            assert abs(row.PValue - pvalue) < 1e-5, "cmk"
 
     def test_doctest(self):
         old_dir = os.getcwd()

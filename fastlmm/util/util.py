@@ -538,6 +538,7 @@ def _compute_x_positions_snps(positions, chromosome_starts):
         cumulative_pos[idx_chr] = positions[idx_chr][:,1] + chromosome_start[1]
     return cumulative_pos
 
+_warn_array_module_once = False
 def array_module_from_env():
     xp = os.environ.get('ARRAY_MODULE','numpy')#!!!cmk change xp to array_module_name
     if xp == 'numpy':
@@ -547,9 +548,14 @@ def array_module_from_env():
             import cupy as cp
             return cp
         except ModuleNotFoundError as e:
-            logging.warn(f"Using numpy. ({e})")
+            global _warn_array_module_once
+            if not _warn_array_module_once:
+                logging.warn(f"Using numpy. ({e})")
+                _warn_array_module_once = True
             return np
     raise ValueError(f"Don't know ARRAY_MODULE '{xp}'")
+
+
 
 def asnumpy(a):
     xp = array_module_from_env()

@@ -616,8 +616,9 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         end = debatch_closure(work_index+1)
 
          # 1-thread C++ standardize is 3.5 faster than cupy standardize
-        snps_read = test_snps[:,start:end].read().read()
-        if xp is np:
+        snps_read = test_snps[:,start:end].read()
+        #!!!snps_read.val[:,2]=np.nan #!!!cmk add snc
+        if False: # xp is np:
             #_standardize_unit_python(snps_read.val,np)
             snps_read.standardize() #!!!cmk
             val = xp.asarray(snps_read.val)
@@ -625,12 +626,16 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
             val = xp.array(snps_read.val) #!!!cmk a version of READ for this???
             start_time = time.time() #!!!cmk
             _standardize_unit_python(val,xp)
-            print(f"cmk cupy standardize {time.time()-start_time} s")
-            if True:
+            #print(f"cmk cupy standardize {time.time()-start_time} s")
+            if False:
                 start_time = time.time() #!!!cmk
                 #_standardize_unit_python(snps_read.val,np)
                 snps_read.standardize()
                 print(f"cmk c++ standardize {time.time()-start_time} s")
+            if True: #cmk
+                val2 = test_snps[:,start:end].read().standardize().val
+                if np.abs(val-val2).max() > 1e-11:
+                    print("!!!cmk")
 
 
 
@@ -774,65 +779,67 @@ def _standardize_unit_python(snps, xp):
     assert snps.dtype in [np.float64,np.float32], "snps must be a float in order to standardize in place."
 
     #!!!cmk
-    s = time.time()
+    #s = time.time()
 
-    #imissX = xp.isnan(snps)
-    snps_copy = snps.copy()
-
-    e = time.time()
-    print(f"1 {e-s}")
-    s = e
-
-    #print(f"sumnan={xp.sum(imissX)},shape={snps.shape}")
+    imiss = xp.isnan(snps)
+    ##snps_copy = snps.copy()
 
     #e = time.time()
-    #print(f"1x {e-s}")
+    #print(f"1 {e-s}")
     #s = e
+
+    ##print(f"sumnan={xp.sum(imissX)},shape={snps.shape}")
+
+    ##e = time.time()
+    ##print(f"1x {e-s}")
+    ##s = e
 
     snp_std = xp.nanstd(snps, axis=0) #!!!cmk need to check dof is right
 
-    e = time.time()
-    print(f"2 {e-s}")
-    s = e
+    #e = time.time()
+    #print(f"2 {e-s}")
+    #s = e
 
     snp_mean = xp.nanmean(snps, axis=0)
 
-    e = time.time()
-    print(f"3 {e-s}")
-    s = e
+    #e = time.time()
+    #print(f"3 {e-s}")
+    #s = e
 
     # avoid div by 0 when standardizing
     #Don't need this warning because SNCs are still meaning full in QQ plots because they should be thought of as SNPs without enough data.
     #logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
     #!!!cmk need to check that SNC are handled.
-    snp_std[snp_std!=snp_std] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
-    e = time.time()
-    print(f"4 {e-s}")
-    s = e
+    snc = snp_std==0
+    snp_std[snc] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
+    #e = time.time()
+    #print(f"4 {e-s}")
+    #s = e
 
     snp_mean[xp.isnan(snp_mean)] = 0
 
-    e = time.time()
-    print(f"6 {e-s}")
-    s = e
+    #e = time.time()
+    #print(f"6 {e-s}")
+    #s = e
 
     snps -= snp_mean #!!!cmk what if mean is NaN
 
-    e = time.time()
-    print(f"7 {e-s}")
-    s = e
+    #e = time.time()
+    #print(f"7 {e-s}")
+    #s = e
 
     snps /= snp_std
 
-    e = time.time()
-    print(f"8 {e-s}")
-    s = e
+    #e = time.time()
+    #print(f"8 {e-s}")
+    #s = e
 
-    snps[snps_copy!=snps_copy] = 0
-
-    e = time.time()
-    print(f"9 {e-s}")
-    s = e
+    #imiss[:,snc]=True
+    snps[imiss] = 0
+    #print("cmk")
+    #e = time.time()
+    #print(f"9 {e-s}")
+    #s = e
 
 
 if __name__ == "__main__":
@@ -845,11 +852,11 @@ if __name__ == "__main__":
             from unittest.mock import patch
 
             seed = 1
-            iid_count = 10*1000 # number of individuals
-            sid_count = 50*1000 # number of SNPs
+            iid_count = 1*1000 # number of individuals
+            sid_count = 5*1000 # number of SNPs
             chrom_count = 10
             piece_per_chrom_count = 5 #Number of pieces for each chromosome
-            cache_top = r'm:\deldir'
+            cache_top = r'c:\deldir'
             file_cache_top = LocalCache(cache_top)
 
             test_snps_cache = file_cache_top.join('testsnps_{0}_{1}_{2}_{3}'.format(seed,chrom_count,iid_count,sid_count))
@@ -885,7 +892,7 @@ if __name__ == "__main__":
 
 
             for every in [1000,500,100,50,25,10,5,4,3,2]: #
-                for array_module_name in ['cupy']: #'numpy',
+                for array_module_name in ['numpy','cupy']: #
                     for GB_goal in [2]:#.25,.5,1,2,4]:
                         with patch.dict('os.environ', {
                             'ARRAY_MODULE': array_module_name,
