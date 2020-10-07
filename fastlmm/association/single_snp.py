@@ -776,17 +776,18 @@ def _standardize_unit_python(snps, xp):
     #!!!cmk
     s = time.time()
 
-    imissX = xp.isnan(snps) # .02 (2)
+    #imissX = xp.isnan(snps)
+    snps_copy = snps.copy()
 
     e = time.time()
     print(f"1 {e-s}")
     s = e
 
-    print(f"sumnan={xp.sum(imissX)},shape={snps.shape}")
+    #print(f"sumnan={xp.sum(imissX)},shape={snps.shape}")
 
-    e = time.time()
-    print(f"1x {e-s}")
-    s = e
+    #e = time.time()
+    #print(f"1x {e-s}")
+    #s = e
 
     snp_std = xp.nanstd(snps, axis=0) #!!!cmk need to check dof is right
 
@@ -804,7 +805,7 @@ def _standardize_unit_python(snps, xp):
     #Don't need this warning because SNCs are still meaning full in QQ plots because they should be thought of as SNPs without enough data.
     #logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
     #!!!cmk need to check that SNC are handled.
-    snp_std[xp.isnan(snp_std)] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
+    snp_std[snp_std!=snp_std] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
     e = time.time()
     print(f"4 {e-s}")
     s = e
@@ -827,7 +828,7 @@ def _standardize_unit_python(snps, xp):
     print(f"8 {e-s}")
     s = e
 
-    snps[imissX] = 0
+    snps[snps_copy!=snps_copy] = 0
 
     e = time.time()
     print(f"9 {e-s}")
@@ -884,8 +885,8 @@ if __name__ == "__main__":
 
 
             for every in [1000,500,100,50,25,10,5,4,3,2]: #
-                for array_module_name in ['numpy','cupy']:
-                    for GB_goal in [4]:#.25,.5,1,2,4]:
+                for array_module_name in ['cupy']: #'numpy',
+                    for GB_goal in [2]:#.25,.5,1,2,4]:
                         with patch.dict('os.environ', {
                             'ARRAY_MODULE': array_module_name,
                             }
