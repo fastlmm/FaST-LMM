@@ -7,7 +7,7 @@
     <ProjectHome>
     </ProjectHome>
     <StartupFile>single_snp.py</StartupFile>
-    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools;..\..\..\bed-reader</SearchPath>
+    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
@@ -28,12 +28,12 @@
     </InterpreterArguments>
     <IsWindowsApplication>False</IsWindowsApplication>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
-    <Environment>MKL_NUM_THREADS=1
-OMP_NUM_THREADS=1
-OPENBLAS_NUM_THREADS=1
-VECLIB_MAXIMUM_THREADS=1
-NUMEXPR_NUM_THREADS=1
+    <InterpreterId>CondaEnv|CondaEnv|Anaconda3</InterpreterId>
+    <Environment>MKL_NUM_THREADS=12
+OMP_NUM_THREADS=12
+OPENBLAS_NUM_THREADS=12
+VECLIB_MAXIMUM_THREADS=12
+NUMEXPR_NUM_THREADS=12
 </Environment>
     <TestFramework>unittest</TestFramework>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
@@ -186,6 +186,7 @@ NUMEXPR_NUM_THREADS=1
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>
+    <InterpreterReference Include="CondaEnv|CondaEnv|Anaconda3" />
     <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
