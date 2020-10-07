@@ -633,6 +633,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                 print(f"cmk c++ standardize {time.time()-start_time} s")
 
 
+
         if interact_with_snp is not None:
             variables_to_test = val * interact[:,np.newaxis]
         else:
@@ -780,40 +781,30 @@ def _standardize_unit_python(snps, xp):
     print(f"1 {s-e}")
     s = e
 
-    snp_sum =  xp.nansum(snps,axis=0)
+    snp_std = xp.nanstd(snps, axis=0) #!!!cmk need to check dof is right
 
     e = time.time()
     print(f"2 {s-e}")
     s = e
 
-    n_obs_sum = (~imissX).sum(0)
-    
+    snp_mean = xp.nanmean(snps, axis=0)
+
     e = time.time()
     print(f"3 {s-e}")
-    s = e
-
-    snp_mean = (snp_sum*1.0)/n_obs_sum
-
-    e = time.time()
-    print(f"4 {s-e}")
-    s = e
-
-    snp_std = xp.sqrt(xp.nansum((snps-snp_mean)**2, axis=0)/n_obs_sum)
-
-    e = time.time()
-    print(f"5 {s-e}")
     s = e
 
     # avoid div by 0 when standardizing
     #Don't need this warning because SNCs are still meaning full in QQ plots because they should be thought of as SNPs without enough data.
     #logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
-    snp_std[snp_std == 0.0] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
+    #!!!cmk need to check that SNC are handled.
+    snp_std[xp.isnan(snp_std)] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
+    snp_mean[xp.isnan(snp_mean)] = 0
 
     e = time.time()
     print(f"6 {s-e}")
     s = e
 
-    snps -= snp_mean
+    snps -= snp_mean #!!!cmk what if mean is NaN
 
     e = time.time()
     print(f"7 {s-e}")
@@ -825,7 +816,7 @@ def _standardize_unit_python(snps, xp):
     print(f"8 {s-e}")
     s = e
 
-    snps[imissX] = 0 # .04 (2)
+    snps[imissX] = 0
 
     e = time.time()
     print(f"9 {s-e}")
