@@ -618,15 +618,15 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
          # 1-thread C++ standardize is 3.5 faster than cupy standardize
         snps_read = test_snps[:,start:end].read().read()
         if xp is np:
-            _standardize_unit_python(snps_read.val,np)
-            #snps_read.standardize() #!!!cmk
+            #_standardize_unit_python(snps_read.val,np)
+            snps_read.standardize() #!!!cmk
             val = xp.asarray(snps_read.val)
         else:
             val = xp.array(snps_read.val) #!!!cmk a version of READ for this???
             start_time = time.time() #!!!cmk
             _standardize_unit_python(val,xp)
             print(f"cmk cupy standardize {time.time()-start_time} s")
-            if True: #!!!cmk
+            if True:
                 start_time = time.time() #!!!cmk
                 #_standardize_unit_python(snps_read.val,np)
                 snps_read.standardize()
@@ -773,24 +773,31 @@ def _standardize_unit_python(snps, xp):
     '''
     assert snps.dtype in [np.float64,np.float32], "snps must be a float in order to standardize in place."
 
+    #!!!cmk
     s = time.time()
 
     imissX = xp.isnan(snps) # .02 (2)
 
     e = time.time()
-    print(f"1 {s-e}")
+    print(f"1 {e-s}")
+    s = e
+
+    print(f"sumnan={xp.sum(imissX)},shape={snps.shape}")
+
+    e = time.time()
+    print(f"1x {e-s}")
     s = e
 
     snp_std = xp.nanstd(snps, axis=0) #!!!cmk need to check dof is right
 
     e = time.time()
-    print(f"2 {s-e}")
+    print(f"2 {e-s}")
     s = e
 
     snp_mean = xp.nanmean(snps, axis=0)
 
     e = time.time()
-    print(f"3 {s-e}")
+    print(f"3 {e-s}")
     s = e
 
     # avoid div by 0 when standardizing
@@ -798,28 +805,32 @@ def _standardize_unit_python(snps, xp):
     #logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
     #!!!cmk need to check that SNC are handled.
     snp_std[xp.isnan(snp_std)] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
+    e = time.time()
+    print(f"4 {e-s}")
+    s = e
+
     snp_mean[xp.isnan(snp_mean)] = 0
 
     e = time.time()
-    print(f"6 {s-e}")
+    print(f"6 {e-s}")
     s = e
 
     snps -= snp_mean #!!!cmk what if mean is NaN
 
     e = time.time()
-    print(f"7 {s-e}")
+    print(f"7 {e-s}")
     s = e
 
     snps /= snp_std
 
     e = time.time()
-    print(f"8 {s-e}")
+    print(f"8 {e-s}")
     s = e
 
     snps[imissX] = 0
 
     e = time.time()
-    print(f"9 {s-e}")
+    print(f"9 {e-s}")
     s = e
 
 
@@ -866,14 +877,14 @@ if __name__ == "__main__":
             # then add features (h2 search, multi kernel, crossval etc)
             from fastlmm.association import single_snp
             from pysnptools.snpreader import Bed
-            leave_out_one_chrom = True
+            leave_out_one_chrom = False
 
-            logging.getLogger().setLevel(logging.INFO)
+            logging.getLogger().setLevel(logging.WARN)
             print(logging.getLogger().level)
 
 
-            for every in [1000]:#[500,100,50,25, 10,5,4,3,2]:
-                for array_module_name in ['cupy']:# ['numpy','cupy']:
+            for every in [1000,500,100,50,25,10,5,4,3,2]: #
+                for array_module_name in ['numpy','cupy']:
                     for GB_goal in [4]:#.25,.5,1,2,4]:
                         with patch.dict('os.environ', {
                             'ARRAY_MODULE': array_module_name,
