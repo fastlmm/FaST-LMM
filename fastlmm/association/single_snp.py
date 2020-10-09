@@ -556,17 +556,17 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     assert h2 is None or log_delta is None, "if h2 is specified, log_delta may not be specified"
     if log_delta is not None:
-        h2 = 1.0/(np.exp(log_delta)+1)
+        h2 = 1.0/(xp.exp(log_delta)+1)
 
-    covar = np.c_[covar.read(view_ok=True,order='A').val,np.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
-    covar = xp.asarray(covar)
+    covar = xp.asarray(covar.read(view_ok=True,order='A').val)
+    covar = xp.c_[covar,xp.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
 
-    y =  pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
+    y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
     y = xp.asarray(y)
 
-    if cache_file is not None and os.path.exists(cache_file):
+    if cache_file is not None and os.path.exists(cache_file): #!!!cmk test this path and do coverage check to check every path
         lmm = lmm_cov(X=covar, Y=y, G=None, K=None)
-        with np.load(cache_file) as data: #!! similar code in epistasis
+        with xp.load(cache_file) as data: #!! similar code in epistasis
             lmm.U = data['arr_0']
             lmm.S = data['arr_1']
             h2 = data['arr_2'][0]
@@ -590,7 +590,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         if cache_file is not None and not os.path.exists(cache_file):
             pstutil.create_directory_if_necessary(cache_file)
             lmm.getSU()
-            np.savez(cache_file, lmm.U,lmm.S,np.array([h2,mixing])) #using np.savez instead of pickle because it seems to be faster to read and write
+            xp.savez(cache_file, lmm.U,lmm.S,xp.array([h2,mixing])) #using np.savez instead of pickle because it seems to be faster to read and write
 
     if interact_with_snp is not None:
         logging.info("interaction with %i" % interact_with_snp)
@@ -609,7 +609,6 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     def mapper_closure(work_index):
         if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
-        xp = array_module_from_env()
 
         do_work_time = time.time()
         start = debatch_closure(work_index)
@@ -618,12 +617,11 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
          # 1-thread C++ standardize is 3.5 faster than cupy standardize
         snps_read = test_snps[:,start:end].read()
         #!!!snps_read.val[:,2]=np.nan #!!!cmk add snc
-        if False: # xp is np:
-            #_standardize_unit_python(snps_read.val,np)
-            snps_read.standardize() #!!!cmk
+        if xp is np:
+            snps_read.standardize()
             val = xp.asarray(snps_read.val)
         else:
-            val = xp.array(snps_read.val) #!!!cmk a version of READ for this???
+            val = xp.asarray(snps_read.val)
             start_time = time.time() #!!!cmk
             _standardize_unit_python(val,xp)
             #print(f"cmk cupy standardize {time.time()-start_time} s")
@@ -632,15 +630,15 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                 #_standardize_unit_python(snps_read.val,np)
                 snps_read.standardize()
                 print(f"cmk c++ standardize {time.time()-start_time} s")
-            if True: #cmk
+            if False: #cmk
                 val2 = test_snps[:,start:end].read().standardize().val
-                if np.abs(val-val2).max() > 1e-11:
+                if xp.abs(val-xp.asarray(val2)).max() > 1e-11:
                     print("!!!cmk")
 
 
 
         if interact_with_snp is not None:
-            variables_to_test = val * interact[:,np.newaxis]
+            variables_to_test = val * interact[:,xp.newaxis]
         else:
             variables_to_test = val
         res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test)
@@ -654,7 +652,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         dataframe = _create_dataframe(snps_read.sid_count)
         dataframe['sid_index'] = np.arange(start,end)
-        dataframe['SNP'] = np.array(snps_read.sid, 'str') #This will be ascii on Python2 and unicode on Python3
+        dataframe['SNP'] = snps_read.sid
         dataframe['Chr'] = snps_read.pos[:,0]
         dataframe['GenDist'] = snps_read.pos[:,1]
         dataframe['ChrPos'] = snps_read.pos[:,2] 
@@ -662,7 +660,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         dataframe['SnpWeight'] = asnumpy(beta[:,0])
         dataframe['SnpWeightSE'] = asnumpy(xp.sqrt(res['variance_beta'][:,0]))
         dataframe['SnpFractVarExpl'] = asnumpy(xp.sqrt(res['fraction_variance_explained_beta'][:,0]))
-        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + mixing
+        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + asnumpy(mixing)
         dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + asnumpy(h2)
 
         logging.info("time={0}".format(time.time()-do_work_time))
@@ -854,23 +852,31 @@ if __name__ == "__main__":
             seed = 1
             iid_count = 1*1000 # number of individuals
             sid_count = 5*1000 # number of SNPs
-            chrom_count = 10
-            piece_per_chrom_count = 5 #Number of pieces for each chromosome
             cache_top = r'c:\deldir'
-            file_cache_top = LocalCache(cache_top)
+            leave_out_one_chrom = False
+            runner = LocalMultiProc(5,just_one_process=False)
+            #cmk need to get working with this again LocalMultiProc(6)
 
-            test_snps_cache = file_cache_top.join('testsnps_{0}_{1}_{2}_{3}'.format(seed,chrom_count,iid_count,sid_count))
-
-            if not next(test_snps_cache.walk(),None): #If no files in the test_snps folder, generate data (takes about 6 hours)
-                from pysnptools.snpreader import SnpGen
-                from pysnptools.util.mapreduce1.runner import LocalMultiProc
-    
-                snpgen = SnpGen(seed=seed,iid_count=iid_count,sid_count=sid_count,chrom_count=chrom_count,block_size=1000) #cmkbatch_sizeCreate an on-the-fly SNP generator
-                snp_gen_runner = None#LocalMultiProc(5)
-                #Write random SNP data to a DistributedBed
-                test_snps = DistributedBed.write(test_snps_cache,snpgen,piece_per_chrom_count=piece_per_chrom_count,runner=snp_gen_runner)
+            if True:
+                test_snps = Bed(r"C:\Users\carlk\OneDrive\Shares\gaw14\gaw\gaw14smoking\synthetic\gaw14.1.Rand100k.familyMult\gaw14.1.Rand100K.familyMult.bed")
+                print(test_snps.shape)
             else:
-                test_snps = DistributedBed(test_snps_cache)
+                chrom_count = 10
+                piece_per_chrom_count = 5 #Number of pieces for each chromosome
+                file_cache_top = LocalCache(cache_top)
+
+                test_snps_cache = file_cache_top.join('testsnps_{0}_{1}_{2}_{3}'.format(seed,chrom_count,iid_count,sid_count))
+
+                if not next(test_snps_cache.walk(),None): #If no files in the test_snps folder, generate data (takes about 6 hours)
+                    from pysnptools.snpreader import SnpGen
+                    from pysnptools.util.mapreduce1.runner import LocalMultiProc
+    
+                    snpgen = SnpGen(seed=seed,iid_count=iid_count,sid_count=sid_count,chrom_count=chrom_count,block_size=1000) #cmkbatch_sizeCreate an on-the-fly SNP generator
+                    snp_gen_runner = None#LocalMultiProc(5)
+                    #Write random SNP data to a DistributedBed
+                    test_snps = DistributedBed.write(test_snps_cache,snpgen,piece_per_chrom_count=piece_per_chrom_count,runner=snp_gen_runner)
+                else:
+                    test_snps = DistributedBed(test_snps_cache)
 
             #Generate random pheno and covar
             import numpy as np
@@ -885,32 +891,38 @@ if __name__ == "__main__":
             # then add features (h2 search, multi kernel, crossval etc)
             from fastlmm.association import single_snp
             from pysnptools.snpreader import Bed
-            leave_out_one_chrom = False
 
             logging.getLogger().setLevel(logging.WARN)
             print(logging.getLogger().level)
+            #logging.getLogger("dill").setLevel(logging.INFO)
 
 
+            array_module_name_list = ['numpy']#,'cupy']
+            print(array_module_name_list)
             for every in [1000,500,100,50,25,10,5,4,3,2]: #
-                for array_module_name in ['numpy','cupy']: #
-                    for GB_goal in [2]:#.25,.5,1,2,4]:
-                        with patch.dict('os.environ', {
-                            'ARRAY_MODULE': array_module_name,
-                            }
-                                        ) as patched_environ: #!!!cmk make this a utility
+                for GB_goal in [2]:#.25,.5,1,2,4]:
+                    K0 = test_snps[:,::every]
+                    print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{every}\t{os.environ.get('MKL_NUM_THREADS',12)}\t{GB_goal}\t{leave_out_one_chrom}",end="")
+                    #test_snps_cache = file_cache_top.join('testsnps_{0}_{1}_{2}_{3}'.format(seed,chrom_count,iid_count,sid_count))
+                    #test_snps = DistributedBed(test_snps_cache)
+                    #K0 = test_snps[:,::every] #!!!cmk re-creating this as a way to close it aftter K0.sid_count
+                    for array_module_name in array_module_name_list: #
+                        #with patch.dict('os.environ', { #cmk is this the generator that pickle/dill don't like?
+                        #    'ARRAY_MODULE': array_module_name,
+                        #    }
+                        #                ) as patched_environ: #!!!cmk make this a utility
                             # There are multiple ways to limit the # of threads and they must be set before 'import np'
                             # See https://stackoverflow.com/questions/30791550/limit-number-of-threads-in-numpy
                             # Here we just spot check that one has been set as expected.
                             assert os.environ['MKL_NUM_THREADS']=='12'
-
-                            K0 = test_snps[:,::every]
+                            #test_snps.close()
                             start = time.time()
                             results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
                                                           leave_out_one_chrom=leave_out_one_chrom, count_A1=False,
-                                                          GB_goal=GB_goal)
+                                                          GB_goal=GB_goal, runner=runner)
                             #print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
-                            total = time.time()-start
-                            print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{array_module_name}\t{every}\t{os.environ.get('MKL_NUM_THREADS',12)}\t{GB_goal}\t{total}")
+                            print(f"\t{time.time()-start}",end="")
+                    print()
 
     if False:
         import logging

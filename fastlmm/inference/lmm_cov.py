@@ -112,7 +112,7 @@ class LMM(object):
                 if xp is np:
                     [self.U,self.S,V] = big_sdd(PxG) #destroys PxG, returns NxN, min, kxk
                 else:
-                    [self.U,self.S,V] = xp.linalg.svd(xp.asarray(PxG),full_matrices=False,compute_uv=True) #, N x min, min, min x k
+                    [self.U,self.S,V] = xp.linalg.svd(PxG,full_matrices=False,compute_uv=True) #, N x min, min, min x k
                 logging.info("Ending SVD")
                 inonzero = xp.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
                 self.S = self.S[inonzero]
