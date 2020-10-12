@@ -539,7 +539,10 @@ def _compute_x_positions_snps(positions, chromosome_starts):
     return cumulative_pos
 
 _warn_array_module_once = False
-def array_module_from_env():
+def array_module_from_env(xp = None):
+    if xp is not None:
+        return xp
+
     xp = os.environ.get('ARRAY_MODULE','numpy')#!!!cmk change xp to array_module_name
     if xp == 'numpy':
         return np

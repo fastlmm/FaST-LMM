@@ -25,9 +25,9 @@ class LMM(object):
     TODO: Add full support for multiple phenotypes by extending h2 and a2
     TODO: Deal with h2_1 parameterization more eloquently (see comments below)
     '''
-    __slots__ = ["linreg","G","Y","X","K","U","S","UX","UY","UUX","UUY","forcefullrank","regressX","numcalls"]
+    __slots__ = ["linreg","G","Y","X","K","U","S","UX","UY","UUX","UUY","forcefullrank","regressX","numcalls","_xp"]
 
-    def __init__(self, forcefullrank=False, X=None, linreg=None, Y=None, G=None, K=None, regressX=True, inplace=False):
+    def __init__(self, forcefullrank=False, X=None, linreg=None, Y=None, G=None, K=None, regressX=True, inplace=False, xp=None):
         '''
 
         Args:
@@ -42,6 +42,7 @@ class LMM(object):
              regressX       : regress out covariates to speed up computations? (default: True)
              inplace        : set kernel without copying? (default: False)
         '''
+        self._xp = array_module_from_env(xp)
         self.numcalls = 0
         self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first)
         self.forcefullrank = forcefullrank
@@ -101,7 +102,6 @@ class LMM(object):
         compute the spectral decomposition from design matrix G for linear kernel
                 (allows low rank computations, if G has more rows than columns) 
         """
-        xp = array_module_from_env()
         N = self.G.shape[0]
         k = self.G.shape[1]
         if k:
@@ -109,12 +109,12 @@ class LMM(object):
                 PxG = self.linreg.regress(Y=self.G)
                 #was
                 logging.info("Starting SVD")
-                if xp is np:
+                if self._xp is np:
                     [self.U,self.S,V] = big_sdd(PxG) #destroys PxG, returns NxN, min, kxk
                 else:
-                    [self.U,self.S,V] = xp.linalg.svd(PxG,full_matrices=False,compute_uv=True) #, N x min, min, min x k
+                    [self.U,self.S,V] = self._xp.linalg.svd(PxG,full_matrices=False,compute_uv=True) #, N x min, min, min x k
                 logging.info("Ending SVD")
-                inonzero = xp.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
+                inonzero = self._xp.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
                 self.S = self.S[inonzero]
                 self.U = self.U[:,inonzero]
                 #V = V[inonzero,:] #If we cared about V, this is what we would do.
@@ -156,12 +156,10 @@ class LMM(object):
                    U.T.dot(A)
                A - U.dot(U.T.dot(A))    (if kernel is full rank this is None)
         """
-        xp = array_module_from_env()
-
         S,U = self.getSU()
         N = A.shape[0]
         D = self.linreg.D
-        A = xp.asarray(self.linreg.regress(A))
+        A = self._xp.asarray(self.linreg.regress(A))
         # treat pathological case where a variable is explained by the covariates
         A_std = A.std(0)
         A[:,A_std<=1e-10] = 0.0
@@ -710,7 +708,7 @@ class LMM(object):
 
         UY,UUY = self.getUY(idx_pheno = idx_pheno)
         P = UY.shape[1] #number of phenotypes used
-        YKY = computeAKA(Sd=Sd, denom=denom, UA=UY, UUA=UUY)
+        YKY = self.computeAKA(Sd=Sd, denom=denom, UA=UY, UUA=UUY)
         logdetK = np.log(Sd).sum()
 
         if (UUY is not None):#low rank part
@@ -718,8 +716,8 @@ class LMM(object):
         
         if Usnps is not None:
             
-            snpsKsnps = computeAKA(Sd=Sd, denom=denom, UA=Usnps, UUA=UUsnps)[:,np.newaxis]
-            snpsKY = computeAKB(Sd=Sd, denom=denom, UA=Usnps, UB=UY, UUA=UUsnps, UUB=UUY)
+            snpsKsnps = self.computeAKA(Sd=Sd, denom=denom, UA=Usnps, UUA=UUsnps)[:,np.newaxis]
+            snpsKY = self.computeAKB(Sd=Sd, denom=denom, UA=Usnps, UB=UY, UUA=UUsnps, UUB=UUY)
         
         if weightW is not None:
             absw = np.absolute(weightW)
@@ -748,15 +746,15 @@ class LMM(object):
             
 
             if multsign:
-                WW = np.eye(num_exclude) + computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UW_, UUB=UUW_)
+                WW = np.eye(num_exclude) + self.computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UW_, UUB=UUW_)
             else:
-                WW = np.diag(signw) + computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UW, UUB=UUW)
+                WW = np.diag(signw) + self.computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UW, UUB=UUW)
             
             # compute inverse efficiently
             [S_WW,U_WW] = la.eigh(WW)
             # compute S_WW^{-1} * UWX
             
-            WY = computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UY, UUB=UUY)
+            WY = self.computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UY, UUB=UUY)
             UWY = U_WW.T.dot(WY)
             WY = UWY / np.lib.stride_tricks.as_strided(S_WW, (S_WW.size,UWY.shape[1]), (S_WW.itemsize,0))
             # compute S_WW^{-1} * UWy
@@ -766,7 +764,7 @@ class LMM(object):
             YKY -= (UWY * WY).sum(0)
             
             if Usnps is not None:
-                Wsnps = computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=Usnps, UUB=UUsnps)
+                Wsnps = self.computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=Usnps, UUB=UUsnps)
                 UWsnps = U_WW.T.dot(Wsnps)
                 Wsnps = UWsnps / np.lib.stride_tricks.as_strided(S_WW, (S_WW.size,UWsnps.shape[1]), (S_WW.itemsize,0))
 
@@ -826,14 +824,51 @@ class LMM(object):
         logging.info("Ending self.nLLcore")
         return result
 
+    def computeAKB(self, Sd, denom, UA, UB, UUA=None, UUB=None):
+        """
+        compute asymmetric squared form
+
+        A.T.dot( f(K) ).dot(B)
+        """
+        UAS = UA / self._xp.lib.stride_tricks.as_strided(Sd, (Sd.size,UA.shape[1]), (Sd.itemsize,0))
+        AKB = UAS.T.dot(UB)
+        if UUA is not None:
+            AKB += UUA.T.dot(UUB) / denom
+        return AKB
+
+    def computeAKA(self, Sd, denom, UA, UUA=None):
+        """
+        compute symmetric squared form
+    
+        A.T.dot( f(K) ).dot(A)
+        """
+
+        #To save memory divide the work into 10 pieces
+        piece_count = 10 if UA.shape[0] > 10 and UA.shape[1] > 1 else 1
+
+
+        AKA = self._xp.zeros(UA.shape[1])
+        start0, start1 = 0, 0
+        for piece_index in range(piece_count):
+            end0 = UA.shape[0] * (piece_index+1) // piece_count
+            AKA += (UA[start0:end0,:] / Sd.reshape(-1,1)[start0:end0,:] * UA[start0:end0,:]).sum(0)
+            start0 = end0
+            if UUA is not None:
+                end1 = UUA.shape[0] * (piece_index+1) // piece_count
+                AKA += (UUA[start1:end1,:] * UUA[start1:end1,:]).sum(0) / denom
+                start1 = end1
+        return AKA
+    
 
 class Linreg(object):
     """ linear regression class"""
-    __slots__ = ["X", "Xdagger", "beta", "N", "D"]
+    __slots__ = ["X", "Xdagger", "beta", "N", "D", "_xp"]
 
-    def __init__(self,X=None, Xdagger=None):
+    def __init__(self, X=None, Xdagger=None, xp=None):
         self.N = 0
         self.setX(X=X, Xdagger=Xdagger)
+        self._xp = array_module_from_env(xp)
+
         
     def setX(self, X=None, Xdagger=None):
         self.beta = None
@@ -845,8 +880,6 @@ class Linreg(object):
             self.D = 1
 
     def set_beta(self,Y):
-        xp = array_module_from_env()
-
         self.N = Y.shape[0]
         if Y.ndim == 1:
             P = 1
@@ -857,9 +890,9 @@ class Linreg(object):
         else:        
             if self.Xdagger is None:
                 if self.X.shape[1]:
-                    self.Xdagger = xp.linalg.pinv(self.X)       #SVD-based, and seems fast
+                    self.Xdagger = self._xp.linalg.pinv(self.X)       #SVD-based, and seems fast
                 else:
-                    self.Xdagger = xp.zeros_like(self.X.T)
+                    self.Xdagger = self._xp.zeros_like(self.X.T)
             self.beta = self.Xdagger.dot(Y)
 
     def regress(self, Y):
@@ -873,43 +906,6 @@ class Linreg(object):
     def predict(self,Xstar):
         return Xstar.dot(self.beta)
 
-def computeAKB(Sd, denom, UA, UB, UUA=None, UUB=None):
-    """
-    compute asymmetric squared form
-
-    A.T.dot( f(K) ).dot(B)
-    """
-    xp = array_module_from_env()
-
-    UAS = UA / xp.lib.stride_tricks.as_strided(Sd, (Sd.size,UA.shape[1]), (Sd.itemsize,0))
-    AKB = UAS.T.dot(UB)
-    if UUA is not None:
-        AKB += UUA.T.dot(UUB) / denom
-    return AKB
-
-def computeAKA(Sd, denom, UA, UUA=None):
-    """
-    compute symmetric squared form
-    
-    A.T.dot( f(K) ).dot(A)
-    """
-    xp = array_module_from_env()
-
-    #To save memory divide the work into 10 pieces
-    piece_count = 10 if UA.shape[0] > 10 and UA.shape[1] > 1 else 1
-
-
-    AKA = xp.zeros(UA.shape[1])
-    start0, start1 = 0, 0
-    for piece_index in range(piece_count):
-        end0 = UA.shape[0] * (piece_index+1) // piece_count
-        AKA += (UA[start0:end0,:] / Sd.reshape(-1,1)[start0:end0,:] * UA[start0:end0,:]).sum(0)
-        start0 = end0
-        if UUA is not None:
-            end1 = UUA.shape[0] * (piece_index+1) // piece_count
-            AKA += (UUA[start1:end1,:] * UUA[start1:end1,:]).sum(0) / denom
-            start1 = end1
-    return AKA
 
 #def _elementwise_mult_and_sum(a,b,start,end):
 #    s =  (a[start:end,:] * b[start:end,:]).sum(0)

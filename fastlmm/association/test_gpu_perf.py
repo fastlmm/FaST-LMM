@@ -84,11 +84,10 @@ def pd_write(short_output_pattern, pref_list):
             break
         i += 1
     pref_df.to_csv(file, sep='\t', index=False)
-    logging.info(pref_df)
+    print(pref_df)
 
 
 def test_exp_1():
-    logging.getLogger().setLevel(logging.INFO)
     short_output_pattern ="exp1/exp_1_{0}.tsv"
 
     # Set these as desired
@@ -113,7 +112,6 @@ def test_exp_1():
     pd_write(short_output_pattern,pref_list)
 
 def test_exp_2():
-    logging.getLogger().setLevel(logging.INFO)
     short_output_pattern ="exp2/exp_2_{0}.tsv"
 
     # Set these as desired
@@ -138,8 +136,7 @@ def test_exp_2():
         pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
 
-def test_exp_3(K0_goal = 500):
-    logging.getLogger().setLevel(logging.INFO)
+def test_exp_3(K0_goal = 500,GB_goal = 2):
     short_output_pattern = f"exp3/exp_3_{K0_goal}_{'{0}'}.tsv"
 
     # Set these as desired
@@ -149,14 +146,13 @@ def test_exp_3(K0_goal = 500):
     sid_count = 50*1000 # number of SNPs
     leave_out_one_chrom = True
 
-    # Tune these
-    GB_goal = 2
+    # Tune these   
 
     test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
 
 
     pref_list = []
-    for proc_count,use_gpu in [(10,False),(1,True)]:
+    for proc_count,use_gpu in [(1,True),(10,False)]:
         logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
         pref_list.append(test_one_exp(test_snps,K0_goal,seed,pheno,covar,
                                     leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
@@ -164,7 +160,6 @@ def test_exp_3(K0_goal = 500):
     pd_write(short_output_pattern,pref_list)
 
 def test_exp_4(K0_goal = 500):
-    logging.getLogger().setLevel(logging.INFO)
     short_output_pattern =f"exp4/exp_4_{K0_goal}_{0}.tsv"
 
     # Set these as desired
@@ -189,5 +184,30 @@ def test_exp_4(K0_goal = 500):
         pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
 
+def test_exp_3delme(K0_goal = 500, leave_out_one_chrom = True):
+    short_output_pattern = f"exp3delme/exp_3delme_{K0_goal}_{'{0}'}.tsv"
+
+    # Set these as desired
+    os.environ['MKL_THREAD_COUNT'] = '20' #Set this before numpy is imported
+    seed = 1 
+    iid_count = 10*1000 # number of individuals
+    sid_count = 50*1000 # number of SNPs
+
+    # Tune these
+
+    test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
+
+
+    pref_list = []
+    GB_goal = 2
+    for repeat_i in [1]:
+        for proc_count,use_gpu in [(10,False),(1,True)]:
+            logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
+            pref_list.append(test_one_exp(test_snps,K0_goal,seed,pheno,covar,
+                                        leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
+            pd_write(short_output_pattern+".temp",pref_list)
+    pd_write(short_output_pattern,pref_list)
+
 if __name__ == "__main__":
-    test_exp_3(2500)
+    logging.getLogger().setLevel(logging.INFO)
+    test_exp_3(K0_goal=500)
