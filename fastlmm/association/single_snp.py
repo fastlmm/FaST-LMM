@@ -363,7 +363,7 @@ class _Mixer(object):
                     do_g = bool(data['do_g']),
                     kernel_trained0 = float(data['factor0']),
                     kernel_trained1 = float(data['factor1']),
-                    mixing = float(data['mixing'])
+                    mixing = data['mixing']
                     )
         return mixer
 
@@ -585,13 +585,13 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         if h2 is None:
             result = lmm.findH2()
-            h2 = float(result['h2'])
+            h2 = result['h2']
         logging.info("h2={0}".format(h2))
 
         if cache_file is not None and not os.path.exists(cache_file):
             pstutil.create_directory_if_necessary(cache_file)
             lmm.getSU()
-            xp.savez(cache_file, lmm.U,lmm.S,xp.array([h2,mixing])) #using np.savez instead of pickle because it seems to be faster to read and write
+            xp.savez(cache_file, lmm.U,lmm.S,xp.array([float(h2),float(mixing)])) #using np.savez instead of pickle because it seems to be faster to read and write
 
     if interact_with_snp is not None:
         logging.info("interaction with %i" % interact_with_snp)
@@ -661,8 +661,8 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         dataframe['SnpWeight'] = asnumpy(beta[:,0])
         dataframe['SnpWeightSE'] = asnumpy(xp.sqrt(res['variance_beta'][:,0]))
         dataframe['SnpFractVarExpl'] = asnumpy(xp.sqrt(res['fraction_variance_explained_beta'][:,0]))
-        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + mixing
-        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + h2
+        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + float(mixing)
+        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + float(h2)
 
         logging.info("time={0}".format(time.time()-do_work_time))
 
@@ -764,12 +764,12 @@ def _find_mixing_from_Ks(K, covar, K0_val, K1_val, h2, y):
 def _mix_from_Gs(G, G0_standardized_val, G1_standardized_val, mixing):
     #logging.info("concat G1, mixing {0}".format(mixing))
     G[:,0:G0_standardized_val.shape[1]] = G0_standardized_val
-    G[:,0:G0_standardized_val.shape[1]] *= (np.sqrt(1.0-mixing))
+    G[:,0:G0_standardized_val.shape[1]] *= (np.sqrt(1.0-float(mixing)))
     G[:,G0_standardized_val.shape[1]:] = G1_standardized_val
-    G[:,G0_standardized_val.shape[1]:] *= np.sqrt(mixing)
+    G[:,G0_standardized_val.shape[1]:] *= np.sqrt(float(mixing))
 
 def _mix_from_Ks(K, K0_val, K1_val, mixing):
-    K[:,:] = K0_val * (1.0-mixing) + K1_val * mixing
+    K[:,:] = K0_val * (1.0-float(mixing)) + K1_val * float(mixing)
 
 def _standardize_unit_python(snps, xp):
     '''

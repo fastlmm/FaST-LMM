@@ -207,21 +207,21 @@ class LMM(object):
         set the Kernel K.
         
         Args:
-                K :       [N*N] array, random effects covariance (positive semi-definite)
+            K :       [N*N] array, random effects covariance (positive semi-definite)
             G :       [NxS] array of random effects (will be used for linear kernel)
             inplace:  set kernel without copying? (default: False)
         '''
         self.clear_cache()
         if K is not None:
             if inplace:
-                self.K = K
-            else:
-                self.K = K.copy()
+                self.K = self._xp.asarray(K)
+            else: 
+                self.K = K.copy() #!!!cmk need xp code
         elif G is not None:
             if inplace:
-                self.G = G
+                self.G = self._xp.asarray(G)
             else:
-                self.G = G.copy()
+                self.G = G.copy()  #!!!cmk need xp code
     
 
     def clear_cache(self, reset_K=True):
