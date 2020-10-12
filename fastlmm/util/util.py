@@ -6,6 +6,7 @@ import sys
 import time
 import pysnptools.util as pstutil
 from six.moves import range
+from types import ModuleType
 
 def thin_results_file(myfile,dup_postfix="v2"):
     '''
@@ -539,13 +540,15 @@ def _compute_x_positions_snps(positions, chromosome_starts):
     return cumulative_pos
 
 _warn_array_module_once = False
-def array_module_from_env(xp = None):
-    if xp is not None:
+def array_module_from_env(xp = None): #!!!cmk document this
+    xp = xp or os.environ.get('ARRAY_MODULE','numpy')
+
+    if isinstance(xp, ModuleType):
         return xp
 
-    xp = os.environ.get('ARRAY_MODULE','numpy')#!!!cmk change xp to array_module_name
     if xp == 'numpy':
         return np
+
     if xp == 'cupy':
         try:
             import cupy as cp
@@ -556,6 +559,7 @@ def array_module_from_env(xp = None):
                 logging.warn(f"Using numpy. ({e})")
                 _warn_array_module_once = True
             return np
+
     raise ValueError(f"Don't know ARRAY_MODULE '{xp}'")
 
 

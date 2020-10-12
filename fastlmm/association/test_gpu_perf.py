@@ -12,7 +12,7 @@ else:
     output_dir = Path(r'd:\OneDrive\Projects\Science\gpu_pref')
 
 
-def test_one_exp(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gpu,proc_count,GB_goal):
+def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gpu,proc_count,GB_goal):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
     from unittest.mock import patch
@@ -22,15 +22,17 @@ def test_one_exp(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gpu,
 
     runner = None if proc_count == 1 else LocalMultiProc(proc_count)
 
-    with patch.dict('os.environ', { 'ARRAY_MODULE': 'cupy' if use_gpu else 'numpy',}
-                    ) as patched_environ: #!!!cmk make this a utility
+    #!!!cmk0 change this to using xp=...
+    #!!!cmk0 allow strings in util
+    #!!!cmk0 test and fix up test_single_snp so works with array_module enviorn set to cupy
+    xp = 'cupy' if use_gpu else 'numpy'
 
-        start_time = time.time()
+    start_time = time.time()
 
-        results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
-                                                          leave_out_one_chrom=leave_out_one_chrom, count_A1=False,
-                                                          GB_goal=GB_goal, runner=runner)
-        delta_time = time.time() - start_time
+    results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
+                                                        leave_out_one_chrom=leave_out_one_chrom, count_A1=False,
+                                                        GB_goal=GB_goal, runner=runner, xp = xp)
+    delta_time = time.time() - start_time
 
     perf_result = {'test_snps': str(test_snps),
               'iid_count': test_snps.iid_count,
@@ -107,7 +109,7 @@ def test_exp_1():
 
     pref_list = []
     for use_gpu in [False, True]:
-        pref_list.append(test_one_exp(test_snps,K0_goal,seed,pheno,covar,
+        pref_list.append(one_experiment(test_snps,K0_goal,seed,pheno,covar,
                                  leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
     pd_write(short_output_pattern,pref_list)
 
@@ -131,7 +133,7 @@ def test_exp_2():
     pref_list = []
     for proc_count,use_gpu in [(5,False),(10,False),(1,True),(2,True)]:
         logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-        pref_list.append(test_one_exp(test_snps,K0_goal,seed,pheno,covar,
+        pref_list.append(one_experiment(test_snps,K0_goal,seed,pheno,covar,
                                     leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
         pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
@@ -154,7 +156,7 @@ def test_exp_3(K0_goal = 500,GB_goal = 2):
     pref_list = []
     for proc_count,use_gpu in [(1,True),(10,False)]:
         logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-        pref_list.append(test_one_exp(test_snps,K0_goal,seed,pheno,covar,
+        pref_list.append(one_experiment(test_snps,K0_goal,seed,pheno,covar,
                                     leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
         pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
@@ -179,7 +181,7 @@ def test_exp_4(K0_goal = 500):
     pref_list = []
     for proc_count,use_gpu in [(1,True),(1,False)]:
         logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-        pref_list.append(test_one_exp(test_snps,K0_goal,seed,pheno,covar,
+        pref_list.append(one_experiment(test_snps,K0_goal,seed,pheno,covar,
                                     leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
         pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
@@ -203,7 +205,7 @@ def test_exp_3delme(K0_goal = 500, leave_out_one_chrom = True):
     for repeat_i in [1]:
         for proc_count,use_gpu in [(10,False),(1,True)]:
             logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-            pref_list.append(test_one_exp(test_snps,K0_goal,seed,pheno,covar,
+            pref_list.append(one_experiment(test_snps,K0_goal,seed,pheno,covar,
                                         leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
             pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
