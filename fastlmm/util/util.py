@@ -561,10 +561,9 @@ def array_module_from_env(xp = None):
 
 
 def asnumpy(a):
-    xp = array_module_from_env()
-    if xp is np:
+    if isinstance(a, np.ndarray):
         return a
-    return xp.asnumpy(a)
+    return a.get()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)

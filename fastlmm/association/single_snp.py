@@ -33,6 +33,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                  K1=None, mixing=None,
                  covar=None, covar_by_chrom=None, leave_out_one_chrom=True, output_file_name=None, h2=None, log_delta=None,
                  cache_file=None, GB_goal=None, interact_with_snp=None, force_full_rank=False, force_low_rank=False, G0=None, G1=None, runner=None,
+                 xp = None, #!!!!cmk add docs
                  count_A1=None):
     """
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
@@ -152,6 +153,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
+    xp = array_module_from_env(xp)
 
     assert test_snps is not None, "test_snps must be given as input"
     test_snps = _snps_fixup(test_snps, count_A1=count_A1)
@@ -173,7 +175,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                                     mixing=mixing, h2=h2, log_delta=log_delta,
                                     cache_file = cache_file, force_full_rank=force_full_rank,force_low_rank=force_low_rank,
                                     output_file_name=output_file_name,block_size=block_size, interact_with_snp=interact_with_snp,
-                                    runner=runner)
+                                    runner=runner, xp=xp)
         sid_index_range = IntRangeSet(frame['sid_index'])
         assert sid_index_range == (0,test_snps.sid_count), "Some SNP rows are missing from the output"
     else: 
@@ -203,7 +205,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                                         mixing=mixing, h2=h2, log_delta=log_delta, cache_file=cache_file_chrom,
                                         force_full_rank=force_full_rank,force_low_rank=force_low_rank,
                                         output_file_name=None, block_size=block_size, interact_with_snp=interact_with_snp,
-                                        runner=Local())
+                                        runner=Local(), xp=xp)
             
             return distributable
 
@@ -544,8 +546,7 @@ def _create_dataframe(row_count):
 def _internal_single(K0, test_snps, pheno, covar, K1,
                  mixing, h2, log_delta,
                  cache_file, force_full_rank, force_low_rank,
-                 output_file_name, block_size, interact_with_snp, runner):
-    xp = array_module_from_env()
+                 output_file_name, block_size, interact_with_snp, runner, xp):
 
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
@@ -584,7 +585,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         if h2 is None:
             result = lmm.findH2()
-            h2 = result['h2']
+            h2 = float(result['h2'])
         logging.info("h2={0}".format(h2))
 
         if cache_file is not None and not os.path.exists(cache_file):
@@ -660,8 +661,8 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         dataframe['SnpWeight'] = asnumpy(beta[:,0])
         dataframe['SnpWeightSE'] = asnumpy(xp.sqrt(res['variance_beta'][:,0]))
         dataframe['SnpFractVarExpl'] = asnumpy(xp.sqrt(res['fraction_variance_explained_beta'][:,0]))
-        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + asnumpy(mixing)
-        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + asnumpy(h2)
+        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + mixing
+        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + h2
 
         logging.info("time={0}".format(time.time()-do_work_time))
 
