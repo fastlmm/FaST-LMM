@@ -6,7 +6,7 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test_single_snp.py</StartupFile>
+    <StartupFile>tests\test_gpu_perf.py</StartupFile>
     <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -99,7 +99,7 @@
     </Compile>
     <Compile Include="tests\tests_util.py" />
     <Compile Include="tests\test_gwas.py" />
-    <Compile Include="test_gpu_perf.py" />
+    <Compile Include="tests\test_gpu_perf.py" />
     <Compile Include="varcomp_test.py" />
     <Compile Include="PairResult.py" />
     <Compile Include="Result.py" />

@@ -77,7 +77,7 @@ class LMM(object):
         self.linreg = linreg
         self.regressX = regressX
         if self.linreg is None and regressX:
-            self.linreg = Linreg(X=self.X)
+            self.linreg = Linreg(X=self.X, xp=self._xp)
 
 
     def setSU_fromK(self):

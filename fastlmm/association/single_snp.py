@@ -566,7 +566,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     y = xp.asarray(y)
 
     if cache_file is not None and os.path.exists(cache_file): #!!!cmk test this path and do coverage check to check every path
-        lmm = lmm_cov(X=covar, Y=y, G=None, K=None)
+        lmm = lmm_cov(X=covar, Y=y, G=None, K=None, xp=xp)
         with xp.load(cache_file) as data: #!! similar code in epistasis
             lmm.U = data['arr_0']
             lmm.S = data['arr_1']
@@ -578,10 +578,10 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         if mixer.do_g:
             G = xp.asarray(K.snpreader.val)
-            lmm = lmm_cov(X=covar, Y=y, K=None, G=G, inplace=True)
+            lmm = lmm_cov(X=covar, Y=y, K=None, G=G, inplace=True, xp=xp)
         else:
             #print(covar.sum(),y.sum(),K.val.sum(),covar[0],y[0],K.val[0,0])
-            lmm = lmm_cov(X=covar, Y=y, K=K.val, G=None, inplace=True)
+            lmm = lmm_cov(X=covar, Y=y, K=K.val, G=None, inplace=True, xp=xp)
 
         if h2 is None:
             result = lmm.findH2()
@@ -714,7 +714,7 @@ def _find_mixing_from_Gs(G, covar, G0_standardized_val, G1_standardized_val, h2,
             mixing = mixing[0]
 
         _mix_from_Gs(G, G0_standardized_val,G1_standardized_val,mixing)
-        lmm = lmm_cov(X=covar, Y=y, G=G, K=None, inplace=True)
+        lmm = lmm_cov(X=covar, Y=y, G=G, K=None, inplace=True, xp=xp)
         result = lmm.findH2()
         if (resmin[0] is None) or (result['nLL']<resmin[0]['nLL']):
             resmin[0]=result
@@ -743,7 +743,7 @@ def _find_mixing_from_Ks(K, covar, K0_val, K1_val, h2, y):
             mixing = mixing[0]
 
         _mix_from_Ks(K, K0_val,K1_val,mixing)
-        lmm = lmm_cov(X=covar, Y=y, G=None, K=K, inplace=True)
+        lmm = lmm_cov(X=covar, Y=y, G=None, K=K, inplace=True, xp=xp)
         result = lmm.findH2()
         if (resmin[0] is None) or (result['nLL']<resmin[0]['nLL']):
             resmin[0]=result

@@ -18,7 +18,10 @@ def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gp
     from unittest.mock import patch
     from fastlmm.association import single_snp
 
-    K0 = test_snps[:,::test_snps.sid_count//K0_goal]
+    if K0_goal is not None:
+        K0 = test_snps[:,::test_snps.sid_count//K0_goal]
+    else:
+        K0 = None
 
     runner = None if proc_count == 1 else LocalMultiProc(proc_count)
 
@@ -37,7 +40,7 @@ def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gp
     perf_result = {'test_snps': str(test_snps),
               'iid_count': test_snps.iid_count,
               'test_sid_count': test_snps.sid_count,
-              'K0_sid_count': K0.sid_count,
+              'K0_sid_count': test_snps.iid_count if K0 is None else K0.sid_count,
               'seed': seed,
               'chrom_count': len(np.unique(test_snps.pos[:,0])),
               'covar_count': covar.col_count,
@@ -205,11 +208,34 @@ def test_exp_3delme(K0_goal = 500, leave_out_one_chrom = True):
     for repeat_i in [1]:
         for proc_count,use_gpu in [(10,False),(1,True)]:
             logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-            pref_list.append(one_experiment(test_snps,K0_goal,seed,pheno,covar,
+            pref_list.append(one_experiment(test_snps,K0_goal=K0_goal,seed=seed,phen=pheno,covar=covar,
                                         leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
             pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
 
+def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count=10):
+    short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
+
+    # Set these as desired
+    os.environ['MKL_THREAD_COUNT'] = '20' #Set this before numpy is imported
+    seed = 1 
+    sid_count = 50*1000 # number of SNPs
+    leave_out_one_chrom = True
+
+    # Tune these   
+
+    test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
+
+
+    pref_list = []
+    for proc_count,use_gpu in [(proc_count,False),(1,True)]:
+        logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
+        pref_list.append(one_experiment(test_snps,K0_goal=None,seed=seed,pheno=pheno,covar=covar,
+                                    leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
+        pd_write(short_output_pattern+".temp",pref_list)
+    pd_write(short_output_pattern,pref_list)
+
+
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-    test_exp_3(K0_goal=500)
+    test_exp_4(proc_count=1)
