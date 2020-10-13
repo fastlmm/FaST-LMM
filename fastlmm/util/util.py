@@ -539,6 +539,7 @@ def _compute_x_positions_snps(positions, chromosome_starts):
         cumulative_pos[idx_chr] = positions[idx_chr][:,1] + chromosome_start[1]
     return cumulative_pos
 
+#!!! cmk move to PySnpTools (and next?)
 _warn_array_module_once = False
 def array_module_from_env(xp = None): #!!!cmk document this
     xp = xp or os.environ.get('ARRAY_MODULE','numpy')
@@ -562,8 +563,8 @@ def array_module_from_env(xp = None): #!!!cmk document this
 
     raise ValueError(f"Don't know ARRAY_MODULE '{xp}'")
 
-
-
+#!!!doc this
+# Turns either cupy array and numpy array into numpy array
 def asnumpy(a):
     if isinstance(a, np.ndarray):
         return a

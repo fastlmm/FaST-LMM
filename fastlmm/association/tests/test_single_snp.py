@@ -18,6 +18,7 @@ from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelreader import SnpKernel
 from six.moves import range
+from unittest.mock import patch
 
 class TestSingleSnp(unittest.TestCase):
 
@@ -142,10 +143,11 @@ class TestSingleSnp(unittest.TestCase):
         frame1 = frame1[['sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue']]
         self.compare_files(frame1,"linreg")
 
-        frame2 = single_snp_linreg(test_snps=test_snps[:,:10], pheno=pheno, 
-                                    covar=covar, 
-                                    output_file_name=output_file
-                                    )
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _: #!!!cmk make this a utility
+            frame2 = single_snp_linreg(test_snps=test_snps[:,:10], pheno=pheno, 
+                                        covar=covar, 
+                                        output_file_name=output_file
+                                        )
         self.compare_files(frame2,"linreg")
 
     def test_noK0(self):
@@ -450,10 +452,11 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         covar = self.cov_fn
 
         chrom_to_kernel = {}
-        for chrom in np.unique(test_snps.pos[:,0]):
-            other_snps = test_snps[:,test_snps.pos[:,0]!=chrom]
-            kernel = other_snps.read_kernel(standardizer=Unit(),block_size=500) #Create a kernel from the SNPs not used in testing
-            chrom_to_kernel[chrom] = kernel.standardize(DiagKtoN()) #improves the kernel numerically by making its diagonal sum to iid_count
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _: #!!!cmk make this a utility
+            for chrom in np.unique(test_snps.pos[:,0]):
+                other_snps = test_snps[:,test_snps.pos[:,0]!=chrom]
+                kernel = other_snps.read_kernel(standardizer=Unit(),block_size=500) #Create a kernel from the SNPs not used in testing
+                chrom_to_kernel[chrom] = kernel.standardize(DiagKtoN()) #improves the kernel numerically by making its diagonal sum to iid_count
 
         output_file = self.file_name("one_looc_prekernel")
         frame = single_snp(test_snps, pheno,

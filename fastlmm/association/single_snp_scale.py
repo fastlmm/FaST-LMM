@@ -666,7 +666,7 @@ def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_c
 
         #Because the iid_count can be so big, the factor created for one_step_svd can be very inappropriate for here
         factor_tall_skinny = float(ata.iid_count) / np.diag(ata.val).sum()
-        ata.val *= factor_tall_skinny
+        ata._val *= factor_tall_skinny
     
         ##############################################################
         ############# SLOWEST ########################################

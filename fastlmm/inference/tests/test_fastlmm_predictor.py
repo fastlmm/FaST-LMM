@@ -572,8 +572,8 @@ class TestFastLMM(unittest.TestCase):
         G0_test = snpreader[test_idx,:]
 
         pheno_whole = self.pheno_whole.read()
-        pheno_whole.val *= 100
-        pheno_whole.val += 1000
+        pheno_whole._val *= 100
+        pheno_whole._val += 1000
 
         mean_low, covar_low =   FastLMM(force_low_rank=True,GB_goal=2).fit(K0_train=G0_train, y=pheno_whole[train_idx,:], X=self.covariate_whole[train_idx,:]). predict(K0_whole_test=G0_test,X=self.covariate_whole[test_idx,:],count_A1=False)
         mean_full, covar_full = FastLMM(force_full_rank=True,GB_goal=2).fit(K0_train=G0_train, y=pheno_whole[train_idx,:], X=self.covariate_whole[train_idx,:]).predict(K0_whole_test=G0_test,X=self.covariate_whole[test_idx,:],count_A1=False)
@@ -760,7 +760,7 @@ class TestFastLMM(unittest.TestCase):
 
             for factor in [1,100,.02]:
                 K0 = K0.read()
-                K0.val *= factor
+                K0._val *= factor
 
                 K0_train = K0[train_idx]
                 K0_whole_test = K0[:,test_idx]

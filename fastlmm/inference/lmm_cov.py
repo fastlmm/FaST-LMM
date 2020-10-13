@@ -632,7 +632,7 @@ class LMM(object):
                 'scale'     : Scale parameter that multiplies the Covariance matrix (default 1.0)
         --------------------------------------------------------------------------
         '''
-        logging.info("Starting nLLeval")
+        #logging.info("Starting nLLeval")
         #N = self.Y.shape[0] - self.linreg.D #number of degrees of freedom - commented out because not use and misleading name for dof
         S,U = self.getSU()
         k = S.shape[0]
@@ -665,7 +665,7 @@ class LMM(object):
 
         result = self.nLLcore(Sd=Sd, dof=dof, scale=scale, penalty=penalty, UW=UW, UUW=UUW, weightW=weightW, denom=denom, Usnps=Usnps, UUsnps=UUsnps, idx_pheno=idx_pheno)
         result['h2'] = h2
-        logging.info("Ending nLLeval")
+        #logging.info("Ending nLLeval")
         return result
 
     def nLLcore(self, Sd=None, dof=None, scale=1.0, penalty=0.0, UW=None, UUW=None, weightW=None, denom=1.0, Usnps=None, UUsnps=None, idx_pheno=None):
@@ -699,7 +699,7 @@ class LMM(object):
                 'scale'     : Scale parameter that multiplies the Covariance matrix (default 1.0)
         --------------------------------------------------------------------------
         '''
-        logging.info("Starting self.nLLcore")
+        #logging.info("Starting self.nLLcore")
         N = self.Y.shape[0] - self.linreg.D
         
         S,U = self.getSU()#not used, as provided from outside. Remove???
@@ -821,7 +821,7 @@ class LMM(object):
                         'scale':scale
                 }
 
-        logging.info("Ending self.nLLcore")
+        #logging.info("Ending self.nLLcore")
         return result
 
     def computeAKB(self, Sd, denom, UA, UB, UUA=None, UUB=None):

@@ -28,6 +28,7 @@ from pysnptools.util.intrangeset import IntRangeSet
 from fastlmm.util.util import array_module_from_env, asnumpy
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
 import fastlmm.inference.linear_regression as lin_reg
+from unittest.mock import patch
 
 def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count, might be a covar mix up.(but only if a SnpKernel
                  K1=None, mixing=None,
@@ -154,81 +155,82 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
     xp = array_module_from_env(xp)
+    with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _: #!!!cmk make this a utility
 
-    assert test_snps is not None, "test_snps must be given as input"
-    test_snps = _snps_fixup(test_snps, count_A1=count_A1)
-    pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
-    assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-    pheno = pheno[(pheno.val==pheno.val)[:,0],:]
-    covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
+        assert test_snps is not None, "test_snps must be given as input"
+        test_snps = _snps_fixup(test_snps, count_A1=count_A1)
+        pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
+        assert pheno.sid_count == 1, "Expect pheno to be just one variable"
+        pheno = pheno[(pheno.val==pheno.val)[:,0],:]
+        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
-    if not leave_out_one_chrom:
-        assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"#!!!LATER document covar_by_chrom
-        K0 = _kernel_fixup(K0 or G0 or test_snps, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
-        K1 = _kernel_fixup(K1 or G1, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
-        K0, K1, test_snps, pheno, covar  = pstutil.intersect_apply([K0, K1, test_snps, pheno, covar])
-        logging.debug("# of iids now {0}".format(K0.iid_count))
-        K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal, force_full_rank, force_low_rank)
+        if not leave_out_one_chrom:
+            assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"#!!!LATER document covar_by_chrom
+            K0 = _kernel_fixup(K0 or G0 or test_snps, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
+            K1 = _kernel_fixup(K1 or G1, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
+            K0, K1, test_snps, pheno, covar  = pstutil.intersect_apply([K0, K1, test_snps, pheno, covar])
+            logging.debug("# of iids now {0}".format(K0.iid_count))
+            K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal, force_full_rank, force_low_rank)
 
-        frame =  _internal_single(K0=K0, test_snps=test_snps, pheno=pheno,
-                                    covar=covar, K1=K1,
-                                    mixing=mixing, h2=h2, log_delta=log_delta,
-                                    cache_file = cache_file, force_full_rank=force_full_rank,force_low_rank=force_low_rank,
-                                    output_file_name=output_file_name,block_size=block_size, interact_with_snp=interact_with_snp,
-                                    runner=runner, xp=xp)
-        sid_index_range = IntRangeSet(frame['sid_index'])
-        assert sid_index_range == (0,test_snps.sid_count), "Some SNP rows are missing from the output"
-    else: 
-        chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
-        assert not np.isnan(chrom_list).any(), "chrom list should not contain NaN"
-        input_files = [test_snps, pheno, covar] + ([] if covar_by_chrom is None else list(covar_by_chrom.values()))
-        for Ki in [K0, G0, K1, G1]:
-            if isinstance(Ki,dict):
-                input_files += list(Ki.values())
-            else:
-                input_files.append(Ki)
+            frame =  _internal_single(K0=K0, test_snps=test_snps, pheno=pheno,
+                                        covar=covar, K1=K1,
+                                        mixing=mixing, h2=h2, log_delta=log_delta,
+                                        cache_file = cache_file, force_full_rank=force_full_rank,force_low_rank=force_low_rank,
+                                        output_file_name=output_file_name,block_size=block_size, interact_with_snp=interact_with_snp,
+                                        runner=runner, xp=xp)
+            sid_index_range = IntRangeSet(frame['sid_index'])
+            assert sid_index_range == (0,test_snps.sid_count), "Some SNP rows are missing from the output"
+        else: 
+            chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
+            assert not np.isnan(chrom_list).any(), "chrom list should not contain NaN"
+            input_files = [test_snps, pheno, covar] + ([] if covar_by_chrom is None else list(covar_by_chrom.values()))
+            for Ki in [K0, G0, K1, G1]:
+                if isinstance(Ki,dict):
+                    input_files += list(Ki.values())
+                else:
+                    input_files.append(Ki)
 
-        def nested_closure(chrom):
-            test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
-            covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
-            cache_file_chrom = None if cache_file is None else cache_file + ".{0}".format(chrom)
+            def nested_closure(chrom):
+                test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
+                covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
+                cache_file_chrom = None if cache_file is None else cache_file + ".{0}".format(chrom)
 
-            K0_chrom = _K_per_chrom(K0 or G0 or test_snps, chrom, test_snps.iid)
-            K1_chrom = _K_per_chrom(K1 or G1, chrom, test_snps.iid)
+                K0_chrom = _K_per_chrom(K0 or G0 or test_snps, chrom, test_snps.iid)
+                K1_chrom = _K_per_chrom(K1 or G1, chrom, test_snps.iid)
 
-            K0_chrom, K1_chrom, test_snps_chrom, pheno_chrom, covar_chrom  = pstutil.intersect_apply([K0_chrom, K1_chrom, test_snps_chrom, pheno, covar_chrom])
-            logging.debug("# of iids now {0}".format(K0_chrom.iid_count))
-            K0_chrom, K1_chrom, block_size = _set_block_size(K0_chrom, K1_chrom, mixing, GB_goal, force_full_rank, force_low_rank)
+                K0_chrom, K1_chrom, test_snps_chrom, pheno_chrom, covar_chrom  = pstutil.intersect_apply([K0_chrom, K1_chrom, test_snps_chrom, pheno, covar_chrom])
+                logging.debug("# of iids now {0}".format(K0_chrom.iid_count))
+                K0_chrom, K1_chrom, block_size = _set_block_size(K0_chrom, K1_chrom, mixing, GB_goal, force_full_rank, force_low_rank)
 
-            distributable = _internal_single(K0=K0_chrom, test_snps=test_snps_chrom, pheno=pheno_chrom,
-                                        covar=covar_chrom, K1=K1_chrom,
-                                        mixing=mixing, h2=h2, log_delta=log_delta, cache_file=cache_file_chrom,
-                                        force_full_rank=force_full_rank,force_low_rank=force_low_rank,
-                                        output_file_name=None, block_size=block_size, interact_with_snp=interact_with_snp,
-                                        runner=Local(), xp=xp)
+                distributable = _internal_single(K0=K0_chrom, test_snps=test_snps_chrom, pheno=pheno_chrom,
+                                            covar=covar_chrom, K1=K1_chrom,
+                                            mixing=mixing, h2=h2, log_delta=log_delta, cache_file=cache_file_chrom,
+                                            force_full_rank=force_full_rank,force_low_rank=force_low_rank,
+                                            output_file_name=None, block_size=block_size, interact_with_snp=interact_with_snp,
+                                            runner=Local(), xp=xp)
             
-            return distributable
+                return distributable
 
-        def reducer_closure(frame_sequence):
-            frame = pd.concat(frame_sequence)
-            frame.sort_values(by="PValue", inplace=True)
-            frame.index = np.arange(len(frame))
-            if output_file_name is not None:
-                frame.to_csv(output_file_name, sep="\t", index=False)
-            logging.info("PhenotypeName\t{0}".format(pheno.sid[0]))
-            logging.info("SampleSize\t{0}".format(test_snps.iid_count))
-            logging.info("SNPCount\t{0}".format(test_snps.sid_count))
-            logging.info("Runtime\t{0}".format(time.time()-t0))
+            def reducer_closure(frame_sequence):
+                frame = pd.concat(frame_sequence)
+                frame.sort_values(by="PValue", inplace=True)
+                frame.index = np.arange(len(frame))
+                if output_file_name is not None:
+                    frame.to_csv(output_file_name, sep="\t", index=False)
+                logging.info("PhenotypeName\t{0}".format(pheno.sid[0]))
+                logging.info("SampleSize\t{0}".format(test_snps.iid_count))
+                logging.info("SNPCount\t{0}".format(test_snps.sid_count))
+                logging.info("Runtime\t{0}".format(time.time()-t0))
 
-            return frame
+                return frame
 
-        frame = map_reduce(chrom_list,
-                   mapper = nested_closure,
-                   reducer = reducer_closure,
-                   input_files = input_files,
-                   output_files = [output_file_name],
-                   name = "single_snp (leave_out_one_chrom), out='{0}'".format(output_file_name),
-                   runner = runner)
+            frame = map_reduce(chrom_list,
+                       mapper = nested_closure,
+                       reducer = reducer_closure,
+                       input_files = input_files,
+                       output_files = [output_file_name],
+                       name = "single_snp (leave_out_one_chrom), out='{0}'".format(output_file_name),
+                       runner = runner)
 
     return frame
 
@@ -368,14 +370,17 @@ class _Mixer(object):
         return mixer
 
     @staticmethod
-    def combine_the_best_way(K0, K1, covar, y, mixing, h2, force_full_rank=False, force_low_rank=False,snp_standardizer=None,kernel_standardizer=None,block_size=None):
+    def combine_the_best_way(K0, K1, covar, y, mixing, h2, 
+                             force_full_rank=False, force_low_rank=False,
+                             snp_standardizer=None,kernel_standardizer=None,block_size=None,
+                             xp=np):
         from pysnptools.kernelstandardizer import Identity as KS_Identity
 
         assert K0.iid0 is K0.iid1, "Expect K0 to be square"
         assert K1.iid0 is K1.iid1, "Expect K1 to be square"
         assert K0 is not None
         assert K1 is not None
-        assert np.array_equal(K0.iid,K1.iid), "Expect K0 and K1 to having matching iids"
+        assert xp.array_equal(K0.iid,K1.iid), "Expect K0 and K1 to having matching iids"
         assert kernel_standardizer is not None, "expect values for kernel_standardizer"
 
         mixer = _Mixer(False,KS_Identity(),KS_Identity(),mixing)
@@ -411,9 +416,9 @@ class _Mixer(object):
                 K = K1
             else:
                 if mixer.do_g:
-                    G = np.empty((K0.iid_count, K0.sid_count + K1.sid_count))
+                    G = xp.empty((K0.iid_count, K0.sid_count + K1.sid_count))
                     if mixer.mixing is None:
-                        mixer.mixing, h2 = _find_mixing_from_Gs(G, covar, K0.snpreader.val, K1.snpreader.val, h2, y)
+                        mixer.mixing, h2 = _find_mixing_from_Gs(G, covar, K0.snpreader.val, K1.snpreader.val, h2, y, xp)
 
                     if mixer.mixing == 0:
                         K = K0
@@ -424,7 +429,8 @@ class _Mixer(object):
                         G = SnpData(iid=K0.iid,
                                             sid=["K0_{0}".format(i) for i in range(K0.sid_count)]+["K1_{0}".format(i) for i in range(K1.sid_count)], #rename the sids so that they can't collide.
                                             val=G,name="{0}&{1}".format(K0.snpreader,K1.snpreader),
-                                            pos=np.concatenate((K0.pos,K1.pos),axis=0)
+                                            pos=np.concatenate((K0.pos,K1.pos),axis=0),
+                                            xp=xp
                                             )
                         K = SnpKernel(G,SS_Identity(),block_size=block_size)
         else:
@@ -442,12 +448,12 @@ class _Mixer(object):
                 mixer.mixing = mixer.mixing or 1
                 K = K1
             else:
-                K = np.empty(K0.val.shape)
+                K = xp.empty(K0.val.shape)
                 if mixer.mixing is None:
-                    mixer.mixing, h2 = _find_mixing_from_Ks(K, covar, K0.val, K1.val, h2, y)
+                    mixer.mixing, h2 = _find_mixing_from_Ks(K, covar, K0.val, K1.val, h2, y, xp)
                 _mix_from_Ks(K, K0.val, K1.val, mixer.mixing)
-                assert K.shape[0] == K.shape[1] and abs(np.diag(K).sum() - K.shape[0]) < 1e-7, "Expect mixed K to be standardized"
-                K = KernelData(val=K,iid=K0.iid)
+                assert K.shape[0] == K.shape[1] and abs(xp.diag(K).sum() - K.shape[0]) < 1e-7, "Expect mixed K to be standardized"
+                K = KernelData(val=K,iid=K0.iid,xp=xp)
 
         return K, h2, mixer
 
@@ -573,7 +579,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
             h2 = data['arr_2'][0]
             mixing = data['arr_2'][1]
     else:
-        K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN())
+        K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
         mixing = mixer.mixing
 
         if mixer.do_g:
@@ -584,6 +590,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
             lmm = lmm_cov(X=covar, Y=y, K=K.val, G=None, inplace=True, xp=xp)
 
         if h2 is None:
+            logging.info("Starting findH2")
             result = lmm.findH2()
             h2 = result['h2']
         logging.info("h2={0}".format(h2))
@@ -702,7 +709,7 @@ def _create_covar_chrom(covar, covar_by_chrom, chrom,count_A1=None):
         return covar
 
 
-def _find_mixing_from_Gs(G, covar, G0_standardized_val, G1_standardized_val, h2, y):
+def _find_mixing_from_Gs(G, covar, G0_standardized_val, G1_standardized_val, h2, y, xp):
     logging.info("starting _find_mixing_from_Gs")
     import fastlmm.util.mingrid as mingrid
     assert h2 is None, "if mixing is None, expect h2 to also be None"
@@ -731,7 +738,7 @@ def _find_mixing_from_Gs(G, covar, G0_standardized_val, G1_standardized_val, h2,
     h2 = resmin[0]['h2']
     return mixing, h2
 
-def _find_mixing_from_Ks(K, covar, K0_val, K1_val, h2, y):
+def _find_mixing_from_Ks(K, covar, K0_val, K1_val, h2, y, xp):
     logging.info("starting _find_mixing_from_Ks")
     import fastlmm.util.mingrid as mingrid
     assert h2 is None, "if mixing is None, expect h2 to also be None"
@@ -771,7 +778,7 @@ def _mix_from_Gs(G, G0_standardized_val, G1_standardized_val, mixing):
 def _mix_from_Ks(K, K0_val, K1_val, mixing):
     K[:,:] = K0_val * (1.0-float(mixing)) + K1_val * float(mixing)
 
-def _standardize_unit_python(snps, xp):
+def _standardize_unit_python(snps, xp): #!!!cnj switch back to using D:\OneDrive\programs\pysnptools\pysnptools\standardizer
     '''
     standardize snps to zero-mean and unit variance
     '''
@@ -942,6 +949,6 @@ if __name__ == "__main__":
         import doctest
 
         from unittest.mock import patch
-        with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as patched_environ: #!!!cmk make this a utility
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as _: #!!!cmk make this a utility
             doctest.testmod()
 

@@ -431,3 +431,9 @@ tests/tmp_extract_sim.txt
 /fastlmm/association/testcp2.profile
 /fastlmm/association/testcp.profile
 /fastlmm/association/testcnp.profile
+/fastlmm/association/tests/testexp4.profile
+/fastlmm/association/tests/teststdc.profile
+/fastlmm/association/tests/teststdb.profile
+/fastlmm/association/tests/teststda.profile
+/fastlmm/association/tests/testexp4c.profile
+/fastlmm/association/tests/testexp4b.profile

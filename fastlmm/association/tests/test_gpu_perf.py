@@ -1,8 +1,11 @@
+#!!!cmk keep this file in project?
+
 #Don't import numpy until after threads are set
 from pathlib import Path
 import time
 import os
 import logging
+import pysnptools.util as pstutil
 
 if False:
     cache_top = Path(r'c:\deldir')
@@ -226,16 +229,32 @@ def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count=10):
 
     test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
 
-
+    proc_gpu_list = ([(proc_count,False)] if proc_count > 0 else []) + [(1,True)]
     pref_list = []
-    for proc_count,use_gpu in [(proc_count,False),(1,True)]:
+    for proc_count,use_gpu in proc_gpu_list:
         logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
         pref_list.append(one_experiment(test_snps,K0_goal=None,seed=seed,pheno=pheno,covar=covar,
                                     leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
         pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
 
+def test_std():
+    from pysnptools.standardizer.standardizer import Standardizer
+    seed = 1 
+    iid_count = 2*1000
+    sid_count = 50*1000 # number of SNPs
+    test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
+    xp = pstutil.array_module_from_env('cupy') #!!!cmk should there be a way to override the environment variable? 
+    print(xp.__name__)
+    snps = xp.asarray(test_snps.read().val)
+    stats = xp.empty([snps.shape[1],2],dtype=snps.dtype,order="F" if snps.flags["F_CONTIGUOUS"] else "C")
+
+    for i in range(15):
+        Standardizer._standardize_unit_python(snps,apply_in_place=True,use_stats=False,stats=stats)
+    print("done!")
+
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     test_exp_4(proc_count=1)
+    #test_std()
