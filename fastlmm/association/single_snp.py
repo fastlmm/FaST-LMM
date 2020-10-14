@@ -155,7 +155,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
     xp = array_module_from_env(xp)
-    with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _: #!!!cmk make this a utility
+    with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
 
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
@@ -380,7 +380,7 @@ class _Mixer(object):
         assert K1.iid0 is K1.iid1, "Expect K1 to be square"
         assert K0 is not None
         assert K1 is not None
-        assert xp.array_equal(K0.iid,K1.iid), "Expect K0 and K1 to having matching iids"
+        assert np.array_equal(K0.iid,K1.iid), "Expect K0 and K1 to having matching iids"
         assert kernel_standardizer is not None, "expect values for kernel_standardizer"
 
         mixer = _Mixer(False,KS_Identity(),KS_Identity(),mixing)
@@ -571,7 +571,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
     y = xp.asarray(y)
 
-    if cache_file is not None and os.path.exists(cache_file): #!!!cmk test this path and do coverage check to check every path
+    if cache_file is not None and os.path.exists(cache_file):
         lmm = lmm_cov(X=covar, Y=y, G=None, K=None, xp=xp)
         with xp.load(cache_file) as data: #!! similar code in epistasis
             lmm.U = data['arr_0']
@@ -622,9 +622,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         start = debatch_closure(work_index)
         end = debatch_closure(work_index+1)
 
-         # 1-thread C++ standardize is 3.5 faster than cupy standardize
         snps_read = test_snps[:,start:end].read()
-        #!!!snps_read.val[:,2]=np.nan #!!!cmk add snc
         if xp is np:
             snps_read.standardize()
             val = xp.asarray(snps_read.val)

@@ -143,7 +143,7 @@ class TestSingleSnp(unittest.TestCase):
         frame1 = frame1[['sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue']]
         self.compare_files(frame1,"linreg")
 
-        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _: #!!!cmk make this a utility
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
             frame2 = single_snp_linreg(test_snps=test_snps[:,:10], pheno=pheno, 
                                         covar=covar, 
                                         output_file_name=output_file
@@ -416,7 +416,7 @@ class TestSingleSnp(unittest.TestCase):
             diff = abs(row.PValue - pvalue)
             if diff > 1e-5 or np.isnan(diff):
                 raise Exception("pair {0} differs too much from file '{1}'".format(sid,reffile))
-            assert abs(row.PValue - pvalue) < 1e-5, "cmk"
+            assert abs(row.PValue - pvalue) < 1e-5, "wrong"
 
     def test_doctest(self):
         old_dir = os.getcwd()
@@ -452,7 +452,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         covar = self.cov_fn
 
         chrom_to_kernel = {}
-        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _: #!!!cmk make this a utility
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
             for chrom in np.unique(test_snps.pos[:,0]):
                 other_snps = test_snps[:,test_snps.pos[:,0]!=chrom]
                 kernel = other_snps.read_kernel(standardizer=Unit(),block_size=500) #Create a kernel from the SNPs not used in testing

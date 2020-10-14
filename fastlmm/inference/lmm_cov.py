@@ -215,12 +215,12 @@ class LMM(object):
             if inplace:
                 self.K = self._xp.asarray(K)
             else: 
-                self.K = K.copy() # !!!cmk need xp code
+                self.K = K.copy()
         elif G is not None:
             if inplace:
                 self.G = self._xp.asarray(G)
             else:
-                self.G = G.copy()  # !!!cmk need xp code
+                self.G = G.copy()
     
 
     def clear_cache(self, reset_K=True):

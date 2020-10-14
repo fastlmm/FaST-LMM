@@ -2,22 +2,27 @@
 
 #Don't import numpy until after threads are set
 import os
-os.environ['MKL_NUM_THREADS'] = str(10) #Set this before numpy is imported
-os.environ['OPENBLAS_NUM_THREADS'] = str(10)
-os.environ['OMP_NUM_THREADS'] = str(10)
-os.environ['NUMEXPR_NUM_THREADS'] = str(10)
-os.environ['VECLIB_MAXIMUM_THREADS'] = str(10)
+os.environ['MKL_NUM_THREADS'] = str(1) #Set this before numpy is imported
+os.environ['OPENBLAS_NUM_THREADS'] = str(1)
+os.environ['OMP_NUM_THREADS'] = str(1)
+os.environ['NUMEXPR_NUM_THREADS'] = str(1)
+os.environ['VECLIB_MAXIMUM_THREADS'] = str(1)
 from pathlib import Path
 import time
 import logging
 import pysnptools.util as pstutil
+import platform
 
 if False:
     cache_top = Path(r'c:\deldir')
     output_dir = Path(r'c:\users\carlk\OneDrive\Projects\Science\gpu_pref')
 else:
-    cache_top = Path(r'm:\deldir')
-    output_dir = Path(r'd:\OneDrive\Projects\Science\gpu_pref')
+    if platform.system() == "Windows":
+        cache_top = Path(r'm:\deldir')
+        output_dir = Path(r'd:\OneDrive\Projects\Science\gpu_pref')
+    else:
+        cache_top = Path(r'/mnt/m/deldir')
+        output_dir = Path(r'/mnt/d/OneDrive/Projects/Science/gpu_pref_linux')
 
 
 def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gpu,proc_count,GB_goal):
@@ -253,7 +258,7 @@ def test_std():
     iid_count = 2*1000
     sid_count = 50*1000 # number of SNPs
     test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
-    xp = pstutil.array_module_from_env('cupy') #!!!cmk should there be a way to override the environment variable? 
+    xp = pstutil.array_module_from_env('cupy')
     print(xp.__name__)
     snps = xp.asarray(test_snps.read().val)
     stats = xp.empty([snps.shape[1],2],dtype=snps.dtype,order="F" if snps.flags["F_CONTIGUOUS"] else "C")
@@ -265,5 +270,5 @@ def test_std():
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.WARN)
-    test_exp_4(GB_goal = 4,iid_count=2*1000,proc_count=10,num_threads=10,leave_out_one_chrom = True)
+    test_exp_4(GB_goal = 4,iid_count=2*1000,proc_count=1,num_threads=1,leave_out_one_chrom = True)
     #test_std()
