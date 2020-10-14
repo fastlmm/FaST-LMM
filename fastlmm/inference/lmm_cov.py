@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.linalg as la
 import scipy.optimize as opt
 import scipy.stats as st
 import scipy.special as ss
@@ -89,7 +88,7 @@ class LMM(object):
         self.K.flat[::N+1]+=1.0
         K_ = self.linreg.regress(Y=self.K)
         K_ = self.linreg.regress(Y=K_.T)
-        [self.S,self.U] = la.eigh(K_)#cupy.linalg.eigh(cupy.asarray(K_))#cmk la.eigh(K_)
+        [self.S,self.U] = self._xp.linalg.eigh(K_)
         if np.any(self.S < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
 

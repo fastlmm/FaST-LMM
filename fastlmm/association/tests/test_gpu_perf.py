@@ -1,9 +1,14 @@
 #!!!cmk keep this file in project?
 
 #Don't import numpy until after threads are set
+import os
+os.environ['MKL_NUM_THREADS'] = str(10) #Set this before numpy is imported
+os.environ['OPENBLAS_NUM_THREADS'] = str(10)
+os.environ['OMP_NUM_THREADS'] = str(10)
+os.environ['NUMEXPR_NUM_THREADS'] = str(10)
+os.environ['VECLIB_MAXIMUM_THREADS'] = str(10)
 from pathlib import Path
 import time
-import os
 import logging
 import pysnptools.util as pstutil
 
@@ -48,7 +53,7 @@ def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gp
               'chrom_count': len(np.unique(test_snps.pos[:,0])),
               'covar_count': covar.col_count,
               'leave_out_one_chrom': 1 if leave_out_one_chrom else 0,
-              'mkl_thread_count': os.environ['MKL_THREAD_COUNT'],
+              'num_threads': os.environ['MKL_NUM_THREADS'],
               'use_gpu': 1 if use_gpu else 0,
               'proc_count': proc_count,
               'GB_goal': GB_goal,
@@ -99,7 +104,7 @@ def test_exp_1():
     short_output_pattern ="exp1/exp_1_{0}.tsv"
 
     # Set these as desired
-    os.environ['MKL_THREAD_COUNT'] = '1' #Set this before numpy is imported
+    os.environ['MKL_NUM_THREADS'] = '1' #Set this before numpy is imported
     seed = 1
     iid_count = 1*1000 # number of individuals
     sid_count = 5*1000 # number of SNPs
@@ -123,7 +128,7 @@ def test_exp_2():
     short_output_pattern ="exp2/exp_2_{0}.tsv"
 
     # Set these as desired
-    os.environ['MKL_THREAD_COUNT'] = '20' #Set this before numpy is imported
+    os.environ['MKL_NUM_THREADS'] = '20' #Set this before numpy is imported
     seed = 1 
     iid_count = 10*1000 # number of individuals
     sid_count = 50*1000 # number of SNPs
@@ -148,7 +153,7 @@ def test_exp_3(K0_goal = 500,GB_goal = 2):
     short_output_pattern = f"exp3/exp_3_{K0_goal}_{'{0}'}.tsv"
 
     # Set these as desired
-    os.environ['MKL_THREAD_COUNT'] = '20' #Set this before numpy is imported
+    os.environ['MKL_NUM_THREADS'] = '20' #Set this before numpy is imported
     seed = 1 
     iid_count = 10*1000 # number of individuals
     sid_count = 50*1000 # number of SNPs
@@ -171,7 +176,7 @@ def test_exp_4(K0_goal = 500):
     short_output_pattern =f"exp4/exp_4_{K0_goal}_{0}.tsv"
 
     # Set these as desired
-    os.environ['MKL_THREAD_COUNT'] = '1' #Set this before numpy is imported
+    os.environ['MKL_NUM_THREADS'] = '1' #Set this before numpy is imported
     seed = 1 
     iid_count = 10*1000 # number of individuals
     sid_count = 50*1000 # number of SNPs
@@ -196,7 +201,7 @@ def test_exp_3delme(K0_goal = 500, leave_out_one_chrom = True):
     short_output_pattern = f"exp3delme/exp_3delme_{K0_goal}_{'{0}'}.tsv"
 
     # Set these as desired
-    os.environ['MKL_THREAD_COUNT'] = '20' #Set this before numpy is imported
+    os.environ['MKL_NUM_THREADS'] = '20' #Set this before numpy is imported
     seed = 1 
     iid_count = 10*1000 # number of individuals
     sid_count = 50*1000 # number of SNPs
@@ -216,14 +221,18 @@ def test_exp_3delme(K0_goal = 500, leave_out_one_chrom = True):
             pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
 
-def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count=10):
+def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count=10, num_threads=20, leave_out_one_chrom = True):
     short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
 
     # Set these as desired
-    os.environ['MKL_THREAD_COUNT'] = '20' #Set this before numpy is imported
+    os.environ['MKL_NUM_THREADS'] = str(num_threads) #Set this before numpy is imported
+    os.environ['OPENBLAS_NUM_THREADS'] = str(num_threads)
+    os.environ['OMP_NUM_THREADS'] = str(num_threads)
+    os.environ['NUMEXPR_NUM_THREADS'] = str(num_threads)
+    os.environ['VECLIB_MAXIMUM_THREADS'] = str(num_threads)
     seed = 1 
     sid_count = 50*1000 # number of SNPs
-    leave_out_one_chrom = True
+    
 
     # Tune these   
 
@@ -255,6 +264,6 @@ def test_std():
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
-    test_exp_4(proc_count=1)
+    logging.getLogger().setLevel(logging.WARN)
+    test_exp_4(GB_goal = 4,iid_count=2*1000,proc_count=10,num_threads=10,leave_out_one_chrom = True)
     #test_std()
