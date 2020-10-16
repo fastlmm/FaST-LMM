@@ -191,6 +191,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                     input_files.append(Ki)
 
             def nested_closure(chrom):
+                xp = array_module_from_env()
                 test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
                 cache_file_chrom = None if cache_file is None else cache_file + ".{0}".format(chrom)
@@ -616,6 +617,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         return test_snps.sid_count * work_index // work_count
 
     def mapper_closure(work_index):
+        xp = array_module_from_env()
         if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
 
         do_work_time = time.time()

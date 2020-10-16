@@ -25,7 +25,7 @@ else:
         output_dir = Path(r'/mnt/d/OneDrive/Projects/Science/gpu_pref_linux')
 
 
-def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gpu,proc_count,GB_goal):
+def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gpu,proc_count,GB_goal,just_one_process=False,gpu_weight=1):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
     from unittest.mock import patch
@@ -36,13 +36,26 @@ def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gp
     else:
         K0 = None
 
-    runner = None if proc_count == 1 else LocalMultiProc(proc_count)
+    if proc_count == 1:
+        runner = None
+        xp = 'cupy' if use_gpu>0 else 'numpy'
+    else:
+        if use_gpu==0:
+            runner = LocalMultiProc(proc_count, just_one_process=just_one_process)
+            xp = 'numpy'
+        else:
+            weights = [gpu_weight] + [1]*(proc_count-1)
+            def taskindex_to_environ(taskindex):
+                if taskindex == 0:
+                    return {'ARRAY_MODULE': 'cupy'}
+                else:
+                    return {'ARRAY_MODULE': 'numpy'}
+            xp = 'cupy'
+            runner = LocalMultiProc(proc_count, weights=weights, taskindex_to_environ=taskindex_to_environ, just_one_process=just_one_process)
 
     #!!!cmk0 change this to using xp=...
     #!!!cmk0 allow strings in util
     #!!!cmk0 test and fix up test_single_snp so works with array_module enviorn set to cupy
-    xp = 'cupy' if use_gpu else 'numpy'
-
     start_time = time.time()
 
     results_dataframe = single_snp(K0=K0,test_snps=test_snps, pheno=pheno, covar=covar, 
@@ -59,8 +72,10 @@ def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gp
               'covar_count': covar.col_count,
               'leave_out_one_chrom': 1 if leave_out_one_chrom else 0,
               'num_threads': os.environ['MKL_NUM_THREADS'],
-              'use_gpu': 1 if use_gpu else 0,
+              'use_gpu': use_gpu,
+              'gpu_weight' : gpu_weight,
               'proc_count': proc_count,
+              'just_one_process': 1 if just_one_process else 0,
               'GB_goal': GB_goal,
               'time (s)': delta_time,
               }
@@ -103,6 +118,7 @@ def pd_write(short_output_pattern, pref_list):
         i += 1
     pref_df.to_csv(file, sep='\t', index=False)
     print(pref_df)
+    print(file)
 
 
 def test_exp_1():
@@ -177,8 +193,8 @@ def test_exp_3(K0_goal = 500,GB_goal = 2):
         pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
 
-def test_exp_4(K0_goal = 500):
-    short_output_pattern =f"exp4/exp_4_{K0_goal}_{0}.tsv"
+def test_exp_4x(K0_goal = 500):
+    short_output_pattern =f"exp4x/exp_4x_{K0_goal}_{0}.tsv"
 
     # Set these as desired
     os.environ['MKL_NUM_THREADS'] = '1' #Set this before numpy is imported
@@ -226,32 +242,6 @@ def test_exp_3delme(K0_goal = 500, leave_out_one_chrom = True):
             pd_write(short_output_pattern+".temp",pref_list)
     pd_write(short_output_pattern,pref_list)
 
-def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count=10, num_threads=20, leave_out_one_chrom = True):
-    short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
-
-    # Set these as desired
-    os.environ['MKL_NUM_THREADS'] = str(num_threads) #Set this before numpy is imported
-    os.environ['OPENBLAS_NUM_THREADS'] = str(num_threads)
-    os.environ['OMP_NUM_THREADS'] = str(num_threads)
-    os.environ['NUMEXPR_NUM_THREADS'] = str(num_threads)
-    os.environ['VECLIB_MAXIMUM_THREADS'] = str(num_threads)
-    seed = 1 
-    sid_count = 50*1000 # number of SNPs
-    
-
-    # Tune these   
-
-    test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
-
-    proc_gpu_list = ([(proc_count,False)] if proc_count > 0 else []) + [(1,True)]
-    pref_list = []
-    for proc_count,use_gpu in proc_gpu_list:
-        logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-        pref_list.append(one_experiment(test_snps,K0_goal=None,seed=seed,pheno=pheno,covar=covar,
-                                    leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal))
-        pd_write(short_output_pattern+".temp",pref_list)
-    pd_write(short_output_pattern,pref_list)
-
 def test_std():
     from pysnptools.standardizer.standardizer import Standardizer
     seed = 1 
@@ -268,7 +258,40 @@ def test_std():
     print("done!")
 
 
+def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count_only_cpu=10, proc_count_with_gpu=5, gpu_weight=3, num_threads=20, leave_out_one_chrom = True, just_one_process=False):
+    short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
+
+    # Set these as desired
+    os.environ['MKL_NUM_THREADS'] = str(num_threads) #Set this before numpy is imported
+    os.environ['OPENBLAS_NUM_THREADS'] = str(num_threads)
+    os.environ['OMP_NUM_THREADS'] = str(num_threads)
+    os.environ['NUMEXPR_NUM_THREADS'] = str(num_threads)
+    os.environ['VECLIB_MAXIMUM_THREADS'] = str(num_threads)
+    seed = 1 
+    sid_count = 50*1000 # number of SNPs
+    
+
+    # Tune these   
+
+    test_snps, pheno, covar = snpsA(seed,iid_count,sid_count)
+
+    proc_gpu_list = []
+    if proc_count_only_cpu > 0: proc_gpu_list += [(proc_count_only_cpu,0)]
+    if proc_count_with_gpu > 0: proc_gpu_list += [(proc_count_with_gpu,.5)]
+    proc_gpu_list += [(1,1)]
+    pref_list = []
+    for proc_count,use_gpu in proc_gpu_list:
+        logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
+        pref_list.append(one_experiment(test_snps,K0_goal=None,seed=seed,pheno=pheno,covar=covar,
+                                    leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal,
+                                    just_one_process=just_one_process,gpu_weight=gpu_weight))
+        pd_write(short_output_pattern+".temp",pref_list)
+    pd_write(short_output_pattern,pref_list)
+    
+
+
+
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.WARN)
-    test_exp_4(GB_goal = 4,iid_count=2*1000,proc_count=1,num_threads=1,leave_out_one_chrom = True)
+    test_exp_4(GB_goal = 4,iid_count=2*1000,proc_count_only_cpu=10, proc_count_with_gpu=5, gpu_weight=3,num_threads=10,leave_out_one_chrom = True, just_one_process=False)
     #test_std()
