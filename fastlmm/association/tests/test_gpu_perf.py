@@ -2,11 +2,12 @@
 
 #Don't import numpy until after threads are set
 import os
-os.environ['MKL_NUM_THREADS'] = str(1) #Set this before numpy is imported
-os.environ['OPENBLAS_NUM_THREADS'] = str(1)
-os.environ['OMP_NUM_THREADS'] = str(1)
-os.environ['NUMEXPR_NUM_THREADS'] = str(1)
-os.environ['VECLIB_MAXIMUM_THREADS'] = str(1)
+thread_count = 10
+os.environ['MKL_NUM_THREADS'] = str(thread_count) #Set this before numpy is imported
+os.environ['OPENBLAS_NUM_THREADS'] = str(thread_count)
+os.environ['OMP_NUM_THREADS'] = str(thread_count)
+os.environ['NUMEXPR_NUM_THREADS'] = str(thread_count)
+os.environ['VECLIB_MAXIMUM_THREADS'] = str(thread_count)
 from pathlib import Path
 import time
 import logging
@@ -63,10 +64,13 @@ def one_experiment(test_snps,K0_goal,seed,pheno,covar,leave_out_one_chrom,use_gp
                                                         GB_goal=GB_goal, runner=runner, xp = xp)
     delta_time = time.time() - start_time
 
+    K0_count = test_snps.iid_count if K0 is None else K0.sid_count
+
     perf_result = {'test_snps': str(test_snps),
               'iid_count': test_snps.iid_count,
               'test_sid_count': test_snps.sid_count,
-              'K0_sid_count': test_snps.iid_count if K0 is None else K0.sid_count,
+              'K0_count': K0_count,
+              'low_rank': 0 if test_snps.iid_count == K0_count else 1,
               'seed': seed,
               'chrom_count': len(np.unique(test_snps.pos[:,0])),
               'covar_count': covar.col_count,
@@ -258,7 +262,7 @@ def test_std():
     print("done!")
 
 
-def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count_only_cpu=10, proc_count_with_gpu=5, gpu_weight=3, num_threads=20, leave_out_one_chrom = True, just_one_process=False):
+def test_exp_4(GB_goal = 2,iid_count=2*1000,K0_goal=None, proc_count_only_cpu=10, proc_count_with_gpu=5, gpu_weight=3, num_threads=20, leave_out_one_chrom = True, just_one_process=False):
     short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
 
     # Set these as desired
@@ -282,7 +286,7 @@ def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count_only_cpu=10, proc_count_w
     pref_list = []
     for proc_count,use_gpu in proc_gpu_list:
         logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-        pref_list.append(one_experiment(test_snps,K0_goal=None,seed=seed,pheno=pheno,covar=covar,
+        pref_list.append(one_experiment(test_snps,K0_goal=K0_goal,seed=seed,pheno=pheno,covar=covar,
                                     leave_out_one_chrom=leave_out_one_chrom,use_gpu=use_gpu,proc_count=proc_count,GB_goal=GB_goal,
                                     just_one_process=just_one_process,gpu_weight=gpu_weight))
         pd_write(short_output_pattern+".temp",pref_list)
@@ -293,5 +297,5 @@ def test_exp_4(GB_goal = 2,iid_count=2*1000,proc_count_only_cpu=10, proc_count_w
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.WARN)
-    test_exp_4(GB_goal = 4,iid_count=2*1000,proc_count_only_cpu=10, proc_count_with_gpu=5, gpu_weight=3,num_threads=10,leave_out_one_chrom = True, just_one_process=False)
+    test_exp_4(GB_goal = 4,iid_count=5*1000,K0_goal=2000, proc_count_only_cpu=3, proc_count_with_gpu=0, gpu_weight=4,num_threads=10,leave_out_one_chrom = True, just_one_process=False)
     #test_std()
