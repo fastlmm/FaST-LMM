@@ -750,7 +750,7 @@ class LMM(object):
                 WW = np.diag(signw) + self.computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UW, UUB=UUW)
             
             # compute inverse efficiently
-            [S_WW,U_WW] = la.eigh(WW)
+            [S_WW,U_WW] = self._xp.linalg.eigh(WW)
             # compute S_WW^{-1} * UWX
             
             WY = self.computeAKB(Sd=Sd, denom=denom, UA=UW, UUA=UUW, UB=UY, UUB=UUY)
