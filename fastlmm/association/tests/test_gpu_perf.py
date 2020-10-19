@@ -4,7 +4,7 @@
 import os
 
 print(os.environ["PYTHONPATH"])
-thread_count = 10
+thread_count = 12
 os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
 os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
 os.environ["OMP_NUM_THREADS"] = str(thread_count)
@@ -432,15 +432,15 @@ def test_exp_4(
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.WARN)
     test_exp_4(
         GB_goal=4,
-        iid_count=5 * 1000,
-        K0_goal=2000,
-        proc_count_only_cpu=6,
-        proc_count_with_gpu=6,
-        gpu_weight=3,
-        num_threads=6,
+        iid_count=2 * 1000,
+        K0_goal=None,
+        proc_count_only_cpu=0,
+        proc_count_with_gpu=2,
+        gpu_weight=9,
+        num_threads=12,
         leave_out_one_chrom=True,
         just_one_process=False,
     )
