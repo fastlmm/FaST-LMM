@@ -3,7 +3,7 @@
 # Don't import numpy until after threads are set
 import os
 
-thread_count = 10
+thread_count = 5
 os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
 os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
 os.environ["OMP_NUM_THREADS"] = str(thread_count)
@@ -40,8 +40,8 @@ def one_experiment(
     GB_goal,
     just_one_process=False,
     gpu_weight=1,
-    gpu_count = 1,
-    test_case = "?",
+    gpu_count=1,
+    test_case="?",
 ):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
@@ -99,7 +99,7 @@ def one_experiment(
     K0_count = test_snps.iid_count if K0 is None else K0.sid_count
 
     perf_result = {
-        "computer_name" : os.environ.get("COMPUTERNAME","<unknown>"),
+        "computer_name": os.environ.get("COMPUTERNAME", "<unknown>"),
         "cpu_count": multiprocessing.cpu_count(),
         "gpu_count": "1?",
         "test_case": test_case,
@@ -442,21 +442,19 @@ def test_exp_4(
 
 
 def test_case_def(test_case):
-    if test_case=="a":
+    if test_case == "a":
         iid_count = 2000
         K0_goal = None
-    elif test_case=="b":
+    elif test_case == "b":
         iid_count = 4000
         K0_goal = None
-    elif test_case=="c":
+    elif test_case == "c":
         iid_count = 5000
         K0_goal = 2000
     else:
         assert False, test_case
 
     return test_case, iid_count, K0_goal
-
-
 
 
 if __name__ == "__main__":
@@ -468,11 +466,11 @@ if __name__ == "__main__":
         GB_goal=4,
         iid_count=iid_count,
         K0_goal=K0_goal,
-        proc_count_only_cpu=10,
-        proc_count_with_gpu=7,
-        gpu_weight=4,
-        gpu_count = 1,
-        num_threads=10,
+        proc_count_only_cpu=0,  # 5,
+        proc_count_with_gpu=0,  # 4,
+        gpu_weight=2,
+        gpu_count=1,
+        num_threads=5,
         leave_out_one_chrom=True,
         just_one_process=False,
     )
