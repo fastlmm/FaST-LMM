@@ -3,7 +3,7 @@
 # Don't import numpy until after threads are set
 import os
 
-thread_count = 5
+thread_count = 12
 os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
 os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
 os.environ["OMP_NUM_THREADS"] = str(thread_count)
@@ -466,11 +466,11 @@ if __name__ == "__main__":
         GB_goal=4,
         iid_count=iid_count,
         K0_goal=K0_goal,
-        proc_count_only_cpu=0,  # 5,
-        proc_count_with_gpu=0,  # 4,
-        gpu_weight=2,
-        gpu_count=1,
-        num_threads=5,
+        proc_count_only_cpu=0,  # 12,  # 5,
+        proc_count_with_gpu=12,
+        gpu_weight=3,
+        gpu_count=2,
+        num_threads=12,
         leave_out_one_chrom=True,
         just_one_process=False,
     )
