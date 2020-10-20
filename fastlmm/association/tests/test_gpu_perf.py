@@ -3,7 +3,7 @@
 # Don't import numpy until after threads are set
 import os
 
-thread_count = 12
+thread_count = 6
 os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
 os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
 os.environ["OMP_NUM_THREADS"] = str(thread_count)
@@ -39,6 +39,7 @@ def one_experiment(
     proc_count,
     GB_goal,
     just_one_process=False,
+    cpu_weight=1,
     gpu_weight=1,
     gpu_count=1,
     test_case="?",
@@ -62,7 +63,7 @@ def one_experiment(
             xp = "numpy"
         else:
             assert gpu_count <= proc_count
-            weights = [gpu_weight] * gpu_count + [1] * (proc_count - gpu_count)
+            weights = [gpu_weight] * gpu_count + [cpu_weight] * (proc_count - gpu_count)
 
             def taskindex_to_environ(taskindex):
                 if taskindex < gpu_count:
@@ -115,6 +116,7 @@ def one_experiment(
         "leave_out_one_chrom": 1 if leave_out_one_chrom else 0,
         "num_threads": os.environ["MKL_NUM_THREADS"],
         "use_gpu": use_gpu,
+        "cpu_weight": cpu_weight,
         "gpu_weight": gpu_weight,
         "proc_count": proc_count,
         "just_one_process": 1 if just_one_process else 0,
@@ -389,7 +391,8 @@ def test_exp_4(
     K0_goal=None,
     proc_count_only_cpu=10,
     proc_count_with_gpu=5,
-    gpu_weight=3,
+    cpu_weight=1,
+    gpu_weight=1,
     gpu_count=1,
     num_threads=20,
     leave_out_one_chrom=True,
@@ -433,6 +436,7 @@ def test_exp_4(
                 proc_count=proc_count,
                 GB_goal=GB_goal,
                 just_one_process=just_one_process,
+                cpu_weight=cpu_weight,
                 gpu_weight=gpu_weight,
                 gpu_count=gpu_count,
             )
@@ -466,11 +470,12 @@ if __name__ == "__main__":
         GB_goal=4,
         iid_count=iid_count,
         K0_goal=K0_goal,
-        proc_count_only_cpu=0,  # 12,  # 5,
-        proc_count_with_gpu=12,
-        gpu_weight=3,
-        gpu_count=2,
-        num_threads=12,
+        proc_count_only_cpu=0,
+        proc_count_with_gpu=2,
+        cpu_weight=2,
+        gpu_weight=1,
+        gpu_count=1,
+        num_threads=6,
         leave_out_one_chrom=True,
         just_one_process=False,
     )
