@@ -3,7 +3,6 @@
 # Don't import numpy until after threads are set
 import os
 
-print(os.environ["PYTHONPATH"])
 thread_count = 12
 os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
 os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
@@ -15,6 +14,7 @@ import time
 import logging
 import pysnptools.util as pstutil
 import platform
+import multiprocessing
 
 if False:
     cache_top = Path(r"c:\deldir")
@@ -41,6 +41,7 @@ def one_experiment(
     just_one_process=False,
     gpu_weight=1,
     gpu_count = 1,
+    test_case = "?",
 ):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
@@ -98,6 +99,11 @@ def one_experiment(
     K0_count = test_snps.iid_count if K0 is None else K0.sid_count
 
     perf_result = {
+        "computer_name" : os.environ.get("COMPUTERNAME","<unknown>"),
+        "cpu_count": multiprocessing.cpu_count(),
+        "gpu_count": "1?",
+        "test_case": test_case,
+        "linked": "MKL?/OpenBLAS?",
         "test_snps": str(test_snps),
         "iid_count": test_snps.iid_count,
         "test_sid_count": test_snps.sid_count,
@@ -435,21 +441,38 @@ def test_exp_4(
     pd_write(short_output_pattern, pref_list)
 
 
+def test_case_def(test_case):
+    if test_case=="a":
+        iid_count = 2000
+        K0_goal = None
+    elif test_case=="b":
+        iid_count = 4000
+        K0_goal = None
+    elif test_case=="c":
+        iid_count = 5000
+        K0_goal = 2000
+    else:
+        assert False, test_case
+
+    return test_case, iid_count, K0_goal
 
 
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.WARN)
+    logging.getLogger().setLevel(logging.INFO)
+
+    test_case, iid_count, K0_goal = test_case_def("a")
+
     test_exp_4(
         GB_goal=4,
-        iid_count=2 * 1000,
-        K0_goal=None,
+        iid_count=iid_count,
+        K0_goal=K0_goal,
         proc_count_only_cpu=0,
-        proc_count_with_gpu=2,
+        proc_count_with_gpu=0,
         gpu_weight=9,
-        gpu_count = 2,
-        num_threads=12,
+        gpu_count = 1,
+        num_threads=10,
         leave_out_one_chrom=True,
         just_one_process=False,
     )
