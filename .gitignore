@@ -437,3 +437,4 @@ tests/tmp_extract_sim.txt
 /fastlmm/association/tests/teststda.profile
 /fastlmm/association/tests/testexp4c.profile
 /fastlmm/association/tests/testexp4b.profile
+/fastlmm/association/setup/.lambdalabs.sh

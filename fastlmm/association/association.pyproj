@@ -169,6 +169,7 @@
     <Content Include="Fastlmm_autoselect\fastlmmc" />
     <Content Include="Fastlmm_autoselect\FastLmmC.exe" />
     <Content Include="Fastlmm_autoselect\libiomp5md.dll" />
+    <Content Include="setup\.lambdalabs.sh" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="altset_list\" />
