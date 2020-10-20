@@ -40,6 +40,7 @@ def one_experiment(
     GB_goal,
     just_one_process=False,
     gpu_weight=1,
+    gpu_count = 1,
 ):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
@@ -59,11 +60,12 @@ def one_experiment(
             runner = LocalMultiProc(proc_count, just_one_process=just_one_process)
             xp = "numpy"
         else:
-            weights = [gpu_weight] + [1] * (proc_count - 1)
+            assert gpu_count <= proc_count
+            weights = [gpu_weight]*gpu_count + [1] * (proc_count - gpu_count)
 
             def taskindex_to_environ(taskindex):
-                if taskindex == 0:
-                    return {"ARRAY_MODULE": "cupy"}
+                if taskindex < gpu_count:
+                    return {"ARRAY_MODULE": "cupy", "GPU_INDEX":str(taskindex)}
                 else:
                     return {"ARRAY_MODULE": "numpy"}
 
@@ -382,6 +384,7 @@ def test_exp_4(
     proc_count_only_cpu=10,
     proc_count_with_gpu=5,
     gpu_weight=3,
+    gpu_count=1,
     num_threads=20,
     leave_out_one_chrom=True,
     just_one_process=False,
@@ -425,10 +428,15 @@ def test_exp_4(
                 GB_goal=GB_goal,
                 just_one_process=just_one_process,
                 gpu_weight=gpu_weight,
+                gpu_count = gpu_count,
             )
         )
         pd_write(short_output_pattern + ".temp", pref_list)
     pd_write(short_output_pattern, pref_list)
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -440,6 +448,7 @@ if __name__ == "__main__":
         proc_count_only_cpu=0,
         proc_count_with_gpu=2,
         gpu_weight=9,
+        gpu_count = 2,
         num_threads=12,
         leave_out_one_chrom=True,
         just_one_process=False,
