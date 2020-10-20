@@ -437,4 +437,9 @@ tests/tmp_extract_sim.txt
 /fastlmm/association/tests/teststda.profile
 /fastlmm/association/tests/testexp4c.profile
 /fastlmm/association/tests/testexp4b.profile
+runs/2020-10-19_23_21_16_3275581713333777/distributable.p
+runs/2020-10-19_23_19_29_988201101223859/distributable.p
+runs/2020-10-19_23_36_31_7220435721406316/distributable.p
+runs/2020-10-19_23_40_12_9450337868273058/distributable.p
+runs/2020-10-19_23_37_58_6104741484993268/distributable.p
 /fastlmm/association/setup/.lambdalabs.sh
