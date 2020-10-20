@@ -62,11 +62,11 @@ def one_experiment(
             xp = "numpy"
         else:
             assert gpu_count <= proc_count
-            weights = [gpu_weight]*gpu_count + [1] * (proc_count - gpu_count)
+            weights = [gpu_weight] * gpu_count + [1] * (proc_count - gpu_count)
 
             def taskindex_to_environ(taskindex):
                 if taskindex < gpu_count:
-                    return {"ARRAY_MODULE": "cupy", "GPU_INDEX":str(taskindex)}
+                    return {"ARRAY_MODULE": "cupy", "GPU_INDEX": str(taskindex)}
                 else:
                     return {"ARRAY_MODULE": "numpy"}
 
@@ -434,7 +434,7 @@ def test_exp_4(
                 GB_goal=GB_goal,
                 just_one_process=just_one_process,
                 gpu_weight=gpu_weight,
-                gpu_count = gpu_count,
+                gpu_count=gpu_count,
             )
         )
         pd_write(short_output_pattern + ".temp", pref_list)
