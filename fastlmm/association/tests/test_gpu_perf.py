@@ -3,7 +3,7 @@
 # Don't import numpy until after threads are set
 import os
 
-thread_count = 12
+thread_count = 10
 os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
 os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
 os.environ["OMP_NUM_THREADS"] = str(thread_count)
@@ -462,15 +462,15 @@ def test_case_def(test_case):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    test_case, iid_count, K0_goal = test_case_def("a")
+    test_case, iid_count, K0_goal = test_case_def("c")
 
     test_exp_4(
         GB_goal=4,
         iid_count=iid_count,
         K0_goal=K0_goal,
-        proc_count_only_cpu=0,
-        proc_count_with_gpu=0,
-        gpu_weight=9,
+        proc_count_only_cpu=10,
+        proc_count_with_gpu=7,
+        gpu_weight=4,
         gpu_count = 1,
         num_threads=10,
         leave_out_one_chrom=True,
