@@ -3,8 +3,8 @@
 # Don't import numpy until after threads are set
 import os
 
-if False:
-    thread_count = 10
+if True:
+    thread_count = 1
     os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
     os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
     os.environ["OMP_NUM_THREADS"] = str(thread_count)
@@ -119,7 +119,7 @@ def one_experiment(
         "chrom_count": len(np.unique(test_snps.pos[:, 0])),
         "covar_count": covar.col_count,
         "leave_out_one_chrom": 1 if leave_out_one_chrom else 0,
-        "num_threads": os.environ["MKL_NUM_THREADS"],
+        "num_threads": os.environ.get("MKL_NUM_THREADS","<none>"),
         "use_gpu": use_gpu,
         "cpu_weight": cpu_weight,
         "gpu_weight": gpu_weight,
@@ -399,20 +399,21 @@ def test_exp_4(
     cpu_weight=1,
     gpu_weight=1,
     gpu_count=1,
-    num_threads=20,
+    num_threads=None,
     leave_out_one_chrom=True,
     just_one_process=False,
 ):
     short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
 
     # Set these as desired
-    os.environ["MKL_NUM_THREADS"] = str(
-        num_threads
-    )  # Set this before numpy is imported
-    os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
-    os.environ["OMP_NUM_THREADS"] = str(num_threads)
-    os.environ["NUMEXPR_NUM_THREADS"] = str(num_threads)
-    os.environ["VECLIB_MAXIMUM_THREADS"] = str(num_threads)
+    if num_threads is not None:
+        os.environ["MKL_NUM_THREADS"] = str(
+            num_threads
+        )  # Set this before numpy is imported
+        os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
+        os.environ["OMP_NUM_THREADS"] = str(num_threads)
+        os.environ["NUMEXPR_NUM_THREADS"] = str(num_threads)
+        os.environ["VECLIB_MAXIMUM_THREADS"] = str(num_threads)
     seed = 1
     sid_count = 50 * 1000  # number of SNPs
 
@@ -465,28 +466,11 @@ def test_case_def(test_case):
 
     return test_case, iid_count, K0_goal
 
-    #test_case, iid_count, K0_goal = test_case_def("c")
-
-    #test_exp_4(
-    #    GB_goal=4,
-    #    iid_count=iid_count,
-    #    K0_goal=K0_goal,
-    #    proc_count_only_cpu=1,
-    #    proc_count_with_gpu=2,
-    #    cpu_weight=2,
-    #    gpu_weight=1,
-    #    gpu_count=1,
-    #    num_threads=20,
-    #    leave_out_one_chrom=True,
-    #    just_one_process=False,
-    # )
-
 def test_svd(size,which_list, threads=None):
     #!!!cmk may want to play with "F" vs "C" order 
     if threads is not None:
         os.environ["MKL_NUM_THREADS"] = str(threads)
     import numpy as np
-    xp = np
     from fastlmm.util.matrix.bigsvd import big_sdd, lapack_svd
     short_output_pattern = f"svd/svd_{'{0}'}.tsv"
     which_list = which_list or ["big_sdd","lapack_svd","linalg.svd"]
@@ -508,16 +492,6 @@ def test_svd(size,which_list, threads=None):
             Sx = np.zeros((m_row,n_col))
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
-        elif which=="linalg.svd":
-            logging.info(f"Doing large xp.linalg ({m_row}x{n_col})")
-            start_time = time.time()
-            U, s, V = xp.linalg.svd(a, full_matrices=False,compute_uv=True)
-            delta_time = time.time()-start_time
-            logging.info(f"done with xp.linalg.svd {m_row}x{n_col} in time {delta_time}")
-            print(U.shape, s.shape, V.shape, end=' ') 
-            S = np.zeros((min_row_col,min_row_col))
-            S = np.diag(s)
-            assert np.allclose(a, np.dot(U, np.dot(S, V)))
         elif which=="lapack_svd":
             logging.info("doing lapack_svd")
             start_time = time.time()
@@ -527,6 +501,30 @@ def test_svd(size,which_list, threads=None):
             Sx = np.zeros((m_row,n_col))
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
+        elif which=="np.linalg.svd":
+            xp = np
+            logging.info(f"Doing large np.linalg.svd ({m_row}x{n_col})")
+            start_time = time.time()
+            U, s, V = np.linalg.svd(a, full_matrices=False,compute_uv=True)
+            delta_time = time.time()-start_time
+            logging.info(f"done with np.linalg.svd {m_row}x{n_col} in time {delta_time}")
+            print(U.shape, s.shape, V.shape, end=' ') 
+            S = np.zeros((min_row_col,min_row_col))
+            S = np.diag(s)
+            assert np.allclose(a, np.dot(U, np.dot(S, V)))
+        elif which=="cp.linalg.svd":
+            import cupy as cp
+            xp = cp
+            logging.info(f"Doing large cp.linalg.svd ({m_row}x{n_col})")
+            a = cp.asarray(a)
+            start_time = time.time()
+            U, s, V = cp.linalg.svd(a, full_matrices=False,compute_uv=True)
+            delta_time = time.time()-start_time
+            logging.info(f"done with cp.linalg.svd {m_row}x{n_col} in time {delta_time}")
+            print(U.shape, s.shape, V.shape, end=' ') 
+            S = cp.zeros((min_row_col,min_row_col))
+            S = cp.diag(s)
+            assert cp.allclose(a, cp.dot(U, cp.dot(S, V)))
         else:
             assert False
         perf_result = {
@@ -547,4 +545,19 @@ def test_svd(size,which_list, threads=None):
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-    test_svd(3000,None)#which_list=["lapack_svd","big_sdd","lapack_svd"], threads=None)
+
+    test_case, iid_count, K0_goal = test_case_def("c")
+
+    test_exp_4(
+        GB_goal=4,
+        iid_count=iid_count,
+        K0_goal=K0_goal,
+        proc_count_only_cpu=10,
+        proc_count_with_gpu=7,
+        cpu_weight=1,
+        gpu_weight=4,
+        gpu_count=1,
+        num_threads=1,
+        leave_out_one_chrom=True,
+        just_one_process=False,
+     )

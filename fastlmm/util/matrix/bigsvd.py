@@ -7,12 +7,14 @@ import numpy as np
 import datetime
 import fastlmm.util.matrix.cample as cample
 
-def big_sdd(a):
-    logging.info(f"Starting big_ssd with MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS','<none>')}")
+def big_sdd(a, work_around=True):
+    logging.info(f"Starting big_ssd with MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS','<none>')} and work_around={work_around}")
     if a.flags['C_CONTIGUOUS']:
         #Could use https://pypi.org/project/fastremap/ to avoid a copy
         a = np.require(a,requirements=['F'])
     assert a.flags['F_CONTIGUOUS'],"expect a to be order 'F'"
+    if work_around: #!!!cmk explain this
+        _ = lapack_svd(np.array([[1],[-2],[3]],order="F"))
     minmn = min(a.shape[0],a.shape[1])
     s = np.zeros(minmn,order='F') #!!! empty faster than zero? (and also for the next items)
     u = np.zeros((a.shape[0],a.shape[0]),order='F') 
