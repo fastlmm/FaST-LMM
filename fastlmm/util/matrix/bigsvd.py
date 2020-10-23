@@ -8,6 +8,7 @@ import datetime
 import fastlmm.util.matrix.cample as cample
 
 def big_sdd(a):
+    logging.info(f"Starting big_ssd with MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS','<none>')}")
     if a.flags['C_CONTIGUOUS']:
         #Could use https://pypi.org/project/fastremap/ to avoid a copy
         a = np.require(a,requirements=['F'])
@@ -47,6 +48,7 @@ def big_sdd(a):
                             work.shape[0],
                             iwork)
     assert info==0
+    logging.info("Ending big_ssd")
     return u, s, vt
 
 

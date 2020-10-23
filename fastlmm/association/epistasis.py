@@ -36,7 +36,7 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
           If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
     :type G1: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
 
-    :param mixing: Weight between 0.0 (inclusive, default) and 1.1 (inclusive) given to G1 relative to G0.
+    :param mixing: Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to G1 relative to G0.
             If you give no mixing number, G0 will get all the weight and G1 will be ignored.
     :type mixing: number
 

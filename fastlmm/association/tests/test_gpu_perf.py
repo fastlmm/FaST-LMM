@@ -3,12 +3,13 @@
 # Don't import numpy until after threads are set
 import os
 
-thread_count = 6
-os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
-os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
-os.environ["OMP_NUM_THREADS"] = str(thread_count)
-os.environ["NUMEXPR_NUM_THREADS"] = str(thread_count)
-os.environ["VECLIB_MAXIMUM_THREADS"] = str(thread_count)
+if False:
+    thread_count = 10
+    os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
+    os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
+    os.environ["OMP_NUM_THREADS"] = str(thread_count)
+    os.environ["NUMEXPR_NUM_THREADS"] = str(thread_count)
+    os.environ["VECLIB_MAXIMUM_THREADS"] = str(thread_count)
 from pathlib import Path
 import time
 import logging
@@ -24,8 +25,12 @@ else:
         cache_top = Path(r"m:\deldir")
         output_dir = Path(r"d:\OneDrive\Projects\Science\gpu_pref")
     else:
-        cache_top = Path(r"/home/azureuser/deldir")
-        output_dir = Path(r"/home/azureuser/gpu_pref_linux")
+        if "WSL_DISTRO_NAME" in os.environ:
+            cache_top = Path(r"/mnt/m/deldir")
+            output_dir = Path(r"/mnt/d/OneDrive\Projects\Science\gpu_pref_linux")
+        else:
+            cache_top = Path("/home/azureuser/deldir")
+            output_dir = Path("/home/azureuser/gpu_pref_linux")
 
 
 def one_experiment(
@@ -460,24 +465,86 @@ def test_case_def(test_case):
 
     return test_case, iid_count, K0_goal
 
+    #test_case, iid_count, K0_goal = test_case_def("c")
+
+    #test_exp_4(
+    #    GB_goal=4,
+    #    iid_count=iid_count,
+    #    K0_goal=K0_goal,
+    #    proc_count_only_cpu=1,
+    #    proc_count_with_gpu=2,
+    #    cpu_weight=2,
+    #    gpu_weight=1,
+    #    gpu_count=1,
+    #    num_threads=20,
+    #    leave_out_one_chrom=True,
+    #    just_one_process=False,
+    # )
+
+def test_svd(size,which_list, threads=None):
+    #!!!cmk may want to play with "F" vs "C" order 
+    if threads is not None:
+        os.environ["MKL_NUM_THREADS"] = str(threads)
+    import numpy as np
+    xp = np
+    from fastlmm.util.matrix.bigsvd import big_sdd, lapack_svd
+    short_output_pattern = f"svd/svd_{'{0}'}.tsv"
+    which_list = which_list or ["big_sdd","lapack_svd","linalg.svd"]
+    m_row = size
+    n_col =  m_row + 2
+    min_row_col = size
+    perf_list = []
+    for which in which_list:
+        logging.info("generating {0}x{1}".format(m_row,n_col))
+        np.random.seed(0)
+        a = np.random.randn(m_row, n_col).astype(np.float) #!!!cmk what's the "float about?"
+        if which=="big_sdd":
+            logging.info("doing large big_sdd")
+            start_time = time.time()
+            #_ = lapack_svd(np.array([[1],[-2],[3]],order="F"))
+            ux, sx, vtx = big_sdd(np.array(a,order="F")) #!!!cmk why not allow a copy if already in correct order? (see other code in single_snp)
+            delta_time = time.time()-start_time
+            logging.info(f"done with big_sdd {m_row}x{n_col} in time {delta_time}")
+            Sx = np.zeros((m_row,n_col))
+            Sx[:min_row_col, :min_row_col] = np.diag(sx)
+            assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
+        elif which=="linalg.svd":
+            logging.info(f"Doing large xp.linalg ({m_row}x{n_col})")
+            start_time = time.time()
+            U, s, V = xp.linalg.svd(a, full_matrices=False,compute_uv=True)
+            delta_time = time.time()-start_time
+            logging.info(f"done with xp.linalg.svd {m_row}x{n_col} in time {delta_time}")
+            print(U.shape, s.shape, V.shape, end=' ') 
+            S = np.zeros((min_row_col,min_row_col))
+            S = np.diag(s)
+            assert np.allclose(a, np.dot(U, np.dot(S, V)))
+        elif which=="lapack_svd":
+            logging.info("doing lapack_svd")
+            start_time = time.time()
+            ux, sx, vtx = lapack_svd(np.array(a,order="F"))
+            delta_time = time.time()-start_time
+            logging.info(f"done with xp.linalg.svd {m_row}x{n_col} in time {delta_time}")
+            Sx = np.zeros((m_row,n_col))
+            Sx[:min_row_col, :min_row_col] = np.diag(sx)
+            assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
+        else:
+            assert False
+        perf_result = {
+            "computer_name": os.environ.get("COMPUTERNAME", "<unknown>"),
+            "cpu_count": multiprocessing.cpu_count(),
+            "gpu_count": "1?",
+            "test_case": "test_svd",
+            "linked": "MKL?/OpenBLAS?",
+            "size": size,
+            "which": which,
+            "num_threads": os.environ.get("MKL_NUM_THREADS","<none>"),
+            "xp": xp.__name__,
+            "time (s)": delta_time,
+        }
+        perf_list.append(perf_result)
+        pd_write(short_output_pattern+".temp", perf_list)
+    pd_write(short_output_pattern, perf_list)
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-
-    test_case, iid_count, K0_goal = test_case_def("c")
-
-    test_exp_4(
-        GB_goal=4,
-        iid_count=iid_count,
-        K0_goal=K0_goal,
-        proc_count_only_cpu=0,
-        proc_count_with_gpu=2,
-        cpu_weight=2,
-        gpu_weight=1,
-        gpu_count=1,
-        num_threads=6,
-        leave_out_one_chrom=True,
-        just_one_process=False,
-    )
-    # test_std()
-
+    test_svd(3000,None)#which_list=["lapack_svd","big_sdd","lapack_svd"], threads=None)

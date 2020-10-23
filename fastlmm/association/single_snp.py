@@ -849,7 +849,7 @@ def _standardize_unit_python(snps, xp): #!!!cnj switch back to using D:\OneDrive
 
 
 if __name__ == "__main__":
-    if True:
+    if False:
         logging.basicConfig(level=logging.WARN)
 
         if True:
@@ -951,4 +951,108 @@ if __name__ == "__main__":
         from unittest.mock import patch
         with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as _: #!!!cmk make this a utility
             doctest.testmod()
+
+    if True:
+        # Create a 2nd kernel, based just on the interesting pairs
+        # Specificially, create SNP-like data for each individual
+        # where the value is product of each pair's values
+        # and the "SNP" name is "snp1,snp2"
+        import os
+        os.chdir("D:\OneDrive\Projects\Science")
+
+        ###################################
+        #Build the similarity matrix with everything except chroms 4 and 5.
+        #Test every pair [first_n of] chrom 4 UNION [first n of] chrom 5
+        chromA_of_interest=4
+        chromB_of_interest=5
+        first_n = 50 #None for all the chrom
+
+        # import the algorithm and reader
+        from fastlmm.association import epistasis
+        from pysnptools.snpreader import Bed
+        import numpy as np
+
+        # define file names
+        bed_reader = Bed("datasets/synth/all.bed", count_A1=True)
+        pheno_fn = "datasets/synth/pheno_10_causals.txt"
+        cov_fn = "datasets/synth/cov.txt"
+
+        isin_A = bed_reader.pos[:,0]==chromA_of_interest
+        isin_B = bed_reader.pos[:,0]==chromB_of_interest
+        G0 = bed_reader[:,np.invert(isin_A+isin_B)]
+
+        sid_list_AB = np.concatenate([bed_reader.sid[isin_A][:first_n],bed_reader.sid[isin_B][:first_n]])
+
+        print("similarity matrix created from {0:,} SNPs in chroms {1}".format(G0.sid_count,set(G0.pos[:,0])))
+        a_count = len(bed_reader.sid[isin_A][:first_n])
+        b_count = len(bed_reader.sid[isin_B][:first_n])
+        print("# of approx pairs={0:,}".format(a_count**2//2+b_count**2//2+a_count*b_count))
+        if False:
+            ###################################
+            # run epistasis analysis
+            results_df = epistasis(bed_reader, pheno_fn, G0=G0, covar=cov_fn, sid_list_0=sid_list_AB,sid_list_1=sid_list_AB)
+
+            # qq plot
+            from fastlmm.util.stats import plotp
+            plotp.qqplot(results_df["PValue"].values, xlim=[0,5], ylim=[0,5])
+
+            # print head of results data frame
+            pd.set_option('display.width', 1000)
+            results_df.head(n=10)
+            ###################################
+            interesting_pairs = results_df[0:5][["SNP0","SNP1"]].values.tolist()
+        else:
+            interesting_pairs = [['snp2741_m0_.23m1_.05', 'snp2610_m0_.21m1_.22'],
+                                     ['snp492_m0_.38m1_.36', 'snp2124_m0_.17m1_.49'],
+                                     ['snp325_m0_.45m1_.22', 'snp2743_m0_.03m1_.1'],
+                                     ['snp1060_m0_m1_.06', 'snp2124_m0_.17m1_.49'],
+                                     ['snp574_m0_.15m1_.03', 'snp2124_m0_.17m1_.49']]
+
+        from pysnptools.snpreader import SnpData
+
+        npinteresting_pairs = np.array(interesting_pairs) # convert to numpy array
+
+        left_data = bed_reader[:,bed_reader.sid_to_index(npinteresting_pairs[:,0])].read().standardize()
+        right_data = bed_reader[:,bed_reader.sid_to_index(npinteresting_pairs[:,1])].read().standardize()
+
+        pair_val = left_data.val*right_data.val
+        pair_sids = np.core.defchararray.add(np.core.defchararray.add(left_data.sid,","),right_data.sid)
+
+        pair_data = SnpData(val=pair_val, iid=bed_reader.iid, sid=pair_sids,name="interesting pairs")
+        pair_data
+
+        test_snps = bed_reader #Should be all pairs of interest? just chrom 4 and 5 snps?
+        ss_results = single_snp(test_snps=bed_reader[:,0],pheno=pheno_fn, covar=cov_fn,K0=G0,K1=pair_data,force_low_rank=True,leave_out_one_chrom=False)
+        #ss_results
+        mixing,nullh2 = ss_results.iloc[0][["Mixing","Nullh2"]]
+
+        assert np.array_equal(G0.iid,pair_data.iid), "Expect matching iids"
+        from pysnptools.snpreader import Pheno
+        covar = Pheno(cov_fn).read()
+        assert np.array_equal(G0.iid,covar.iid), "Expect matching iids"
+        assert not np.any(np.isnan(covar.val))
+        covar = np.c_[covar.val,np.ones((test_snps.iid_count, 1))]
+        y = Pheno(pheno_fn).read()#.standardize()       # defaults to Unit standardize #!!!cmk standardize needed?
+        assert np.array_equal(y.iid,G0.iid), "Expect matching iids"
+        assert not np.any(np.isnan(y.val))
+        y = y.val
+
+        from pysnptools.kernelreader import SnpKernel
+        G_kernel=SnpKernel(G0,standardizer=Unit())
+        E_kernel=SnpKernel(pair_data,standardizer=Unit())
+        G_kernel = G_kernel.read().standardize() # defaults to DiagKtoN standardize
+        E_kernel = E_kernel.read().standardize() # defaults to DiagKtoN standardize
+
+        from fastlmm.inference.lmm import LMM
+        lmm1 = LMM()
+        lmm1.setK(K0=G_kernel.val, K1=E_kernel.val, a2=0.5)
+        lmm1.setX(covar)
+        lmm1.sety(y[:,0])
+        res1 = lmm1.findA2()
+        h2, a2, nLLcorr = res1["h2"], res1["a2"], res1["nLL"]
+        h2corr = h2 * (1-a2)
+        e2 = h2 * a2
+        h2corr_raw = h2
+
+        
 
