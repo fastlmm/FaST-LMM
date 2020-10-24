@@ -3,9 +3,11 @@
 # Don't import numpy until after threads are set
 import os
 
-if True:
-    thread_count = 1
-    os.environ["MKL_NUM_THREADS"] = str(thread_count)  # Set this before numpy is imported
+if False:
+    thread_count = 2
+    os.environ["MKL_NUM_THREADS"] = str(
+        thread_count
+    )  # Set this before numpy is imported
     os.environ["OPENBLAS_NUM_THREADS"] = str(thread_count)
     os.environ["OMP_NUM_THREADS"] = str(thread_count)
     os.environ["NUMEXPR_NUM_THREADS"] = str(thread_count)
@@ -119,7 +121,7 @@ def one_experiment(
         "chrom_count": len(np.unique(test_snps.pos[:, 0])),
         "covar_count": covar.col_count,
         "leave_out_one_chrom": 1 if leave_out_one_chrom else 0,
-        "num_threads": os.environ.get("MKL_NUM_THREADS","<none>"),
+        "num_threads": os.environ.get("MKL_NUM_THREADS", "<none>"),
         "use_gpu": use_gpu,
         "cpu_weight": cpu_weight,
         "gpu_weight": gpu_weight,
@@ -473,63 +475,76 @@ def test_case_def(test_case):
 
     return test_case, iid_count, sid_count, K0_goal
 
-def test_svd(size,which_list, threads=None):
-    #!!!cmk may want to play with "F" vs "C" order 
+
+def test_svd(size, which_list, threads=None):
+    #!!!cmk may want to play with "F" vs "C" order
     if threads is not None:
         os.environ["MKL_NUM_THREADS"] = str(threads)
     import numpy as np
     from fastlmm.util.matrix.bigsvd import big_sdd, lapack_svd
+
     short_output_pattern = f"svd/svd_{'{0}'}.tsv"
-    which_list = which_list or ["big_sdd","lapack_svd","linalg.svd"]
+    which_list = which_list or ["big_sdd", "lapack_svd", "linalg.svd"]
     m_row = size
-    n_col =  m_row + 2
+    n_col = m_row + 2
     min_row_col = size
     perf_list = []
     for which in which_list:
-        logging.info("generating {0}x{1}".format(m_row,n_col))
+        logging.info("generating {0}x{1}".format(m_row, n_col))
         np.random.seed(0)
-        a = np.random.randn(m_row, n_col).astype(np.float) #!!!cmk what's the "float about?"
-        if which=="big_sdd":
+        a = np.random.randn(m_row, n_col).astype(
+            np.float
+        )  #!!!cmk what's the "float about?"
+        if which == "big_sdd":
             logging.info("doing large big_sdd")
             start_time = time.time()
-            #_ = lapack_svd(np.array([[1],[-2],[3]],order="F"))
-            ux, sx, vtx = big_sdd(np.array(a,order="F")) #!!!cmk why not allow a copy if already in correct order? (see other code in single_snp)
-            delta_time = time.time()-start_time
+            # _ = lapack_svd(np.array([[1],[-2],[3]],order="F"))
+            ux, sx, vtx = big_sdd(
+                np.array(a, order="F")
+            )  #!!!cmk why not allow a copy if already in correct order? (see other code in single_snp)
+            delta_time = time.time() - start_time
             logging.info(f"done with big_sdd {m_row}x{n_col} in time {delta_time}")
-            Sx = np.zeros((m_row,n_col))
+            Sx = np.zeros((m_row, n_col))
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
-        elif which=="lapack_svd":
+        elif which == "lapack_svd":
             logging.info("doing lapack_svd")
             start_time = time.time()
-            ux, sx, vtx = lapack_svd(np.array(a,order="F"))
-            delta_time = time.time()-start_time
-            logging.info(f"done with xp.linalg.svd {m_row}x{n_col} in time {delta_time}")
-            Sx = np.zeros((m_row,n_col))
+            ux, sx, vtx = lapack_svd(np.array(a, order="F"))
+            delta_time = time.time() - start_time
+            logging.info(
+                f"done with xp.linalg.svd {m_row}x{n_col} in time {delta_time}"
+            )
+            Sx = np.zeros((m_row, n_col))
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
-        elif which=="np.linalg.svd":
+        elif which == "np.linalg.svd":
             xp = np
             logging.info(f"Doing large np.linalg.svd ({m_row}x{n_col})")
             start_time = time.time()
-            U, s, V = np.linalg.svd(a, full_matrices=False,compute_uv=True)
-            delta_time = time.time()-start_time
-            logging.info(f"done with np.linalg.svd {m_row}x{n_col} in time {delta_time}")
-            print(U.shape, s.shape, V.shape, end=' ') 
-            S = np.zeros((min_row_col,min_row_col))
+            U, s, V = np.linalg.svd(a, full_matrices=False, compute_uv=True)
+            delta_time = time.time() - start_time
+            logging.info(
+                f"done with np.linalg.svd {m_row}x{n_col} in time {delta_time}"
+            )
+            print(U.shape, s.shape, V.shape, end=" ")
+            S = np.zeros((min_row_col, min_row_col))
             S = np.diag(s)
             assert np.allclose(a, np.dot(U, np.dot(S, V)))
-        elif which=="cp.linalg.svd":
+        elif which == "cp.linalg.svd":
             import cupy as cp
+
             xp = cp
             logging.info(f"Doing large cp.linalg.svd ({m_row}x{n_col})")
             a = cp.asarray(a)
             start_time = time.time()
-            U, s, V = cp.linalg.svd(a, full_matrices=False,compute_uv=True)
-            delta_time = time.time()-start_time
-            logging.info(f"done with cp.linalg.svd {m_row}x{n_col} in time {delta_time}")
-            print(U.shape, s.shape, V.shape, end=' ') 
-            S = cp.zeros((min_row_col,min_row_col))
+            U, s, V = cp.linalg.svd(a, full_matrices=False, compute_uv=True)
+            delta_time = time.time() - start_time
+            logging.info(
+                f"done with cp.linalg.svd {m_row}x{n_col} in time {delta_time}"
+            )
+            print(U.shape, s.shape, V.shape, end=" ")
+            S = cp.zeros((min_row_col, min_row_col))
             S = cp.diag(s)
             assert cp.allclose(a, cp.dot(U, cp.dot(S, V)))
         else:
@@ -542,13 +557,14 @@ def test_svd(size,which_list, threads=None):
             "linked": "MKL?/OpenBLAS?",
             "size": size,
             "which": which,
-            "num_threads": os.environ.get("MKL_NUM_THREADS","<none>"),
+            "num_threads": os.environ.get("MKL_NUM_THREADS", "<none>"),
             "xp": xp.__name__,
             "time (s)": delta_time,
         }
         perf_list.append(perf_result)
-        pd_write(short_output_pattern+".temp", perf_list)
+        pd_write(short_output_pattern + ".temp", perf_list)
     pd_write(short_output_pattern, perf_list)
+
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
@@ -560,12 +576,12 @@ if __name__ == "__main__":
         iid_count=iid_count,
         sid_count=sid_count,
         K0_goal=K0_goal,
-        proc_count_only_cpu=1,
-        proc_count_with_gpu=1,
+        proc_count_only_cpu=10,
+        proc_count_with_gpu=7,
         cpu_weight=1,
-        gpu_weight=1,
+        gpu_weight=4,
         gpu_count=1,
-        num_threads=None,
+        num_threads=1,
         leave_out_one_chrom=True,
         just_one_process=False,
      )
