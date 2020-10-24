@@ -4,7 +4,7 @@
 import os
 
 if False:
-    thread_count = 2
+    thread_count = 1
     os.environ["MKL_NUM_THREADS"] = str(
         thread_count
     )  # Set this before numpy is imported
@@ -470,6 +470,10 @@ def test_case_def(test_case):
         iid_count = 1000
         sid_count = 100*1000
         K0_goal = 1000
+    elif test_case == "e":
+        iid_count = 2000
+        sid_count = 1000*1000
+        K0_goal = None
     else:
         assert False, test_case
 
@@ -569,19 +573,19 @@ def test_svd(size, which_list, threads=None):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    test_case, iid_count, sid_count, K0_goal = test_case_def("d")
+    test_case, iid_count, sid_count, K0_goal = test_case_def("e")
 
     test_exp_4(
         GB_goal=4,
         iid_count=iid_count,
         sid_count=sid_count,
         K0_goal=K0_goal,
-        proc_count_only_cpu=10,
-        proc_count_with_gpu=7,
+        proc_count_only_cpu=3,
+        proc_count_with_gpu=4,
         cpu_weight=1,
-        gpu_weight=4,
+        gpu_weight=2,
         gpu_count=1,
-        num_threads=1,
+        num_threads=None,
         leave_out_one_chrom=True,
         just_one_process=False,
      )
