@@ -298,7 +298,7 @@ def test_exp_3(K0_goal=500, GB_goal=2):
     pd_write(short_output_pattern, pref_list)
 
 
-def test_exp_4x(K0_goal=500):
+def testX_exp_4x(K0_goal=500):
     short_output_pattern = f"exp4x/exp_4x_{K0_goal}_{0}.tsv"
 
     # Set these as desired
@@ -395,6 +395,7 @@ def test_std():
 def test_exp_4(
     GB_goal=2,
     iid_count=2 * 1000,
+    sid_count=50 * 1000,
     K0_goal=None,
     proc_count_only_cpu=10,
     proc_count_with_gpu=5,
@@ -417,7 +418,6 @@ def test_exp_4(
         os.environ["NUMEXPR_NUM_THREADS"] = str(num_threads)
         os.environ["VECLIB_MAXIMUM_THREADS"] = str(num_threads)
     seed = 1
-    sid_count = 50 * 1000  # number of SNPs
 
     # Tune these
 
@@ -456,17 +456,28 @@ def test_exp_4(
 def test_case_def(test_case):
     if test_case == "a":
         iid_count = 2000
+        sid_count = 50 * 1000
         K0_goal = None
     elif test_case == "b":
         iid_count = 4000
+        sid_count = 50 * 1000
         K0_goal = None
     elif test_case == "c":
         iid_count = 5000
+        sid_count = 50 * 1000
         K0_goal = 2000
+    elif test_case == "d":
+        iid_count = 1000
+        sid_count = 100 * 1000
+        K0_goal = 1000
+    elif test_case == "e":
+        iid_count = 2000
+        sid_count = 1000 * 1000
+        K0_goal = None
     else:
         assert False, test_case
 
-    return test_case, iid_count, K0_goal
+    return test_case, iid_count, sid_count, K0_goal
 
 
 def test_svd(size, which_list, threads=None):
