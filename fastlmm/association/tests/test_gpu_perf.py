@@ -4,7 +4,7 @@
 import os
 
 if False:
-    thread_count = 2
+    thread_count = 1
     os.environ["MKL_NUM_THREADS"] = str(
         thread_count
     )  # Set this before numpy is imported
@@ -477,7 +477,12 @@ def test_svd(size, which_list, threads=None):
     from fastlmm.util.matrix.bigsvd import big_sdd, lapack_svd
 
     short_output_pattern = f"svd/svd_{'{0}'}.tsv"
-    which_list = which_list or ["big_sdd", "lapack_svd", "linalg.svd"]
+    which_list = which_list or [
+        "big_sdd",
+        "lapack_svd",
+        "np.linalg.svd",
+        "cp.linalg.svd",
+    ]
     m_row = size
     n_col = m_row + 2
     min_row_col = size
@@ -500,6 +505,7 @@ def test_svd(size, which_list, threads=None):
             Sx = np.zeros((m_row, n_col))
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
+            xp = np
         elif which == "lapack_svd":
             logging.info("doing lapack_svd")
             start_time = time.time()
@@ -511,6 +517,7 @@ def test_svd(size, which_list, threads=None):
             Sx = np.zeros((m_row, n_col))
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
             assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
+            xp = np
         elif which == "np.linalg.svd":
             xp = np
             logging.info(f"Doing large np.linalg.svd ({m_row}x{n_col})")
@@ -562,19 +569,21 @@ def test_svd(size, which_list, threads=None):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    test_case, iid_count, K0_goal = test_case_def("c")
+    # test_case, iid_count, K0_goal = test_case_def("c")
 
-    test_exp_4(
-        GB_goal=4,
-        iid_count=iid_count,
-        K0_goal=K0_goal,
-        proc_count_only_cpu=0,
-        proc_count_with_gpu=2,
-        cpu_weight=4,
-        gpu_weight=3,
-        gpu_count=2,
-        num_threads=None,
-        leave_out_one_chrom=True,
-        just_one_process=False,
-    )
+    # test_exp_4(
+    #     GB_goal=4,
+    #     iid_count=iid_count,
+    #     K0_goal=K0_goal,
+    #     proc_count_only_cpu=0,
+    #     proc_count_with_gpu=2,
+    #     cpu_weight=4,
+    #     gpu_weight=3,
+    #     gpu_count=2,
+    #     num_threads=None,
+    #     leave_out_one_chrom=True,
+    #     just_one_process=False,
+    # )
+
+    test_svd(3000, which_list=None)
 
