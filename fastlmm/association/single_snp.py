@@ -405,9 +405,9 @@ class _Mixer(object):
             #!!!there is no need for block_size here because we want G0 in full. But if starting with SNPs and not low-rank then batches are needed and the two standardizers must be remembered for use later
 
             if sid_count_0 > 0:
-                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True)
+                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True, xp=xp)
             if sid_count_1 > 0:
-                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True)
+                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True, xp=xp)
 
             if sid_count_1 == 0:
                 mixer.mixing = mixer.mixing or 0
@@ -437,10 +437,10 @@ class _Mixer(object):
         else:
             mixer.do_g = False
             if sid_count_0 > 0: #!!!but what if we have SNP data but still need to remember the standardizer?
-                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=True,return_trained=True)#!!!pass in a new argument, the kernel_standardizer(???)
+                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=True,return_trained=True, xp=xp)#!!!pass in a new argument, the kernel_standardizer(???)
 
             if sid_count_1 > 0:
-                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=True,return_trained=True)
+                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=True,return_trained=True, xp=xp)
 
             if sid_count_1 == 0:
                 mixer.mixing = mixer.mixing or 0

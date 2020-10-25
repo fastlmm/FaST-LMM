@@ -3,7 +3,7 @@
 # Don't import numpy until after threads are set
 import os
 
-if False:
+if True:
     thread_count = 1
     os.environ["MKL_NUM_THREADS"] = str(
         thread_count
