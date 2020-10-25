@@ -580,21 +580,21 @@ def test_svd(size, which_list, threads=None):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    # test_case, iid_count, K0_goal = test_case_def("c")
+    test_case, iid_count, sid_count, K0_goal = test_case_def("a")
 
-    # test_exp_4(
-    #     GB_goal=4,
-    #     iid_count=iid_count,
-    #     K0_goal=K0_goal,
-    #     proc_count_only_cpu=0,
-    #     proc_count_with_gpu=2,
-    #     cpu_weight=4,
-    #     gpu_weight=3,
-    #     gpu_count=2,
-    #     num_threads=None,
-    #     leave_out_one_chrom=True,
-    #     just_one_process=False,
-    # )
+    test_exp_4(
+        GB_goal=4,
+        iid_count=iid_count,
+        K0_goal=K0_goal,
+        proc_count_only_cpu=0,
+        proc_count_with_gpu=0,
+        cpu_weight=4,
+        gpu_weight=3,
+        gpu_count=2,
+        num_threads=None,
+        leave_out_one_chrom=True,
+        just_one_process=True,
+    )
 
-    test_svd(3000, which_list=None)
+    # test_svd(3000, which_list=None)
 

@@ -14,7 +14,7 @@ from fastlmm.inference.lmm_cov import LMM as lmm_cov
 import warnings
 from pysnptools.snpreader import SnpReader
 from pysnptools.snpreader import SnpData
-from pysnptools.standardizer import Unit
+from pysnptools.standardizer import Unit, Standardizer
 from pysnptools.standardizer import Identity as SS_Identity
 from pysnptools.standardizer import DiagKtoN
 from pysnptools.standardizer import UnitTrained
@@ -405,9 +405,9 @@ class _Mixer(object):
             #!!!there is no need for block_size here because we want G0 in full. But if starting with SNPs and not low-rank then batches are needed and the two standardizers must be remembered for use later
 
             if sid_count_0 > 0:
-                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True, xp=xp)
+                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True)
             if sid_count_1 > 0:
-                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True, xp=xp)
+                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=not mixer.do_g, kernel_standardizer=kernel_standardizer, return_trained=True)
 
             if sid_count_1 == 0:
                 mixer.mixing = mixer.mixing or 0
@@ -437,10 +437,10 @@ class _Mixer(object):
         else:
             mixer.do_g = False
             if sid_count_0 > 0: #!!!but what if we have SNP data but still need to remember the standardizer?
-                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=True,return_trained=True, xp=xp)#!!!pass in a new argument, the kernel_standardizer(???)
+                K0, mixer.snp_trained0, mixer.kernel_trained0 = K0._read_with_standardizing(to_kerneldata=True,return_trained=True)#!!!pass in a new argument, the kernel_standardizer(???)
 
             if sid_count_1 > 0:
-                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=True,return_trained=True, xp=xp)
+                K1, mixer.snp_trained1, mixer.kernel_trained1 = K1._read_with_standardizing(to_kerneldata=True,return_trained=True)
 
             if sid_count_1 == 0:
                 mixer.mixing = mixer.mixing or 0
@@ -630,20 +630,8 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
             val = xp.asarray(snps_read.val)
         else:
             val = xp.asarray(snps_read.val)
-            start_time = time.time() #!!!cmk
-            _standardize_unit_python(val,xp)
-            #print(f"cmk cupy standardize {time.time()-start_time} s")
-            if False:
-                start_time = time.time() #!!!cmk
-                #_standardize_unit_python(snps_read.val,np)
-                snps_read.standardize()
-                print(f"cmk c++ standardize {time.time()-start_time} s")
-            if False: #cmk
-                val2 = test_snps[:,start:end].read().standardize().val
-                if xp.abs(val-xp.asarray(val2)).max() > 1e-11:
-                    print("!!!cmk")
-
-
+            statsx = xp.empty([val.shape[1],2],dtype=val.dtype,order="F" if val.flags["F_CONTIGUOUS"] else "C")
+            Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx,xp=xp)
 
         if interact_with_snp is not None:
             variables_to_test = val * interact[:,xp.newaxis]
@@ -778,7 +766,7 @@ def _mix_from_Gs(G, G0_standardized_val, G1_standardized_val, mixing):
 def _mix_from_Ks(K, K0_val, K1_val, mixing):
     K[:,:] = K0_val * (1.0-float(mixing)) + K1_val * float(mixing)
 
-def _standardize_unit_python(snps, xp): #!!!cnj switch back to using D:\OneDrive\programs\pysnptools\pysnptools\standardizer
+def _cmkdeletemestandardize_unit_python(snps, xp): #!!!cnj switch back to using D:\OneDrive\programs\pysnptools\pysnptools\standardizer
     '''
     standardize snps to zero-mean and unit variance
     '''
