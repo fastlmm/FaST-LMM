@@ -50,6 +50,8 @@ def one_experiment(
     gpu_weight=1,
     gpu_count=1,
     test_case="?",
+    force = None,
+    two_ks = False,
 ):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
@@ -86,13 +88,22 @@ def one_experiment(
                 just_one_process=just_one_process,
             )
 
-    #!!!cmk0 change this to using xp=...
-    #!!!cmk0 allow strings in util
-    #!!!cmk0 test and fix up test_single_snp so works with array_module enviorn set to cupy
+    force_full_rank = False
+    force_low_rank = False
+    if force == "full_rank":
+        force_full_rank = True
+    elif force == "low_rank":
+        force_low_rank = True
+    elif force is None:
+        pass
+    else:
+        assert False
+
     start_time = time.time()
 
     results_dataframe = single_snp(
         K0=K0,
+        K1 = test_snps if two_ks else None,
         test_snps=test_snps,
         pheno=pheno,
         covar=covar,
@@ -101,6 +112,8 @@ def one_experiment(
         GB_goal=GB_goal,
         runner=runner,
         xp=xp,
+        force_full_rank=force_full_rank,
+        force_low_rank=force_low_rank,
     )
     delta_time = time.time() - start_time
 
@@ -129,6 +142,8 @@ def one_experiment(
         "just_one_process": 1 if just_one_process else 0,
         "GB_goal": GB_goal,
         "time (s)": delta_time,
+        "force": force if force is not None else "<none>",
+        "two_ks": 1 if two_ks else 0,
     }
     return perf_result
 
@@ -405,6 +420,8 @@ def test_exp_4(
     num_threads=None,
     leave_out_one_chrom=True,
     just_one_process=False,
+    force = None,
+    two_ks = False,
 ):
     short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
 
@@ -447,6 +464,8 @@ def test_exp_4(
                 cpu_weight=cpu_weight,
                 gpu_weight=gpu_weight,
                 gpu_count=gpu_count,
+                force = force,
+                two_ks = two_ks,
             )
         )
         pd_write(short_output_pattern + ".temp", pref_list)
@@ -473,6 +492,10 @@ def test_case_def(test_case):
     elif test_case == "e":
         iid_count = 2000
         sid_count = 1000 * 1000
+        K0_goal = None
+    elif test_case == "f":
+        iid_count = 200
+        sid_count = 200
         K0_goal = None
     else:
         assert False, test_case
@@ -580,21 +603,25 @@ def test_svd(size, which_list, threads=None):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    test_case, iid_count, sid_count, K0_goal = test_case_def("a")
+    test_case, iid_count, sid_count, K0_goal = test_case_def("f")
 
-    test_exp_4(
-        GB_goal=4,
-        iid_count=iid_count,
-        K0_goal=K0_goal,
-        proc_count_only_cpu=0,
-        proc_count_with_gpu=0,
-        cpu_weight=4,
-        gpu_weight=3,
-        gpu_count=2,
-        num_threads=None,
-        leave_out_one_chrom=True,
-        just_one_process=True,
-    )
+    for two_ks in [False]:
+        for force in ["full_rank","low_rank"]:
+            test_exp_4(
+                GB_goal=4,
+                iid_count=iid_count,
+                K0_goal=K0_goal,
+                proc_count_only_cpu=0,
+                proc_count_with_gpu=0,
+                cpu_weight=4,
+                gpu_weight=3,
+                gpu_count=2,
+                num_threads=None,
+                leave_out_one_chrom=True,
+                just_one_process=True,
+                force = force,
+                two_ks = two_ks,
+        )
 
     # test_svd(3000, which_list=None)
 

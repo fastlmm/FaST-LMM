@@ -25,7 +25,6 @@ from pysnptools.kernelreader import KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util import create_directory_if_necessary
 from pysnptools.util.intrangeset import IntRangeSet
-from fastlmm.util.util import array_module_from_env, asnumpy
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
 import fastlmm.inference.linear_regression as lin_reg
 from unittest.mock import patch
@@ -154,7 +153,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
-    xp = array_module_from_env(xp)
+    xp = pstutil.array_module_from_env(xp)
     with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
 
         assert test_snps is not None, "test_snps must be given as input"
@@ -191,7 +190,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                     input_files.append(Ki)
 
             def nested_closure(chrom):
-                xp = array_module_from_env()
+                xp = pstutil.array_module_from_env()
                 test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
                 cache_file_chrom = None if cache_file is None else cache_file + ".{0}".format(chrom)
@@ -419,6 +418,7 @@ class _Mixer(object):
                 if mixer.do_g:
                     G = xp.empty((K0.iid_count, K0.sid_count + K1.sid_count))
                     if mixer.mixing is None:
+                        assert xp is np, "Currently, single_snp does not support cupy and searching for best mix of two kernels."
                         mixer.mixing, h2 = _find_mixing_from_Gs(G, covar, K0.snpreader.val, K1.snpreader.val, h2, y, xp)
 
                     if mixer.mixing == 0:
@@ -451,6 +451,7 @@ class _Mixer(object):
             else:
                 K = xp.empty(K0.val.shape)
                 if mixer.mixing is None:
+                    assert xp is np, "Currently, single_snp does not support cupy and searching for best mix of two kernels."
                     mixer.mixing, h2 = _find_mixing_from_Ks(K, covar, K0.val, K1.val, h2, y, xp)
                 _mix_from_Ks(K, K0.val, K1.val, mixer.mixing)
                 assert K.shape[0] == K.shape[1] and abs(xp.diag(K).sum() - K.shape[0]) < 1e-7, "Expect mixed K to be standardized"
@@ -617,7 +618,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         return test_snps.sid_count * work_index // work_count
 
     def mapper_closure(work_index):
-        xp = array_module_from_env()
+        xp = pstutil.array_module_from_env()
         if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
 
         do_work_time = time.time()
@@ -641,7 +642,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         beta = res['beta']
         
-        chi2stats = asnumpy(beta*beta/res['variance_beta'])
+        chi2stats = pstutil.asnumpy(beta*beta/res['variance_beta'])
         #p_values = stats.chi2.sf(chi2stats,1)[:,0]
         assert test_snps.iid_count == lmm.U.shape[0]
         p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))[:,0]#note that G.shape is the number of individuals#
@@ -653,9 +654,9 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         dataframe['GenDist'] = snps_read.pos[:,1]
         dataframe['ChrPos'] = snps_read.pos[:,2] 
         dataframe['PValue'] = p_values
-        dataframe['SnpWeight'] = asnumpy(beta[:,0])
-        dataframe['SnpWeightSE'] = asnumpy(xp.sqrt(res['variance_beta'][:,0]))
-        dataframe['SnpFractVarExpl'] = asnumpy(xp.sqrt(res['fraction_variance_explained_beta'][:,0]))
+        dataframe['SnpWeight'] = pstutil.asnumpy(beta[:,0])
+        dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(res['variance_beta'][:,0]))
+        dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(res['fraction_variance_explained_beta'][:,0]))
         dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + float(mixing)
         dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + float(h2)
 
@@ -766,75 +767,6 @@ def _mix_from_Gs(G, G0_standardized_val, G1_standardized_val, mixing):
 def _mix_from_Ks(K, K0_val, K1_val, mixing):
     K[:,:] = K0_val * (1.0-float(mixing)) + K1_val * float(mixing)
 
-def _cmkdeletemestandardize_unit_python(snps, xp): #!!!cnj switch back to using D:\OneDrive\programs\pysnptools\pysnptools\standardizer
-    '''
-    standardize snps to zero-mean and unit variance
-    '''
-    assert snps.dtype in [np.float64,np.float32], "snps must be a float in order to standardize in place."
-
-    #!!!cmk
-    #s = time.time()
-
-    imiss = xp.isnan(snps)
-    ##snps_copy = snps.copy()
-
-    #e = time.time()
-    #print(f"1 {e-s}")
-    #s = e
-
-    ##print(f"sumnan={xp.sum(imissX)},shape={snps.shape}")
-
-    ##e = time.time()
-    ##print(f"1x {e-s}")
-    ##s = e
-
-    snp_std = xp.nanstd(snps, axis=0) #!!!cmk need to check dof is right
-
-    #e = time.time()
-    #print(f"2 {e-s}")
-    #s = e
-
-    snp_mean = xp.nanmean(snps, axis=0)
-
-    #e = time.time()
-    #print(f"3 {e-s}")
-    #s = e
-
-    # avoid div by 0 when standardizing
-    #Don't need this warning because SNCs are still meaning full in QQ plots because they should be thought of as SNPs without enough data.
-    #logging.warn("A least one snps has only one value, that is, its standard deviation is zero")
-    #!!!cmk need to check that SNC are handled.
-    snc = snp_std==0
-    snp_std[snc] = xp.inf #We make the stdev infinity so that applying as a trained_standardizer will turn any input to 0. Thus if a variable has no variation in the training data, then it will be set to 0 in test data, too. 
-    #e = time.time()
-    #print(f"4 {e-s}")
-    #s = e
-
-    snp_mean[xp.isnan(snp_mean)] = 0
-
-    #e = time.time()
-    #print(f"6 {e-s}")
-    #s = e
-
-    snps -= snp_mean #!!!cmk what if mean is NaN
-
-    #e = time.time()
-    #print(f"7 {e-s}")
-    #s = e
-
-    snps /= snp_std
-
-    #e = time.time()
-    #print(f"8 {e-s}")
-    #s = e
-
-    #imiss[:,snc]=True
-    snps[imiss] = 0
-    #print("cmk")
-    #e = time.time()
-    #print(f"9 {e-s}")
-    #s = e
-
 
 if __name__ == "__main__":
     if False:
@@ -851,7 +783,6 @@ if __name__ == "__main__":
             cache_top = r'c:\deldir'
             leave_out_one_chrom = False
             runner = LocalMultiProc(5,just_one_process=False)
-            #cmk need to get working with this again LocalMultiProc(6)
 
             if True:
                 test_snps = Bed(r"C:\Users\carlk\OneDrive\Shares\gaw14\gaw\gaw14smoking\synthetic\gaw14.1.Rand100k.familyMult\gaw14.1.Rand100K.familyMult.bed")
