@@ -19,7 +19,7 @@ try:
     import dill as pickle
 except:
     logging.warning("Can't import dill, so won't be able to clusterize lambda expressions. If you try, you'll get this error 'Can't pickle <type 'function'>: attribute lookup __builtin__.function failed'")
-    import six.moves.cPickle as pickle
+    import pickle
 
 try:
     import azure.batch.models as batchmodels

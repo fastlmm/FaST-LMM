@@ -22,7 +22,7 @@ class SnpAndSetNameCollection(object):  # implements ISnpSetList
         setname_to_snp_list = defaultdict(list)
         for snp,gene in snp_and_setname_sequence.itertuples(index=False):
             setname_to_snp_list[gene].append(snp)
-        self.bigToSmall = sorted(six.iteritems(setname_to_snp_list), key = lambda gene_snp_list:-len(gene_snp_list[1]))
+        self.bigToSmall = sorted(setname_to_snp_list.items(), key = lambda gene_snp_list:-len(gene_snp_list[1]))
 
     def addbed(self, bed):
         return SnpAndSetNameCollectionPlusBed(self,bed)

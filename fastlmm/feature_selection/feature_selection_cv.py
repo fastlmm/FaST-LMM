@@ -11,7 +11,7 @@ from __future__ import print_function
 from collections import defaultdict
 import gzip
 import bz2
-import six.moves.cPickle
+import pickle
 import time
 import os 
 import gc

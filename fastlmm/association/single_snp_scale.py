@@ -26,8 +26,6 @@ from fastlmm.util.mingrid import minimize1D
 from fastlmm.util.matrix.bigsvd import big_sdd
 from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
 import six
-from six.moves import filter
-from six.moves import range
 
 def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor=1,
             output_file_name=None, K0=None,
@@ -413,7 +411,7 @@ def get_clear_local(file_cache):
         return list(filter(os.path.isdir, [os.path.join(d,f) for f in os.listdir(d)]))
 
     def clear_local_lambda():
-        for local_root in set(storage.local_lambda()[1] for storage in six.itervalues(file_cache)):
+        for local_root in set(storage.local_lambda()[1] for storage in file_cache.values()):
             for sub in sub_dir_path(local_root):
                 logging.info("Removing '{0}'".format(sub))
                 shutil.rmtree(sub)
@@ -1220,7 +1218,7 @@ def _clear_cache_dict_internal(start_stage,cache_dict,chrom_num_list,log_writer)
 def _cache_dict_fixup(cache_dict,chrom_list):
     #If a dictionary, then fix up the values. Else, fix up the value and create a dictionary.
     if isinstance(cache_dict, collections.Mapping):
-        return {k:FileCache._fixup(v,default_subfolder='single_snp_scale') for k,v in six.iteritems(cache_dict)}
+        return {k:FileCache._fixup(v,default_subfolder='single_snp_scale') for k,v in cache_dict.items()}
     else:
         cache_value = FileCache._fixup(cache_dict,default_subfolder='single_snp_scale')
         return {chrom:cache_value for chrom in [0]+chrom_list}

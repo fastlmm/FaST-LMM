@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 import gzip
 import bz2
-import six.moves.cPickle
+import pickle
 import time
 import os 
 import gc

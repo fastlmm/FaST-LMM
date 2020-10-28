@@ -59,7 +59,7 @@ from six.moves import range
 try:
     import queue
 except ImportError:  # pragma: no cover
-    import six.moves.queue as queue
+    import queue
 # pylint: enable=F0401
 import socket
 import sys

@@ -130,7 +130,7 @@ class NearBronze:
                     valueAndSnpList = bronzeChromToSortedValueAndSnpList.setdefault(chrom,[])
                     valueAndSnpList.append((value, snp))
         chromToSortedValuesAndSnps = {}
-        for chrom, valueAndSnpList in six.iteritems(bronzeChromToSortedValueAndSnpList):
+        for chrom, valueAndSnpList in bronzeChromToSortedValueAndSnpList.items():
             sortedList = sorted(valueAndSnpList,key=lambda valueAndSnp: valueAndSnp[0])
             sortedValues = [valueAndSnp[0] for valueAndSnp in sortedList]
             sortedSnps = [valueAndSnp[1] for valueAndSnp in sortedList]

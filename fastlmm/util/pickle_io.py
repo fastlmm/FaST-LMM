@@ -3,7 +3,7 @@ simple module to save and load compressed pickle files
 """
 
 from __future__ import absolute_import
-import six.moves.cPickle
+import pickle
 import bz2
 import sys
 
@@ -25,7 +25,7 @@ def save(filename, myobj):
         sys.stderr.write(details)
         return
  
-    six.moves.cPickle.dump(myobj, f, protocol=2)
+    pickle.dump(myobj, f, protocol=2)
     f.close()
  
  
@@ -45,7 +45,7 @@ def load(filename):
         sys.stderr.write(details)
         return
  
-    myobj = six.moves.cPickle.load(f)
+    myobj = pickle.load(f)
     f.close()
     return myobj
 
