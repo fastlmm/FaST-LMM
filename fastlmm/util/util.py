@@ -539,38 +539,6 @@ def _compute_x_positions_snps(positions, chromosome_starts):
         cumulative_pos[idx_chr] = positions[idx_chr][:,1] + chromosome_start[1]
     return cumulative_pos
 
-##!!! cmk move to PySnpTools (and next?)
-#_warn_array_module_once = False
-#def array_module_from_env(xp = None, device = None): #!!!cmk document this
-#    xp = xp or os.environ.get('ARRAY_MODULE','numpy')
-#    device = int(device or os.environ.get('GPU_INDEX','0'))
-
-#    if xp == 'numpy':
-#        xp = np
-#    elif xp == 'cupy':
-#        try:
-#            import cupy as cp
-#            xp = cp
-#        except ModuleNotFoundError as e:
-#            global _warn_array_module_once
-#            if not _warn_array_module_once:
-#                logging.warn(f"Using numpy. ({e})")
-#                _warn_array_module_once = True
-#            xp = np
-
-#    if isinstance(xp, ModuleType):
-#        if xp.__name__ == "cupy":
-#            xp.cuda.Device(device).use()
-#        return xp
-
-#    raise ValueError(f"Don't know ARRAY_MODULE '{xp}'")
-
-##!!!doc this
-## Turns either cupy array and numpy array into numpy array
-#def asnumpy(a):
-#    if isinstance(a, np.ndarray):
-#        return a
-#    return a.get()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)

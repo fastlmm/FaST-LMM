@@ -33,7 +33,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                  K1=None, mixing=None,
                  covar=None, covar_by_chrom=None, leave_out_one_chrom=True, output_file_name=None, h2=None, log_delta=None,
                  cache_file=None, GB_goal=None, interact_with_snp=None, force_full_rank=False, force_low_rank=False, G0=None, G1=None, runner=None,
-                 xp = None, #!!!!cmk add docs
+                 xp = None,
                  count_A1=None):
     """
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
@@ -128,6 +128,14 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     :param runner: a `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
         If not given, the function is run locally.
     :type runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
+
+    :param xp: The numpy-like module to use (optional), for example, 'numpy' (normal CPU-based module)
+               or 'cupy' (GPU-based module). If not given, will try to read
+               from the ARRAY_MODULE environment variable. If not given and ARRAY_MODULE is not set,
+               will use numpy. If 'cupy' is requested, will
+               try to 'import cupy'. If that import fails, will revert to numpy.
+    :type xp: string or Python module
+    :rtype: Python module
 
     :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
@@ -798,7 +806,7 @@ if __name__ == "__main__":
                     from pysnptools.snpreader import SnpGen
                     from pysnptools.util.mapreduce1.runner import LocalMultiProc
     
-                    snpgen = SnpGen(seed=seed,iid_count=iid_count,sid_count=sid_count,chrom_count=chrom_count,block_size=1000) #cmkbatch_sizeCreate an on-the-fly SNP generator
+                    snpgen = SnpGen(seed=seed,iid_count=iid_count,sid_count=sid_count,chrom_count=chrom_count,block_size=1000) # Create an on-the-fly SNP generator
                     snp_gen_runner = None#LocalMultiProc(5)
                     #Write random SNP data to a DistributedBed
                     test_snps = DistributedBed.write(test_snps_cache,snpgen,piece_per_chrom_count=piece_per_chrom_count,runner=snp_gen_runner)
@@ -832,12 +840,12 @@ if __name__ == "__main__":
                     print(f"{iid_count}\t{sid_count}\t{K0.sid_count}\t{every}\t{os.environ.get('MKL_NUM_THREADS',12)}\t{GB_goal}\t{leave_out_one_chrom}",end="")
                     #test_snps_cache = file_cache_top.join('testsnps_{0}_{1}_{2}_{3}'.format(seed,chrom_count,iid_count,sid_count))
                     #test_snps = DistributedBed(test_snps_cache)
-                    #K0 = test_snps[:,::every] #!!!cmk re-creating this as a way to close it aftter K0.sid_count
+                    #K0 = test_snps[:,::every] # re-creating this as a way to close it after K0.sid_count
                     for array_module_name in array_module_name_list: #
-                        #with patch.dict('os.environ', { #cmk is this the generator that pickle/dill don't like?
+                        #with patch.dict('os.environ', { #is this the generator that pickle/dill don't like?
                         #    'ARRAY_MODULE': array_module_name,
                         #    }
-                        #                ) as patched_environ: #!!!cmk make this a utility
+                        #                ) as patched_environ:
                             # There are multiple ways to limit the # of threads and they must be set before 'import np'
                             # See https://stackoverflow.com/questions/30791550/limit-number-of-threads-in-numpy
                             # Here we just spot check that one has been set as expected.
@@ -862,13 +870,13 @@ if __name__ == "__main__":
         results_dataframe = single_snp(test_snps=test_snps, pheno=pheno_fn, count_A1=False)
         print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
 
-    if False: #!!!cmk
+    if False:
 
         logging.basicConfig(level=logging.INFO)
         import doctest
 
         from unittest.mock import patch
-        with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as _: #!!!cmk make this a utility
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as _:
             doctest.testmod()
 
     if True:
@@ -951,7 +959,7 @@ if __name__ == "__main__":
         assert np.array_equal(G0.iid,covar.iid), "Expect matching iids"
         assert not np.any(np.isnan(covar.val))
         covar = np.c_[covar.val,np.ones((test_snps.iid_count, 1))]
-        y = Pheno(pheno_fn).read()#.standardize()       # defaults to Unit standardize #!!!cmk standardize needed?
+        y = Pheno(pheno_fn).read()
         assert np.array_equal(y.iid,G0.iid), "Expect matching iids"
         assert not np.any(np.isnan(y.val))
         y = y.val

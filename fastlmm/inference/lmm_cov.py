@@ -109,7 +109,7 @@ class LMM(object):
                 #was
                 logging.info("Starting SVD")
                 if self._xp is np:
-                    [self.U,self.S,V] = big_sdd(PxG) #destroys PxG, returns NxN, min, kxk
+                    [self.U,self.S,V] = big_sdd(PxG, work_around=True) #destroys PxG, returns NxN, min, kxk
                 else:
                     [self.U,self.S,V] = self._xp.linalg.svd(PxG,full_matrices=False,compute_uv=True) #, N x min, min, min x k
                 logging.info("Ending SVD")

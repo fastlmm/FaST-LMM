@@ -1,4 +1,4 @@
-#!!!cmk keep this file in project?
+#!!!cmk9 keep this file in project?
 
 # Don't import numpy until after threads are set
 import os
@@ -504,7 +504,7 @@ def test_case_def(test_case):
 
 
 def test_svd(size, which_list, threads=None):
-    #!!!cmk may want to play with "F" vs "C" order
+    # may want to play with "F" vs "C" order
     if threads is not None:
         os.environ["MKL_NUM_THREADS"] = str(threads)
     import numpy as np
@@ -526,14 +526,15 @@ def test_svd(size, which_list, threads=None):
         np.random.seed(0)
         a = np.random.randn(m_row, n_col).astype(
             np.float
-        )  #!!!cmk what's the "float about?"
+        )  # what's the "float about?"
         if which == "big_sdd":
             logging.info("doing large big_sdd")
             start_time = time.time()
             # _ = lapack_svd(np.array([[1],[-2],[3]],order="F"))
             ux, sx, vtx = big_sdd(
-                np.array(a, order="F")
-            )  #!!!cmk why not allow a copy if already in correct order? (see other code in single_snp)
+                np.array(a, order="F"),
+                work_around=True
+            ) 
             delta_time = time.time() - start_time
             logging.info(f"done with big_sdd {m_row}x{n_col} in time {delta_time}")
             Sx = np.zeros((m_row, n_col))

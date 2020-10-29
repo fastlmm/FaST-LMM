@@ -7,13 +7,19 @@ import numpy as np
 import datetime
 import fastlmm.util.matrix.cample as cample
 
-def big_sdd(a, work_around=True):
+def big_sdd(a, work_around=False):
+    """
+    About 'work_around':
+    When using both this function, which is defined in an MKL library and OpenBLAS functions there is an error.
+    That error goes away if the MKL-defined lapack_svd is called first. So, if work_around is true, we call
+    lapack_svd first on a tiny, tiny array.
+    """
     logging.info(f"Starting big_ssd with MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS','<none>')} and work_around={work_around}")
     if a.flags['C_CONTIGUOUS']:
         #Could use https://pypi.org/project/fastremap/ to avoid a copy
         a = np.require(a,requirements=['F'])
     assert a.flags['F_CONTIGUOUS'],"expect a to be order 'F'"
-    if work_around: #!!!cmk explain this
+    if work_around:
         _ = lapack_svd(np.array([[1],[-2],[3]],order="F"))
     minmn = min(a.shape[0],a.shape[1])
     s = np.zeros(minmn,order='F') #!!! empty faster than zero? (and also for the next items)
@@ -131,7 +137,7 @@ if __name__ == '__main__':
 
         min_row_col = min(m_row,n_col)
 
-        if False: #!!!cmk need to update or remove
+        if False:
             xp = array_module_from_env()
 
             cp_a = xp.asarray(a)
@@ -149,7 +155,7 @@ if __name__ == '__main__':
         if True:
             now = datetime.datetime.now()
             logging.info("doing large big_sdd")
-            ux, sx, vtx = big_sdd(np.array(a,order="F"))
+            ux, sx, vtx = big_sdd(np.array(a,order="F"), work_around=True)
             logging.info("done with big_sdd {0}x{1} in time {2}".format(m_row,n_col, datetime.datetime.now()-now))
             Sx = np.zeros((m_row,n_col))
             Sx[:min_row_col, :min_row_col] = np.diag(sx)
