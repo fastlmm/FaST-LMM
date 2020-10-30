@@ -443,3 +443,5 @@ runs/2020-10-19_23_36_31_7220435721406316/distributable.p
 runs/2020-10-19_23_40_12_9450337868273058/distributable.p
 runs/2020-10-19_23_37_58_6104741484993268/distributable.p
 /fastlmm/association/setup/.lambdalabs.sh
+/fastlmm/association/.working
+/tests/.working

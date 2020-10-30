@@ -3,8 +3,8 @@
 # Don't import numpy until after threads are set
 import os
 
-if True:
-    thread_count = 1
+if False:
+    thread_count = 12
     os.environ["MKL_NUM_THREADS"] = str(
         thread_count
     )  # Set this before numpy is imported
@@ -148,16 +148,22 @@ def one_experiment(
     return perf_result
 
 
-def snpsA(seed, iid_count, sid_count):
+def snpsA(seed, iid_count, sid_count, use_distributed):
     import numpy as np
     from pysnptools.snpreader import Bed
+    from pysnptools.snpreader import DistributedBed
     from pysnptools.snpreader import SnpGen
 
     chrom_count = 10
     global top_cache
-    test_snp_path = (
-        cache_top / f"snpsA_{seed}_{chrom_count}_{iid_count}_{sid_count}.bed"
-    )
+    if use_distributed:
+        test_snp_path = (
+            cache_top / f"snpsA_{seed}_{chrom_count}_{iid_count}_{sid_count}_db"
+        )
+    else:
+        test_snp_path = (
+            cache_top / f"snpsA_{seed}_{chrom_count}_{iid_count}_{sid_count}.bed"
+        )
     count_A1 = False
     if not test_snp_path.exists():
         snpgen = SnpGen(
@@ -167,11 +173,17 @@ def snpsA(seed, iid_count, sid_count):
             chrom_count=chrom_count,
             block_size=1000,
         )
-        test_snps = Bed.write(
-            str(test_snp_path), snpgen.read(dtype="float32"), count_A1=count_A1
-        )
+        if use_distributed:
+            test_snps = DistributedBed.write(str(test_snp_path), snpgen)
+        else:
+            test_snps = Bed.write(
+                str(test_snp_path), snpgen.read(dtype="float32"), count_A1=count_A1
+            )
     else:
-        test_snps = Bed(str(test_snp_path), count_A1=count_A1)
+        if use_distributed:
+            test_snps = DistributedBed(str(test_snp_path))
+        else:
+            test_snps = Bed(str(test_snp_path), count_A1=count_A1)
     from pysnptools.snpreader import SnpData
 
     np.random.seed(seed)
@@ -185,6 +197,7 @@ def snpsA(seed, iid_count, sid_count):
         sid=["covar1", "covar2"],
         val=np.random.randn(test_snps.iid_count, 2) * 2 - 3,
     )
+
     return test_snps, pheno, covar
 
 
@@ -349,39 +362,7 @@ def testX_exp_4x(K0_goal=500):
     pd_write(short_output_pattern, pref_list)
 
 
-def test_exp_3delme(K0_goal=500, leave_out_one_chrom=True):
-    short_output_pattern = f"exp3delme/exp_3delme_{K0_goal}_{'{0}'}.tsv"
 
-    # Set these as desired
-    os.environ["MKL_NUM_THREADS"] = "20"  # Set this before numpy is imported
-    seed = 1
-    iid_count = 10 * 1000  # number of individuals
-    sid_count = 50 * 1000  # number of SNPs
-
-    # Tune these
-
-    test_snps, pheno, covar = snpsA(seed, iid_count, sid_count)
-
-    pref_list = []
-    GB_goal = 2
-    for repeat_i in [1]:
-        for proc_count, use_gpu in [(10, False), (1, True)]:
-            logging.info(f"proc_count={proc_count},use_gpu={use_gpu}")
-            pref_list.append(
-                one_experiment(
-                    test_snps,
-                    K0_goal=K0_goal,
-                    seed=seed,
-                    phen=pheno,
-                    covar=covar,
-                    leave_out_one_chrom=leave_out_one_chrom,
-                    use_gpu=use_gpu,
-                    proc_count=proc_count,
-                    GB_goal=GB_goal,
-                )
-            )
-            pd_write(short_output_pattern + ".temp", pref_list)
-    pd_write(short_output_pattern, pref_list)
 
 
 def test_std():
@@ -422,6 +403,7 @@ def test_exp_4(
     just_one_process=False,
     force = None,
     two_ks = False,
+    use_distributed = False,
 ):
     short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
 
@@ -438,7 +420,7 @@ def test_exp_4(
 
     # Tune these
 
-    test_snps, pheno, covar = snpsA(seed, iid_count, sid_count)
+    test_snps, pheno, covar = snpsA(seed, iid_count, sid_count,use_distributed=use_distributed)
 
     proc_gpu_list = []
     if proc_count_only_cpu > 0:
@@ -600,29 +582,106 @@ def test_svd(size, which_list, threads=None):
         pd_write(short_output_pattern + ".temp", perf_list)
     pd_write(short_output_pattern, perf_list)
 
+def benchmark1():
+    #based on https://towardsdatascience.com/heres-how-to-use-cupy-to-make-numpy-700x-faster-4b920dda1f56
+    import numpy as np
+    import cupy as cp
+    import time
+
+    ### Numpy and CPU
+    s = time.time()
+    x_cpu = np.ones((500,1000,1000))
+    e = time.time()
+    print(e - s)
+
+    ### CuPy and GPU
+    s = time.time()
+    x_gpu = cp.ones((500,1000,1000))
+    #cp.cuda.Stream.null.synchronize()
+    e = time.time()
+    print(e - s)
+
+    ### Numpy and CPU
+    s = time.time()
+    x_cpu *= 5
+    e = time.time()
+    print(e - s)
+    ### CuPy and GPU
+    s = time.time()
+    x_gpu *= 5
+    cp.cuda.Stream.null.synchronize()
+    e = time.time()
+    print(e - s)
+
+    print("done")
+
+def benchmark2():
+    import time, numpy
+    #import cupy
+
+    def test1(xp,size,repeat):
+        a = xp.arange(size).reshape(1000, -1)
+        #cupy.cuda.runtime.deviceSynchronize()
+        t1 = time.time()
+        for index in range(repeat):
+            a = a.T * 2.5
+        #cupy.cuda.runtime.deviceSynchronize()
+        t2 = time.time()
+        diff = t2-t1
+        print(f"{repeat}x{size:,} {xp.__name__} {diff}")
+        return max(t2-t1,1e-16)
+
+    def test(xp,size,repeat):
+        a = xp.arange(size).reshape(1000, -1)
+        b = xp.arange(size).reshape(-1, 1000)
+        #cupy.cuda.runtime.deviceSynchronize()
+        t1 = time.time()
+        for index in range(repeat):
+            a = xp.dot(b,a)
+        #cupy.cuda.runtime.deviceSynchronize()
+        t2 = time.time()
+        diff = t2-t1
+        print(f"{repeat}x{size:,} {xp.__name__} {diff}")
+        return max(t2-t1,1e-16)
+
+
+    repeat = 50
+    for exp in range(6,9):
+        size = 10 ** exp
+        t_dict = {}
+        for xp in [numpy]:
+             t_dict[xp.__name__+"1st"] = test(xp,size,1) # Avoid first call overhead
+             t_dict[xp.__name__+"2nd"] = test(xp,size,1)
+        #print(f"{repeat}x{size:,} 1st:{t_dict['numpy1st']/t_dict['cupy1st']} 2nd:{t_dict['numpy2nd']/t_dict['cupy2nd']}")
+    # (’numpy’, 0.5105748176574707)
+    # (’cupy’, 0.08418107032775879)
+
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    test_case, iid_count, sid_count, K0_goal = test_case_def("f")
+    #test_case, iid_count, sid_count, K0_goal = test_case_def("d")
 
-    for two_ks in [False]:
-        for force in ["full_rank","low_rank"]:
-            test_exp_4(
-                GB_goal=4,
-                iid_count=iid_count,
-                K0_goal=K0_goal,
-                proc_count_only_cpu=0,
-                proc_count_with_gpu=0,
-                cpu_weight=4,
-                gpu_weight=3,
-                gpu_count=2,
-                num_threads=None,
-                leave_out_one_chrom=True,
-                just_one_process=True,
-                force = force,
-                two_ks = two_ks,
-        )
+    #for two_ks in [False]:
+    #    for force in ["full_rank","low_rank"]:
+    #        test_exp_4(
+    #            GB_goal=4,
+    #            iid_count=iid_count,
+    #            K0_goal=K0_goal,
+    #            proc_count_only_cpu=6,
+    #            proc_count_with_gpu=6,
+    #            cpu_weight=4,
+    #            gpu_weight=3,
+    #            gpu_count=2,
+    #            num_threads=None,
+    #            leave_out_one_chrom=True,
+    #            just_one_process=False,
+    #            force = force,
+    #            two_ks = two_ks,
+    #            use_distributed=True
+    #    )
 
-    # test_svd(3000, which_list=None)
+    benchmark2()
+
+    #test_svd(5_000,which_list=None)
 
