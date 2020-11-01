@@ -372,7 +372,7 @@ def test_std():
     iid_count = 2 * 1000
     sid_count = 50 * 1000  # number of SNPs
     test_snps, pheno, covar = snpsA(seed, iid_count, sid_count)
-    xp = pstutil.array_module_from_env("cupy")
+    xp = pstutil.array_module("cupy")
     print(xp.__name__)
     snps = xp.asarray(test_snps.read().val)
     stats = xp.empty(
@@ -616,6 +616,7 @@ def benchmark1():
     print("done")
 
 def benchmark2():
+    #Based on http://learningsys.org/nips17/assets/papers/paper_16.pdf
     import time, numpy
     #import cupy
 
@@ -624,7 +625,7 @@ def benchmark2():
         #cupy.cuda.runtime.deviceSynchronize()
         t1 = time.time()
         for index in range(repeat):
-            a = a.T * 2.5
+            a = a.T * 2
         #cupy.cuda.runtime.deviceSynchronize()
         t2 = time.time()
         diff = t2-t1
@@ -660,28 +661,29 @@ def benchmark2():
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    #test_case, iid_count, sid_count, K0_goal = test_case_def("d")
+    if True:
+        test_case, iid_count, sid_count, K0_goal = test_case_def("d")
 
-    #for two_ks in [False]:
-    #    for force in ["full_rank","low_rank"]:
-    #        test_exp_4(
-    #            GB_goal=4,
-    #            iid_count=iid_count,
-    #            K0_goal=K0_goal,
-    #            proc_count_only_cpu=6,
-    #            proc_count_with_gpu=6,
-    #            cpu_weight=4,
-    #            gpu_weight=3,
-    #            gpu_count=2,
-    #            num_threads=None,
-    #            leave_out_one_chrom=True,
-    #            just_one_process=False,
-    #            force = force,
-    #            two_ks = two_ks,
-    #            use_distributed=True
-    #    )
+        for two_ks in [False]:
+            for force in ["full_rank","low_rank"]:
+                test_exp_4(
+                    GB_goal=4,
+                    iid_count=iid_count,
+                    K0_goal=K0_goal,
+                    proc_count_only_cpu=0,
+                    proc_count_with_gpu=6,
+                    cpu_weight=4,
+                    gpu_weight=3,
+                    gpu_count=2,
+                    num_threads=None,
+                    leave_out_one_chrom=True,
+                    just_one_process=True, #!!!cmk
+                    force = force,
+                    two_ks = two_ks,
+                    use_distributed=True
+            )
 
-    benchmark2()
+    #benchmark2()
 
-    #test_svd(5_000,which_list=None)
+    #test_svd(3_000, which_list=None)
 

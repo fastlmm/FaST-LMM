@@ -161,7 +161,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
-    xp = pstutil.array_module_from_env(xp)
+    xp = pstutil.array_module(xp)
     with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
 
         assert test_snps is not None, "test_snps must be given as input"
@@ -198,7 +198,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                     input_files.append(Ki)
 
             def nested_closure(chrom):
-                xp = pstutil.array_module_from_env()
+                xp = pstutil.array_module()
                 test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
                 cache_file_chrom = None if cache_file is None else cache_file + ".{0}".format(chrom)
@@ -626,7 +626,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         return test_snps.sid_count * work_index // work_count
 
     def mapper_closure(work_index):
-        xp = pstutil.array_module_from_env()
+        xp = pstutil.array_module()
         if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
 
         do_work_time = time.time()
@@ -640,7 +640,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         else:
             val = xp.asarray(snps_read.val)
             statsx = xp.empty([val.shape[1],2],dtype=val.dtype,order="F" if val.flags["F_CONTIGUOUS"] else "C")
-            Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx,xp=xp)
+            Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx)
 
         if interact_with_snp is not None:
             variables_to_test = val * interact[:,xp.newaxis]

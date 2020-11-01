@@ -41,7 +41,7 @@ class LMM(object):
              regressX       : regress out covariates to speed up computations? (default: True)
              inplace        : set kernel without copying? (default: False)
         '''
-        self._xp = pstutil.array_module_from_env(xp)
+        self._xp = pstutil.array_module(xp)
         self.numcalls = 0
         self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first)
         self.forcefullrank = forcefullrank
@@ -866,7 +866,7 @@ class Linreg(object):
     def __init__(self, X=None, Xdagger=None, xp=None):
         self.N = 0
         self.setX(X=X, Xdagger=Xdagger)
-        self._xp = pstutil.array_module_from_env(xp)
+        self._xp = pstutil.array_module(xp)
 
         
     def setX(self, X=None, Xdagger=None):

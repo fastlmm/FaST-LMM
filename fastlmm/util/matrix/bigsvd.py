@@ -138,7 +138,7 @@ if __name__ == '__main__':
         min_row_col = min(m_row,n_col)
 
         if False:
-            xp = array_module_from_env()
+            xp = array_module()
 
             cp_a = xp.asarray(a)
 

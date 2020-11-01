@@ -110,39 +110,26 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
     return ata_piece
 
 def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=-1, force_python_only=False):
-    if force_python_only:
-        if False:
-            a=a_snp_mem_map.val
-            aTb = np.dot(a.T,b)
-            aaTb = b-np.dot(a,aTb)
-            return aTb, aaTb
-        else:
-            #xp = array_module_from_env()
-            #aTb = xp.zeros((a_snp_mem_map.sid_count,b.shape[1])) #b can be destroyed. Is everything is in best order, i.e. F vs C
-            #aaTb = b.copy()
-            #b_mem = xp.array(b,order="F") #!!! if we want this in "F" how about just creating that way instead of copying it
-            #with open(a_snp_mem_map.filename,"rb") as U_fp:
-            #    U_fp.seek(a_snp_mem_map.offset)
-            #    for i in range(a_snp_mem_map.sid_count):
-            #        a_mem = xp.fromfile(U_fp, dtype=np.float64, count=a_snp_mem_map.iid_count)
-            #        if log_frequency > 0 and i%log_frequency == 0:
-            #            logging.info("{0}/{1}".format(i,a_snp_mem_map.sid_count))
-            #        aTb[i,:] = xp.dot(a_mem,b_mem).asnumpy()
-            #        aaTb -= xp.dot(a_mem.reshape(-1,1),aTb[i:i+1,:])
-            #return aTb, aaTb
-            aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1])) #b can be destroyed. Is everything is in best order, i.e. F vs C
-            aaTb = b.copy()
-            b_mem = np.array(b,order="F") #!!! if we want this in "F" how about just creating that way instead of copying it
-            with open(a_snp_mem_map.filename,"rb") as U_fp:
-                U_fp.seek(a_snp_mem_map.offset)
-                for i in range(a_snp_mem_map.sid_count):
-                    a_mem = np.fromfile(U_fp, dtype=np.float64, count=a_snp_mem_map.iid_count)
-                    if log_frequency > 0 and i%log_frequency == 0:
-                        logging.info("{0}/{1}".format(i,a_snp_mem_map.sid_count))
-                    aTb[i,:] = np.dot(a_mem,b_mem)
-                    aaTb -= np.dot(a_mem.reshape(-1,1),aTb[i:i+1,:])
-            return aTb, aaTb
 
+    # Without memory efficiency
+    #   a=a_snp_mem_map.val
+    #   aTb = np.dot(a.T,b)
+    #   aaTb = b-np.dot(a,aTb)
+    #   return aTb, aaTb
+
+    if force_python_only:
+        aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1])) #b can be destroyed. Is everything is in best order, i.e. F vs C
+        aaTb = b.copy()
+        b_mem = np.array(b,order="F") #!!! if we want this in "F" how about just creating that way instead of copying it
+        with open(a_snp_mem_map.filename,"rb") as U_fp:
+            U_fp.seek(a_snp_mem_map.offset)
+            for i in range(a_snp_mem_map.sid_count):
+                a_mem = np.fromfile(U_fp, dtype=np.float64, count=a_snp_mem_map.iid_count)
+                if log_frequency > 0 and i%log_frequency == 0:
+                    logging.info("{0}/{1}".format(i,a_snp_mem_map.sid_count))
+                aTb[i,:] = np.dot(a_mem,b_mem)
+                aaTb -= np.dot(a_mem.reshape(-1,1),aTb[i:i+1,:])
+        return aTb, aaTb
     else:
         b1 = np.array(b,order="F")
         aTb = np.zeros((a_snp_mem_map.sid_count,b.shape[1]))
