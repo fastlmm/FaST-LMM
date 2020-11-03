@@ -134,6 +134,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                from the ARRAY_MODULE environment variable. If not given and ARRAY_MODULE is not set,
                will use numpy. If 'cupy' is requested, will
                try to 'import cupy'. If that import fails, will revert to numpy.
+               If two kernels are given, will ignore this and use 'numpy'
     :type xp: string or Python module
     :rtype: Python module
 
@@ -161,6 +162,9 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
+
+    if K1 or G1: #If 2nd kernel given, use numpy
+        xp = 'numpy'
     xp = pstutil.array_module(xp)
     with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
 

@@ -677,7 +677,7 @@ if __name__ == "__main__":
                     gpu_count=2,
                     num_threads=None,
                     leave_out_one_chrom=True,
-                    just_one_process=True, #!!!cmk
+                    just_one_process=False,
                     force = force,
                     two_ks = two_ks,
                     use_distributed=True
