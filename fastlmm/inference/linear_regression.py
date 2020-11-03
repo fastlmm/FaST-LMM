@@ -26,6 +26,7 @@ from fastlmm.inference import FastLMM
 from pysnptools.standardizer import Identity as StandardizerIdentity
 from scipy.stats import multivariate_normal
 from fastlmm.util.pickle_io import load, save
+from unittest.mock import patch
 
 # make FastLmm use this when there are no SNPs or K is Identity?
 class LinearRegression(object):
@@ -94,40 +95,42 @@ class LinearRegression(object):
 
         :rtype: self, the fitted Linear Regression predictor
         """
-        self.is_fitted = True
-        assert K0_train is None # could also accept that ID or no snps
-        assert K1_train is None # could also accept that ID or no snps
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        assert y is not None, "y must be given"
+            self.is_fitted = True
+            assert K0_train is None # could also accept that ID or no snps
+            assert K1_train is None # could also accept that ID or no snps
 
-        y = _pheno_fixup(y,count_A1=count_A1)
-        assert y.sid_count == 1, "Expect y to be just one variable"
-        X = _pheno_fixup(X, iid_if_none=y.iid,count_A1=count_A1)
+            assert y is not None, "y must be given"
 
-        X, y  = intersect_apply([X, y])
-        y = y.read()
-        X, covar_unit_trained = X.read().standardize(self.covariate_standardizer,return_trained=True)
+            y = _pheno_fixup(y,count_A1=count_A1)
+            assert y.sid_count == 1, "Expect y to be just one variable"
+            X = _pheno_fixup(X, iid_if_none=y.iid,count_A1=count_A1)
 
-        # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
-        X = SnpData(iid=X.iid,
-                                sid=FastLMM._new_snp_name(X),
-                                val=np.c_[X.val,np.ones((X.iid_count,1))])
+            X, y  = intersect_apply([X, y])
+            y = y.read()
+            X, covar_unit_trained = X.read().standardize(self.covariate_standardizer,return_trained=True)
+
+            # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
+            X = SnpData(iid=X.iid,
+                                    sid=FastLMM._new_snp_name(X),
+                                    val=np.c_[X.val,np.ones((X.iid_count,1))])
 
 
-        lsqSol = np.linalg.lstsq(X.val, y.val[:,0],rcond=-1)
-        bs=lsqSol[0] #weights
-        r2=lsqSol[1] #squared residuals
-        D=lsqSol[2]  #rank of design matrix
-        N=y.iid_count
+            lsqSol = np.linalg.lstsq(X.val, y.val[:,0],rcond=-1)
+            bs=lsqSol[0] #weights
+            r2=lsqSol[1] #squared residuals
+            D=lsqSol[2]  #rank of design matrix
+            N=y.iid_count
 
-        self.beta = bs
-        self.ssres = float(r2)
-        self.sstot = ((y.val-y.val.mean())**2).sum()
-        self.covar_unit_trained = covar_unit_trained
-        self.iid_count = X.iid_count
-        self.covar_sid = X.sid
-        self.pheno_sid = y.sid
-        return self
+            self.beta = bs
+            self.ssres = float(r2)
+            self.sstot = ((y.val-y.val.mean())**2).sum()
+            self.covar_unit_trained = covar_unit_trained
+            self.iid_count = X.iid_count
+            self.covar_sid = X.sid
+            self.pheno_sid = y.sid
+            return self
     
 
     def predict(self,X=None,K0_whole_test=None,K1_whole_test=None,iid_if_none=None,count_A1=None):
@@ -154,26 +157,26 @@ class LinearRegression(object):
 
         :rtype: A `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__ of the means and a :class:`KernelData` of the covariance
         """
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+            assert self.is_fitted, "Can only predict after predictor has been fitted"
+            assert K0_whole_test is None or isinstance(K0_whole_test,KernelIdentity) # could also accept no snps
+            assert K1_whole_test is None or isinstance(K1_whole_test,KernelIdentity) # could also accept no snps
 
-        assert self.is_fitted, "Can only predict after predictor has been fitted"
-        assert K0_whole_test is None or isinstance(K0_whole_test,KernelIdentity) # could also accept no snps
-        assert K1_whole_test is None or isinstance(K1_whole_test,KernelIdentity) # could also accept no snps
+            X = _pheno_fixup(X,iid_if_none=iid_if_none,count_A1=count_A1)
+            X = X.read().standardize(self.covar_unit_trained)
 
-        X = _pheno_fixup(X,iid_if_none=iid_if_none,count_A1=count_A1)
-        X = X.read().standardize(self.covar_unit_trained)
+            # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
+            X = SnpData(iid=X.iid,
+                                  sid=FastLMM._new_snp_name(X),
+                                  val=np.c_[X.read().val,np.ones((X.iid_count,1))])
+            assert np.array_equal(X.sid,self.covar_sid), "Expect covar sids to be the same in train and test."
 
-        # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
-        X = SnpData(iid=X.iid,
-                              sid=FastLMM._new_snp_name(X),
-                              val=np.c_[X.read().val,np.ones((X.iid_count,1))])
-        assert np.array_equal(X.sid,self.covar_sid), "Expect covar sids to be the same in train and test."
+            pheno_predicted = X.val.dot(self.beta).reshape(-1,1)
+            ret0 = SnpData(iid = X.iid, sid=self.pheno_sid,val=pheno_predicted,pos=np.array([[np.nan,np.nan,np.nan]]),name="linear regression Prediction") #!!!replace 'parent_string' with 'name'
 
-        pheno_predicted = X.val.dot(self.beta).reshape(-1,1)
-        ret0 = SnpData(iid = X.iid, sid=self.pheno_sid,val=pheno_predicted,pos=np.array([[np.nan,np.nan,np.nan]]),name="linear regression Prediction") #!!!replace 'parent_string' with 'name'
-
-        from pysnptools.kernelreader import KernelData
-        ret1 = KernelData(iid=X.iid,val=np.eye(X.iid_count)* self.ssres / self.iid_count)
-        return ret0, ret1
+            from pysnptools.kernelreader import KernelData
+            ret1 = KernelData(iid=X.iid,val=np.eye(X.iid_count)* self.ssres / self.iid_count)
+            return ret0, ret1
 
     def score(self, X=None, y=None, K0_whole_test=None, K1_whole_test=None, iid_if_none=None, return_mse_too=False, count_A1=None):
         """
@@ -206,19 +209,18 @@ class LinearRegression(object):
 
         :rtype: a float of the negative log likelihood and, optionally, a float of the mean squared error.
         """
-        mean0, covar0 = self.predict(K0_whole_test=K0_whole_test,K1_whole_test=K1_whole_test,X=X,iid_if_none=iid_if_none,count_A1=count_A1)
-        y = _pheno_fixup(y, iid_if_none=covar0.iid,count_A1=count_A1)
-        mean, covar, y = intersect_apply([mean0, covar0, y])
-        var = multivariate_normal(mean=mean.read(order='A',view_ok=True).val.reshape(-1), cov=covar.read(order='A',view_ok=True).val)
-        y_actual = y.read().val
-        nll = -np.log(var.pdf(y_actual.reshape(-1)))
-        if not return_mse_too:
-            return nll
-        else:
-            mse = ((y_actual-mean)**2).sum()
-            return nll, mse
-
-
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+            mean0, covar0 = self.predict(K0_whole_test=K0_whole_test,K1_whole_test=K1_whole_test,X=X,iid_if_none=iid_if_none,count_A1=count_A1)
+            y = _pheno_fixup(y, iid_if_none=covar0.iid,count_A1=count_A1)
+            mean, covar, y = intersect_apply([mean0, covar0, y])
+            var = multivariate_normal(mean=mean.read(order='A',view_ok=True).val.reshape(-1), cov=covar.read(order='A',view_ok=True).val)
+            y_actual = y.read().val
+            nll = -np.log(var.pdf(y_actual.reshape(-1)))
+            if not return_mse_too:
+                return nll
+            else:
+                mse = ((y_actual-mean)**2).sum()
+                return nll, mse
 
 
 

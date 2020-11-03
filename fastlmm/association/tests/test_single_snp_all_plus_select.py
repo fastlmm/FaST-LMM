@@ -5,6 +5,8 @@ import logging
 import unittest
 import doctest
 import os.path
+from unittest.mock import patch
+
 from pysnptools.snpreader import Bed, Pheno,SnpData
 from fastlmm.association import single_snp_all_plus_select,single_snp
 from fastlmm.feature_selection.test import TestFeatureSelection
@@ -126,44 +128,46 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             self.compare_files(results,"two")
 
     def test_old(self):
-        do_plot = False
-        from fastlmm.feature_selection.feature_selection_two_kernel import FeatureSelectionInSample
-        from pysnptools.util import intersect_apply
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        logging.info("TestSingleSnpAllPlusSelect test_old")
+            do_plot = False
+            from fastlmm.feature_selection.feature_selection_two_kernel import FeatureSelectionInSample
+            from pysnptools.util import intersect_apply
 
-        bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
-        pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
-        cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
+            logging.info("TestSingleSnpAllPlusSelect test_old")
 
-        #load data
-        ###################################################################
-        snp_reader = Bed(bed_fn,count_A1=False)
-        pheno = Pheno(pheno_fn)
-        cov = Pheno(cov_fn)
+            bed_fn = self.pythonpath + "/tests/datasets/synth/all.bed"
+            pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
+            cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
 
-        # intersect sample ids
-        snp_reader, pheno, cov = intersect_apply([snp_reader, pheno, cov])
+            #load data
+            ###################################################################
+            snp_reader = Bed(bed_fn,count_A1=False)
+            pheno = Pheno(pheno_fn)
+            cov = Pheno(cov_fn)
 
-        # read in snps
+            # intersect sample ids
+            snp_reader, pheno, cov = intersect_apply([snp_reader, pheno, cov])
 
-        # partition snps on chr5 vs rest
-        test_chr = 5
-        G0 = snp_reader[:,snp_reader.pos[:,0] != test_chr].read(order='C').standardize()
-        test_snps = snp_reader[:,snp_reader.pos[:,0] == test_chr].read(order='C').standardize()
+            # read in snps
+
+            # partition snps on chr5 vs rest
+            test_chr = 5
+            G0 = snp_reader[:,snp_reader.pos[:,0] != test_chr].read(order='C').standardize()
+            test_snps = snp_reader[:,snp_reader.pos[:,0] == test_chr].read(order='C').standardize()
 
 
-        y = pheno.read().val[:,0]
-        y -= y.mean()
-        y /= y.std()
+            y = pheno.read().val[:,0]
+            y -= y.mean()
+            y /= y.std()
 
-        # load covariates
-        X_cov = cov.read().val
-        X_cov.flags.writeable = False
+            # load covariates
+            X_cov = cov.read().val
+            X_cov.flags.writeable = False
 
-        # invoke feature selection to learn which SNPs to use to build G1
-        logging.info("running feature selection conditioned on background kernel")
-        # partition data into the first 50 SNPs on chr1 and all but chr1
+            # invoke feature selection to learn which SNPs to use to build G1
+            logging.info("running feature selection conditioned on background kernel")
+            # partition data into the first 50 SNPs on chr1 and all but chr1
 
         select = FeatureSelectionInSample(max_log_k=7, n_folds=7, order_by_lmm=True, measure="ll", random_state=42)
         best_k, feat_idx, best_mix, best_delta = select.run_select(G0.val, G0.val, y, cov=X_cov)    

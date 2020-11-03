@@ -6,8 +6,6 @@ Created on 2013-07-28
 """
 
 # std modules
-from __future__ import absolute_import
-from __future__ import print_function
 from collections import defaultdict
 import gzip
 import bz2
@@ -18,6 +16,7 @@ import gc
 import subprocess
 import sys
 import logging
+from unittest.mock import patch
 
 # common modules
 import scipy as sp
@@ -45,7 +44,6 @@ from fastlmm.feature_selection import PerformSelectionDistributable as psd
 from pysnptools.util.mapreduce1.runner import *
 from pysnptools.standardizer import Unit
 import pysnptools.snpreader as sr
-from six.moves import range
 
 class FeatureSelectionStrategy(object):
 
@@ -139,22 +137,24 @@ class FeatureSelectionStrategy(object):
 
 
     def run_once(self):
-        if (self._ran_once):
-            return
-        self._ran_once = True
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        # load data
-        self.load_data()
+            if (self._ran_once):
+                return
+            self._ran_once = True
 
-        # precompute kernel on all snps if needed
-        if self.num_pcs > 0 or self.biggest_k >= self.snpreader.sid_count:
-            from pysnptools.standardizer import Identity
-            self.K = self.G.kernel()
-            self.K.flags.writeable = False
+            # load data
+            self.load_data()
 
-        # optionally perform pca
-        if self.num_pcs > 0:
-            self.perform_pca()
+            # precompute kernel on all snps if needed
+            if self.num_pcs > 0 or self.biggest_k >= self.snpreader.sid_count:
+                from pysnptools.standardizer import Identity
+                self.K = self.G.kernel()
+                self.K.flags.writeable = False
+
+            # optionally perform pca
+            if self.num_pcs > 0:
+                self.perform_pca()
 
     def load_covariates(self, pheno):
         if self.cov_fn == None:
@@ -174,34 +174,34 @@ class FeatureSelectionStrategy(object):
     def load_data(self):
         """load data
         """
-
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
         
-        tt0 = time.time()
-        logging.info("loading data...")
+            tt0 = time.time()
+            logging.info("loading data...")
 
-        if self.num_snps_in_memory <= self.snpreader.iid_count : raise Exception("Expect self.num_snps_in_memory, {0} > self.snpreader.iid_count, {1}".format(self.num_snps_in_memory, self.total_num_ind))
+            if self.num_snps_in_memory <= self.snpreader.iid_count : raise Exception("Expect self.num_snps_in_memory, {0} > self.snpreader.iid_count, {1}".format(self.num_snps_in_memory, self.total_num_ind))
 
-        self.sid = pd.Series(self.snpreader.sid)
+            self.sid = pd.Series(self.snpreader.sid)
 
-        # load phenotype
-        pheno = pstpheno.loadOnePhen(self.pheno_fn,self.mpheno, vectorize=True)
-        self.ind_iid = pheno['iid'] #!!LATER: bug? It looks like we record the pre-intersect iids only to write out the pcs later? Why?
+            # load phenotype
+            pheno = pstpheno.loadOnePhen(self.pheno_fn,self.mpheno, vectorize=True)
+            self.ind_iid = pheno['iid'] #!!LATER: bug? It looks like we record the pre-intersect iids only to write out the pcs later? Why?
 
-        # load covariates
-        self.X, cov_iid = self.load_covariates(pheno)
+            # load covariates
+            self.X, cov_iid = self.load_covariates(pheno)
 
-        # Set up the snps
-        # G is the standardized snps. The GClass.factory will either load them into memory or will note their file and read them as needed.
-        self.G = GClass.factory(self.snpreader, self.num_snps_in_memory, self.standardizer, self.blocksize,count_A1=self.count_A1)
+            # Set up the snps
+            # G is the standardized snps. The GClass.factory will either load them into memory or will note their file and read them as needed.
+            self.G = GClass.factory(self.snpreader, self.num_snps_in_memory, self.standardizer, self.blocksize,count_A1=self.count_A1)
 
-        #!!LATER Should we give preference to self.G since reordering it is the most expensive?
-        (self.y, yiid), (self.X, xiid), self.G = pstutil.intersect_apply([(pheno['vals'], pheno['iid']), (self.X, cov_iid), self.G], sort_by_dataset=False)
+            #!!LATER Should we give preference to self.G since reordering it is the most expensive?
+            (self.y, yiid), (self.X, xiid), self.G = pstutil.intersect_apply([(pheno['vals'], pheno['iid']), (self.X, cov_iid), self.G], sort_by_dataset=False)
 
-        # make sure input data isn't modified
-        self.X.flags.writeable = False
-        self.y.flags.writeable = False
+            # make sure input data isn't modified
+            self.X.flags.writeable = False
+            self.y.flags.writeable = False
 
-        logging.info("...done. Loading time %.2f s" % (float(time.time() - tt0)))
+            logging.info("...done. Loading time %.2f s" % (float(time.time() - tt0)))
 
 
     def perform_pca(self):
@@ -373,16 +373,17 @@ class FeatureSelectionStrategy(object):
             list of ids of best snps (univariate selection done on whole data set using best_k, best_delta)
 
         """
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        self.biggest_k = max(k_values)
+            self.biggest_k = max(k_values)
         
-        if (strategy!="lmm_full_cv") and (strategy!="insample_cv"):
-            logging.warning("strategies other than lmm_full_cv and insample_cv are experimental!")
-            raise Exception("strategies other than lmm_full_cv and insample_cv are experimental!")
+            if (strategy!="lmm_full_cv") and (strategy!="insample_cv"):
+                logging.warning("strategies other than lmm_full_cv and insample_cv are experimental!")
+                raise Exception("strategies other than lmm_full_cv and insample_cv are experimental!")
 
-        perform_selection_distributable = psd.PerformSelectionDistributable(self, k_values, delta_values, strategy, output_prefix, select_by_ll, penalty=penalty,create_pdf=create_pdf)
-        result = runner.run(perform_selection_distributable)
-        return result
+            perform_selection_distributable = psd.PerformSelectionDistributable(self, k_values, delta_values, strategy, output_prefix, select_by_ll, penalty=penalty,create_pdf=create_pdf)
+            result = runner.run(perform_selection_distributable)
+            return result
 
     def copyinputs(self, copier):
         copier.input(self.snpreader)

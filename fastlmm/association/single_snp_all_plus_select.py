@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 import logging
 from fastlmm.association import single_snp
@@ -7,6 +5,7 @@ from sklearn.model_selection import KFold
 import pandas as pd
 import os
 import time
+from unittest.mock import patch
 
 import pysnptools.util as pstutil
 from pysnptools.standardizer import Unit
@@ -18,7 +17,6 @@ from fastlmm.inference import FastLMM
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
 from fastlmm.association.single_snp import _K_per_chrom
 from fastlmm.association import single_snp_linreg
-from six.moves import range
 
 #!!!move this
 class _SnpWholeWithTrain(KernelReader):
@@ -243,181 +241,182 @@ def single_snp_all_plus_select(test_snps, pheno, G=None, covar=None,
     null_9800 0.0793385 4
 
     """
+    with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-    #=================================================
-    # Start of definition of inner functions
-    #=================================================
-    def _best_snps_for_each_chrom(chrom_list, input_files, runner, G, n_folds, seed, pheno, covar, force_full_rank, force_low_rank, mixing, h2, k_list, GB_goal):
-        #logging.info("Doing GWAS_1K for each chrom and fold. Work_count={0}".format(len(chrom_list)*(n_folds+1)))
+        #=================================================
+        # Start of definition of inner functions
+        #=================================================
+        def _best_snps_for_each_chrom(chrom_list, input_files, runner, G, n_folds, seed, pheno, covar, force_full_rank, force_low_rank, mixing, h2, k_list, GB_goal):
+            #logging.info("Doing GWAS_1K for each chrom and fold. Work_count={0}".format(len(chrom_list)*(n_folds+1)))
 
-        max_k = int(max(k_list))
-        assert np.array_equal(G.iid,pheno.iid) and np.array_equal(G.iid,covar.iid), "real assert"
+            max_k = int(max(k_list))
+            assert np.array_equal(G.iid,pheno.iid) and np.array_equal(G.iid,covar.iid), "real assert"
 
-        def mapper_find_best_given_chrom(test_chr):
-            G_for_chrom = _K_per_chrom(G, test_chr, G.iid).snpreader
+            def mapper_find_best_given_chrom(test_chr):
+                G_for_chrom = _K_per_chrom(G, test_chr, G.iid).snpreader
     
-            def mapper_gather_lots(i_fold_and_pair):
-                i_fold, (train_idx, test_idx) = i_fold_and_pair
-                logging.info("Working on GWAS_1K and k search, chrom={0}, i_fold={1}".format(test_chr, i_fold))
+                def mapper_gather_lots(i_fold_and_pair):
+                    i_fold, (train_idx, test_idx) = i_fold_and_pair
+                    logging.info("Working on GWAS_1K and k search, chrom={0}, i_fold={1}".format(test_chr, i_fold))
 
-                G_train = G_for_chrom[train_idx,:]
+                    G_train = G_for_chrom[train_idx,:]
 
-                #Precompute whole x whole standardized on train
-                from fastlmm.association.single_snp import _internal_determine_block_size, _block_size_from_GB_goal
-                min_count = _internal_determine_block_size(G_for_chrom, None, None, force_full_rank, force_low_rank)
-                block_size = _block_size_from_GB_goal(GB_goal, G_for_chrom.iid_count, min_count)
-                K_whole_unittrain = _SnpWholeWithTrain(whole=G_for_chrom,train_idx=train_idx, standardizer=Unit(), block_size=block_size).read()
+                    #Precompute whole x whole standardized on train
+                    from fastlmm.association.single_snp import _internal_determine_block_size, _block_size_from_GB_goal
+                    min_count = _internal_determine_block_size(G_for_chrom, None, None, force_full_rank, force_low_rank)
+                    block_size = _block_size_from_GB_goal(GB_goal, G_for_chrom.iid_count, min_count)
+                    K_whole_unittrain = _SnpWholeWithTrain(whole=G_for_chrom,train_idx=train_idx, standardizer=Unit(), block_size=block_size).read()
 
-                assert np.array_equal(K_whole_unittrain.iid,G_for_chrom.iid),"real assert"
-                K_train = K_whole_unittrain[train_idx]
+                    assert np.array_equal(K_whole_unittrain.iid,G_for_chrom.iid),"real assert"
+                    K_train = K_whole_unittrain[train_idx]
                     
-                single_snp_result = single_snp(test_snps=G_train, K0=K_train, pheno=pheno, #iid intersection means when can give the whole covariate and pheno
-                             covar=covar, leave_out_one_chrom=False,
-                             GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank, mixing=mixing, h2=h2, count_A1=count_A1)
+                    single_snp_result = single_snp(test_snps=G_train, K0=K_train, pheno=pheno, #iid intersection means when can give the whole covariate and pheno
+                                 covar=covar, leave_out_one_chrom=False,
+                                 GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank, mixing=mixing, h2=h2, count_A1=count_A1)
 
-                is_all = (i_fold == n_folds) if n_folds > 1 else True
+                    is_all = (i_fold == n_folds) if n_folds > 1 else True
 
-                k_list_in =  [0] + [int(k) for k in k_list if 0 < k < len(single_snp_result)]
+                    k_list_in =  [0] + [int(k) for k in k_list if 0 < k < len(single_snp_result)]
 
-                if is_all:
-                    top_snps = list(single_snp_result.SNP[:max_k])
-                else:
-                    top_snps = None
+                    if is_all:
+                        top_snps = list(single_snp_result.SNP[:max_k])
+                    else:
+                        top_snps = None
 
-                if i_fold == n_folds:
-                    k_index_to_nLL = None
-                else:
-                    k_index_to_nLL = []
-                    for k in k_list_in:
-                        top_k = G_for_chrom[:,G_for_chrom.sid_to_index(single_snp_result.SNP[:k])]
-                        logging.info("Working on chr={0}, i_fold={1}, and K_{2}".format(test_chr,i_fold,k))
+                    if i_fold == n_folds:
+                        k_index_to_nLL = None
+                    else:
+                        k_index_to_nLL = []
+                        for k in k_list_in:
+                            top_k = G_for_chrom[:,G_for_chrom.sid_to_index(single_snp_result.SNP[:k])]
+                            logging.info("Working on chr={0}, i_fold={1}, and K_{2}".format(test_chr,i_fold,k))
 
-                        top_k_train = top_k[train_idx,:] if k > 0 else None
-                        fastlmm = FastLMM(force_full_rank=force_full_rank, force_low_rank=force_low_rank,GB_goal=GB_goal)
-                        fastlmm.fit(K0_train=K_train, K1_train=top_k_train, X=covar, y=pheno,mixing=mixing,h2raw=h2) #iid intersection means when can give the whole covariate and pheno
+                            top_k_train = top_k[train_idx,:] if k > 0 else None
+                            fastlmm = FastLMM(force_full_rank=force_full_rank, force_low_rank=force_low_rank,GB_goal=GB_goal)
+                            fastlmm.fit(K0_train=K_train, K1_train=top_k_train, X=covar, y=pheno,mixing=mixing,h2raw=h2) #iid intersection means when can give the whole covariate and pheno
     
-                        top_k_test = top_k[test_idx,:] if k > 0 else None
-                        K0_whole_test = K_whole_unittrain[:,test_idx]
-                        nLL = fastlmm.score(K0_whole_test=K0_whole_test,K1_whole_test=top_k_test,X=covar,y=pheno) #iid intersection means when can give the whole covariate and pheno
-                        k_index_to_nLL.append(nLL)
+                            top_k_test = top_k[test_idx,:] if k > 0 else None
+                            K0_whole_test = K_whole_unittrain[:,test_idx]
+                            nLL = fastlmm.score(K0_whole_test=K0_whole_test,K1_whole_test=top_k_test,X=covar,y=pheno) #iid intersection means when can give the whole covariate and pheno
+                            k_index_to_nLL.append(nLL)
 
-                if i_fold > 0:
-                    k_list_in = None
+                    if i_fold > 0:
+                        k_list_in = None
     
-                return k_list_in, top_snps, k_index_to_nLL
+                    return k_list_in, top_snps, k_index_to_nLL
 
-            def reducer_find_best(top_snps_and_k_index_to_nLL_sequence):
-                #Starts fold_index+all -> k_index -> nll
-                #Need:  k_index -> sum(fold_index -> nll)
+                def reducer_find_best(top_snps_and_k_index_to_nLL_sequence):
+                    #Starts fold_index+all -> k_index -> nll
+                    #Need:  k_index -> sum(fold_index -> nll)
 
-                k_index_to_sum_nll = None
-                top_snps_all = None
-                k_list_in_all = None
-                for i_fold, (k_list_in, top_snps, k_index_to_nLL) in enumerate(top_snps_and_k_index_to_nLL_sequence):
-                    if k_list_in is not None:
-                        assert k_list_in_all is None, "real assert"
-                        k_list_in_all = k_list_in
-                        k_index_to_sum_nll = np.zeros(len(k_list_in))
+                    k_index_to_sum_nll = None
+                    top_snps_all = None
+                    k_list_in_all = None
+                    for i_fold, (k_list_in, top_snps, k_index_to_nLL) in enumerate(top_snps_and_k_index_to_nLL_sequence):
+                        if k_list_in is not None:
+                            assert k_list_in_all is None, "real assert"
+                            k_list_in_all = k_list_in
+                            k_index_to_sum_nll = np.zeros(len(k_list_in))
 
-                    if top_snps is not None:
-                        assert top_snps_all is None, "real assert"
-                        top_snps_all = top_snps
+                        if top_snps is not None:
+                            assert top_snps_all is None, "real assert"
+                            top_snps_all = top_snps
 
-                    if k_index_to_nLL is not None:
-                        assert i_fold < n_folds or n_folds == 1, "real assert"
-                        for k_index, nLL in enumerate(k_index_to_nLL):
-                            k_index_to_sum_nll[k_index] += nLL
+                        if k_index_to_nLL is not None:
+                            assert i_fold < n_folds or n_folds == 1, "real assert"
+                            for k_index, nLL in enumerate(k_index_to_nLL):
+                                k_index_to_sum_nll[k_index] += nLL
 
-                #find best # top_snps
-                best_k = k_list_in_all[np.argmin(k_index_to_sum_nll)]
-                logging.info("For chrom={0}, best_k={1}".format(test_chr,best_k))
-                if do_plot: _nll_plot(k_list_in_all, k_index_to_sum_nll)
+                    #find best # top_snps
+                    best_k = k_list_in_all[np.argmin(k_index_to_sum_nll)]
+                    logging.info("For chrom={0}, best_k={1}".format(test_chr,best_k))
+                    if do_plot: _nll_plot(k_list_in_all, k_index_to_sum_nll)
 
-                #Return the top snps from all
-                result = top_snps_all[:best_k]
+                    #Return the top snps from all
+                    result = top_snps_all[:best_k]
+                    return result
+
+
+                i_fold_index_to_top_snps_and_k_index_to_nLL = map_reduce(
+                        _kfold(G_for_chrom.iid_count, n_folds, seed, end_with_all=True),
+                        mapper=mapper_gather_lots,
+                        reducer=reducer_find_best)
+                return i_fold_index_to_top_snps_and_k_index_to_nLL
+
+            chrom_index_to_best_sid = map_reduce(
+                    chrom_list,
+                    nested=mapper_find_best_given_chrom,
+                    input_files=input_files,
+                    name="best snps for each chrom",
+                    runner=runner)
+            return chrom_index_to_best_sid
+
+
+        def _gwas_2k_via_loo_chrom(test_snps, chrom_list, input_files, runner, G, chrom_index_to_best_sid, pheno, covar, force_full_rank, force_low_rank, mixing, h2, output_file_name, GB_goal):
+            logging.info("Doing GWAS_2K for each chrom. Work_count={0}".format(len(chrom_list)))
+
+            def mapper_single_snp_2K_given_chrom(test_chr):
+                logging.info("Working on chr={0}".format(test_chr))
+                test_snps_chrom = test_snps[:,test_snps.pos[:,0]==test_chr]
+                G_for_chrom = _K_per_chrom(G, test_chr, G.iid).snpreader
+                chrom_index = chrom_list.index(test_chr)
+                best_sid = chrom_index_to_best_sid[chrom_index]
+    
+                K1 = G_for_chrom[:,G_for_chrom.sid_to_index(best_sid)]
+                result = single_snp(test_snps=test_snps_chrom, K0=G_for_chrom, K1=K1, pheno=pheno,
+                            covar=covar, leave_out_one_chrom=False, 
+                            GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank,mixing=mixing,h2=h2,count_A1=count_A1)
                 return result
-
-
-            i_fold_index_to_top_snps_and_k_index_to_nLL = map_reduce(
-                    _kfold(G_for_chrom.iid_count, n_folds, seed, end_with_all=True),
-                    mapper=mapper_gather_lots,
-                    reducer=reducer_find_best)
-            return i_fold_index_to_top_snps_and_k_index_to_nLL
-
-        chrom_index_to_best_sid = map_reduce(
+    
+            def reducer_closure(frame_sequence): #!!!very similar code in single_snp
+                frame = pd.concat(frame_sequence)
+                frame.sort_values(by="PValue", inplace=True)
+                frame.index = np.arange(len(frame))
+                if output_file_name is not None:
+                    frame.to_csv(output_file_name, sep="\t", index=False)
+                logging.info("PhenotypeName\t{0}".format(pheno.sid[0]))
+                logging.info("SampleSize\t{0}".format(G.iid_count))
+                logging.info("SNPCount\t{0}".format(G.sid_count))
+    
+                return frame
+    
+    
+            frame = map_reduce(
                 chrom_list,
-                nested=mapper_find_best_given_chrom,
+                mapper=mapper_single_snp_2K_given_chrom,
+                reducer=reducer_closure,
                 input_files=input_files,
-                name="best snps for each chrom",
-                runner=runner)
-        return chrom_index_to_best_sid
-
-
-    def _gwas_2k_via_loo_chrom(test_snps, chrom_list, input_files, runner, G, chrom_index_to_best_sid, pheno, covar, force_full_rank, force_low_rank, mixing, h2, output_file_name, GB_goal):
-        logging.info("Doing GWAS_2K for each chrom. Work_count={0}".format(len(chrom_list)))
-
-        def mapper_single_snp_2K_given_chrom(test_chr):
-            logging.info("Working on chr={0}".format(test_chr))
-            test_snps_chrom = test_snps[:,test_snps.pos[:,0]==test_chr]
-            G_for_chrom = _K_per_chrom(G, test_chr, G.iid).snpreader
-            chrom_index = chrom_list.index(test_chr)
-            best_sid = chrom_index_to_best_sid[chrom_index]
-    
-            K1 = G_for_chrom[:,G_for_chrom.sid_to_index(best_sid)]
-            result = single_snp(test_snps=test_snps_chrom, K0=G_for_chrom, K1=K1, pheno=pheno,
-                        covar=covar, leave_out_one_chrom=False, 
-                        GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank,mixing=mixing,h2=h2,count_A1=count_A1)
-            return result
-    
-        def reducer_closure(frame_sequence): #!!!very similar code in single_snp
-            frame = pd.concat(frame_sequence)
-            frame.sort_values(by="PValue", inplace=True)
-            frame.index = np.arange(len(frame))
-            if output_file_name is not None:
-                frame.to_csv(output_file_name, sep="\t", index=False)
-            logging.info("PhenotypeName\t{0}".format(pheno.sid[0]))
-            logging.info("SampleSize\t{0}".format(G.iid_count))
-            logging.info("SNPCount\t{0}".format(G.sid_count))
-    
+                name="single_snp with two K's for all chroms",
+                runner=runner
+                )
             return frame
-    
-    
-        frame = map_reduce(
-            chrom_list,
-            mapper=mapper_single_snp_2K_given_chrom,
-            reducer=reducer_closure,
-            input_files=input_files,
-            name="single_snp with two K's for all chroms",
-            runner=runner
-            )
+
+        #=================================================
+        # End of definition of inner functions
+        #=================================================
+
+        #!!!code similar to single_snp
+        if force_full_rank and force_low_rank:
+            raise Exception("Can't force both full rank and low rank")
+        if k_list is None:
+            k_list = np.logspace(start=0, stop=13, num=14, base=2)
+
+        assert test_snps is not None, "test_snps must be given as input"
+        test_snps = _snps_fixup(test_snps,count_A1=count_A1)
+        G = _snps_fixup(G or test_snps,count_A1=count_A1)
+        pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
+        assert pheno.sid_count == 1, "Expect pheno to be just one variable"
+        pheno = pheno[(pheno.val==pheno.val)[:,0],:]
+        covar = _pheno_fixup(covar, iid_if_none=pheno.iid,count_A1=count_A1)
+        chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
+        G, test_snps, pheno, covar  = pstutil.intersect_apply([G, test_snps, pheno, covar])
+        common_input_files = [test_snps, G, pheno, covar]
+
+        chrom_index_to_best_sid = _best_snps_for_each_chrom(chrom_list, common_input_files, runner, G, n_folds, seed, pheno, covar, force_full_rank, force_low_rank, mixing, h2, k_list, GB_goal)
+
+        frame = _gwas_2k_via_loo_chrom(test_snps, chrom_list, common_input_files, runner, G, chrom_index_to_best_sid, pheno, covar, force_full_rank, force_low_rank, mixing, h2, output_file_name, GB_goal)
+
         return frame
-
-    #=================================================
-    # End of definition of inner functions
-    #=================================================
-
-    #!!!code similar to single_snp
-    if force_full_rank and force_low_rank:
-        raise Exception("Can't force both full rank and low rank")
-    if k_list is None:
-        k_list = np.logspace(start=0, stop=13, num=14, base=2)
-
-    assert test_snps is not None, "test_snps must be given as input"
-    test_snps = _snps_fixup(test_snps,count_A1=count_A1)
-    G = _snps_fixup(G or test_snps,count_A1=count_A1)
-    pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
-    assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-    pheno = pheno[(pheno.val==pheno.val)[:,0],:]
-    covar = _pheno_fixup(covar, iid_if_none=pheno.iid,count_A1=count_A1)
-    chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
-    G, test_snps, pheno, covar  = pstutil.intersect_apply([G, test_snps, pheno, covar])
-    common_input_files = [test_snps, G, pheno, covar]
-
-    chrom_index_to_best_sid = _best_snps_for_each_chrom(chrom_list, common_input_files, runner, G, n_folds, seed, pheno, covar, force_full_rank, force_low_rank, mixing, h2, k_list, GB_goal)
-
-    frame = _gwas_2k_via_loo_chrom(test_snps, chrom_list, common_input_files, runner, G, chrom_index_to_best_sid, pheno, covar, force_full_rank, force_low_rank, mixing, h2, output_file_name, GB_goal)
-
-    return frame
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARN) #Needs to be WARN and not INFO to stop Doctest from putting out extra messages.

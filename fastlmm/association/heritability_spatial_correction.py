@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -20,8 +18,7 @@ from pysnptools.standardizer import Unit
 import itertools
 from sklearn import model_selection
 from scipy import stats
-from six.moves import map
-from six.moves import range
+from unittest.mock import patch
 
 
 def _nth(iterable, n, default=None):
@@ -273,285 +270,286 @@ def heritability_spatial_correction(G_kernel, spatial_coor, spatial_iid, alpha_l
     :rtype: Pandas dataframe with one row per phenotype. Columns include "h2uncorr", "h2corr", etc.
 
     """
+    with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-    ######################
-    # Prepare the inputs
-    ######################
+        ######################
+        # Prepare the inputs
+        ######################
 
-    from fastlmm.inference.fastlmm_predictor import _kernel_fixup, _pheno_fixup
-    G_kernel = _kernel_fixup(G_kernel, iid_if_none=None, standardizer=Unit(),count_A1=count_A1)  # Create a kernel from an in-memory kernel, some snps, or a text file.
-    pheno = _pheno_fixup(pheno,iid_if_none=G_kernel.iid, missing='NA',count_A1=count_A1) # Create phenotype data from in-memory data or a text file.
+        from fastlmm.inference.fastlmm_predictor import _kernel_fixup, _pheno_fixup
+        G_kernel = _kernel_fixup(G_kernel, iid_if_none=None, standardizer=Unit(),count_A1=count_A1)  # Create a kernel from an in-memory kernel, some snps, or a text file.
+        pheno = _pheno_fixup(pheno,iid_if_none=G_kernel.iid, missing='NA',count_A1=count_A1) # Create phenotype data from in-memory data or a text file.
 
-    if cache_folder is not None:
-        pstutil.create_directory_if_necessary(cache_folder,isfile=False)
+        if cache_folder is not None:
+            pstutil.create_directory_if_necessary(cache_folder,isfile=False)
 
     
-    jackknife_seed = seed or 1954692566
-    permute_plus_seed = seed or 2372373100
-    permute_times_seed = seed or 2574440128
+        jackknife_seed = seed or 1954692566
+        permute_plus_seed = seed or 2372373100
+        permute_times_seed = seed or 2574440128
 
-    ######################
-    # Find 'alpha', the scale for distance
-    ######################
+        ######################
+        # Find 'alpha', the scale for distance
+        ######################
 
-    # create the alpha table (unless it is already there)
-    alpha_table_fn = "{0}/alpha_table.{1}.txt".format(cache_folder,pheno.sid_count) # create a name for the alpha_table cache file
-    phen_target_array = np.array(pheno.sid,dtype='str')
-    if cache_folder is not None and os.path.exists(alpha_table_fn):
-        alpha_table = pd.read_csv(alpha_table_fn, delimiter = '\t',index_col=False, comment=None)
-    else:
-        # create the list of arguments to run    
-        arg_list = []   
-        for phen_target in phen_target_array:
-            pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
-            for alpha in alpha_list:
-                            #pheno, G_kernel, spatial_coor, spatial_iid, alpha,     alpha_power,  (jackknife_index, jackknife_count, jackknife_seed),
-                arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power, (-1,     0,     None),  
-                             # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2,               a2
-                               (-1,     0,     None),                                       (-1,     0,     None),                                          just_testing, False,     True and allow_gxe2,   None)
-                arg_list.append(arg_tuple)
-
-        # Run "run_line" on each set of arguments and save to file
-        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
-        return_list = [line for line in return_list if line is not None] #Remove 'None' results
-        alpha_table = pd.DataFrame(return_list)
-        if cache_folder is not None:
-            _write_csv(alpha_table,False,alpha_table_fn)
-
-    # read the alpha table and find the best values
-    grouped = alpha_table.groupby("phen")
-    alpha_dict = {}
-    for phen, phen_table in grouped:
-        best_index_corr = phen_table['nLLcorr'].idxmin() # with Pandas, this returns the index in the parent table, not the group table
-        best_index_gxe2 = phen_table['nLL_gxe2'].idxmin() if allow_gxe2 else 0
-        alpha_corr = alpha_table.iloc[best_index_corr]['alpha']
-        alpha_gxe2 = alpha_table.iloc[best_index_gxe2]['alpha']
-        alpha_dict[phen] = alpha_corr, alpha_gxe2
-    logging.info(alpha_dict)
-
-
-    ######################
-    # Use jackknifing to compute h2uncorr, SE, h2corr, SE, e2, SE, gxe2, SE
-    ######################
-
-    jackknife_count_actual = min(jackknife_count,G_kernel.iid_count)
-
-    # Set up the run and do it (unless it has already been run)
-    jackknife_table_fn = "{0}/jackknife.{1}.count{2}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual)
-    if cache_folder is not None and os.path.exists(jackknife_table_fn):
-        jackknife_table = pd.read_csv(jackknife_table_fn, delimiter = '\t',index_col=False, comment=None)
-    else:
-        arg_list = []
-        for phen_target in phen_target_array:
-            pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
-            alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
-            alpha_set = set([alpha_corr, alpha_gxe2]) #If these are the same, then only need to do half the work
-            for alpha in alpha_set:
-                logging.debug(alpha)
-                do_uncorr = (alpha == alpha_corr)
-                do_gxe2   = (alpha == alpha_gxe2) and allow_gxe2
-                for jackknife in range(-1, jackknife_count_actual):
-                               # pheno, G_kernel, spatial_coor, spatial_iid, alpha,     alpha_power, (jackknife_index, jackknife_count,         jackknife_seed),
-                    arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power, (jackknife,       jackknife_count_actual,  jackknife_seed),
-                                    # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2, a2
-                                    (-1,0,None),                                                 (-1,0,None),                                                    just_testing, do_uncorr, do_gxe2, None)
-                    arg_list.append(arg_tuple)    
-
-        # Run "run_line" on each set of arguments and save to file
-        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
-        return_list = [line for line in return_list if line is not None] #Remove 'None' results
-        jackknife_table = pd.DataFrame(return_list)
-        if cache_folder is not None:
-            _write_csv(jackknife_table, False, jackknife_table_fn)
-
-
-    # get the real (that is, unjackknifed) values    
-    jackknife_table["diff"] = jackknife_table.h2uncorr-jackknife_table.h2corr # Compute the diff = h2uncorr-h2corr column
-    results_both = jackknife_table[jackknife_table.jackknife_index==-1]  # Create a table of the real (non-jackknifed) results for both alphas (which may be the same)
-    del results_both["jackknife_index"]
-    results_corr = results_both[results_both.alpha == [alpha_dict[phen][0] for phen in results_both.phen]] #Create version for g+e's alpha
-    results_gxe2 = results_both[results_both.alpha == [alpha_dict[phen][1] for phen in results_both.phen]] #Create version for gxe's alpha
-    #remove unwanted columns
-    for delcol in ["a2_gxe2","gxe2","nLL_gxe2","permute_plus_count","permute_plus_index","permute_plus_seed","permute_times_count","permute_times_index","permute_times_seed","jackknife_count","jackknife_seed"]:
-        del results_corr[delcol]
-    for delcol in ["a2","e2","h2corr","h2uncorr","nLLcorr","nLLuncorr","diff","permute_plus_count","permute_plus_index","permute_plus_seed","permute_times_count","permute_times_index","permute_times_seed","jackknife_count","jackknife_seed"]:
-        del results_gxe2[delcol]
-
-    if jackknife_count_actual > 0:
-        #Use a pivottable to compute the jackknifed SE's
-        corr_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][0] for phen in jackknife_table.phen])
-        jk_table_corr = pd.pivot_table(jackknife_table[corr_rows], values=['h2uncorr','h2corr','diff','e2'], index=['phen'], columns=[], aggfunc=np.std)
-        jk_table_corr["h2uncorr SE"] = jk_table_corr["h2uncorr"] * np.sqrt(jackknife_count_actual-1)
-        jk_table_corr["h2corr SE"] = jk_table_corr["h2corr"] * np.sqrt(jackknife_count_actual-1)
-        jk_table_corr["diff SE"] = jk_table_corr["diff"] * np.sqrt(jackknife_count_actual-1)
-        jk_table_corr["e2 SE"] = jk_table_corr["e2"] * np.sqrt(jackknife_count_actual-1)
-        del jk_table_corr["h2uncorr"]
-        del jk_table_corr["h2corr"]
-        del jk_table_corr["diff"]
-        del jk_table_corr["e2"]
-        gxe2_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][1] for phen in jackknife_table.phen])
-        jk_table_gxe2 = pd.pivot_table(jackknife_table[gxe2_rows], values=['gxe2'], index=['phen'], columns=[], aggfunc=np.std)
-        jk_table_gxe2["gxe2 SE"] = jk_table_gxe2["gxe2"] * np.sqrt(jackknife_count_actual-1)
-        del jk_table_gxe2["gxe2"]
-
-        #Join the SE's to the main results table
-        results_corr = results_corr.join(jk_table_corr, on='phen')
-        results_gxe2 = results_gxe2.join(jk_table_gxe2, on='phen')
-    else:
-        for col in ['h2uncorr SE','h2corr SE','diff SE','e2 SE']:
-            results_corr[col] = np.NaN
-        results_gxe2['gxe2 SE'] = np.NaN
-
-    #compute pValue columns
-    results_corr["P (diff=0)"] = stats.t.sf(results_corr["diff"]/results_corr["diff SE"],df=jackknife_count_actual-1)*2 #two sided
-    results_corr["from SE, one-sided, P (e2=0)"] = stats.t.sf(results_corr["e2"]/results_corr["e2 SE"],df=jackknife_count_actual-1)
-    results_gxe2["from SE, one-sided, P (gxe2=0)"] = stats.t.sf(results_gxe2["gxe2"]/results_gxe2["gxe2 SE"],df=jackknife_count_actual-1)   #one sided
-
-    if cache_folder is not None:
-        _write_csv(results_corr, False, "{0}/jackknife_corr_summary.{1}.jackknife{2}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual))
-        _write_csv(results_gxe2, False, "{0}/jackknife_gxe2_summary.{1}.jackknife{2}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual))
-
-
-    ######################
-    # compute p(e2=0) via permutation
-    ######################
-
-    permplus_table_fn = "{0}/permutation.GPlusE.{1}.count{2}.txt".format(cache_folder, pheno.sid_count, permute_plus_count)
-    if cache_folder is not None and os.path.exists(permplus_table_fn):
-        permplus_table = pd.read_csv(permplus_table_fn, delimiter = '\t',index_col=False, comment=None)
-    else:
-        arg_list = []
-        for phen_target in phen_target_array:
-            pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
-            alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
-            for jackknife_index in range(-1,permute_plus_count):
-                           # pheno, G_kernel, spatial_coor, spatial_iid, alpha,          alpha_power,    (jackknife_index, jackknife_count, jackknife_seed),
-                arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha_corr, alpha_power, (-1,0,None),
-                             # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2, a2
-                             (jackknife_index, permute_plus_count,permute_plus_seed),       (-1,0,None),                                                    just_testing, False,    False,    None)
-                arg_list.append(arg_tuple)
-
-        # Run "run_line" on each set of arguments and save to file
-        return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
-        return_list = [line for line in return_list if line is not None] #Remove 'None' results
-        permplus_table = pd.DataFrame(return_list)
-        if cache_folder is not None:
-            _write_csv(permplus_table, False, permplus_table_fn)
-
-
-    #Create a table of the real nLL for each pheno
-    real_result_permplus = permplus_table[permplus_table.permute_plus_index==-1][['phen','nLLcorr']]
-    real_result_permplus.rename(columns={'nLLcorr':'nLLcorr_real'},inplace=True)
-    real_result_permplus.set_index(['phen'],inplace=True)
-
-    # Create a table of the permutation runs and add the real nLL to each row
-    perm_table = permplus_table[permplus_table.permute_plus_index!=-1]
-    result = perm_table.join(real_result_permplus, on='phen')
-    result['P(e2)'] = [1.0 if b else 0.0 for b in result.nLLcorr <= result.nLLcorr_real] # create a column showing where the perm is better (or as good) as the real
-    # Use pivottable to find the fraction of of times when permutation is better
-    pivot_table_plus = pd.pivot_table(result, values=['P(e2)'], index=['phen'], columns=[], aggfunc=np.mean)
-    if cache_folder is not None:
-        summary_permplus_table_fn = "{0}/summary.permutation.GPlusE.{1}.count{2}.txt".format(cache_folder, pheno.sid_count, permute_plus_count)
-        _write_csv(pivot_table_plus, True, summary_permplus_table_fn)
-
-    ################################################
-    # compute p(gxe2=0) via permutation
-    ################################################
-
-    #Only process phenos for which gxe2 is not 0
-    nonzero = set(results_gxe2[results_gxe2.gxe2 !=0].phen)
-    permtimes_phenotypes = set(phen_target_array) & nonzero #intersection
-    permtimes_table_list = []
-    for phen_target in permtimes_phenotypes:
-        permtimes_table_fn = "{0}/permutation.GxE/{1}.count{2}.txt".format(cache_folder, phen_target, permute_times_count)
-
-        if cache_folder is not None and os.path.exists(permtimes_table_fn):
-            permtime_results = pd.read_csv(permtimes_table_fn, delimiter = '\t',index_col=False, comment=None)
+        # create the alpha table (unless it is already there)
+        alpha_table_fn = "{0}/alpha_table.{1}.txt".format(cache_folder,pheno.sid_count) # create a name for the alpha_table cache file
+        phen_target_array = np.array(pheno.sid,dtype='str')
+        if cache_folder is not None and os.path.exists(alpha_table_fn):
+            alpha_table = pd.read_csv(alpha_table_fn, delimiter = '\t',index_col=False, comment=None)
         else:
-            arg_list = []
-            pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
-            alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
-            a2 = float(permplus_table[permplus_table.phen==phen_target][permplus_table.permute_plus_index == -1]['a2'])
-            for permute_index in range(-1,permute_times_count):
-                           # pheno, G_kernel, spatial_coor, spatial_iid, alpha,          alpha_powerm (permute_index, permute_count, permute_seed),
-                arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha_gxe2, alpha_power, (-1,0,None),
-                             # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2, a2
-                            (-1,0,None),                                                    (permute_index, permute_times_count,permute_times_seed),        just_testing, False,     allow_gxe2,    a2)
-                arg_list.append(arg_tuple)    
+            # create the list of arguments to run    
+            arg_list = []   
+            for phen_target in phen_target_array:
+                pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
+                for alpha in alpha_list:
+                                #pheno, G_kernel, spatial_coor, spatial_iid, alpha,     alpha_power,  (jackknife_index, jackknife_count, jackknife_seed),
+                    arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power, (-1,     0,     None),  
+                                 # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2,               a2
+                                   (-1,     0,     None),                                       (-1,     0,     None),                                          just_testing, False,     True and allow_gxe2,   None)
+                    arg_list.append(arg_tuple)
 
             # Run "run_line" on each set of arguments and save to file
             return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
             return_list = [line for line in return_list if line is not None] #Remove 'None' results
-            permtime_results = pd.DataFrame(return_list)
+            alpha_table = pd.DataFrame(return_list)
             if cache_folder is not None:
-                pstutil.create_directory_if_necessary(permtimes_table_fn)
-                _write_csv(permtime_results,False,permtimes_table_fn)
-        permtimes_table_list.append(permtime_results)
+                _write_csv(alpha_table,False,alpha_table_fn)
 
-    if permtimes_table_list: #not empty
-        permtimes_table = pd.concat(permtimes_table_list)
-        logging.info(permtimes_table.head())
+        # read the alpha table and find the best values
+        grouped = alpha_table.groupby("phen")
+        alpha_dict = {}
+        for phen, phen_table in grouped:
+            best_index_corr = phen_table['nLLcorr'].idxmin() # with Pandas, this returns the index in the parent table, not the group table
+            best_index_gxe2 = phen_table['nLL_gxe2'].idxmin() if allow_gxe2 else 0
+            alpha_corr = alpha_table.iloc[best_index_corr]['alpha']
+            alpha_gxe2 = alpha_table.iloc[best_index_gxe2]['alpha']
+            alpha_dict[phen] = alpha_corr, alpha_gxe2
+        logging.info(alpha_dict)
+
+
+        ######################
+        # Use jackknifing to compute h2uncorr, SE, h2corr, SE, e2, SE, gxe2, SE
+        ######################
+
+        jackknife_count_actual = min(jackknife_count,G_kernel.iid_count)
+
+        # Set up the run and do it (unless it has already been run)
+        jackknife_table_fn = "{0}/jackknife.{1}.count{2}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual)
+        if cache_folder is not None and os.path.exists(jackknife_table_fn):
+            jackknife_table = pd.read_csv(jackknife_table_fn, delimiter = '\t',index_col=False, comment=None)
+        else:
+            arg_list = []
+            for phen_target in phen_target_array:
+                pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
+                alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
+                alpha_set = set([alpha_corr, alpha_gxe2]) #If these are the same, then only need to do half the work
+                for alpha in alpha_set:
+                    logging.debug(alpha)
+                    do_uncorr = (alpha == alpha_corr)
+                    do_gxe2   = (alpha == alpha_gxe2) and allow_gxe2
+                    for jackknife in range(-1, jackknife_count_actual):
+                                   # pheno, G_kernel, spatial_coor, spatial_iid, alpha,     alpha_power, (jackknife_index, jackknife_count,         jackknife_seed),
+                        arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha, alpha_power, (jackknife,       jackknife_count_actual,  jackknife_seed),
+                                        # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2, a2
+                                        (-1,0,None),                                                 (-1,0,None),                                                    just_testing, do_uncorr, do_gxe2, None)
+                        arg_list.append(arg_tuple)    
+
+            # Run "run_line" on each set of arguments and save to file
+            return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
+            return_list = [line for line in return_list if line is not None] #Remove 'None' results
+            jackknife_table = pd.DataFrame(return_list)
+            if cache_folder is not None:
+                _write_csv(jackknife_table, False, jackknife_table_fn)
+
+
+        # get the real (that is, unjackknifed) values    
+        jackknife_table["diff"] = jackknife_table.h2uncorr-jackknife_table.h2corr # Compute the diff = h2uncorr-h2corr column
+        results_both = jackknife_table[jackknife_table.jackknife_index==-1]  # Create a table of the real (non-jackknifed) results for both alphas (which may be the same)
+        del results_both["jackknife_index"]
+        results_corr = results_both[results_both.alpha == [alpha_dict[phen][0] for phen in results_both.phen]] #Create version for g+e's alpha
+        results_gxe2 = results_both[results_both.alpha == [alpha_dict[phen][1] for phen in results_both.phen]] #Create version for gxe's alpha
+        #remove unwanted columns
+        for delcol in ["a2_gxe2","gxe2","nLL_gxe2","permute_plus_count","permute_plus_index","permute_plus_seed","permute_times_count","permute_times_index","permute_times_seed","jackknife_count","jackknife_seed"]:
+            del results_corr[delcol]
+        for delcol in ["a2","e2","h2corr","h2uncorr","nLLcorr","nLLuncorr","diff","permute_plus_count","permute_plus_index","permute_plus_seed","permute_times_count","permute_times_index","permute_times_seed","jackknife_count","jackknife_seed"]:
+            del results_gxe2[delcol]
+
+        if jackknife_count_actual > 0:
+            #Use a pivottable to compute the jackknifed SE's
+            corr_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][0] for phen in jackknife_table.phen])
+            jk_table_corr = pd.pivot_table(jackknife_table[corr_rows], values=['h2uncorr','h2corr','diff','e2'], index=['phen'], columns=[], aggfunc=np.std)
+            jk_table_corr["h2uncorr SE"] = jk_table_corr["h2uncorr"] * np.sqrt(jackknife_count_actual-1)
+            jk_table_corr["h2corr SE"] = jk_table_corr["h2corr"] * np.sqrt(jackknife_count_actual-1)
+            jk_table_corr["diff SE"] = jk_table_corr["diff"] * np.sqrt(jackknife_count_actual-1)
+            jk_table_corr["e2 SE"] = jk_table_corr["e2"] * np.sqrt(jackknife_count_actual-1)
+            del jk_table_corr["h2uncorr"]
+            del jk_table_corr["h2corr"]
+            del jk_table_corr["diff"]
+            del jk_table_corr["e2"]
+            gxe2_rows = np.logical_and(jackknife_table.jackknife_index!=-1,jackknife_table.alpha==[alpha_dict[phen][1] for phen in jackknife_table.phen])
+            jk_table_gxe2 = pd.pivot_table(jackknife_table[gxe2_rows], values=['gxe2'], index=['phen'], columns=[], aggfunc=np.std)
+            jk_table_gxe2["gxe2 SE"] = jk_table_gxe2["gxe2"] * np.sqrt(jackknife_count_actual-1)
+            del jk_table_gxe2["gxe2"]
+
+            #Join the SE's to the main results table
+            results_corr = results_corr.join(jk_table_corr, on='phen')
+            results_gxe2 = results_gxe2.join(jk_table_gxe2, on='phen')
+        else:
+            for col in ['h2uncorr SE','h2corr SE','diff SE','e2 SE']:
+                results_corr[col] = np.NaN
+            results_gxe2['gxe2 SE'] = np.NaN
+
+        #compute pValue columns
+        results_corr["P (diff=0)"] = stats.t.sf(results_corr["diff"]/results_corr["diff SE"],df=jackknife_count_actual-1)*2 #two sided
+        results_corr["from SE, one-sided, P (e2=0)"] = stats.t.sf(results_corr["e2"]/results_corr["e2 SE"],df=jackknife_count_actual-1)
+        results_gxe2["from SE, one-sided, P (gxe2=0)"] = stats.t.sf(results_gxe2["gxe2"]/results_gxe2["gxe2 SE"],df=jackknife_count_actual-1)   #one sided
+
+        if cache_folder is not None:
+            _write_csv(results_corr, False, "{0}/jackknife_corr_summary.{1}.jackknife{2}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual))
+            _write_csv(results_gxe2, False, "{0}/jackknife_gxe2_summary.{1}.jackknife{2}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual))
+
+
+        ######################
+        # compute p(e2=0) via permutation
+        ######################
+
+        permplus_table_fn = "{0}/permutation.GPlusE.{1}.count{2}.txt".format(cache_folder, pheno.sid_count, permute_plus_count)
+        if cache_folder is not None and os.path.exists(permplus_table_fn):
+            permplus_table = pd.read_csv(permplus_table_fn, delimiter = '\t',index_col=False, comment=None)
+        else:
+            arg_list = []
+            for phen_target in phen_target_array:
+                pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
+                alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
+                for jackknife_index in range(-1,permute_plus_count):
+                               # pheno, G_kernel, spatial_coor, spatial_iid, alpha,          alpha_power,    (jackknife_index, jackknife_count, jackknife_seed),
+                    arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha_corr, alpha_power, (-1,0,None),
+                                 # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2, a2
+                                 (jackknife_index, permute_plus_count,permute_plus_seed),       (-1,0,None),                                                    just_testing, False,    False,    None)
+                    arg_list.append(arg_tuple)
+
+            # Run "run_line" on each set of arguments and save to file
+            return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
+            return_list = [line for line in return_list if line is not None] #Remove 'None' results
+            permplus_table = pd.DataFrame(return_list)
+            if cache_folder is not None:
+                _write_csv(permplus_table, False, permplus_table_fn)
+
 
         #Create a table of the real nLL for each pheno
-        real_result_permtimes = permtimes_table[permtimes_table.permute_times_index==-1][['phen','nLL_gxe2']]
-        real_result_permtimes.rename(columns={'nLL_gxe2':'nLL_gxe2_real'},inplace=True)
-        real_result_permtimes.set_index(['phen'],inplace=True)
+        real_result_permplus = permplus_table[permplus_table.permute_plus_index==-1][['phen','nLLcorr']]
+        real_result_permplus.rename(columns={'nLLcorr':'nLLcorr_real'},inplace=True)
+        real_result_permplus.set_index(['phen'],inplace=True)
 
-        # Create a table of the permutation runs and add the real nLL to reach row
-        summary_permtimes_table_fn = "{0}/summary.permutation.GxE.{1}.count{2}.txt".format(cache_folder,len(permtimes_phenotypes), permute_times_count)
-
-        perm_table = permtimes_table[permtimes_table.permute_times_index!=-1]
-        resultx = perm_table.join(real_result_permtimes, on='phen')
-        resultx['P(gxe2)'] = [1.0 if b else 0.0 for b in resultx.nLL_gxe2 <= resultx.nLL_gxe2_real] # create a column showing where the perm is better (or as good) as the real
-        # Use pivottable to find the fraction of times when permutation is better
-        pivot_table_times = pd.pivot_table(resultx, values=['P(gxe2)'], index=['phen'], columns=[], aggfunc=np.mean)
+        # Create a table of the permutation runs and add the real nLL to each row
+        perm_table = permplus_table[permplus_table.permute_plus_index!=-1]
+        result = perm_table.join(real_result_permplus, on='phen')
+        result['P(e2)'] = [1.0 if b else 0.0 for b in result.nLLcorr <= result.nLLcorr_real] # create a column showing where the perm is better (or as good) as the real
+        # Use pivottable to find the fraction of of times when permutation is better
+        pivot_table_plus = pd.pivot_table(result, values=['P(e2)'], index=['phen'], columns=[], aggfunc=np.mean)
         if cache_folder is not None:
-            _write_csv(pivot_table_times,True,summary_permtimes_table_fn)
+            summary_permplus_table_fn = "{0}/summary.permutation.GPlusE.{1}.count{2}.txt".format(cache_folder, pheno.sid_count, permute_plus_count)
+            _write_csv(pivot_table_plus, True, summary_permplus_table_fn)
+
+        ################################################
+        # compute p(gxe2=0) via permutation
+        ################################################
+
+        #Only process phenos for which gxe2 is not 0
+        nonzero = set(results_gxe2[results_gxe2.gxe2 !=0].phen)
+        permtimes_phenotypes = set(phen_target_array) & nonzero #intersection
+        permtimes_table_list = []
+        for phen_target in permtimes_phenotypes:
+            permtimes_table_fn = "{0}/permutation.GxE/{1}.count{2}.txt".format(cache_folder, phen_target, permute_times_count)
+
+            if cache_folder is not None and os.path.exists(permtimes_table_fn):
+                permtime_results = pd.read_csv(permtimes_table_fn, delimiter = '\t',index_col=False, comment=None)
+            else:
+                arg_list = []
+                pheno_one = pheno[:,pheno.col_to_index([phen_target])] # Look at only this pheno_target
+                alpha_corr, alpha_gxe2 = alpha_dict[phen_target]
+                a2 = float(permplus_table[permplus_table.phen==phen_target][permplus_table.permute_plus_index == -1]['a2'])
+                for permute_index in range(-1,permute_times_count):
+                               # pheno, G_kernel, spatial_coor, spatial_iid, alpha,          alpha_powerm (permute_index, permute_count, permute_seed),
+                    arg_tuple = (pheno_one, G_kernel, spatial_coor, spatial_iid, alpha_gxe2, alpha_power, (-1,0,None),
+                                 # (permute_plus_index, permute_plus_count, permute_plus_seed), (permute_times_index, permute_times_count, permute_times_seed) ,just_testing, do_uncorr, do_gxe2, a2
+                                (-1,0,None),                                                    (permute_index, permute_times_count,permute_times_seed),        just_testing, False,     allow_gxe2,    a2)
+                    arg_list.append(arg_tuple)    
+
+                # Run "run_line" on each set of arguments and save to file
+                return_list = map_function(work_item, arg_list) if len(arg_list)>1 or always_remote else list(map(work_item, arg_list))
+                return_list = [line for line in return_list if line is not None] #Remove 'None' results
+                permtime_results = pd.DataFrame(return_list)
+                if cache_folder is not None:
+                    pstutil.create_directory_if_necessary(permtimes_table_fn)
+                    _write_csv(permtime_results,False,permtimes_table_fn)
+            permtimes_table_list.append(permtime_results)
+
+        if permtimes_table_list: #not empty
+            permtimes_table = pd.concat(permtimes_table_list)
+            logging.info(permtimes_table.head())
+
+            #Create a table of the real nLL for each pheno
+            real_result_permtimes = permtimes_table[permtimes_table.permute_times_index==-1][['phen','nLL_gxe2']]
+            real_result_permtimes.rename(columns={'nLL_gxe2':'nLL_gxe2_real'},inplace=True)
+            real_result_permtimes.set_index(['phen'],inplace=True)
+
+            # Create a table of the permutation runs and add the real nLL to reach row
+            summary_permtimes_table_fn = "{0}/summary.permutation.GxE.{1}.count{2}.txt".format(cache_folder,len(permtimes_phenotypes), permute_times_count)
+
+            perm_table = permtimes_table[permtimes_table.permute_times_index!=-1]
+            resultx = perm_table.join(real_result_permtimes, on='phen')
+            resultx['P(gxe2)'] = [1.0 if b else 0.0 for b in resultx.nLL_gxe2 <= resultx.nLL_gxe2_real] # create a column showing where the perm is better (or as good) as the real
+            # Use pivottable to find the fraction of times when permutation is better
+            pivot_table_times = pd.pivot_table(resultx, values=['P(gxe2)'], index=['phen'], columns=[], aggfunc=np.mean)
+            if cache_folder is not None:
+                _write_csv(pivot_table_times,True,summary_permtimes_table_fn)
 
 
-    #######################
-    # Create final table of results by combining the summary tables
-    #######################
+        #######################
+        # Create final table of results by combining the summary tables
+        #######################
 
-    #Rename some columns
-    results_corr.rename(columns={"h2uncorr SE":"SE (h2uncorr)","h2corr SE":"SE (h2corr)","e2 SE":"SE (e2)"}, inplace=True)
+        #Rename some columns
+        results_corr.rename(columns={"h2uncorr SE":"SE (h2uncorr)","h2corr SE":"SE (h2corr)","e2 SE":"SE (e2)"}, inplace=True)
 
-    #Rename some columns and join results
-    results_gxe2.rename(columns={"alpha":"alpha_gxe2","gxe2 SE":"SE (gxe2)","h2corr_raw":"h2corr_raw_gxe2"}, inplace=True)
-    del results_gxe2['alpha_power']
-    results_gxe2.set_index(["phen"],inplace=True)
-    final0 = results_corr.join(results_gxe2, on='phen')
+        #Rename some columns and join results
+        results_gxe2.rename(columns={"alpha":"alpha_gxe2","gxe2 SE":"SE (gxe2)","h2corr_raw":"h2corr_raw_gxe2"}, inplace=True)
+        del results_gxe2['alpha_power']
+        results_gxe2.set_index(["phen"],inplace=True)
+        final0 = results_corr.join(results_gxe2, on='phen')
 
-    #Rename some columns and join results
-    pivot_table_plus.rename(columns={"P(e2)":"P(e2=0)"}, inplace=True)
-    if len(pivot_table_plus)>0:
-        final1 = final0.join(pivot_table_plus, on='phen')
-    else:
-        final1 = final0.copy()
-        final1['P(e2=0)'] = np.NaN
+        #Rename some columns and join results
+        pivot_table_plus.rename(columns={"P(e2)":"P(e2=0)"}, inplace=True)
+        if len(pivot_table_plus)>0:
+            final1 = final0.join(pivot_table_plus, on='phen')
+        else:
+            final1 = final0.copy()
+            final1['P(e2=0)'] = np.NaN
 
-    #Rename some columns and join results
-    if permtimes_table_list and len(pivot_table_times)>0: #not empty
-        pivot_table_times.rename(columns={"P(gxe2)":"P(gxe2=0)"}, inplace=True)
-        final2 = final1.join(pivot_table_times, on='phen')
-    else:
-        final2 = final1.copy()
-        final2["P(gxe2=0)"] = np.nan
+        #Rename some columns and join results
+        if permtimes_table_list and len(pivot_table_times)>0: #not empty
+            pivot_table_times.rename(columns={"P(gxe2)":"P(gxe2=0)"}, inplace=True)
+            final2 = final1.join(pivot_table_times, on='phen')
+        else:
+            final2 = final1.copy()
+            final2["P(gxe2=0)"] = np.nan
 
-    #Rename 'phen' and select final columns
-    final2.rename(columns={"phen":"phenotype"}, inplace=True)
-    final3 = final2[["phenotype","h2uncorr","SE (h2uncorr)","h2corr","SE (h2corr)","P (diff=0)","e2","SE (e2)","P(e2=0)","alpha","alpha_gxe2","gxe2","SE (gxe2)","P(gxe2=0)"]].copy()
+        #Rename 'phen' and select final columns
+        final2.rename(columns={"phen":"phenotype"}, inplace=True)
+        final3 = final2[["phenotype","h2uncorr","SE (h2uncorr)","h2corr","SE (h2corr)","P (diff=0)","e2","SE (e2)","P(e2=0)","alpha","alpha_gxe2","gxe2","SE (gxe2)","P(gxe2=0)"]].copy()
 
-    #Rename sort the phenotypes
-    final3['lower'] = [pheno_one.lower() for pheno_one in final3.phenotype]
-    final3.sort_values(['lower'],inplace=True)
-    del final3['lower']
+        #Rename sort the phenotypes
+        final3['lower'] = [pheno_one.lower() for pheno_one in final3.phenotype]
+        final3.sort_values(['lower'],inplace=True)
+        del final3['lower']
 
-    if cache_folder is not None:
-        summary_final_table_fn = "{0}/summary.final.{1}.{2}.{3}.{4}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual,permute_plus_count,permute_times_count)
-        _write_csv(final3,False,summary_final_table_fn)
+        if cache_folder is not None:
+            summary_final_table_fn = "{0}/summary.final.{1}.{2}.{3}.{4}.txt".format(cache_folder, pheno.sid_count, jackknife_count_actual,permute_plus_count,permute_times_count)
+            _write_csv(final3,False,summary_final_table_fn)
     
-    return final3
+        return final3
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

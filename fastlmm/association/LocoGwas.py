@@ -7,17 +7,15 @@ Created on 2014-03-11
 @summary: Module for performing GWAS
 """
 
-from __future__ import absolute_import
 import time
 import logging
 import os.path
+from unittest.mock import patch
 
 import numpy as np
 import scipy as sp
 import pandas as pd
 from scipy import stats
-
-
 
 import fastlmm.inference as fastlmm
 
@@ -32,7 +30,6 @@ from sklearn.decomposition import PCA, KernelPCA
 from sklearn.feature_selection import f_regression
 from fastlmm.association.PrecomputeLocoPcs import PrecomputeLocoPcs, load_intersect
 from fastlmm.association.LeaveOneChromosomeOut import LeaveOneChromosomeOut
-from six.moves import range
 
 
 class LocoGwas(object): #implements IDistributable
@@ -378,40 +375,41 @@ class FastGwas(object):
         """
         invoke all steps in the right order
         """
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        from fastlmm.inference.lmm_cov import LMM as fastLMM
+            from fastlmm.inference.lmm_cov import LMM as fastLMM
 
-        if self.train_pcs is None and self.train_snps is not None:
-            assert self.mixing == 0.0
-            G = self.train_snps        
-        elif self.train_pcs is not None and self.train_snps is None:
-            assert self.mixing == 0.0
-            G = self.train_pcs
-        else:
-            logging.info("concat pcs, mixing {0}".format(self.mixing))
-            G = np.concatenate((np.sqrt(1.0-self.mixing) * self.train_snps, np.sqrt(self.mixing) * self.train_pcs),1)
+            if self.train_pcs is None and self.train_snps is not None:
+                assert self.mixing == 0.0
+                G = self.train_snps        
+            elif self.train_pcs is not None and self.train_snps is None:
+                assert self.mixing == 0.0
+                G = self.train_pcs
+            else:
+                logging.info("concat pcs, mixing {0}".format(self.mixing))
+                G = np.concatenate((np.sqrt(1.0-self.mixing) * self.train_snps, np.sqrt(self.mixing) * self.train_pcs),1)
 
-        #TODO: make sure low-rank case is handled correctly
-        lmm = fastLMM(X=self.cov, Y=self.phen, G=G, K=None)
+            #TODO: make sure low-rank case is handled correctly
+            lmm = fastLMM(X=self.cov, Y=self.phen, G=G, K=None)
 
-        if self.findh2:
-            opt = lmm.findH2(nGridH2=100)
-            h2 = opt['h2']
-            assert self.delta is None, "either findh2 or set delta"
-        else:
-            h2 = 0.0
-            assert not self.delta is None
-            logging.info("using externally provided delta")
+            if self.findh2:
+                opt = lmm.findH2(nGridH2=100)
+                h2 = opt['h2']
+                assert self.delta is None, "either findh2 or set delta"
+            else:
+                h2 = 0.0
+                assert not self.delta is None
+                logging.info("using externally provided delta")
 
-        res = lmm.nLLeval(h2=h2, delta=self.delta, dof=None, scale=1.0, penalty=0.0, snps=self.test_snps)
+            res = lmm.nLLeval(h2=h2, delta=self.delta, dof=None, scale=1.0, penalty=0.0, snps=self.test_snps)
         
         
-        chi2stats = res['beta']*res['beta']/res['variance_beta']
+            chi2stats = res['beta']*res['beta']/res['variance_beta']
         
-        self.p_values = stats.chi2.sf(chi2stats,1)[:,0]
-        self.p_values_F = stats.f.sf(chi2stats,1,G.shape[0]-(lmm.linreg.D+1))[:,0]#note that G.shape is the number of individuals
-        self.p_idx = np.argsort(self.p_values)        
-        self.sorted_p_values = self.p_values[self.p_idx]
+            self.p_values = stats.chi2.sf(chi2stats,1)[:,0]
+            self.p_values_F = stats.f.sf(chi2stats,1,G.shape[0]-(lmm.linreg.D+1))[:,0]#note that G.shape is the number of individuals
+            self.p_idx = np.argsort(self.p_values)        
+            self.sorted_p_values = self.p_values[self.p_idx]
 
-        self.p_idx_F = np.argsort(self.p_values_F)
-        self.sorted_p_values_F = self.p_values_F[self.p_idx_F]
+            self.p_idx_F = np.argsort(self.p_values_F)
+            self.sorted_p_values_F = self.p_values_F[self.p_idx_F]

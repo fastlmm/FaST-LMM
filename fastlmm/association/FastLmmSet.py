@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import fastlmm.association.lrt as lr
 import fastlmm.association.score as score
 import fastlmm.association.testCV as testCV
@@ -28,9 +26,7 @@ import warnings
 from tempfile import TemporaryFile
 import fastlmm.util.preprocess as util
 import os
-from six.moves import map
-from six.moves import range
-from six.moves import zip
+from unittest.mock import patch
 
 class FastLmmSet: # implements IDistributable
     '''
@@ -193,84 +189,86 @@ class FastLmmSet: # implements IDistributable
         Enumerates a sequence of work items
         Each work item is a lambda expression (i.e. function pointer) that calls 'run_test', returning a list of Results (often just one)
         '''
-        self.run_once() #load files, etc. -- stuff we only want to do once per task (e.g. on the cluster)
-                        #no matter how many times we call 'run_test' (and then 'reduce' which of course
-                        #only gets run one time, and calls this too, but doesn't actually do the work).
-        ttt0=time.time()
-        y=None        
-        y_back=None
-        nInd=len(self.__y)               
-        haswrittenphen=False;                            
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+
+            self.run_once() #load files, etc. -- stuff we only want to do once per task (e.g. on the cluster)
+                            #no matter how many times we call 'run_test' (and then 'reduce' which of course
+                            #only gets run one time, and calls this too, but doesn't actually do the work).
+            ttt0=time.time()
+            y=None        
+            y_back=None
+            nInd=len(self.__y)               
+            haswrittenphen=False;                            
                 
-        if self.altset_list2 is None: #singleton sets            
-            for iset, altset in enumerate(self.altsetlist_filtbysnps):
-                for iperm in range(-1, self.nperm):   #note that self.nperm is the 'stop', not the 'count'
-                    SNPsalt=altset.read()
-                    SNPsalt['snps'] = util.standardize(SNPsalt['snps'])
-                    G1 = SNPsalt['snps']/sp.sqrt(SNPsalt['snps'].shape[1])  
-                    ichrm =  ",".join(sp.array(sp.unique(SNPsalt['pos'][:,0]),dtype=str)) 
-                    minpos= str(sp.min(SNPsalt['pos'][:,2]))
-                    maxpos= str(sp.max(SNPsalt['pos'][:,2]))
-                    iposrange = minpos + "-" + maxpos                     
+            if self.altset_list2 is None: #singleton sets            
+                for iset, altset in enumerate(self.altsetlist_filtbysnps):
+                    for iperm in range(-1, self.nperm):   #note that self.nperm is the 'stop', not the 'count'
+                        SNPsalt=altset.read()
+                        SNPsalt['snps'] = util.standardize(SNPsalt['snps'])
+                        G1 = SNPsalt['snps']/sp.sqrt(SNPsalt['snps'].shape[1])  
+                        ichrm =  ",".join(sp.array(sp.unique(SNPsalt['pos'][:,0]),dtype=str)) 
+                        minpos= str(sp.min(SNPsalt['pos'][:,2]))
+                        maxpos= str(sp.max(SNPsalt['pos'][:,2]))
+                        iposrange = minpos + "-" + maxpos                     
                     
-                    if self.genphen is None:
-                        y=self.__y
-                    else: 
-                        assert self.permute is None, "Error: using permute with genphen--there should be no need, use genphen['seed'] instead"
-                        self.__y=None      
+                        if self.genphen is None:
+                            y=self.__y
+                        else: 
+                            assert self.permute is None, "Error: using permute with genphen--there should be no need, use genphen['seed'] instead"
+                            self.__y=None      
 
-                        #if (self.__G0 is not None) and y_G0 is None:  #cache so only do it once
-                        if (self.__SNPs0 is not None) and y_G0 is None:  #cache so only do it once   
-                            newseed = self.mainseed ^ self.genphen['seed']
-                            from numpy.random import RandomState
-                            randomstate = RandomState(newseed)
-                            nSnp=self.__SNPs0['data']['snps'].shape[1]
-                            #good for low rank, other wise, use the dual, as in gp.genphen
-                            raise Exception("Bug below. should be randn, is rand")
-                            y_G0=sp.sqrt(self.genphen["varBack"]/nSnp)*self.__SNPs0['data']['snps'].dot(randomstate.rand(nSnp,1))    #TODO: CL This seems to be a bug. Should be randn
-                            #y_G0=sp.sqrt(self.genphen["varBack"])*self.__SNPs0['data']['snps'].dot(randomstate.rand(nSnp,1))    #TODO: CL This seems to be a bug. Should be randn
-                        elif self.__SNPs0 is None:
-                            y_G0=0      
+                            #if (self.__G0 is not None) and y_G0 is None:  #cache so only do it once
+                            if (self.__SNPs0 is not None) and y_G0 is None:  #cache so only do it once   
+                                newseed = self.mainseed ^ self.genphen['seed']
+                                from numpy.random import RandomState
+                                randomstate = RandomState(newseed)
+                                nSnp=self.__SNPs0['data']['snps'].shape[1]
+                                #good for low rank, other wise, use the dual, as in gp.genphen
+                                raise Exception("Bug below. should be randn, is rand")
+                                y_G0=sp.sqrt(self.genphen["varBack"]/nSnp)*self.__SNPs0['data']['snps'].dot(randomstate.rand(nSnp,1))    #TODO: CL This seems to be a bug. Should be randn
+                                #y_G0=sp.sqrt(self.genphen["varBack"])*self.__SNPs0['data']['snps'].dot(randomstate.rand(nSnp,1))    #TODO: CL This seems to be a bug. Should be randn
+                            elif self.__SNPs0 is None:
+                                y_G0=0      
 
-                        #always have the same background signal                                                
-                        if self.genphen["varBackNullFileGen"] is not None and y_back is None:                                                      
-                            nSnp=self.__SNPs0['data']['snps'].shape[1]
-                            y_back=sp.sqrt(self.genphen["varBack"]/nSnp)*self.__varBackNullSnpsGen['snps'].dot(sp.random.randn(self.__varBackNullSnpsGen['snps'].shape[1],1))/sp.sqrt(self.__varBackNullSnpsGen['snps'].shape[1]) 
-                            #self.printPhenToFile(nInd, SNPsalt, y_back);
-                        elif "varBackNullPhenGen" in self.genphen and self.genphen["varBackNullPhenGen"] is not None and y_back is None:
-                            y_back=loadPhen(filename = self.genphen["varBackNullPhenGen"])['vals']                            
-                        elif y_back is None:          
-                            y_back=0                          
+                            #always have the same background signal                                                
+                            if self.genphen["varBackNullFileGen"] is not None and y_back is None:                                                      
+                                nSnp=self.__SNPs0['data']['snps'].shape[1]
+                                y_back=sp.sqrt(self.genphen["varBack"]/nSnp)*self.__varBackNullSnpsGen['snps'].dot(sp.random.randn(self.__varBackNullSnpsGen['snps'].shape[1],1))/sp.sqrt(self.__varBackNullSnpsGen['snps'].shape[1]) 
+                                #self.printPhenToFile(nInd, SNPsalt, y_back);
+                            elif "varBackNullPhenGen" in self.genphen and self.genphen["varBackNullPhenGen"] is not None and y_back is None:
+                                y_back=loadPhen(filename = self.genphen["varBackNullPhenGen"])['vals']                            
+                            elif y_back is None:          
+                                y_back=0                          
                         
-                        if self.genphen["once"] and y is None: # only generate the phenotype once for entire run                            
-                            newseed = self.mainseed ^ self.genphen['seed']  
-                            assert  self.genphen["varG"]==0, "doesn't make sense to have varG>0 and only one phen--not sure why I put this code there"       
-                            if self.genphen["varG"]>0 and nInd<=SNPsalt['snps'].shape[1]:                                                       
-                                Kall = self.KfromAltSnps(nInd) #useful for full rank
-                                y=gp.genphen(y_G0=y_G0+y_back,G1=None,covDat=self.__X,options=self.genphen,nInd=nInd,
-                                             K1=Kall,randseed=newseed)                          
-                            else:     
-                                Kall=None                                     
-                                y=gp.genphen(y_G0=y_G0+y_back,G1=G1,covDat=self.__X,options=self.genphen,nInd=nInd,randseed=newseed)
-                        elif (not self.genphen["once"]):  #generate for each set in turn                           
-                            eachseed=utilx.combineseeds(iset,self.genphen['seed'])                            
-                            newseed = self.mainseed ^ eachseed                              
-                            y=gp.genphen(y_G0=y_G0+y_back,G1=G1,covDat=self.__X,options=self.genphen,nInd=nInd,randseed=newseed) 
+                            if self.genphen["once"] and y is None: # only generate the phenotype once for entire run                            
+                                newseed = self.mainseed ^ self.genphen['seed']  
+                                assert  self.genphen["varG"]==0, "doesn't make sense to have varG>0 and only one phen--not sure why I put this code there"       
+                                if self.genphen["varG"]>0 and nInd<=SNPsalt['snps'].shape[1]:                                                       
+                                    Kall = self.KfromAltSnps(nInd) #useful for full rank
+                                    y=gp.genphen(y_G0=y_G0+y_back,G1=None,covDat=self.__X,options=self.genphen,nInd=nInd,
+                                                 K1=Kall,randseed=newseed)                          
+                                else:     
+                                    Kall=None                                     
+                                    y=gp.genphen(y_G0=y_G0+y_back,G1=G1,covDat=self.__X,options=self.genphen,nInd=nInd,randseed=newseed)
+                            elif (not self.genphen["once"]):  #generate for each set in turn                           
+                                eachseed=utilx.combineseeds(iset,self.genphen['seed'])                            
+                                newseed = self.mainseed ^ eachseed                              
+                                y=gp.genphen(y_G0=y_G0+y_back,G1=G1,covDat=self.__X,options=self.genphen,nInd=nInd,randseed=newseed) 
                                                                 
-                    assert y is not None, "y is None"                                   
-                    yield lambda altset=altset,iset=iset,iperm=iperm,y=y,ichrm=ichrm, iposrange=iposrange : self.run_test(SNPs1=SNPsalt,G1=G1, y=y, altset=altset, iset=iset, iperm=iperm, ichrm=ichrm, iposrange=iposrange)
-        else: #pairs of sets
-            raise Exception("not implemented, started a long time ago and never finished")
-            #for iperm in xrange(-1, self.nperm):   #note that self.nperm is the 'stop', not the 'count'
-            #    for iset, altset in enumerate(self.__altsetlist_filtbysnps):
-            #         for iset2, altset2 in enumerate(self.__altsetlist2_filtbysnps):
-            #            if iset!=iset2:
-            #                yield lambda altset=altset,iset=iset,altset2=altset2,iset2=iset2,iperm=iperm : self.run_interactiontest(altset,iset,altset2,iset2,iperm)
+                        assert y is not None, "y is None"                                   
+                        yield lambda altset=altset,iset=iset,iperm=iperm,y=y,ichrm=ichrm, iposrange=iposrange : self.run_test(SNPs1=SNPsalt,G1=G1, y=y, altset=altset, iset=iset, iperm=iperm, ichrm=ichrm, iposrange=iposrange)
+            else: #pairs of sets
+                raise Exception("not implemented, started a long time ago and never finished")
+                #for iperm in xrange(-1, self.nperm):   #note that self.nperm is the 'stop', not the 'count'
+                #    for iset, altset in enumerate(self.__altsetlist_filtbysnps):
+                #         for iset2, altset2 in enumerate(self.__altsetlist2_filtbysnps):
+                #            if iset!=iset2:
+                #                yield lambda altset=altset,iset=iset,altset2=altset2,iset2=iset2,iperm=iperm : self.run_interactiontest(altset,iset,altset2,iset2,iperm)
 
-        ttt1=time.time()
-        logging.info("---------------------------------------------------")
-        logging.info("Elapsed time for all tests is %.2f seconds" % (ttt1-ttt0))
-        logging.info("---------------------------------------------------")
+            ttt1=time.time()
+            logging.info("---------------------------------------------------")
+            logging.info("Elapsed time for all tests is %.2f seconds" % (ttt1-ttt0))
+            logging.info("---------------------------------------------------")
     
     def check_for_None(self, alteqnull, alteqnullperm):
         none_ind = []
@@ -292,93 +290,94 @@ class FastLmmSet: # implements IDistributable
         Given a sequence of results from 'run_test', create the output report.
 
         '''
-        logging.info("last modified: %s" % time.ctime(os.path.getmtime(__file__)))
-        logging.info("-------------------------------------------------")
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+            logging.info("last modified: %s" % time.ctime(os.path.getmtime(__file__)))
+            logging.info("-------------------------------------------------")
 
-        # Create the info file and direct all 'stdout' messages to both stdout and to the info file
-        infofile=utilx.appendtofilename(self.outfile,"info")
-        outfiletab=self.outfile
-        if self.datestamp=="auto": self.outfile=utilx.appendtofilename(self.outfile,"tab")
+            # Create the info file and direct all 'stdout' messages to both stdout and to the info file
+            infofile=utilx.appendtofilename(self.outfile,"info")
+            outfiletab=self.outfile
+            if self.datestamp=="auto": self.outfile=utilx.appendtofilename(self.outfile,"tab")
 
-        try:
-            pstutil.create_directory_if_necessary(infofile)
-        except:
-            logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(infofile))
+            try:
+                pstutil.create_directory_if_necessary(infofile)
+            except:
+                logging.warn("Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(infofile))
 
-        logging_handler=logging.FileHandler(infofile,"w",delay=False)
-        logger = logging.getLogger()
-        logger.addHandler(logging_handler)
+            logging_handler=logging.FileHandler(infofile,"w",delay=False)
+            logger = logging.getLogger()
+            logger.addHandler(logging_handler)
 
-        logging.info("distributable = " + self.__repr__())
+            logging.info("distributable = " + self.__repr__())
 
-        self.run_once() #load files, etc. -- doesn't actually do the work if it's already been done
-                         #note, however, that before reduce is called, work_count calls run_once() anyhow
+            self.run_once() #load files, etc. -- doesn't actually do the work if it's already been done
+                             #note, however, that before reduce is called, work_count calls run_once() anyhow
 
-        result_dict = {}
+            result_dict = {}
 
-        lrt = SP.nan*SP.ones(len(self.altsetlist_filtbysnps))
-        # whether alt and null models give the same margll
-        alteqnull = [None]*len(self.altsetlist_filtbysnps)
+            lrt = SP.nan*SP.ones(len(self.altsetlist_filtbysnps))
+            # whether alt and null models give the same margll
+            alteqnull = [None]*len(self.altsetlist_filtbysnps)
 
-        lrtperm = SP.nan*SP.ones(len(self.altsetlist_filtbysnps)*self.nperm)
-        alteqnullperm = [None]*len(self.altsetlist_filtbysnps)*self.nperm
-        setsizeperm = SP.nan*SP.ones(len(self.altsetlist_filtbysnps)*self.nperm)
+            lrtperm = SP.nan*SP.ones(len(self.altsetlist_filtbysnps)*self.nperm)
+            alteqnullperm = [None]*len(self.altsetlist_filtbysnps)*self.nperm
+            setsizeperm = SP.nan*SP.ones(len(self.altsetlist_filtbysnps)*self.nperm)
 
-        npvals=self.test.npvals
-        pv_adj= sp.nan*sp.ones((len(self.altsetlist_filtbysnps)))
+            npvals=self.test.npvals
+            pv_adj= sp.nan*sp.ones((len(self.altsetlist_filtbysnps)))
               
-        # results can come in any order, so we have to use iperm and iset to put them in the right place
-        # there is one result instance for each combination of test and permutation, and here we are just gathering them
-        # into the arrays from above
+            # results can come in any order, so we have to use iperm and iset to put them in the right place
+            # there is one result instance for each combination of test and permutation, and here we are just gathering them
+            # into the arrays from above
 
-        for result_list in result_list_sequence:
-            for result in result_list:
-                if result.iperm < 0:
-                    result_dict[result.iset] = result
-                    #iset is the index of the test (irrespective of permutation)
-                    lrt[result.iset] = self.test.lrt_method(result)
-                    alteqnull[result.iset] = result.alteqnull #equiv to result["alteqnull"]
-                    #pv_adj[result.iset,:] = self.test.pv_adj_from_result(result)                
-                    pv_adj[result.iset] = self.test.pv_adj_from_result(result)                
-                else:
-                    isetiperm = result.iset+result.iperm*len(self.altsetlist_filtbysnps)
-                    lrtperm[isetiperm] = self.test.lrt_method(result)
-                    alteqnullperm[isetiperm] = result.alteqnull
-                    setsizeperm[isetiperm] = result.setsize
-                if result.alteqnull is None and str(self.test)[0:3]=="lrt":
-                    raise Exception("self.alteqnull is None")
+            for result_list in result_list_sequence:
+                for result in result_list:
+                    if result.iperm < 0:
+                        result_dict[result.iset] = result
+                        #iset is the index of the test (irrespective of permutation)
+                        lrt[result.iset] = self.test.lrt_method(result)
+                        alteqnull[result.iset] = result.alteqnull #equiv to result["alteqnull"]
+                        #pv_adj[result.iset,:] = self.test.pv_adj_from_result(result)                
+                        pv_adj[result.iset] = self.test.pv_adj_from_result(result)                
+                    else:
+                        isetiperm = result.iset+result.iperm*len(self.altsetlist_filtbysnps)
+                        lrtperm[isetiperm] = self.test.lrt_method(result)
+                        alteqnullperm[isetiperm] = result.alteqnull
+                        setsizeperm[isetiperm] = result.setsize
+                    if result.alteqnull is None and str(self.test)[0:3]=="lrt":
+                        raise Exception("self.alteqnull is None")
 
-        #look for None to see if anything didn't get filled in, and if so, where
-        if str(self.test)[0:3]=="lrt":
-            self.check_for_None(alteqnull, alteqnullperm)
+            #look for None to see if anything didn't get filled in, and if so, where
+            if str(self.test)[0:3]=="lrt":
+                self.check_for_None(alteqnull, alteqnullperm)
             
-        if self.write_lrtperm and self.nperm>0:
-            self._saveArray("lrtperm", ["2*(LL(alt)-LL(null))","alteqnull","setsize"], (lrtperm,alteqnullperm,setsizeperm))
+            if self.write_lrtperm and self.nperm>0:
+                self._saveArray("lrtperm", ["2*(LL(alt)-LL(null))","alteqnull","setsize"], (lrtperm,alteqnullperm,setsizeperm))
                 
-        pv_adj,ind = self.test.pv_adj_and_ind(self.nperm, pv_adj, self.nullfit, 
-                                              lrt, lrtperm, alteqnull, alteqnullperm,self.qmax, self.nullfitfile, self.nlocalperm)
+            pv_adj,ind = self.test.pv_adj_and_ind(self.nperm, pv_adj, self.nullfit, 
+                                                  lrt, lrtperm, alteqnull, alteqnullperm,self.qmax, self.nullfitfile, self.nlocalperm)
 
-        logging.info("writing the result files : " + self.outfile + "")
+            logging.info("writing the result files : " + self.outfile + "")
 
-        #TODO: move the following to a function/object:
-        with open(outfiletab,"w") as fp:
-            if type(self.test) is Lrt: #dan: this is ugly, will fix soon                
-                self.test.write(fp, ind, result_dict, pv_adj, self.detailed_table, self.signal_ratio)
-            else:
-                self.test.write(fp, ind, result_dict, pv_adj, self.detailed_table)
+            #TODO: move the following to a function/object:
+            with open(outfiletab,"w") as fp:
+                if type(self.test) is Lrt: #dan: this is ugly, will fix soon                
+                    self.test.write(fp, ind, result_dict, pv_adj, self.detailed_table, self.signal_ratio)
+                else:
+                    self.test.write(fp, ind, result_dict, pv_adj, self.detailed_table)
 
-        if not self.show_pvalue_5050: #Remove the unwanted column if requested and necessary
-            dataframe=pd.read_csv(outfiletab,delimiter='\t',comment=None) #Need \t instead of \s because the output has tabs by design and spaces in column names(?)
-            # adjust the dataframe and then remove the original outfile and (if requested) create a final outfile
-            header5050 = 'P-value(50/50)'
-            if header5050 in dataframe.columns:
-                dataframe.drop(header5050, axis=1, inplace=True)
-            dataframe.rename(columns={'P-value_adjusted': 'P-value'}, inplace=True)
-            dataframe.to_csv(outfiletab, sep="\t", index=False)
+            if not self.show_pvalue_5050: #Remove the unwanted column if requested and necessary
+                dataframe=pd.read_csv(outfiletab,delimiter='\t',comment=None) #Need \t instead of \s because the output has tabs by design and spaces in column names(?)
+                # adjust the dataframe and then remove the original outfile and (if requested) create a final outfile
+                header5050 = 'P-value(50/50)'
+                if header5050 in dataframe.columns:
+                    dataframe.drop(header5050, axis=1, inplace=True)
+                dataframe.rename(columns={'P-value_adjusted': 'P-value'}, inplace=True)
+                dataframe.to_csv(outfiletab, sep="\t", index=False)
 
-        logger.removeHandler(logging_handler)
-        logging_handler.close()
-        return self.outfile
+            logger.removeHandler(logging_handler)
+            logging_handler.close()
+            return self.outfile
         
     #def getRandSnpSignal(self, nSnp, nInd,genphen,newseed):
     #    from numpy.random import RandomState

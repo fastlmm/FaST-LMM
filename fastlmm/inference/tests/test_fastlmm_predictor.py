@@ -1,10 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from six.moves import range
-#import matplotlib
-#matplotlib.use("TKAgg",warn=False)
-#import pylab
-
 import logging
 import numpy as np
 import unittest
@@ -13,6 +6,7 @@ import doctest
 import pandas as pd
 import sys
 import pysnptools.util as pstutil
+from unittest.mock import patch
 
 from fastlmm.inference import FastLMM
 from fastlmm.inference.fastlmm_predictor import _SnpWholeTest
@@ -46,53 +40,55 @@ class TestFastLMM(unittest.TestCase):
         return temp_fn
 
     def test_api(self):
-        train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
-        test_idx  = np.r_[0:10] # the first 10 iids
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        #####################################################
-        # Train and standardize cov and then apply to test
-        #####################################################
+            train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
+            test_idx  = np.r_[0:10] # the first 10 iids
 
-        cov_train, unit_trained = self.covariate_whole[train_idx,:].read().standardize(Unit(),return_trained=True)
-        cov_test = self.covariate_whole[test_idx,:].read().standardize(unit_trained)
+            #####################################################
+            # Train and standardize cov and then apply to test
+            #####################################################
 
-        #####################################################
-        # standardize whole kernel from snps (both ways) and then pull out the 3 parts
-        #####################################################
+            cov_train, unit_trained = self.covariate_whole[train_idx,:].read().standardize(Unit(),return_trained=True)
+            cov_test = self.covariate_whole[test_idx,:].read().standardize(unit_trained)
+
+            #####################################################
+            # standardize whole kernel from snps (both ways) and then pull out the 3 parts
+            #####################################################
         
-        whole_kernel = SnpKernel(self.covariate_whole,Unit()).read().standardize(DiagKtoN())
-        train_kernel = whole_kernel[train_idx].read(order='A',view_ok=True)
-        test_kernel = whole_kernel[train_idx,test_idx].read(order='A',view_ok=True)
-        test_test_kernel = whole_kernel[test_idx,test_idx].read(order='A',view_ok=True)
+            whole_kernel = SnpKernel(self.covariate_whole,Unit()).read().standardize(DiagKtoN())
+            train_kernel = whole_kernel[train_idx].read(order='A',view_ok=True)
+            test_kernel = whole_kernel[train_idx,test_idx].read(order='A',view_ok=True)
+            test_test_kernel = whole_kernel[test_idx,test_idx].read(order='A',view_ok=True)
 
-        #####################################################
-        # create train_train, train_test, and test_test based on just the training snps (both standardizations)
-        #####################################################
+            #####################################################
+            # create train_train, train_test, and test_test based on just the training snps (both standardizations)
+            #####################################################
 
-        K_train = SnpKernel(self.snpreader_whole[train_idx,:],Unit(),block_size=100)
-        train_train_kernel, snp_trained, kernel_trained = K_train._read_with_standardizing(to_kerneldata=True, kernel_standardizer=DiagKtoN(), return_trained=True)
+            K_train = SnpKernel(self.snpreader_whole[train_idx,:],Unit(),block_size=100)
+            train_train_kernel, snp_trained, kernel_trained = K_train._read_with_standardizing(to_kerneldata=True, kernel_standardizer=DiagKtoN(), return_trained=True)
 
-        K_whole_test = _SnpWholeTest(train=self.snpreader_whole[train_idx,:],test=self.snpreader_whole[test_idx,:],standardizer=snp_trained,block_size=100)
-        train_idx2 = K_whole_test.iid0_to_index(self.snpreader_whole.iid[train_idx]) #The new reader may have the iids in a different order than the original reader
-        train_test_kernel = K_whole_test[train_idx2,:].read().standardize(kernel_trained)
+            K_whole_test = _SnpWholeTest(train=self.snpreader_whole[train_idx,:],test=self.snpreader_whole[test_idx,:],standardizer=snp_trained,block_size=100)
+            train_idx2 = K_whole_test.iid0_to_index(self.snpreader_whole.iid[train_idx]) #The new reader may have the iids in a different order than the original reader
+            train_test_kernel = K_whole_test[train_idx2,:].read().standardize(kernel_trained)
 
-        test_idx2 = K_whole_test.iid0_to_index(self.snpreader_whole.iid[test_idx])
-        test_test_kernel = K_whole_test[test_idx2,:].read().standardize(kernel_trained)
+            test_idx2 = K_whole_test.iid0_to_index(self.snpreader_whole.iid[test_idx])
+            test_test_kernel = K_whole_test[test_idx2,:].read().standardize(kernel_trained)
 
-        #####################################################
-        # How does predict look with whole_test as input?
-        #####################################################
+            #####################################################
+            # How does predict look with whole_test as input?
+            #####################################################
 
-        # a. - standardize whole up front
-        whole_kernel = SnpKernel(self.snpreader_whole,Unit(),block_size=100).read().standardize()
-        train_kernel = whole_kernel[train_idx].read(order='A',view_ok=True)
-        whole_test_kernel = whole_kernel[:,test_idx].read(order='A',view_ok=True)
-        fastlmm1 = FastLMM(snp_standardizer=SS_Identity(), kernel_standardizer=KS_Identity())
-        fastlmm1.fit(K0_train=train_kernel, X=self.covariate_whole, y=self.pheno_whole) #iid intersection means we won't really be using whole covar or pheno
-        predicted_pheno, covar = fastlmm1.predict(K0_whole_test=whole_test_kernel, X=self.covariate_whole,count_A1=False)
-        output_file = self.file_name("whole")
-        Dat.write(output_file,predicted_pheno)
-        self.compare_files(predicted_pheno,"whole")
+            # a. - standardize whole up front
+            whole_kernel = SnpKernel(self.snpreader_whole,Unit(),block_size=100).read().standardize()
+            train_kernel = whole_kernel[train_idx].read(order='A',view_ok=True)
+            whole_test_kernel = whole_kernel[:,test_idx].read(order='A',view_ok=True)
+            fastlmm1 = FastLMM(snp_standardizer=SS_Identity(), kernel_standardizer=KS_Identity())
+            fastlmm1.fit(K0_train=train_kernel, X=self.covariate_whole, y=self.pheno_whole) #iid intersection means we won't really be using whole covar or pheno
+            predicted_pheno, covar = fastlmm1.predict(K0_whole_test=whole_test_kernel, X=self.covariate_whole,count_A1=False)
+            output_file = self.file_name("whole")
+            Dat.write(output_file,predicted_pheno)
+            self.compare_files(predicted_pheno,"whole")
 
         # b -- just files
         fastlmm2 = FastLMM()
@@ -471,21 +467,22 @@ class TestFastLMM(unittest.TestCase):
 
 
     def test_str2(self):
-        logging.info("TestLmmTrain test_str2")
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+            logging.info("TestLmmTrain test_str2")
 
 
-        #Standardize train and test together
-        whole_kernel = self.snpreader_whole.read_kernel(Unit())
+            #Standardize train and test together
+            whole_kernel = self.snpreader_whole.read_kernel(Unit())
 
-        train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
-        test_idx  = np.r_[0:10] # the first 10 iids
-        covariate_train = self.covariate_whole[train_idx,:]
-        pheno_train = self.pheno_whole[train_idx,:]
+            train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
+            test_idx  = np.r_[0:10] # the first 10 iids
+            covariate_train = self.covariate_whole[train_idx,:]
+            pheno_train = self.pheno_whole[train_idx,:]
 
-        K0_train_filename = self.tempout_dir + "/model_str2.kernel.npz"
-        pstutil.create_directory_if_necessary(K0_train_filename)
-        from pysnptools.kernelreader import KernelNpz
-        KernelNpz.write(K0_train_filename,whole_kernel[train_idx].read(order='A',view_ok=True))
+            K0_train_filename = self.tempout_dir + "/model_str2.kernel.npz"
+            pstutil.create_directory_if_necessary(K0_train_filename)
+            from pysnptools.kernelreader import KernelNpz
+            KernelNpz.write(K0_train_filename,whole_kernel[train_idx].read(order='A',view_ok=True))
 
         fastlmm1 = FastLMM(GB_goal=2).fit(K0_train=K0_train_filename, X=covariate_train, y=pheno_train)
         filename = self.tempout_dir + "/model_str2.flm.p"
@@ -892,21 +889,23 @@ class TestFastLMM(unittest.TestCase):
         self.compare_files(predicted_pheno,"snps")
 
     def test_kernel(self):
-        logging.info("TestLmmTrain test_kernel")
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
-        test_idx  = np.r_[0:10] # the first 10 iids
+            logging.info("TestLmmTrain test_kernel")
 
-        # Show it using the snps
-        K0_train = self.snpreader_whole[train_idx,:].read_kernel(Unit())
-        covariate_train3 = self.covariate_whole[train_idx,:].read()
-        pheno_train3 = self.pheno_whole[train_idx,:].read()
-        pheno_train3.val = self.snpreader_whole[train_idx,0:1].read().val*2
-        assert np.array_equal(K0_train.iid,covariate_train3.iid), "Expect iids to be the same (so that early and late Unit standardization will give the same result)"
-        assert np.array_equal(K0_train.iid,pheno_train3.iid), "Expect iids to be the same (so that early and late Unit standardization will give the same result)"
+            train_idx = np.r_[10:self.snpreader_whole.iid_count] # iids 10 and on
+            test_idx  = np.r_[0:10] # the first 10 iids
 
-        #pylab.plot(G0_train[:,0:1].read().val[:,0], pheno_train3.val[:,0],".")
-        #pylab.show()
+            # Show it using the snps
+            K0_train = self.snpreader_whole[train_idx,:].read_kernel(Unit())
+            covariate_train3 = self.covariate_whole[train_idx,:].read()
+            pheno_train3 = self.pheno_whole[train_idx,:].read()
+            pheno_train3.val = self.snpreader_whole[train_idx,0:1].read().val*2
+            assert np.array_equal(K0_train.iid,covariate_train3.iid), "Expect iids to be the same (so that early and late Unit standardization will give the same result)"
+            assert np.array_equal(K0_train.iid,pheno_train3.iid), "Expect iids to be the same (so that early and late Unit standardization will give the same result)"
+
+            #pylab.plot(G0_train[:,0:1].read().val[:,0], pheno_train3.val[:,0],".")
+            #pylab.show()
 
         #Learn model, save, load
         fastlmm3x = FastLMM(GB_goal=2).fit(K0_train=K0_train, X=covariate_train3, y=pheno_train3)

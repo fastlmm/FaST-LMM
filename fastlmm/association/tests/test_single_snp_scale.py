@@ -21,7 +21,6 @@ from pysnptools.snpreader import SnpGen
 from fastlmm.association import single_snp
 from fastlmm.association import single_snp_scale
 from pysnptools.util.mapreduce1.runner import LocalMultiProc
-from six.moves import range
 
 class TestSingleSnpScale(unittest.TestCase):
     @classmethod

@@ -1,11 +1,10 @@
-from __future__ import print_function #Python 2 & 3 compatibility
-from __future__ import absolute_import
 import numpy as np
 import logging
 import unittest
 import os
 import scipy.linalg as LA
 import time
+from unittest.mock import patch
 
 from pysnptools.snpreader import Bed,Pheno
 from pysnptools.snpreader import SnpData,SnpReader
@@ -23,7 +22,6 @@ from pysnptools.standardizer import Identity as StandardizerIdentity
 from scipy.stats import multivariate_normal
 from fastlmm.util.pickle_io import load, save
 from pysnptools.pstreader import PstReader
-from six.moves import range
 
 class _SnpWholeTest(KernelReader):
     '''
@@ -315,86 +313,88 @@ class FastLMM(object):
 
         :rtype: self, the fitted FastLMM predictor
         """
-        self.is_fitted = True
-        # should this have a cache file like 'single_snp'?
-        #!!!later what happens if missing values in pheno_train?
-        #!!!later add code so that X, y, etc can be array-like objects without iid information. In that case, make up iid info
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        assert y is not None, "y must be given"
+            self.is_fitted = True
+            # should this have a cache file like 'single_snp'?
+            #!!!later what happens if missing values in pheno_train?
+            #!!!later add code so that X, y, etc can be array-like objects without iid information. In that case, make up iid info
 
-        y = _pheno_fixup(y,count_A1=count_A1)
-        assert y.sid_count == 1, "Expect y to be just one variable"
-        X = _pheno_fixup(X, iid_if_none=y.iid,count_A1=count_A1)
+            assert y is not None, "y must be given"
 
-        K0_train = _kernel_fixup(K0_train, iid_if_none=y.iid, standardizer=self.snp_standardizer,count_A1=count_A1)
-        K1_train = _kernel_fixup(K1_train, iid_if_none=y.iid, standardizer=self.snp_standardizer,count_A1=count_A1)
+            y = _pheno_fixup(y,count_A1=count_A1)
+            assert y.sid_count == 1, "Expect y to be just one variable"
+            X = _pheno_fixup(X, iid_if_none=y.iid,count_A1=count_A1)
 
-        K0_train, K1_train, X, y = intersect_apply([K0_train, K1_train, X, y],intersect_before_standardize=True) #!!! test this on both K's as None
-        from fastlmm.association.single_snp import _set_block_size
-        K0_train, K1_train, block_size = _set_block_size(K0_train, K1_train, mixing, self.GB_goal, self.force_full_rank, self.force_low_rank)
+            K0_train = _kernel_fixup(K0_train, iid_if_none=y.iid, standardizer=self.snp_standardizer,count_A1=count_A1)
+            K1_train = _kernel_fixup(K1_train, iid_if_none=y.iid, standardizer=self.snp_standardizer,count_A1=count_A1)
 
-        X = X.read()
-        # If possible, unit standardize train and test together. If that is not possible, unit standardize only train and later apply
-        # the same linear transformation to test. Unit standardization is necessary for FastLMM to work correctly.
-        #!!!later is the calculation of the training data's stats done twice???
-        X, covar_unit_trained = X.standardize(self.covariate_standardizer,block_size=block_size,return_trained=True) #This also fills missing with the mean
+            K0_train, K1_train, X, y = intersect_apply([K0_train, K1_train, X, y],intersect_before_standardize=True) #!!! test this on both K's as None
+            from fastlmm.association.single_snp import _set_block_size
+            K0_train, K1_train, block_size = _set_block_size(K0_train, K1_train, mixing, self.GB_goal, self.force_full_rank, self.force_low_rank)
 
-        # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
-        X = SnpData(iid=X.iid,
-                                sid=self._new_snp_name(X),
-                                val=np.c_[X.val,np.ones((X.iid_count,1))],
-                                name ="covariate_train w/ 1's")
+            X = X.read()
+            # If possible, unit standardize train and test together. If that is not possible, unit standardize only train and later apply
+            # the same linear transformation to test. Unit standardization is necessary for FastLMM to work correctly.
+            #!!!later is the calculation of the training data's stats done twice???
+            X, covar_unit_trained = X.standardize(self.covariate_standardizer,block_size=block_size,return_trained=True) #This also fills missing with the mean
 
-        y0 =  y.read().val #!!!later would view_ok=True,order='A' be ok because this code already did a fresh read to look for any missing values 
+            # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
+            X = SnpData(iid=X.iid,
+                                    sid=self._new_snp_name(X),
+                                    val=np.c_[X.val,np.ones((X.iid_count,1))],
+                                    name ="covariate_train w/ 1's")
 
-        from fastlmm.association.single_snp import _Mixer #!!!move _combine_the_best_way to another file (e.g. this one)
-        K_train, h2raw, mixer = _Mixer.combine_the_best_way(K0_train,K1_train,X.val,y0,mixing,h2raw,force_full_rank=self.force_full_rank,force_low_rank=self.force_low_rank,kernel_standardizer=self.kernel_standardizer,block_size=block_size)
+            y0 =  y.read().val #!!!later would view_ok=True,order='A' be ok because this code already did a fresh read to look for any missing values 
 
-        # do final prediction using lmm.py
-        lmm = LMM()
+            from fastlmm.association.single_snp import _Mixer #!!!move _combine_the_best_way to another file (e.g. this one)
+            K_train, h2raw, mixer = _Mixer.combine_the_best_way(K0_train,K1_train,X.val,y0,mixing,h2raw,force_full_rank=self.force_full_rank,force_low_rank=self.force_low_rank,kernel_standardizer=self.kernel_standardizer,block_size=block_size)
 
-        #Special case: The K kernel is defined implicitly with SNP data
-        if mixer.do_g:
-            assert isinstance(K_train.standardizer,StandardizerIdentity), "Expect Identity standardizer"
-            G_train = K_train.snpreader
-            lmm.setG(G0=K_train.snpreader.val)
-        else:
-            lmm.setK(K0=K_train.val)
+            # do final prediction using lmm.py
+            lmm = LMM()
 
-        lmm.setX(X.val)
-        lmm.sety(y0[:,0])
+            #Special case: The K kernel is defined implicitly with SNP data
+            if mixer.do_g:
+                assert isinstance(K_train.standardizer,StandardizerIdentity), "Expect Identity standardizer"
+                G_train = K_train.snpreader
+                lmm.setG(G0=K_train.snpreader.val)
+            else:
+                lmm.setK(K0=K_train.val)
 
-        # Find the best h2 and also on covariates (not given from new model)
-        if h2raw is None:
-            res = lmm.findH2() #!!!why is REML true in the return???
-        else:
-            res = lmm.nLLeval(h2=h2raw)
+            lmm.setX(X.val)
+            lmm.sety(y0[:,0])
+
+            # Find the best h2 and also on covariates (not given from new model)
+            if h2raw is None:
+                res = lmm.findH2() #!!!why is REML true in the return???
+            else:
+                res = lmm.nLLeval(h2=h2raw)
 
 
-        #We compute sigma2 instead of using res['sigma2'] because res['sigma2'] is only the pure noise.
-        full_sigma2 = float(sum((np.dot(X.val,res['beta']).reshape(-1,1)-y0)**2))/y.iid_count #!!! this is non REML. Is that right?
+            #We compute sigma2 instead of using res['sigma2'] because res['sigma2'] is only the pure noise.
+            full_sigma2 = float(sum((np.dot(X.val,res['beta']).reshape(-1,1)-y0)**2))/y.iid_count #!!! this is non REML. Is that right?
 
-        ###### all references to 'fastlmm_model' should be here so that we don't forget any
-        self.block_size = block_size
-        self.beta = res['beta']
-        self.h2raw = res['h2']
-        self.sigma2 = full_sigma2
-        self.U = lmm.U
-        self.S = lmm.S
-        self.K = lmm.K
-        self.G = lmm.G
-        self.y = lmm.y
-        self.Uy = lmm.Uy
-        self.X = lmm.X
-        self.UX = lmm.UX
-        self.mixer = mixer
-        self.covar_unit_trained = covar_unit_trained
-        self.K_train_iid = K_train.iid
-        self.covar_sid = X.sid
-        self.pheno_sid = y.sid
-        self.G0_train = K0_train.snpreader if isinstance(K0_train,SnpKernel) else None #!!!later expensive?
-        self.G1_train = K1_train.snpreader if isinstance(K1_train,SnpKernel) else None #!!!later expensive?
-        return self
+            ###### all references to 'fastlmm_model' should be here so that we don't forget any
+            self.block_size = block_size
+            self.beta = res['beta']
+            self.h2raw = res['h2']
+            self.sigma2 = full_sigma2
+            self.U = lmm.U
+            self.S = lmm.S
+            self.K = lmm.K
+            self.G = lmm.G
+            self.y = lmm.y
+            self.Uy = lmm.Uy
+            self.X = lmm.X
+            self.UX = lmm.UX
+            self.mixer = mixer
+            self.covar_unit_trained = covar_unit_trained
+            self.K_train_iid = K_train.iid
+            self.covar_sid = X.sid
+            self.pheno_sid = y.sid
+            self.G0_train = K0_train.snpreader if isinstance(K0_train,SnpKernel) else None #!!!later expensive?
+            self.G1_train = K1_train.snpreader if isinstance(K1_train,SnpKernel) else None #!!!later expensive?
+            return self
 
     @staticmethod
     def _new_snp_name(snpreader):
@@ -502,69 +502,70 @@ class FastLMM(object):
 
         :rtype: A `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__ of the means and a :class:`KernelData` of the covariance
         """
+        with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-        assert self.is_fitted, "Can only predict after predictor has been fitted"
-        #assert K0_whole_test is not None, "K0_whole_test must be given"
-        #!!!later is it too wasteful to keep both G0_train, G1_train, and lmm.G when storing to disk?
-        #!!!later all _kernel_fixup's should use block_size input
+            assert self.is_fitted, "Can only predict after predictor has been fitted"
+            #assert K0_whole_test is not None, "K0_whole_test must be given"
+            #!!!later is it too wasteful to keep both G0_train, G1_train, and lmm.G when storing to disk?
+            #!!!later all _kernel_fixup's should use block_size input
 
-        K0_whole_test_b = _kernel_fixup(K0_whole_test, train_snps=self.G0_train, iid_if_none=iid_if_none, standardizer=self.mixer.snp_trained0, test=K0_whole_test, test_iid_if_none=None, block_size=self.block_size,count_A1=count_A1)
-        K1_whole_test = _kernel_fixup(K1_whole_test, train_snps=self.G1_train, iid_if_none=K0_whole_test_b.iid0, standardizer=self.mixer.snp_trained1, test=K1_whole_test, test_iid_if_none=K0_whole_test_b.iid1, block_size=self.block_size,count_A1=count_A1)
-        X = _pheno_fixup(X,iid_if_none=K0_whole_test_b.iid1,count_A1=count_A1)
-        K0_whole_test_c, K1_whole_test, X = intersect_apply([K0_whole_test_b, K1_whole_test, X],intersect_before_standardize=True,is_test=True)
-        X = X.read().standardize(self.covar_unit_trained)
-        # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
-        X = SnpData(iid=X.iid,
-                              sid=self._new_snp_name(X),
-                              val=np.c_[X.read().val,np.ones((X.iid_count,1))])
-        assert np.array_equal(X.sid,self.covar_sid), "Expect covar sids to be the same in train and test."
+            K0_whole_test_b = _kernel_fixup(K0_whole_test, train_snps=self.G0_train, iid_if_none=iid_if_none, standardizer=self.mixer.snp_trained0, test=K0_whole_test, test_iid_if_none=None, block_size=self.block_size,count_A1=count_A1)
+            K1_whole_test = _kernel_fixup(K1_whole_test, train_snps=self.G1_train, iid_if_none=K0_whole_test_b.iid0, standardizer=self.mixer.snp_trained1, test=K1_whole_test, test_iid_if_none=K0_whole_test_b.iid1, block_size=self.block_size,count_A1=count_A1)
+            X = _pheno_fixup(X,iid_if_none=K0_whole_test_b.iid1,count_A1=count_A1)
+            K0_whole_test_c, K1_whole_test, X = intersect_apply([K0_whole_test_b, K1_whole_test, X],intersect_before_standardize=True,is_test=True)
+            X = X.read().standardize(self.covar_unit_trained)
+            # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
+            X = SnpData(iid=X.iid,
+                                  sid=self._new_snp_name(X),
+                                  val=np.c_[X.read().val,np.ones((X.iid_count,1))])
+            assert np.array_equal(X.sid,self.covar_sid), "Expect covar sids to be the same in train and test."
 
-        train_idx0 = K0_whole_test_c.iid0_to_index(self.K_train_iid)
-        K0_train_test = K0_whole_test_c[train_idx0,:]
-        train_idx1 = K1_whole_test.iid0_to_index(self.K_train_iid)
-        K1_train_test = K1_whole_test[train_idx1,:]
-        test_idx0 = K0_whole_test_c.iid0_to_index(K0_whole_test_c.iid1)
-        K0_test_test = K0_whole_test_c[test_idx0,:]
-        if K0_test_test.iid0 is not K0_test_test.iid1:
-            raise Exception("real assert")
-        test_idx1 = K1_whole_test.iid0_to_index(K0_whole_test_c.iid1)
-        K1_test_test = K1_whole_test[test_idx1,:]
+            train_idx0 = K0_whole_test_c.iid0_to_index(self.K_train_iid)
+            K0_train_test = K0_whole_test_c[train_idx0,:]
+            train_idx1 = K1_whole_test.iid0_to_index(self.K_train_iid)
+            K1_train_test = K1_whole_test[train_idx1,:]
+            test_idx0 = K0_whole_test_c.iid0_to_index(K0_whole_test_c.iid1)
+            K0_test_test = K0_whole_test_c[test_idx0,:]
+            if K0_test_test.iid0 is not K0_test_test.iid1:
+                raise Exception("real assert")
+            test_idx1 = K1_whole_test.iid0_to_index(K0_whole_test_c.iid1)
+            K1_test_test = K1_whole_test[test_idx1,:]
 
-        if self.mixer.do_g:
-            ###################################################
-            # low rank from Rasmussen  eq 2.9 + noise term added to covar
-            ###################################################
-            Gstar = self.mixer.g_mix(K0_train_test,K1_train_test)
-            varg = self.h2raw * self.sigma2
-            vare = (1.-self.h2raw) * self.sigma2
-            Ainv = LA.inv((1./vare) * np.dot(self.G.T,self.G) + (1./varg)*np.eye(self.G.shape[1]))
-            testAinv = np.dot(Gstar.test.val, Ainv)
-            pheno_predicted = np.dot(X.val,self.beta) + (1./vare) * np.dot(np.dot(testAinv,self.G.T),self.y-np.dot(self.X,self.beta))
-            pheno_predicted = pheno_predicted.reshape(-1,1)
-            covar  = np.dot(testAinv,Gstar.test.val.T) + vare * np.eye(Gstar.test.val.shape[0])
+            if self.mixer.do_g:
+                ###################################################
+                # low rank from Rasmussen  eq 2.9 + noise term added to covar
+                ###################################################
+                Gstar = self.mixer.g_mix(K0_train_test,K1_train_test)
+                varg = self.h2raw * self.sigma2
+                vare = (1.-self.h2raw) * self.sigma2
+                Ainv = LA.inv((1./vare) * np.dot(self.G.T,self.G) + (1./varg)*np.eye(self.G.shape[1]))
+                testAinv = np.dot(Gstar.test.val, Ainv)
+                pheno_predicted = np.dot(X.val,self.beta) + (1./vare) * np.dot(np.dot(testAinv,self.G.T),self.y-np.dot(self.X,self.beta))
+                pheno_predicted = pheno_predicted.reshape(-1,1)
+                covar  = np.dot(testAinv,Gstar.test.val.T) + vare * np.eye(Gstar.test.val.shape[0])
 
-        else:
-            lmm = LMM()
-            lmm.U = self.U
-            lmm.S = self.S
-            lmm.G = self.G
-            lmm.y = self.y
-            lmm.Uy = self.Uy
-            lmm.X = self.X
-            lmm.UX = self.UX
+            else:
+                lmm = LMM()
+                lmm.U = self.U
+                lmm.S = self.S
+                lmm.G = self.G
+                lmm.y = self.y
+                lmm.Uy = self.Uy
+                lmm.X = self.X
+                lmm.UX = self.UX
 
-            Kstar = self.mixer.k_mix(K0_train_test,K1_train_test) #!!!later do we need/want reads here? how about view_OK?
-            lmm.setTestData(Xstar=X.val, K0star=Kstar.val.T)
+                Kstar = self.mixer.k_mix(K0_train_test,K1_train_test) #!!!later do we need/want reads here? how about view_OK?
+                lmm.setTestData(Xstar=X.val, K0star=Kstar.val.T)
 
-            Kstar_star = self.mixer.k_mix(K0_test_test,K1_test_test) #!!!later do we need/want reads here?how about view_OK?
-            pheno_predicted, covar = lmm.predict_mean_and_variance(beta=self.beta, h2=self.h2raw,sigma2=self.sigma2, Kstar_star=Kstar_star.val)
+                Kstar_star = self.mixer.k_mix(K0_test_test,K1_test_test) #!!!later do we need/want reads here?how about view_OK?
+                pheno_predicted, covar = lmm.predict_mean_and_variance(beta=self.beta, h2=self.h2raw,sigma2=self.sigma2, Kstar_star=Kstar_star.val)
 
-        #pheno_predicted = lmm.predictMean(beta=self.beta, h2=self.h2,scale=self.sigma2).reshape(-1,1)
-        ret0 = SnpData(iid = X.iid, sid=self.pheno_sid,val=pheno_predicted,pos=np.array([[np.nan,np.nan,np.nan]]),name="lmm Prediction")
+            #pheno_predicted = lmm.predictMean(beta=self.beta, h2=self.h2,scale=self.sigma2).reshape(-1,1)
+            ret0 = SnpData(iid = X.iid, sid=self.pheno_sid,val=pheno_predicted,pos=np.array([[np.nan,np.nan,np.nan]]),name="lmm Prediction")
 
-        from pysnptools.kernelreader import KernelData
-        ret1 = KernelData(iid=K0_test_test.iid,val=covar)
-        return ret0, ret1
+            from pysnptools.kernelreader import KernelData
+            ret1 = KernelData(iid=K0_test_test.iid,val=covar)
+            return ret0, ret1
 
 if __name__ == "__main__":
     if True:

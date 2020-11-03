@@ -25,7 +25,7 @@ from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
 from fastlmm.util.mingrid import minimize1D
 from fastlmm.util.matrix.bigsvd import big_sdd
 from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
-import six
+from unittest.mock import patch
 
 def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor=1,
             output_file_name=None, K0=None,
@@ -155,39 +155,40 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
 
     All stages cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.
     """
+    with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-    #Fill in with the default runner and default min_work_count
-    gtg_runner = gtg_runner or runner
-    gtg_min_work_count = gtg_min_work_count or min_work_count
-    svd_runner = svd_runner or runner
-    postsvd_runner = postsvd_runner or runner
-    postsvd_min_work_count = postsvd_min_work_count or min_work_count
-    test_snps_runner = test_snps_runner or runner
-    test_snps_min_work_count = test_snps_min_work_count or min_work_count
+        #Fill in with the default runner and default min_work_count
+        gtg_runner = gtg_runner or runner
+        gtg_min_work_count = gtg_min_work_count or min_work_count
+        svd_runner = svd_runner or runner
+        postsvd_runner = postsvd_runner or runner
+        postsvd_min_work_count = postsvd_min_work_count or min_work_count
+        test_snps_runner = test_snps_runner or runner
+        test_snps_min_work_count = test_snps_min_work_count or min_work_count
 
-    #######################################
-    # all in time and space 1M x 3
-    #######################################
-    G0 = G0 or K0 or test_snps
-    chrom_list, pheno1, RxY, test_snps1, X, Xdagger, G0 = preload(covar, G0, pheno, test_snps, count_A1=count_A1, multi_pheno_is_ok=True)
-    cache_dict = _cache_dict_fixup(cache,chrom_list)
+        #######################################
+        # all in time and space 1M x 3
+        #######################################
+        G0 = G0 or K0 or test_snps
+        chrom_list, pheno1, RxY, test_snps1, X, Xdagger, G0 = preload(covar, G0, pheno, test_snps, count_A1=count_A1, multi_pheno_is_ok=True)
+        cache_dict = _cache_dict_fixup(cache,chrom_list)
 
-    G0_memmap_lambda, ss_per_snp = get_G0_memmap(G0, cache_dict[0], X, Xdagger, memory_factor)
+        G0_memmap_lambda, ss_per_snp = get_G0_memmap(G0, cache_dict[0], X, Xdagger, memory_factor)
 
-    gtg_npz_lambda = get_gtg(cache_dict[0], G0.iid_count, G0.sid, G0_memmap_lambda, memory_factor, gtg_runner, min_work_count=gtg_min_work_count)
+        gtg_npz_lambda = get_gtg(cache_dict[0], G0.iid_count, G0.sid, G0_memmap_lambda, memory_factor, gtg_runner, min_work_count=gtg_min_work_count)
 
-    svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, X, svd_runner)
+        svd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict[0], G0.iid_count, G0.pos, ss_per_snp, X, svd_runner)
 
-    log_frequency = 200 if logging.getLogger().level <= logging.INFO else 0
-    postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=log_frequency)
+        log_frequency = 200 if logging.getLogger().level <= logging.INFO else 0
+        postsvd(chrom_list, gtg_npz_lambda, memory_factor, cache_dict, G0.iid, G0.sid, G0_memmap_lambda, ss_per_snp, RxY, X, postsvd_runner, clear_local_lambda, postsvd_min_work_count,log_frequency=log_frequency)
 
-    test_snps_memory_factor = memory_factor
+        test_snps_memory_factor = memory_factor
 
-    frame = do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, test_snps_memory_factor, G0.iid_count, G0.sid_count, G0.pos, pheno1,
-                         ss_per_snp, RxY, X, Xdagger, test_snps=test_snps1, runner=test_snps_runner,
-                         output_file_name=output_file_name, min_work_count=test_snps_min_work_count)
+        frame = do_test_snps(cache_dict, chrom_list, gtg_npz_lambda, test_snps_memory_factor, G0.iid_count, G0.sid_count, G0.pos, pheno1,
+                             ss_per_snp, RxY, X, Xdagger, test_snps=test_snps1, runner=test_snps_runner,
+                             output_file_name=output_file_name, min_work_count=test_snps_min_work_count)
 
-    return frame
+        return frame
 
 
 

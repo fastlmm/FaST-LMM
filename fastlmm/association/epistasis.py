@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -12,7 +10,7 @@ from pysnptools.snpreader import Bed
 from fastlmm.util.pickle_io import load, save
 import time
 import pandas as pd
-from six.moves import range
+from unittest.mock import patch
 
 def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_name=None,sid_list_0=None,sid_list_1=None,
                  log_delta=None, min_log_delta=-5, max_log_delta=10, 
@@ -107,15 +105,15 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
     1_12 1_9 0.07779 85
 
     """
+    with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+        if runner is None:
+            runner = Local()
 
-    if runner is None:
-        runner = Local()
-
-    epistasis = _Epistasis(test_snps, pheno, G0, G1, mixing, covar, sid_list_0, sid_list_1, log_delta, min_log_delta, max_log_delta, output_file_name, cache_file, count_A1=count_A1)
-    logging.info("# of pairs is {0}".format(epistasis.pair_count))
-    epistasis.fill_in_cache_file()
-    result = runner.run(epistasis)
-    return result
+        epistasis = _Epistasis(test_snps, pheno, G0, G1, mixing, covar, sid_list_0, sid_list_1, log_delta, min_log_delta, max_log_delta, output_file_name, cache_file, count_A1=count_A1)
+        logging.info("# of pairs is {0}".format(epistasis.pair_count))
+        epistasis.fill_in_cache_file()
+        result = runner.run(epistasis)
+        return result
 
 def write(sid0_list, sid1_list, pvalue_list, output_file):
     """

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 import logging
 
@@ -18,11 +16,11 @@ from pysnptools.standardizer import Unit
 from fastlmm.inference import getLMM
 import unittest
 import os.path
+from unittest.mock import patch
 
 import pysnptools.util
 from fastlmm.feature_selection.feature_selection_two_kernel import FeatureSelectionInSample
 import fastlmm.util.standardizer as stdizer
-from six.moves import range
 
 
 
@@ -448,60 +446,61 @@ def core_run(snpreader, pheno_fn, k, delta):
     """
     extracted core functionality, to avoid shuffle of data and not correct delta
     """
+    with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
 
-    G, X, y = load_snp_data(snpreader, pheno_fn, standardizer=Unit())
-    kf = KFold(n_splits=10, shuffle=False).split(list(range(len(y))))
+        G, X, y = load_snp_data(snpreader, pheno_fn, standardizer=Unit())
+        kf = KFold(n_splits=10, shuffle=False).split(list(range(len(y))))
 
-    ll = np.zeros(10)
+        ll = np.zeros(10)
 
-    fold_idx = 0
-    fold_data = {}
-    for split_idx, (train_idx, test_idx) in enumerate(kf):
-        fold_idx += 1
+        fold_idx = 0
+        fold_data = {}
+        for split_idx, (train_idx, test_idx) in enumerate(kf):
+            fold_idx += 1
 
-        fold_data["train_idx"] = train_idx
-        fold_data["test_idx"] = test_idx
+            fold_data["train_idx"] = train_idx
+            fold_data["test_idx"] = test_idx
 
-        # set up data
-        ##############################
-        fold_data["G_train"] = G[train_idx,:].read()
-        fold_data["G_test"] = G[test_idx,:]
+            # set up data
+            ##############################
+            fold_data["G_train"] = G[train_idx,:].read()
+            fold_data["G_test"] = G[test_idx,:]
 
-        fold_data["X_train"] = X[train_idx]
-        fold_data["X_test"] = X[test_idx]
+            fold_data["X_train"] = X[train_idx]
+            fold_data["X_test"] = X[test_idx]
 
-        fold_data["y_train"] = y[train_idx]
-        fold_data["y_test"] = y[test_idx]
+            fold_data["y_train"] = y[train_idx]
+            fold_data["y_test"] = y[test_idx]
 
 
-        # feature selection
-        ##############################
-        _F,_pval = lin_reg.f_regression_block(lin_reg.f_regression_cov_alt,fold_data["G_train"].val,fold_data["y_train"],blocksize=1E4,C=fold_data["X_train"])
-        feat_idx = np.argsort(_pval)
-        fold_data["feat_idx"] = feat_idx
+            # feature selection
+            ##############################
+            _F,_pval = lin_reg.f_regression_block(lin_reg.f_regression_cov_alt,fold_data["G_train"].val,fold_data["y_train"],blocksize=1E4,C=fold_data["X_train"])
+            feat_idx = np.argsort(_pval)
+            fold_data["feat_idx"] = feat_idx
         
-        # re-order SNPs (and cut to max num)
-        ##############################
-        fold_data["G_train"] = fold_data["G_train"][:,feat_idx[0:k]].read()
-        fold_data["G_test"] = fold_data["G_test"][:,feat_idx[0:k]].read()
+            # re-order SNPs (and cut to max num)
+            ##############################
+            fold_data["G_train"] = fold_data["G_train"][:,feat_idx[0:k]].read()
+            fold_data["G_test"] = fold_data["G_test"][:,feat_idx[0:k]].read()
 
-        model = getLMM()
-        model.setG(fold_data["G_train"].val)
-        model.sety(fold_data["y_train"])
-        model.setX(fold_data["X_train"])
+            model = getLMM()
+            model.setG(fold_data["G_train"].val)
+            model.sety(fold_data["y_train"])
+            model.setX(fold_data["X_train"])
 
-        REML = False
+            REML = False
         
-        # predict on test set
-        res = model.nLLeval(delta=delta, REML=REML)
-        model.setTestData(Xstar=fold_data["X_test"], G0star=fold_data["G_test"].val)
-        model.predictMean(beta=res["beta"], delta=delta)
-        #mse_cv1[k_idx, delta_idx] = mean_squared_error(fold_data["y_test"],
-        #out)
-        ll[split_idx] = model.nLLeval_test(fold_data["y_test"], res["beta"], sigma2=res["sigma2"], delta=delta)
+            # predict on test set
+            res = model.nLLeval(delta=delta, REML=REML)
+            model.setTestData(Xstar=fold_data["X_test"], G0star=fold_data["G_test"].val)
+            model.predictMean(beta=res["beta"], delta=delta)
+            #mse_cv1[k_idx, delta_idx] = mean_squared_error(fold_data["y_test"],
+            #out)
+            ll[split_idx] = model.nLLeval_test(fold_data["y_test"], res["beta"], sigma2=res["sigma2"], delta=delta)
 
 
-    return ll
+        return ll
 
 
 def getTestSuite():
