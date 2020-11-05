@@ -9,9 +9,7 @@ See `FaST-LMM's README.md <https://github.com/fastlmm/FaST-LMM/blob/master/READM
 
 :new:
 
-:func:`.single_snp_scale` Does single-SNP GWAS on a cluster. It analyzes multiple phenotypes
-at almost no additional cost over analyzing a single phenotype.
-(Also, scales on a single machine a little better than :func:`.single_snp`.)
+:func:`.single_snp` runs on both CPU (default) and GPU (optional).
 
 :Code:
 

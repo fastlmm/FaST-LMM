@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 import scipy as sp
 import scipy.stats as st
@@ -8,7 +6,6 @@ import scipy.linalg as la
 import pylab as pl
 from fastlmm.association.tests import Cv
 import fastlmm.util.util as ut
-from six.moves import range
 
 def pnames():
     '''

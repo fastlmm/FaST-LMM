@@ -883,9 +883,9 @@ if __name__ == "__main__":
         with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as _:
             doctest.testmod()
 
-    if True:
+    if False:
         # Create a 2nd kernel, based just on the interesting pairs
-        # Specificially, create SNP-like data for each individual
+        # Specifically, create SNP-like data for each individual
         # where the value is product of each pair's values
         # and the "SNP" name is "snp1,snp2"
         import os
@@ -985,5 +985,21 @@ if __name__ == "__main__":
         e2 = h2 * a2
         h2corr_raw = h2
 
-        
+    if False:
+        from fastlmm.association import single_snp
+        from pysnptools.snpreader import Bed
+        import matplotlib.pyplot as plt
+
+        plt.ylim()
+        plt.show()
+
+        snp_reader = Bed(r"M:\Temp\carl/hashdown/3f3ec259205678626199fb0ab3b0803a/tests/datasets/synth/all.bed")
+        pheno_fn = r"M:\Temp\carl\hashdown\3f3ec259205678626199fb0ab3b0803a\tests\datasets\synth\pheno_10_causals.txt"
+
+        test_snps = snp_reader[:,snp_reader.pos[:,0] == 1]
+        results_dfx = single_snp(test_snps, pheno_fn)
+        print(results_dfx.head())
+        results_dfx = single_snp(test_snps, pheno_fn)
+        print(results_dfx.head())
+ 
 

@@ -1,4 +1,4 @@
-#!!!cmk9 keep this file in project?
+#!!! keep this file in project?
 
 # Don't import numpy until after threads are set
 import os
