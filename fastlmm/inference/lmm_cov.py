@@ -889,7 +889,7 @@ class Linreg(object):
         else:        
             if self.Xdagger is None:
                 if self.X.shape[1]:
-                    self.Xdagger = self._xp.linalg.pinv2(self.X)       #SVD-based, and seems fast
+                    self.Xdagger = self._xp.linalg.pinv(self.X)       #SVD-based, and seems fast
                 else:
                     self.Xdagger = self._xp.zeros_like(self.X.T)
             self.beta = self.Xdagger.dot(Y)
