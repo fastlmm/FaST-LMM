@@ -129,7 +129,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
         If not given, the function is run locally.
     :type runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
 
-    :param xp: The numpy-like module to use (optional), for example, 'numpy' (normal CPU-based module)
+    :param xp: The array module to use (optional), for example, 'numpy' (normal CPU-based module)
                or 'cupy' (GPU-based module). If not given, will try to read
                from the ARRAY_MODULE environment variable. If not given and ARRAY_MODULE is not set,
                will use numpy. If 'cupy' is requested, will

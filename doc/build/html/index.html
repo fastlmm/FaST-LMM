@@ -43,9 +43,7 @@ single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large
 <dt class="field-odd">new</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<p><a class="reference internal" href="#fastlmm.association.single_snp_scale" title="fastlmm.association.single_snp_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp_scale()</span></code></a> Does single-SNP GWAS on a cluster. It analyzes multiple phenotypes
-at almost no additional cost over analyzing a single phenotype.
-(Also, scales on a single machine a little better than <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>.)</p>
+<p><a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> runs on both CPU (default) and GPU (optional).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Code</dt>
 <dd class="field-odd"><p></p></dd>
@@ -69,7 +67,7 @@ list (or use <a class="reference external" href="https://mail.python.org/mailman
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp</span></code><a class="headerlink" href="#single-snp" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="fastlmm.association.single_snp">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">K0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar_by_chrom</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">leave_out_one_chrom</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_delta</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">interact_with_snp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">G0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">G1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">K0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar_by_chrom</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">leave_out_one_chrom</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_delta</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">interact_with_snp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">G0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">G1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">xp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
 (For backwards compatibility, you may use ‘leave_out_one_chrom=False’ to skip cross validation, but that is not recommended.)</p>
 <dl class="field-list simple">
@@ -130,15 +128,24 @@ default: None</p></li>
 <li><p><strong>G1</strong> (<em>Same as K1.</em>) – Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.</p></li>
 <li><p><strong>runner</strong> – a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</p></li>
+<li><p><strong>xp</strong> (<em>string</em><em> or </em><em>Python module</em>) – The array module to use (optional), for example, ‘numpy’ (normal CPU-based module)
+or ‘cupy’ (GPU-based module). If not given, will try to read
+from the ARRAY_MODULE environment variable. If not given and ARRAY_MODULE is not set,
+will use numpy. If ‘cupy’ is requested, will
+try to ‘import cupy’. If that import fails, will revert to numpy.
+If two kernels are given, will ignore this and use ‘numpy’</p></li>
 <li><p><strong>count_A1</strong> (<em>bool</em>) – If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
 alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
+<dd class="field-even"><p>Python module</p>
 </dd>
-<dt class="field-odd">Example</dt>
-<dd class="field-odd"><p></p></dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Pandas dataframe with one row per test SNP. Columns include “PValue”</p>
+</dd>
+<dt class="field-even">Example</dt>
+<dd class="field-even"><p></p></dd>
 </dl>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp</span>
@@ -451,7 +458,7 @@ If you give a string, it should be the file name of a PLINK phenotype-formatted 
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p></li>
 <li><p><strong>G1</strong> (a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a> or a string) – SNPs from which to construct a second similarity kernel, optional. Also, see ‘mixing’).
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.</p></li>
-<li><p><strong>mixing</strong> (<em>number</em>) – Weight between 0.0 (inclusive, default) and 1.1 (inclusive) given to G1 relative to G0.
+<li><p><strong>mixing</strong> (<em>number</em>) – Weight between 0.0 (inclusive, default) and 1.0 (inclusive) given to G1 relative to G0.
 If you give no mixing number, G0 will get all the weight and G1 will be ignored.</p></li>
 <li><p><strong>covar</strong> (<em>a 'pheno dictionary'</em><em> or </em><em>a string</em>) – covariate information, optional: A ‘pheno dictionary’ contains an ndarray on the ‘vals’ key and a iid list on the ‘iid’ key.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.</p></li>
