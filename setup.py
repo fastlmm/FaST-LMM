@@ -9,7 +9,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.4.12'
+version = '0.4.13'
 
 def readme():
     with open('README.md') as f:
@@ -150,6 +150,7 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python",
     ],
@@ -200,7 +201,7 @@ setup(
                  },
 
     install_requires = ['pandas>=1.1.1','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.25', 'dill>=0.2.9',
+                       'scikit-learn>=0.19.1', 'pysnptools>=0.4.26', 'dill>=0.2.9',
                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,

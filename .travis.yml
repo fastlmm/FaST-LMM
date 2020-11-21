@@ -14,7 +14,16 @@ matrix:
     python: 3.8
     os: linux
     before_install:
-    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    UPDATE- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH=$HOME/miniconda/bin:$PATH
+    - ls -las /home/travis/miniconda/lib/
+
+  - name: linux_py39
+    python: 3.9
+    os: linux
+    before_install:
+    UPDATE- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
     - ls -las /home/travis/miniconda/lib/
@@ -43,6 +52,8 @@ matrix:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
 
+UPDATEMAC39
+
   - name: win_py37
     os: windows
     language: shell
@@ -63,6 +74,7 @@ matrix:
     - export SYSP=/c/tools/miniconda3
     - export PATH=$SYSP:$SYSP/Library/bin:$SYSP/Scripts:$PATH
 
+UPDATEWINDOWS39
 
 install:
 - hash -r
