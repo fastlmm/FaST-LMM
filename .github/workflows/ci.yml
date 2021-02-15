@@ -6,8 +6,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        python-version: [3.7, 3.8 ,3.9]
+        os: [ubuntu-latest] #, windows-latest, macOS-latest]
+        python-version: [3.7] #, 3.8 ,3.9]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
@@ -23,10 +23,6 @@ jobs:
     - name: Install Prerequisites
       shell: bash -l {0}
       run: |
-        hash -r
-        conda config --set always_yes yes --set changeps1 no
-        conda update -q conda
-        conda info -a
         conda install pip
         conda install cython
         conda install --file conda_requirements.txt
