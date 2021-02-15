@@ -30,7 +30,7 @@ jobs:
         # pip uninstall bed-reader --yes
         # pip uninstall pysnptools --yes
         # conda install numpy>=1.17.0
-        conda install setuptools>=41.2.0
+        pip install setuptools~=41.2.0
         pip install --index-url https://test.pypi.org/simple/ bed-reader
         pip install --index-url https://test.pypi.org/simple/ pysnptools
         python setup.py build_ext --inplace
