@@ -6,8 +6,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        python-version: [3.7, 3.8] #later ,3.9]
+        os: [ubuntu-latest] #, windows-latest, macOS-latest]
+        python-version: [3.8] #, 3.7]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -21,10 +21,7 @@ jobs:
 
     - name: Install GCC 7 on Mac
       if: runner.os == 'macOS'
-      run: |
-          brew install gcc@7
-          export CC=gcc-7
-          export CXX=g++-7
+      run: brew install gcc@7
 
 
     - name: Set up Miniconda ${{ matrix.python-version }}
@@ -51,13 +48,14 @@ jobs:
         pip freeze
         python setup.py sdist bdist_wheel
 
-    - name: Test
-      shell: bash -l {0}
-      run: |
-        pip uninstall fastlmm --yes
-        export PYTHONPATH=${GITHUB_WORKSPACE}
-        cd tests
-        python test.py
+    # cmk
+    #- name: Test
+    #  shell: bash -l {0}
+    #  run: |
+    #    pip uninstall fastlmm --yes
+    #    export PYTHONPATH=${GITHUB_WORKSPACE}
+    #    cd tests
+    #    python test.py
 
     - name: Save Wheels
       uses: actions/upload-artifact@v2
@@ -66,7 +64,7 @@ jobs:
         path: dist/*.whl
 
     - name: Save SDist
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
       uses: actions/upload-artifact@v2
       with:
         name: wheels
