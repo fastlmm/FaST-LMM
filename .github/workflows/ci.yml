@@ -40,7 +40,8 @@ jobs:
       run: |
         pip uninstall fastlmm --yes
         export PYTHONPATH=${GITHUB_WORKSPACE}
-        python tests/test.py
+        cd tests
+        python test.py
 
     - name: Save Wheels
       uses: actions/upload-artifact@v2
