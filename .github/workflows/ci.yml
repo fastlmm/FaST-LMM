@@ -6,12 +6,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        python-version: [3.7, 3.8 ,3.9]
+        os: [windows-latest]# [ubuntu-latest, windows-latest, macOS-latest]
+        python-version: [3.7] # [3.7, 3.8] # ,3.9]
     runs-on: ${{ matrix.os }}
+
     steps:
+
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        lfs: true
+    - name: Checkout LFS objects
+      run: git lfs checkout
 
     - name: Set up Miniconda ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
