@@ -34,7 +34,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
     # cmk installing bed-reader from test pypi
-    - name: Install Prerequisites
+    - name: Install Prerequisites and build
       shell: bash -l {0}
       run: |
         conda install pip
@@ -45,6 +45,8 @@ jobs:
         pip uninstall pysnptools --yes
         pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bed-reader
         pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple pysnptools
+        export CC=gcc-7
+        export CXX=g++-7
         python setup.py build_ext --inplace
         pip freeze
         python setup.py sdist bdist_wheel
