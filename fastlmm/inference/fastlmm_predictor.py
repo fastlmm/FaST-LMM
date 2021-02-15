@@ -93,8 +93,8 @@ class _SnpWholeTest(KernelReader):
 
 
     #!!! does it make sense to read from disk in to parts?
-    def _read(self, row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok):
-        result = self[row_index_or_none,col_index_or_none]._read(row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok)
+    def _read(self, row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok, num_threads):
+        result = self[row_index_or_none,col_index_or_none]._read(row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok, num_threads, num_threads)
         return result
 
     def __repr__(self):
@@ -130,7 +130,7 @@ class _SnpTrainTest(KernelReader):
     def col(self):
         return self._col
 
-    def _read(self, row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok):
+    def _read(self, row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok, num_threads):
         assert self.train.sid_count == self.test.sid_count, "real assert"
         #case 1: asking for all of train x test
         if (row_index_or_none is None or np.array_equal(row_index_or_none,np.arange(self.row_count))
@@ -138,8 +138,8 @@ class _SnpTrainTest(KernelReader):
 
             #Do all-at-once (not in blocks) if 1. No block size is given or 2. The #ofSNPs < Min(block_size,iid_count) #similar code elsewhere
             if self.block_size is None or (self.train.sid_count <= self.block_size or self.train.sid_count <= self.train.iid_count+self.test.iid_count):
-                train_snps = self.train.read(dtype=dtype).standardize(self.standardizer)
-                test_snps = self.test.read(dtype=dtype).standardize(self.standardizer)
+                train_snps = self.train.read(dtype=dtype,num_threads=num_threads).standardize(self.standardizer,num_threads=num_threads)
+                test_snps = self.test.read(dtype=dtype,num_threads=num_threads).standardize(self.standardizer,num_threads=num_threads)
                 if order == 'F': #numpy's 'dot' always returns 'C' order
                     k_val = test_snps.val.dot(train_snps.val.T).T
                 else:
@@ -155,8 +155,8 @@ class _SnpTrainTest(KernelReader):
 
                 for start in range(0, self.train.sid_count, self.block_size):
                     ct += self.block_size
-                    train_snps = self.train[:,start:start+self.block_size].read(dtype=dtype).standardize(self.standardizer)
-                    test_snps =  self.test [:,start:start+self.block_size].read(dtype=dtype).standardize(self.standardizer)
+                    train_snps = self.train[:,start:start+self.block_size].read(dtype=dtype,num_threads=num_threads).standardize(self.standardizer,num_threads=num_threads)
+                    test_snps =  self.test [:,start:start+self.block_size].read(dtype=dtype,num_threads=num_threads).standardize(self.standardizer,num_threads=num_threads)
                     if order == 'F': #numpy's 'dot' always returns 'C' order
                         k_val += test_snps.val.dot(train_snps.val.T).T
                     else:

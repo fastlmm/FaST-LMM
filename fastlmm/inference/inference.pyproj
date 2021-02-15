@@ -6,8 +6,8 @@
     <ProjectGuid>6d8dcdf9-3776-4e1b-a713-e9b6f2a49865</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>tests\test_linear_regression.py</StartupFile>
-    <SearchPath>..\..\;..\..\..\pstsgkit</SearchPath>
+    <StartupFile>tests\test_fastlmm_predictor.py</StartupFile>
+    <SearchPath>..\..\;..\..\..\bed-reader;..\..\..\pysnptools</SearchPath>
     <OutputPath>.</OutputPath>
     <Name>inference</Name>
     <RootNamespace>inference</RootNamespace>
@@ -22,7 +22,7 @@
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
+    <InterpreterId>CondaEnv|CondaEnv|gtg</InterpreterId>
     <TestFramework>unittest</TestFramework>
     <WorkingDirectory>D:\OneDrive\programs\fastlmm\tests</WorkingDirectory>
   </PropertyGroup>
@@ -3751,7 +3751,7 @@
     <Content Include="fastlmmpy3\setup.py.bak" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
+    <InterpreterReference Include="CondaEnv|CondaEnv|gtg" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

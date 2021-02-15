@@ -1,0 +1,60 @@
+name: CI
+on: push
+    
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        python-version: [3.7, 3.8 ,3.9]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Miniconda ${{ matrix.python-version }}
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+
+    # cmk installing bed-reader from test pypi
+    - name: Install Prerequisites
+      shell: bash -l {0}
+      run: |
+        hash -r
+        conda config --set always_yes yes --set changeps1 no
+        conda update -q conda
+        conda info -a
+        conda install pip
+        conda install cython
+        conda install --file conda_requirements.txt
+        pip install -r requirements.txt
+        pip uninstall bed-reader --yes
+        pip uninstall pysnptools --yes
+        pip install --index-url https://test.pypi.org/simple/ bed-reader
+        pip install --index-url https://test.pypi.org/simple/ pysnptools
+        python setup.py build_ext --inplace
+        pip freeze
+        python setup.py sdist bdist_wheel
+
+    - name: Test
+      shell: bash -l {0}
+      run: |
+        pip uninstall fastlmm --yes
+        export PYTHONPATH=${GITHUB_WORKSPACE}
+        python tests/test.py
+
+    - name: Save Wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: target/wheels/*.whl
+
+    - name: Save SDist
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: dist/*.tar.gz

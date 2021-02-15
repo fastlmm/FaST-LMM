@@ -26,7 +26,7 @@ class _SnpWholeWithTrain(KernelReader):
         self.standardizer = standardizer
         self.block_size = block_size
 
-    def _read(self, row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok):
+    def _read(self, row_index_or_none, col_index_or_none, order, dtype, force_python_only, view_ok, num_threads):
         #case 1:
         if row_index_or_none is None and col_index_or_none is None:
 
