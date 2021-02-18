@@ -31,9 +31,3 @@ jobs:
       with:
         python-versions: 'cp37-cp37m cp38-cp38m'
         build-requirements: 'cython numpy'
-
-    - name: Save Wheels
-        uses: actions/upload-artifact@v2
-        with:
-        name: wheels
-        path: dist/*.whl
