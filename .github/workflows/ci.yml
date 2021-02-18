@@ -6,8 +6,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest] #, windows-latest, macOS-latest]
-        python-version: [3.8] #, 3.7]
+        os: [] #cmk ubuntu-latest, windows-latest, macOS-latest]
+        python-version: [3.8, 3.7]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -48,14 +48,13 @@ jobs:
         pip freeze
         python setup.py sdist bdist_wheel
 
-    # cmk
-    #- name: Test
-    #  shell: bash -l {0}
-    #  run: |
-    #    pip uninstall fastlmm --yes
-    #    export PYTHONPATH=${GITHUB_WORKSPACE}
-    #    cd tests
-    #    python test.py
+    - name: Test
+      shell: bash -l {0}
+      run: |
+        pip uninstall fastlmm --yes
+        export PYTHONPATH=${GITHUB_WORKSPACE}
+        cd tests
+        python test.py
 
     - name: Save Windows and Mac Wheels
       if: matrix.os != 'ubuntu-latest'
