@@ -48,8 +48,8 @@ Quick install:
 
 If you have Anaconda installed, installation is as easy as:
 
-    conda install "mkl>=2019.4" "scipy" "numpy"
-    pip install fastlmm
+    conda install "mkl==2019.4" "scipy" "numpy"
+    pip install --no-build-isolation fastlmm
 
 (1) Installation of dependent packages
 -------------------------------------------
