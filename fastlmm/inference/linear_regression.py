@@ -55,8 +55,8 @@ class LinearRegression(object):
         >>> print(mean.iid[0], round(mean.val[0,0],7), round(covariance.val[0,0],7))
         ['per0' 'per0'] 0.1518764 0.9043703
         >>> nll = linreg.score(X=cov[test_idx,:],y=pheno_fn)
-        >>> print(round(nll,7))
-        13.6688448
+        >>> print(round(nll,6))
+        13.668845
 
 
         '''
