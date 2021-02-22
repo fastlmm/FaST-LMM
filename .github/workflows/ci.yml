@@ -62,7 +62,7 @@ jobs:
         path: dist/*.whl
 
     - name: Save SDist
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7'
       uses: actions/upload-artifact@v2
       with:
         name: wheels

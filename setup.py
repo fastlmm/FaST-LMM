@@ -48,6 +48,8 @@ if platform.system() == "Darwin":
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
     mp5lib = 'iomp5'
     mkl_core = 'mkl_core'
+    mkl_rt = 'mkl_rt'
+    mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = []
     extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
     extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
@@ -56,6 +58,8 @@ elif platform.system() == "Windows":
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
     mp5lib = 'libiomp5md'
     mkl_core = 'mkl_core_dll'
+    mkl_rt = 'mkl_rt'
+    mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = ['/EHsc']
     extra_compile_args1 = ['/DMKL_ILP64']
     extra_compile_args2 = ['/EHsc', '/openmp', '/DMKL_LP64']
@@ -64,6 +68,8 @@ else:
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
     mp5lib = 'iomp5'
     mkl_core = 'mkl_core'
+    mkl_rt = 'mkl_rt'
+    mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = []
     extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
     extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
@@ -84,7 +90,7 @@ if use_cython:
                    Extension(name="fastlmm.util.matrix.cample",
                             language="c++",
                             sources=["fastlmm/util/matrix/cample.pyx"],
-                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib], #!!!'mkl_core','mkl_core_dll'
+                            libraries = [mkl_rt, 'mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib, mkl_sequential],
                             library_dirs = mkl_library_list,
                             runtime_library_dirs = runtime_library_dirs,
                             include_dirs = mkl_include_list+[numpy.get_include()],
