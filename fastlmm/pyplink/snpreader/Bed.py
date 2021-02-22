@@ -7,6 +7,26 @@ import pandas as pd
 import logging
 import warnings
 
+WRAPPED_PLINK_PARSER_PRESENT = None
+
+def decide_once_on_plink_reader():
+    #This is now done in a method, instead of at the top of the file, so that messages can be re-directed to the appropriate stream.
+    #(Usually messages go to stdout, but when the code is run on Hadoop, they are sent to stderr)
+
+    global WRAPPED_PLINK_PARSER_PRESENT
+    if WRAPPED_PLINK_PARSER_PRESENT == None:
+        # attempt to import wrapped plink parser
+        try:
+            from bed_reader import read_f32, read_f64
+            WRAPPED_PLINK_PARSER_PRESENT = True #!!!does the standardizer work without c++
+            logging.info("using Rust-based plink parser")
+        except Exception as detail:
+            logging.warn(detail)
+            WRAPPED_PLINK_PARSER_PRESENT = False
+
+
+
+
 class Bed(object):
     '''
     This is an obsolete class that does random-access reads of a BED file. For examples of its use see its 'read' method.
@@ -175,38 +195,69 @@ class Bed(object):
     @staticmethod
     def read_with_specification(snpset_withbbed, order="F", dtype=SP.float64, force_python_only=False):
         # doesn't need to self.run_once() because it is static
+        decide_once_on_plink_reader()
+        global WRAPPED_PLINK_PARSER_PRESENT
 
         bed = snpset_withbbed.bed
         iid_count_in, iid_count_out, iid_index_out, snp_count_in, snp_count_out, snp_index_out = bed.counts_and_indexes(snpset_withbbed)
 
-        # An earlier version of this code had a way to read consecutive SNPs of code in one read. May want
-        # to add that ability back to the code. 
-        # Also, note that reading with python will often result in non-contigious memory, so the python standardizers will automatically be used, too.       
-        logging.warn("using pure python plink parser (might be much slower!!)")
-        SNPs = SP.zeros(((int(SP.ceil(0.25*iid_count_in))*4),snp_count_out),order=order, dtype=dtype) #allocate it a little big
-        for SNPsIndex, bimIndex in enumerate(snpset_withbbed):
+        if WRAPPED_PLINK_PARSER_PRESENT and not force_python_only:
+            from bed_reader import read_f32, read_f64
+            SNPs = SP.zeros((iid_count_out, snp_count_out), order=order, dtype=dtype)
+            bed_fn = bed.basefilename + ".bed"
+            count_A1 = False
 
-            startbit = int(SP.ceil(0.25*iid_count_in)*bimIndex+3)
-            bed._filepointer.seek(startbit)
-            nbyte = int(SP.ceil(0.25*iid_count_in))
-            bytes = SP.array(bytearray(bed._filepointer.read(nbyte))).reshape((int(SP.ceil(0.25*iid_count_in)),1),order='F')
+            if dtype == SP.float64:
+                reader = read_f64
+            elif dtype == SP.float32:
+                    reader = read_f32
+            else:
+                raise ValueError(
+                    f"dtype '{val.dtype}' not known, only "
+                    + "'int8', 'float32', and 'float64' are allowed."
+                )
 
-            SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=64]=SP.nan
-            SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=128]=1
-            SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=192]=2
-            bytes=SP.mod(bytes,64)
-            SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=16]=SP.nan
-            SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=32]=1
-            SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=48]=2
-            bytes=SP.mod(bytes,16)
-            SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=4]=SP.nan
-            SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=8]=1
-            SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=12]=2
-            bytes=SP.mod(bytes,4)
-            SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=1]=SP.nan
-            SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=2]=1
-            SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=3]=2
-        SNPs = SNPs[iid_index_out,:] #reorder or trim any extra allocation
+            reader(
+                bed_fn,
+                iid_count=iid_count_in,
+                sid_count=snp_count_in,
+                count_a1=count_A1,
+                iid_index=SP.array(iid_index_out,dtype=SP.uint64),
+                sid_index=SP.array(snp_index_out,dtype=SP.uint64),
+                val=SNPs,
+                num_threads=0
+            )
+
+        else:
+
+            # An earlier version of this code had a way to read consecutive SNPs of code in one read. May want
+            # to add that ability back to the code. 
+            # Also, note that reading with python will often result in non-contiguous memory, so the python standardizers will automatically be used, too.       
+            logging.warn("using pure python plink parser (might be much slower!!)")
+            SNPs = SP.zeros(((int(SP.ceil(0.25*iid_count_in))*4),snp_count_out),order=order, dtype=dtype) #allocate it a little big
+            for SNPsIndex, bimIndex in enumerate(snpset_withbbed):
+
+                startbit = int(SP.ceil(0.25*iid_count_in)*bimIndex+3)
+                bed._filepointer.seek(startbit)
+                nbyte = int(SP.ceil(0.25*iid_count_in))
+                bytes = SP.array(bytearray(bed._filepointer.read(nbyte))).reshape((int(SP.ceil(0.25*iid_count_in)),1),order='F')
+
+                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=64]=SP.nan
+                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=128]=1
+                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=192]=2
+                bytes=SP.mod(bytes,64)
+                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=16]=SP.nan
+                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=32]=1
+                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=48]=2
+                bytes=SP.mod(bytes,16)
+                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=4]=SP.nan
+                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=8]=1
+                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=12]=2
+                bytes=SP.mod(bytes,4)
+                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=1]=SP.nan
+                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=2]=1
+                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=3]=2
+            SNPs = SNPs[iid_index_out,:] #reorder or trim any extra allocation
 
         ret = {
                 'rs'     :bed.rs[snp_index_out],

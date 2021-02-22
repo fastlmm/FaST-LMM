@@ -6,14 +6,6 @@ from .snpset import *
 import logging
 from six.moves import range
 
-# attempt to import wrapped plink parser
-WRAPPED_PLINK_PARSER_PRESENT = True
-try:
-    import pysnptools.snpreader.wrap_plink_parser
-except Exception:
-    WRAPPED_PLINK_PARSER_PRESENT = False
-
-
 def readPED(basefilename, delimiter = ' ',missing = '0',standardize = True, pheno = None):
     '''
     read [basefilename].ped and [basefilename].map

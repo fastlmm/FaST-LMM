@@ -4,4 +4,4 @@ scikit-learn>=0.19.1
 dill>=0.2.9
 statsmodels>=0.10.1
 psutil>=5.6.7
-pysnptools>=0.4.22
+pysnptools>=0.5.1

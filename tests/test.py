@@ -130,6 +130,7 @@ def removeTmpFiles():
 
 if __name__ == '__main__':
 
+
     logging.basicConfig(level=logging.WARN)
     removeTmpFiles()
 

@@ -7,7 +7,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]#cmk, windows-latest, macOS-latest]
-        python-version: [3.9]#cmk, 3.8]
+        python-version: [3.7]#cmk, 3.8]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -34,7 +34,6 @@ jobs:
     - name: Install Prerequisites and build
       shell: bash -l {0}
       run: |
-        conda install mkl==2019.4 mkl-service
         conda install --file conda_requirements.txt
         conda install cython
         conda install pip
