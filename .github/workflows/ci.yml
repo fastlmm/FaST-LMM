@@ -37,11 +37,9 @@ jobs:
         conda install --file conda_requirements.txt
         conda install cython
         conda install pip
-        pip install -r requirements.txt
-        pip uninstall bed-reader --yes
-        pip uninstall pysnptools --yes
         pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bed-reader
         pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple pysnptools
+        pip install -r requirements.txt
         export CC=gcc-7
         export CXX=g++-7
         python setup.py build_ext --inplace
