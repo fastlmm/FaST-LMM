@@ -19,7 +19,13 @@ Improvements:
 
 *A C++ version, which is generally less functional, is available. See http://fastlmm.github.io/.*
 
+Quick install:
+=================================
 
+If you have Miniconda or Anaconda installed, installation is as easy as:
+
+    conda install "mkl==2019.4" "scipy" "numpy"
+    pip install --no-build-isolation fastlmm
 Documentation
 =================================
 
@@ -43,49 +49,7 @@ Contacts
 * [Join](mailto:fastlmm-user-join@python.org?subject=Subscribe) the user discussion and announcement list (or use [web sign up](https://mail.python.org/mailman3/lists/fastlmm-user.python.org)).
 * [Open an issue](https://github.com/fastlmm/FaST-LMM/issues) on GitHub.
 
-Quick install:
-=================================
-
-If you have Miniconda or Anaconda installed, installation is as easy as:
-
-    conda install "mkl==2019.4" "scipy" "numpy"
-    pip install --no-build-isolation fastlmm
-
-(1) Installation of dependent packages
--------------------------------------------
-
-You must have the "mkl" (and related) packages installed. It is not available via pip,
-but the conda command above will install it.
-
-We recommend using a Python distribution such as 
-[Anaconda](https://www.anaconda.com/distribution/).
-This distribution can be used on Linux, Windows, and Mac and is free.
-It is the easiest way to get all the required package
-dependencies, especially the those related to the
-MKL library.
-
-
-(2) Installing from source
--------------------------------------------
-
-Go to the directory where you copied the source code for fastlmm.
-
-On Linux:
-
-At the shell, type: 
-
-    sudo python setup.py install
-
-
-On Windows:
-
-At the OS command prompt, type 
-
-    python setup.py install
-
-
-
-For developers (and also to run regression tests)
+Installing for developers and regression tests
 =====================================================
 
 When working on the developer version, first add the src directory of the package to your PYTHONPATH 
