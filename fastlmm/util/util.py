@@ -469,15 +469,14 @@ def manhattan_plot(
     :type xaxis_unit_bp:        Boolean
     :param alpha:               alpha (opaqueness) for P-value markers in scatterplot (default 0.5)
     :type alpha:                number
-
-    :rtype:                     chromosome_starts       [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
-                                cumulative chromosome starts used in plotting.
     :param alpha:               alpha (opaqueness) for P-value markers in scatterplot (default 0.5)
     :type alpha:                number
     :param color:               color to use for the final scatterplot. If None (default) chromosomes are alternately colored
     :type color:                string
     :param ax:                  ax where to plot the figure. If None (default) a fresh canvas is used
     :type ax:                   matplotlib.ax
+    :rtype:                     chromosome_starts       [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
+                                cumulative chromosome starts used in plotting.
 
     :Example:
 
@@ -531,9 +530,6 @@ def manhattan_plot(
 
         xticks = xticks[unique_idx]
         xticklabels = unique_chr
-
-        print(unique_chr)
-        print(unique_idx)
 
         ax.set_xticks(np.sort(xticks))
         ax.set_xticklabels(np.sort(xticklabels))
