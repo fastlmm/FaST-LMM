@@ -434,11 +434,22 @@ def _color_list(chr_list,rle):
     result = [index_to_color[chr_to_index[chr]%len(index_to_color)] for chr in chr_list]
     return result
 
-def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vline_significant=False,marker="o", chromosome_starts=None, xaxis_unit_bp=True, alpha=0.5):
+def manhattan_plot(
+    chr_pos_pvalue_array,
+    pvalue_line=None,
+    plot_threshold=1.0,
+    vline_significant=False,
+    marker="o",
+    chromosome_starts=None,
+    xaxis_unit_bp=True,
+    alpha=0.5,
+    color=None,
+    ax=None,
+):
     """
     Function to create a Manhattan plot.  See http://en.wikipedia.org/wiki/Manhattan_plot.
 
-    :param chr_pos_pvalue_array: an n x 3 numpy array. The three columns are the chrom number 
+    :param chr_pos_pvalue_array: an n x 3 numpy array. The three columns are the chrom number
                                 (as a number), the position, and pvalue.
     :type chr_pos_pvalue_array: numpy array
     :param pvalue_line:         (Default: None). If given, draws a line at that PValue.
@@ -453,7 +464,7 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
     :param chromosome_starts:   chromosome, cumulative start position, cumulative stop position
                                 cumulative chromosome starts, for plotting. If None (default), this is estimated from data
     :type chromosome_starts:    [Nchrom x 3] ndarray
-    :param xaxis_unit_bp:       If true, plot cumulative position in basepair units on x axis. If False, only 
+    :param xaxis_unit_bp:       If true, plot cumulative position in basepair units on x axis. If False, only
                                 use rank of SNP positions. (default: True)
     :type xaxis_unit_bp:        Boolean
     :param alpha:               alpha (opaqueness) for P-value markers in scatterplot (default 0.5)
@@ -461,6 +472,12 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
 
     :rtype:                     chromosome_starts       [Nchrom x 3] ndarray: chromosome, cumulative start position, cumulative stop position
                                 cumulative chromosome starts used in plotting.
+    :param alpha:               alpha (opaqueness) for P-value markers in scatterplot (default 0.5)
+    :type alpha:                number
+    :param color:               color to use for the final scatterplot. If None (default) chromosomes are alternately colored
+    :type color:                string
+    :param ax:                  ax where to plot the figure. If None (default) a fresh canvas is used
+    :type ax:                   matplotlib.ax
 
     :Example:
 
@@ -481,42 +498,81 @@ def manhattan_plot(chr_pos_pvalue_array,pvalue_line=None,plot_threshold=1.0,vlin
     # create a copy of the data and sort it by chrom and then position
     array = np.array(chr_pos_pvalue_array)
     if plot_threshold:
-        array = array[array[:,2]<=plot_threshold]
+        array = array[array[:, 2] <= plot_threshold]
     else:
         plot_threshold = 1.0
-    array=array[np.argsort(array[:,1]),:] #sort by ChrPos
-    array=array[np.argsort(array[:,0],kind='mergesort'),:] #Finally, sort by Chr (but keep ChrPos in case of ties)
-    rle = list(_run_length_encode(array[:,0]))
-        
-    if xaxis_unit_bp:   #compute and use cumulative basepair positions for x-axis
+    array = array[np.argsort(array[:, 1]), :]  # sort by ChrPos
+    array = array[
+        np.argsort(array[:, 0], kind="mergesort"), :
+    ]  # Finally, sort by Chr (but keep ChrPos in case of ties)
+    rle = list(_run_length_encode(array[:, 0]))
+
+    if xaxis_unit_bp:  # compute and use cumulative basepair positions for x-axis
         if chromosome_starts is None:
             chromosome_starts = _compute_x_positions_chrom(array)
         chr_pos_list = _compute_x_positions_snps(array, chromosome_starts)
-        plt.xlim([0,chromosome_starts[-1,2]+1])
-        plt.xticks(chromosome_starts[:,1:3].mean(1),chromosome_starts[:,0])
-    else:               #use rank indices for x-axis
+        plt.xlim([0, chromosome_starts[-1, 2] + 1])
+        plt.xticks(chromosome_starts[:, 1:3].mean(1), chromosome_starts[:, 0])
+    else:  # use rank indices for x-axis
         chr_pos_list = np.arange(array.shape[0])
-        xTickMarks = [str(int(item)) for item,count in rle]
-        plt.xlim([0,array.shape[0]])
+        xTickMarks = [str(int(item)) for item, count in rle]
+        plt.xlim([0, array.shape[0]])
         plt.xticks(list(_rel_to_midpoint(rle)), xTickMarks)
-    y = -np.log10(array[:,2])
+    y = -np.log10(array[:, 2])
     max_y = y.max()
 
-    if pvalue_line and vline_significant:   #mark significant associations (ones that pass the pvalue_line) by a red vertical line:
-        idx_significant = array[:,2]<pvalue_line
+    if (
+        pvalue_line and vline_significant
+    ):  # mark significant associations (ones that pass the pvalue_line) by a red vertical line:
+        idx_significant = array[:, 2] < pvalue_line
         if np.any(idx_significant):
             y_significant = y[idx_significant]
             chr_pos_list_significant = chr_pos_list[idx_significant]
             for i in range(len(chr_pos_list_significant)):
-                plt.axvline(x=chr_pos_list_significant[i],ymin = 0.0, ymax = y_significant[i], color = 'r',alpha=0.8)
+                plt.axvline(
+                    x=chr_pos_list_significant[i],
+                    ymin=0.0,
+                    ymax=y_significant[i],
+                    color="r",
+                    alpha=0.8,
+                )
 
-    plt.scatter(chr_pos_list,y,marker=marker,c=_color_list(array[:,0],rle),edgecolor='none',s=y/max_y*20+0.5, alpha=alpha)
-    plt.xlabel("chromosome")
-    plt.ylabel("-log10(P value)")
+    if ax is None:
 
-    if pvalue_line:
-        plt.axhline(-np.log10(pvalue_line),linestyle="--",color='gray')
-    plt.ylim([-np.log10(plot_threshold),None])
+        plt.scatter(
+            chr_pos_list,
+            y,
+            marker=marker,
+            c=(_color_list(array[:, 0], rle) if color is None else color),
+            edgecolor="none",
+            s=y / max_y * 20 + 0.5,
+            alpha=alpha,
+        )
+        plt.xlabel("chromosome")
+        plt.ylabel("-log10(P value)")
+
+        if pvalue_line:
+            plt.axhline(-np.log10(pvalue_line), linestyle="--", color="gray")
+        plt.ylim([-np.log10(plot_threshold), None])
+
+    else:
+
+        ax.scatter(
+            chr_pos_list,
+            y,
+            marker=marker,
+            c=(_color_list(array[:, 0], rle) if color is None else color),
+            edgecolor="none",
+            s=y / max_y * 20 + 0.5,
+            alpha=alpha,
+        )
+        ax.set_xlabel("chromosome")
+        ax.set_ylabel("-log10(P value)")
+
+        if pvalue_line:
+            ax.axhline(-np.log10(pvalue_line), linestyle="--", color="gray")
+        ax.set_ylim([-np.log10(plot_threshold), None])
+
     return chromosome_starts
 
 def _compute_x_positions_chrom(positions, offset=1e5):
