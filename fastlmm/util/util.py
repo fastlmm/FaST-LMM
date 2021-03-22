@@ -532,6 +532,9 @@ def manhattan_plot(
         xticks = xticks[unique_idx]
         xticklabels = unique_chr
 
+        print(unique_chr)
+        print(unique_idx)
+
         ax.set_xticks(np.sort(xticks))
         ax.set_xticklabels(np.sort(xticklabels))
 
@@ -541,6 +544,7 @@ def manhattan_plot(
         ax.set_xlim([0, array.shape[0]])
         ax.set_xticks(list(_rel_to_midpoint(rle)))
         ax.set_xticklabels(xTickMarks)
+
     y = -np.log10(array[:, 2])
     max_y = y.max()
 
