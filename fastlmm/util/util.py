@@ -495,6 +495,11 @@ def manhattan_plot(
     """
     import matplotlib.pyplot as plt
 
+    # Create an empty canvas if none is provided
+    # this way the function can only work on 'ax'
+    if ax is None:
+        _, ax = plt.subplots()
+
     # create a copy of the data and sort it by chrom and then position
     array = np.array(chr_pos_pvalue_array)
     if plot_threshold:
@@ -511,12 +516,12 @@ def manhattan_plot(
         if chromosome_starts is None:
             chromosome_starts = _compute_x_positions_chrom(array)
         chr_pos_list = _compute_x_positions_snps(array, chromosome_starts)
-        plt.xlim([0, chromosome_starts[-1, 2] + 1])
+        ax.set_xlim([0, chromosome_starts[-1, 2] + 1])
         plt.xticks(chromosome_starts[:, 1:3].mean(1), chromosome_starts[:, 0])
     else:  # use rank indices for x-axis
         chr_pos_list = np.arange(array.shape[0])
         xTickMarks = [str(int(item)) for item, count in rle]
-        plt.xlim([0, array.shape[0]])
+        ax.set_xlim([0, array.shape[0]])
         plt.xticks(list(_rel_to_midpoint(rle)), xTickMarks)
     y = -np.log10(array[:, 2])
     max_y = y.max()
@@ -529,7 +534,7 @@ def manhattan_plot(
             y_significant = y[idx_significant]
             chr_pos_list_significant = chr_pos_list[idx_significant]
             for i in range(len(chr_pos_list_significant)):
-                plt.axvline(
+                ax.axvline(
                     x=chr_pos_list_significant[i],
                     ymin=0.0,
                     ymax=y_significant[i],
@@ -537,41 +542,21 @@ def manhattan_plot(
                     alpha=0.8,
                 )
 
-    if ax is None:
+    ax.scatter(
+        chr_pos_list,
+        y,
+        marker=marker,
+        c=(_color_list(array[:, 0], rle) if color is None else color),
+        edgecolor="none",
+        s=y / max_y * 20 + 0.5,
+        alpha=alpha,
+    )
+    ax.set_xlabel("chromosome")
+    ax.set_ylabel("-log10(P value)")
 
-        plt.scatter(
-            chr_pos_list,
-            y,
-            marker=marker,
-            c=(_color_list(array[:, 0], rle) if color is None else color),
-            edgecolor="none",
-            s=y / max_y * 20 + 0.5,
-            alpha=alpha,
-        )
-        plt.xlabel("chromosome")
-        plt.ylabel("-log10(P value)")
-
-        if pvalue_line:
-            plt.axhline(-np.log10(pvalue_line), linestyle="--", color="gray")
-        plt.ylim([-np.log10(plot_threshold), None])
-
-    else:
-
-        ax.scatter(
-            chr_pos_list,
-            y,
-            marker=marker,
-            c=(_color_list(array[:, 0], rle) if color is None else color),
-            edgecolor="none",
-            s=y / max_y * 20 + 0.5,
-            alpha=alpha,
-        )
-        ax.set_xlabel("chromosome")
-        ax.set_ylabel("-log10(P value)")
-
-        if pvalue_line:
-            ax.axhline(-np.log10(pvalue_line), linestyle="--", color="gray")
-        ax.set_ylim([-np.log10(plot_threshold), None])
+    if pvalue_line:
+        ax.axhline(-np.log10(pvalue_line), linestyle="--", color="gray")
+    ax.set_ylim([-np.log10(plot_threshold), None])
 
     return chromosome_starts
 
