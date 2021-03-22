@@ -498,7 +498,7 @@ def manhattan_plot(
     # Create an empty canvas if none is provided
     # this way the function can only work on 'ax'
     if ax is None:
-        _, ax = plt.subplots()
+        ax = plt.axes(label="manhattan")
 
     # create a copy of the data and sort it by chrom and then position
     array = np.array(chr_pos_pvalue_array)
@@ -517,12 +517,30 @@ def manhattan_plot(
             chromosome_starts = _compute_x_positions_chrom(array)
         chr_pos_list = _compute_x_positions_snps(array, chromosome_starts)
         ax.set_xlim([0, chromosome_starts[-1, 2] + 1])
-        plt.xticks(chromosome_starts[:, 1:3].mean(1), chromosome_starts[:, 0])
+
+        # If canvas already exists, add new ticks to it and keep only unique values
+        if ax.get_xticks()[0] == 0.0:
+            ax.set_xticks([])
+
+        xticks = np.concatenate([ax.get_xticks(), chromosome_starts[:, 1:3].mean(1)])
+        old_ticklabels = [float(i.get_text()) for i in ax.get_xticklabels()]
+
+        unique_chr, unique_idx = np.unique(
+            np.concatenate([old_ticklabels, chromosome_starts[:, 0]]), return_index=True
+        )
+
+        xticks = xticks[unique_idx]
+        xticklabels = unique_chr
+
+        ax.set_xticks(np.sort(xticks))
+        ax.set_xticklabels(np.sort(xticklabels))
+
     else:  # use rank indices for x-axis
         chr_pos_list = np.arange(array.shape[0])
         xTickMarks = [str(int(item)) for item, count in rle]
         ax.set_xlim([0, array.shape[0]])
-        plt.xticks(list(_rel_to_midpoint(rle)), xTickMarks)
+        ax.set_xticks(list(_rel_to_midpoint(rle)))
+        ax.set_xticklabels(xTickMarks)
     y = -np.log10(array[:, 2])
     max_y = y.max()
 
