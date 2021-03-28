@@ -6,8 +6,8 @@
     <ProjectGuid>{52d85a6d-fd53-41e5-b7e2-6acc38373c98}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>single_snp.py</StartupFile>
-    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools</SearchPath>
+    <StartupFile>tests\test_single_snp_scale.py</StartupFile>
+    <SearchPath>..\..\..\fastlmm;..\..\..\pysnptools;..\..\..\bed-reader</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>association</Name>
@@ -27,8 +27,8 @@
     <InterpreterArguments>
     </InterpreterArguments>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda38-64</InterpreterId>
+    <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
+    <InterpreterId>CondaEnv|CondaEnv|gtg</InterpreterId>
     <Environment>
     </Environment>
     <TestFramework>unittest</TestFramework>
@@ -184,9 +184,8 @@
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="CondaEnv|CondaEnv|Anaconda3" />
-    <InterpreterReference Include="CondaEnv|CondaEnv|cupy2" />
-    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda38-64" />
+    <InterpreterReference Include="CondaEnv|CondaEnv|gtg" />
+    <InterpreterReference Include="CondaEnv|CondaEnv|mini38c" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

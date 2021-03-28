@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import platform
 import os
 import sys
@@ -9,7 +7,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.5.1'
+version = '0.5.2'
 
 def readme():
     with open('README.md') as f:
@@ -35,7 +33,6 @@ class CleanCommand(Clean):
                     or filename.endswith('.pyd')
                     or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
                     or (use_cython and filename.find("cample.cpp") != -1) # remove automatically generated source file
-                    or (use_cython and filename.find("mmultfilex.cpp") != -1) # remove automatically generated source file
                     or filename.endswith('.pyc')
                                 ):
                     tmp_fn = os.path.join(dirpath, filename)
@@ -46,33 +43,27 @@ class CleanCommand(Clean):
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
-    mp5lib = 'iomp5'
     mkl_core = 'mkl_core'
     mkl_rt = 'mkl_rt'
     mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = []
     extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
 elif platform.system() == "Windows":
     macros = [("_WIN32", "1")]
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
-    mp5lib = 'libiomp5md'
     mkl_core = 'mkl_core_dll'
     mkl_rt = 'mkl_rt'
     mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = ['/EHsc']
     extra_compile_args1 = ['/DMKL_ILP64']
-    extra_compile_args2 = ['/EHsc', '/openmp', '/DMKL_LP64']
 else:
     macros = [("_UNIX", "1")]
     intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
-    mp5lib = 'iomp5'
     mkl_core = 'mkl_core'
     mkl_rt = 'mkl_rt'
     mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = []
     extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
-    extra_compile_args2 = ['-fopenmp', '-DMKL_LP64','-fpermissive']
 
 mkl_library_list = [intel_root+"/mkl/lib/intel64",intel_root+"/compiler/lib/intel64"]
 mkl_include_list = [intel_root+"/mkl/include"]
@@ -90,21 +81,12 @@ if use_cython:
                    Extension(name="fastlmm.util.matrix.cample",
                             language="c++",
                             sources=["fastlmm/util/matrix/cample.pyx"],
-                            libraries = [mkl_rt, 'mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib, mkl_sequential],
+                            libraries = [mkl_rt, 'mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mkl_sequential],
                             library_dirs = mkl_library_list,
                             runtime_library_dirs = runtime_library_dirs,
                             include_dirs = mkl_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args1,
                             define_macros=macros),
-                    Extension(name="fastlmm.util.matrix.mmultfilex",
-                            language="c++",
-                            sources=["fastlmm/util/matrix/mmultfilex.pyx","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['mkl_intel_lp64', mkl_core, 'mkl_intel_thread', mp5lib],
-                            runtime_library_dirs = runtime_library_dirs,
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
-                            extra_compile_args = extra_compile_args2,
-                            define_macros=macros)
                      ]
     cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
 else:
@@ -122,14 +104,6 @@ else:
                             include_dirs = mkl_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args1,
                             define_macros=macros),
-                    Extension(name="fastlmm.util.matrix.mmultfilex",
-                            language="c++",
-                            sources=["fastlmm/util/matrix/mmultfilex.cpp","fastlmm/util/matrix/mmultfile.cpp"],
-                            libraries = ['mkl_intel_lp64', mkl_core, 'mkl_intel_thread', mp5lib],
-                            library_dirs = mkl_library_list,
-                            include_dirs = mkl_include_list+[numpy.get_include()],
-                            extra_compile_args = extra_compile_args2,
-                            define_macros=macros) 
                     ]
     cmdclass = {}
 
@@ -207,7 +181,7 @@ setup(
                  },
 
     install_requires = ['pandas>=1.1.1','matplotlib>=1.5.1',
-                       'scikit-learn>=0.19.1', 'pysnptools>=0.5.1', 'dill>=0.2.9',
+                       'scikit-learn>=0.19.1', 'pysnptools>=0.5.2', 'dill>=0.2.9',
                        'statsmodels>=0.10.1', 'psutil>=5.6.7'],
     cmdclass = cmdclass,
     ext_modules = ext_modules,
