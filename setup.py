@@ -7,7 +7,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = '0.5.3'
+version = '0.5.4'
 
 def readme():
     with open('README.md') as f:
@@ -99,7 +99,7 @@ else:
                    Extension(name="fastlmm.util.matrix.cample",
                             language="c++",
                             sources=["fastlmm/util/matrix/cample.cpp"],
-                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib],
+                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread'],
                             library_dirs = mkl_library_list,
                             include_dirs = mkl_include_list+[numpy.get_include()],
                             extra_compile_args = extra_compile_args1,
