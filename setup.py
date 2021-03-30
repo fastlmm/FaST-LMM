@@ -6,7 +6,7 @@ from distutils.command.clean import clean as Clean
 import numpy
 
 # Version number
-version = "0.5.2"
+version = '0.5.5'
 
 
 def readme():
@@ -31,23 +31,12 @@ class CleanCommand(Clean):
             shutil.rmtree("build")
         for dirpath, dirnames, filenames in os.walk("."):
             for filename in filenames:
-                if (
-                    (
-                        filename.endswith(".so")
-                        and not filename.startswith("libmkl_core.")
-                    )
-                    or filename.endswith(".pyd")
-                    or (
-                        use_cython and filename.find("wrap_qfc.cpp") != -1
-                    )  # remove automatically generated source file
-                    or (
-                        use_cython and filename.find("cample.cpp") != -1
-                    )  # remove automatically generated source file
-                    or (
-                        use_cython and filename.find("mmultfilex.cpp") != -1
-                    )  # remove automatically generated source file
-                    or filename.endswith(".pyc")
-                ):
+                if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))
+                    or filename.endswith('.pyd')
+                    or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
+                    or (use_cython and filename.find("cample.cpp") != -1) # remove automatically generated source file
+                    or filename.endswith('.pyc')
+                                ):
                     tmp_fn = os.path.join(dirpath, filename)
                     print("removing", tmp_fn)
                     os.unlink(tmp_fn)
@@ -56,34 +45,31 @@ class CleanCommand(Clean):
 # set up macros
 if platform.system() == "Darwin":
     macros = [("__APPLE__", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__), "external/intel/linux")
+    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
     mp5lib = "iomp5"
-    mkl_core = "mkl_core"
-    mkl_rt = "mkl_rt"
-    mkl_sequential = "mkl_sequential"
+    mkl_core = 'mkl_core'
+    mkl_rt = 'mkl_rt'
+    mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = []
-    extra_compile_args1 = ["-DMKL_ILP64", "-fpermissive"]
-    extra_compile_args2 = ["-fopenmp", "-DMKL_LP64", "-fpermissive"]
+    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
 elif platform.system() == "Windows":
     macros = [("_WIN32", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__), "external/intel/windows")
+    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
     mp5lib = "libiomp5md"
-    mkl_core = "mkl_core_dll"
-    mkl_rt = "mkl_rt"
-    mkl_sequential = "mkl_sequential"
-    extra_compile_args0 = ["/EHsc"]
-    extra_compile_args1 = ["/DMKL_ILP64"]
-    extra_compile_args2 = ["/EHsc", "/openmp", "/DMKL_LP64"]
+    mkl_core = 'mkl_core_dll'
+    mkl_rt = 'mkl_rt'
+    mkl_sequential = 'mkl_sequential'
+    extra_compile_args0 = ['/EHsc']
+    extra_compile_args1 = ['/DMKL_ILP64']
 else:
     macros = [("_UNIX", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__), "external/intel/linux")
+    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
     mp5lib = "iomp5"
-    mkl_core = "mkl_core"
-    mkl_rt = "mkl_rt"
-    mkl_sequential = "mkl_sequential"
+    mkl_core = 'mkl_core'
+    mkl_rt = 'mkl_rt'
+    mkl_sequential = 'mkl_sequential'
     extra_compile_args0 = []
-    extra_compile_args1 = ["-DMKL_ILP64", "-fpermissive"]
-    extra_compile_args2 = ["-fopenmp", "-DMKL_LP64", "-fpermissive"]
+    extra_compile_args1 = ['-DMKL_ILP64','-fpermissive']
 
 mkl_library_list = [
     intel_root + "/mkl/lib/intel64",
@@ -95,89 +81,39 @@ runtime_library_dirs = None if platform.system() == "Windows" else mkl_library_l
 # see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
 print("use_cython? {0}".format(use_cython))
 if use_cython:
-    ext_modules = [
-        Extension(
-            name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
-            language="c++",
-            sources=[
-                "fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx",
-                "fastlmm/util/stats/quadform/qfc_src/QFC.cpp",
-            ],
-            include_dirs=[numpy.get_include()],
-            extra_compile_args=extra_compile_args0,
-            define_macros=macros,
-        ),
-        Extension(
-            name="fastlmm.util.matrix.cample",
-            language="c++",
-            sources=["fastlmm/util/matrix/cample.pyx"],
-            libraries=[
-                mkl_rt,
-                "mkl_intel_ilp64",
-                mkl_core,
-                "mkl_intel_thread",
-                mp5lib,
-                mkl_sequential,
-            ],
-            library_dirs=mkl_library_list,
-            runtime_library_dirs=runtime_library_dirs,
-            include_dirs=mkl_include_list + [numpy.get_include()],
-            extra_compile_args=extra_compile_args1,
-            define_macros=macros,
-        ),
-        Extension(
-            name="fastlmm.util.matrix.mmultfilex",
-            language="c++",
-            sources=[
-                "fastlmm/util/matrix/mmultfilex.pyx",
-                "fastlmm/util/matrix/mmultfile.cpp",
-            ],
-            libraries=["mkl_intel_lp64", mkl_core, "mkl_intel_thread", mp5lib],
-            runtime_library_dirs=runtime_library_dirs,
-            library_dirs=mkl_library_list,
-            include_dirs=mkl_include_list + [numpy.get_include()],
-            extra_compile_args=extra_compile_args2,
-            define_macros=macros,
-        ),
-    ]
-    cmdclass = {"build_ext": build_ext, "clean": CleanCommand}
+    ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
+                             language="c++",                             
+                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
+                             include_dirs=[numpy.get_include()],
+                             extra_compile_args = extra_compile_args0,
+                             define_macros=macros),
+                   Extension(name="fastlmm.util.matrix.cample",
+                            language="c++",
+                            sources=["fastlmm/util/matrix/cample.pyx"],
+                            libraries = [mkl_rt, 'mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib, mkl_sequential],
+                            library_dirs = mkl_library_list,
+                            runtime_library_dirs = runtime_library_dirs,
+                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            extra_compile_args = extra_compile_args1,
+                            define_macros=macros),
+                     ]
+    cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
 else:
-    ext_modules = [
-        Extension(
-            name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
-            language="c++",
-            sources=[
-                "fastlmm/util/stats/quadform/qfc_src/wrap_qfc.cpp",
-                "fastlmm/util/stats/quadform/qfc_src/QFC.cpp",
-            ],
-            include_dirs=[numpy.get_include()],
-            extra_compile_args=extra_compile_args0,
-            define_macros=macros,
-        ),
-        Extension(
-            name="fastlmm.util.matrix.cample",
-            language="c++",
-            sources=["fastlmm/util/matrix/cample.cpp"],
-            libraries=["mkl_intel_ilp64", mkl_core, "mkl_intel_thread", mp5lib],
-            library_dirs=mkl_library_list,
-            include_dirs=mkl_include_list + [numpy.get_include()],
-            extra_compile_args=extra_compile_args1,
-            define_macros=macros,
-        ),
-        Extension(
-            name="fastlmm.util.matrix.mmultfilex",
-            language="c++",
-            sources=[
-                "fastlmm/util/matrix/mmultfilex.cpp",
-                "fastlmm/util/matrix/mmultfile.cpp",
-            ],
-            libraries=["mkl_intel_lp64", mkl_core, "mkl_intel_thread", mp5lib],
-            library_dirs=mkl_library_list,
-            include_dirs=mkl_include_list + [numpy.get_include()],
-            extra_compile_args=extra_compile_args2,
-            define_macros=macros,
-        ),
-    ]
+    ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
+                             language="c++",
+                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.cpp", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
+                             include_dirs=[numpy.get_include()],
+                             extra_compile_args = extra_compile_args0,
+                             define_macros=macros),
+                   Extension(name="fastlmm.util.matrix.cample",
+                            language="c++",
+                            sources=["fastlmm/util/matrix/cample.cpp"],
+                            libraries = ['mkl_intel_ilp64', mkl_core, 'mkl_intel_thread', mp5lib],
+                            library_dirs = mkl_library_list,
+                            include_dirs = mkl_include_list+[numpy.get_include()],
+                            extra_compile_args = extra_compile_args1,
+                            define_macros=macros),
+                    ]
     cmdclass = {}
 
 for e in ext_modules:
@@ -267,3 +203,9 @@ setup(
     ext_modules=ext_modules,
 )
 
+    install_requires = ['pandas>=1.1.1','matplotlib>=1.5.1',
+                       'scikit-learn>=0.19.1', 'pysnptools>=0.5.2', 'dill>=0.2.9',
+                       'statsmodels>=0.10.1', 'psutil>=5.6.7'],
+    cmdclass = cmdclass,
+    ext_modules = ext_modules,
+  )

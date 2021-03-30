@@ -449,6 +449,7 @@ runs/2020-10-19_23_37_58_6104741484993268/distributable.p
 /1.20.0
 /doc/ipynb/=1.20.0
 /doc/ipynb/=1.19
+/fastlmm/util/matrix/mmultfilex.cpython-39-x86_64-linux-gnu.so
+/fastlmm/util/matrix/cample.cpython-39-x86_64-linux-gnu.so
 /local_cache
 /runs
-/fastlmm/util/matrix/cample.cpython-39-x86_64-linux-gnu.so

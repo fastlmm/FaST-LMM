@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import doctest
 import unittest
 import numpy as np
@@ -276,22 +274,8 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.WARN)
     suites = getTestSuite()
 
-    if False:
-        from fastlmm.util.matrix.mmultfilex import mmultfile_b_less_aatbx, mmultfile_atax
-        ata_piece = np.zeros((100,100),order='C')
-        try:
-            mmultfile_atax(r"m:\deldir\nofile.txt".encode('ascii'),0,10,10,
-                            1,10,
-                            ata_piece,
-                            num_threads = 2,
-                            log_frequency=1)
-        except Exception as exception:
-            raise exception.__cause__
-
-
-
     if True:
-        r = unittest.TextTestRunner(failfast=True)
+        r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else: #runner test run
