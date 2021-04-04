@@ -171,8 +171,9 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
-        assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-        pheno = pheno[(pheno.val==pheno.val)[:,0],:]
+        # !!!cmk need to look for/handle/check missing values in pheno
+        # !!!cmk assert pheno.sid_count == 1, "Expect pheno to be just one variable"
+        # !!!cmk pheno = pheno[(pheno.val==pheno.val)[:,0],:]
         covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
         if not leave_out_one_chrom:
@@ -606,7 +607,9 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         if h2 is None:
             logging.info("Starting findH2")
             result = lmm.findH2()
-            h2 = result['h2']
+            if not isinstance(result,list):
+                result = [result]
+            h2 = np.array([item['h2'] for item in result])
         logging.info("h2={0}".format(h2))
 
         if cache_file is not None and not os.path.exists(cache_file):

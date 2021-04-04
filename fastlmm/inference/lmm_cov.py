@@ -639,15 +639,16 @@ class LMM(object):
         if logdelta is not None:
             delta = np.exp(logdelta)
 
-        if delta is not None:
+        if delta is not None: # !!!cmk
             Sd = (self.S + delta) * scale
             denom = delta * scale         # determine normalization factor
             h2 = 1.0 / (1.0 + delta)
             assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
         else:
-            Sd = (h2 * self.S + (1.0 - h2)) * scale
+            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
+            Sd = (Sbyh + (1.0 - h2)) * scale
             denom = (1.0 - h2) * scale      # determine normalization factor
-        if (h2 < 0.0) or (h2 >= 1.0):
+        if (h2 < 0.0) or (h2 >= 1.0): #!!!cmk
             return {'nLL':3E20,
                     'h2':h2,
                     'scale':scale}

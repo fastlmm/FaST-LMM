@@ -35,7 +35,7 @@ class TestSingleSnp(unittest.TestCase):
 
     tempout_dir = "tempout/single_snp"
 
-    def test_match_cpp(self):
+    def cmktest_match_cpp(self):
         '''
         match
             FaSTLMM.207\Data\DemoData>..\.cd.\bin\windows\cpp_mkl\fastlmmc -bfile snps -extract topsnps.txt -bfileSim snps -extractSim ASout.snps.txt -pheno pheno.txt -covar covariate.txt -out topsnps.singlesnp.txt -logDelta 0 -verbose 100
@@ -69,7 +69,7 @@ class TestSingleSnp(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def test_mixing(self):
+    def cmktest_mixing(self):
         logging.info("TestSingleSnp test_mixing")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -83,7 +83,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"mixing")
 
-    def test_mixingKs(self):
+    def cmktest_mixingKs(self):
         logging.info("TestSingleSnp test_mixingKs")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -98,7 +98,7 @@ class TestSingleSnp(unittest.TestCase):
         self.compare_files(frame,"mixing")
 
 
-    def test_mixid(self):
+    def cmktest_mixid(self):
         logging.info("TestSingleSnp test_mixid")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -113,7 +113,7 @@ class TestSingleSnp(unittest.TestCase):
         self.compare_files(frame,"mixid")
 
 
-    def test_one(self):
+    def cmktest_one(self):
         logging.info("TestSingleSnp test_one")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -127,7 +127,21 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
-    def test_linreg(self):
+    def cmktest_multipheno(self):
+        logging.info("TestSingleSnpLeaveOutOneChrom test_multipheno")
+        test_snps = Bed(self.bedbase, count_A1=False)
+        pheno = self.phen_fn
+        covar = self.cov_fn
+
+        output_file = self.file_name("multipheno")
+        frame = single_snp(test_snps[:,::10], pheno,
+                                  covar=covar,
+                                  output_file_name=output_file,count_A1=False
+                                  )
+
+        self.compare_files(frame,"two_looc")
+
+    def cmktest_linreg(self):
         logging.info("TestSingleSnp test_linreg")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -150,7 +164,7 @@ class TestSingleSnp(unittest.TestCase):
                                         )
         self.compare_files(frame2,"linreg")
 
-    def test_noK0(self):
+    def cmktest_noK0(self):
         logging.info("TestSingleSnp test_noK0")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -165,7 +179,7 @@ class TestSingleSnp(unittest.TestCase):
         self.compare_files(frame,"one")
 
 
-    def test_gb_goal(self):
+    def cmktest_gb_goal(self):
         logging.info("TestSingleSnp test_gb_goal")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -187,7 +201,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
-    def test_other(self):
+    def cmktest_other(self):
         logging.info("TestSingleSnp test_other")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -201,7 +215,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
-    def test_none(self):
+    def cmktest_none(self):
         logging.info("TestSingleSnp test_none")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -215,7 +229,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"none")
 
-    def test_interact(self):
+    def cmktest_interact(self):
         logging.info("TestSingleSnp test_interact")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -229,7 +243,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"interact")
 
-    def test_preload_files(self):
+    def cmktest_preload_files(self):
         logging.info("TestSingleSnp test_preload_files")
         test_snps = self.bedbase
         pheno = pstpheno.loadOnePhen(self.phen_fn,vectorize=True)
@@ -243,7 +257,7 @@ class TestSingleSnp(unittest.TestCase):
                                   )
         self.compare_files(frame,"one")
         
-    def test_SNC(self):
+    def cmktest_SNC(self):
         logging.info("TestSNC")
         test_snps = self.bedbase
         pheno = pstpheno.loadOnePhen(self.phen_fn,vectorize=True)
@@ -259,7 +273,7 @@ class TestSingleSnp(unittest.TestCase):
                                   )
         self.compare_files(frame,"snc")
 
-    def test_G0_has_reader(self):
+    def cmktest_G0_has_reader(self):
         logging.info("TestSingleSnp test_G0_has_reader")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -279,7 +293,7 @@ class TestSingleSnp(unittest.TestCase):
                                   )
         self.compare_files(frame1,"one")
 
-    def test_no_cov(self):
+    def cmktest_no_cov(self):
         logging.info("TestSingleSnp test_no_cov")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -291,7 +305,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"no_cov")
 
-    def test_no_cov_b(self):
+    def cmktest_no_cov_b(self):
         logging.info("TestSingleSnp test_no_cov_b")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -308,7 +322,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"no_cov")
 
-    def test_G1(self):
+    def cmktest_G1(self):
         logging.info("TestSingleSnp test_G1")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -325,7 +339,7 @@ class TestSingleSnp(unittest.TestCase):
             self.compare_files(frame,"G1")
 
 
-    def test_file_cache(self):
+    def cmktest_file_cache(self):
         logging.info("TestSingleSnp test_file_cache")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -351,7 +365,7 @@ class TestSingleSnp(unittest.TestCase):
         self.compare_files(frame,"G1")
 
 
-    def test_G1_mixing(self):
+    def cmktest_G1_mixing(self):
         logging.info("TestSingleSnp test_G1_mixing")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -367,7 +381,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
-    def test_unknown_sid(self):
+    def cmktest_unknown_sid(self):
         logging.info("TestSingleSnp test_unknown_sid")
 
         test_snps = Bed(self.bedbase, count_A1=False)
@@ -382,7 +396,7 @@ class TestSingleSnp(unittest.TestCase):
 
         assert(failed)
 
-    def test_cid_intersect(self):
+    def cmktest_cid_intersect(self):
         logging.info("TestSingleSnp test_cid_intersect")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = pstpheno.loadOnePhen(self.phen_fn,vectorize=True)
@@ -418,7 +432,7 @@ class TestSingleSnp(unittest.TestCase):
                 raise Exception("pair {0} differs too much from file '{1}'".format(sid,reffile))
             assert abs(row.PValue - pvalue) < 1e-5, "wrong"
 
-    def test_doctest(self):
+    def cmktest_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         result = doctest.testmod(sys.modules['fastlmm.association.single_snp'])
@@ -444,7 +458,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def test_leave_one_out_with_prekernels(self):
+    def cmktest_leave_one_out_with_prekernels(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_leave_one_out_with_prekernels")
         from pysnptools.kernelstandardizer import DiagKtoN
         test_snps = Bed(self.bedbase, count_A1=False)
@@ -467,7 +481,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
         self.compare_files(frame,"one_looc")
 
-    def test_one_looc(self):
+    def cmktest_one_looc(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_one_looc")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -481,7 +495,47 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
         self.compare_files(frame,"one_looc")
 
-    def test_two_looc(self):
+    def test_multipheno(self):
+        logging.info("TestSingleSnpLeaveOutOneChrom test_multipheno")
+        test_snps = Bed(self.bedbase, count_A1=False)
+        pheno = self.phen_fn
+        covar = self.cov_fn
+
+        output_file = self.file_name("multipheno1")
+        #frame = single_snp(test_snps[:,::10], pheno,
+        #                   force_full_rank=True,
+        #                          covar=covar,
+        #                          output_file_name=output_file,count_A1=False
+        #                          )
+
+        #self.compare_files(frame,"two_looc")
+
+        pheno2 = Pheno(pheno).read()
+        pheno2.val[0,0] = 100
+        pheno2.val[1,0] = -100
+
+        output_file = self.file_name("multipheno2")
+        #frame = single_snp(test_snps[:,::10], pheno2,
+        #                   force_full_rank=True,
+        #                          covar=covar,
+        #                          output_file_name=output_file,count_A1=False
+        #                          )
+
+        #self.compare_files(frame,"multipheno2")
+
+        pheno12 = SnpData(iid=pheno2.iid,sid=["pheno1","pheno2"],val = np.c_[Pheno(pheno).read().val,pheno2.val])
+        output_file = self.file_name("multipheno12")
+        frame = single_snp(test_snps[:,::10], pheno12,
+                           force_full_rank=True,
+                                  covar=covar,
+                                  output_file_name=output_file,count_A1=False
+                                  )
+
+        self.compare_files(frame,"multipheno12")
+
+
+
+    def cmktest_two_looc(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_two_looc")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -496,7 +550,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         self.compare_files(frame,"two_looc")
 
 
-    def test_interact_looc(self):
+    def cmktest_interact_looc(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_interact_looc")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -510,7 +564,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
         self.compare_files(frame,"interact_looc")
 
-    def test_covar_by_chrom(self):
+    def cmktest_covar_by_chrom(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_covar_by_chrom")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -526,7 +580,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
         self.compare_files(frame,"covar_by_chrom")
 
-    def test_covar_by_chrom_mixing(self):
+    def cmktest_covar_by_chrom_mixing(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_covar_by_chrom_mixing")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
@@ -581,7 +635,7 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([getTestSuite()])
 
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=False)
+        r = unittest.TextTestRunner(failfast=True) #!!!cmk
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else: #Cluster test run
