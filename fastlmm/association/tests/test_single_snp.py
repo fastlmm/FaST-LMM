@@ -491,59 +491,6 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         pheno2.val[0,0] = 100
         pheno2.val[1,0] = -100
 
-        if False:
-            output_file = self.file_name("multipheno1")
-            frame = single_snp(test_snps[:,::10], pheno,
-                               force_full_rank=True,
-                                      covar=covar,
-                                      output_file_name=output_file,count_A1=False
-                                      )
-
-            self.compare_files(frame,"two_looc")
-
-
-        if False:
-            output_file = self.file_name("multipheno2")
-            frame = single_snp(test_snps[:,::10], pheno2,
-                               force_full_rank=True,
-                                      covar=covar,
-                                      output_file_name=output_file,count_A1=False
-                                      )
-
-            self.compare_files(frame,"multipheno2")
-
-        if False:
-            pheno11 = SnpData(iid=pheno2.iid,sid=["pheno1a","pheno1b"],val = np.c_[Pheno(pheno).read().val,Pheno(pheno).read().val])
-            output_file = self.file_name("multipheno11")
-            frame = single_snp(test_snps[:,::10], pheno11,
-                               force_full_rank=True,
-                                      covar=covar,
-                                      output_file_name=output_file,count_A1=False
-                                      )
-            frame1 = frame[frame['Pheno']=='pheno1a']
-            del frame1['Pheno']
-            self.compare_files(frame1,"two_looc")
-
-            frame2 = frame[frame['Pheno']=='pheno1b']
-            del frame2['Pheno']
-            self.compare_files(frame2,"two_looc")
-
-        if True:
-            pheno22 = SnpData(iid=pheno2.iid,sid=["pheno2a","pheno2b"],val = np.c_[pheno2.val, pheno2.val])
-            output_file = self.file_name("multipheno22")
-            frame = single_snp(test_snps[:,::10], pheno22,
-                               force_full_rank=True,
-                                      covar=covar,
-                                      output_file_name=output_file,count_A1=False
-                                      )
-            frame1 = frame[frame['Pheno']=='pheno2a']
-            del frame1['Pheno']
-            self.compare_files(frame1,"multipheno2")
-
-            frame2 = frame[frame['Pheno']=='pheno2b']
-            del frame2['Pheno']
-            self.compare_files(frame2,"multipheno2")
-
         if True:
             pheno12 = SnpData(iid=pheno2.iid,sid=["pheno1","pheno2"],val = np.c_[Pheno(pheno).read().val,pheno2.val])
             output_file = self.file_name("multipheno12")
@@ -560,6 +507,60 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
             del frame1['Pheno']
             self.compare_files(frame1,"two_looc")
 
+        if True:
+            pheno11 = SnpData(iid=pheno2.iid,sid=["pheno1a","pheno1b"],val = np.c_[Pheno(pheno).read().val,Pheno(pheno).read().val])
+            output_file = self.file_name("multipheno11")
+            frame = single_snp(test_snps[:,::10], pheno11,
+                               force_full_rank=True,
+                                      covar=covar,
+                                      output_file_name=output_file,count_A1=False
+                                      )
+            frame1 = frame[frame['Pheno']=='pheno1a']
+            del frame1['Pheno']
+            self.compare_files(frame1,"two_looc")
+
+            frame2 = frame[frame['Pheno']=='pheno1b']
+            del frame2['Pheno']
+            self.compare_files(frame2,"two_looc")
+
+        if True:
+            output_file = self.file_name("multipheno1")
+            frame = single_snp(test_snps[:,::10], pheno,
+                               force_full_rank=True,
+                                      covar=covar,
+                                      output_file_name=output_file,count_A1=False
+                                      )
+
+            self.compare_files(frame,"two_looc")
+
+
+        if True:
+            output_file = self.file_name("multipheno2")
+            frame = single_snp(test_snps[:,::10], pheno2,
+                               force_full_rank=True,
+                                      covar=covar,
+                                      output_file_name=output_file,count_A1=False
+                                      )
+
+            self.compare_files(frame,"multipheno2")
+
+
+
+        if True:
+            pheno22 = SnpData(iid=pheno2.iid,sid=["pheno2a","pheno2b"],val = np.c_[pheno2.val, pheno2.val])
+            output_file = self.file_name("multipheno22")
+            frame = single_snp(test_snps[:,::10], pheno22,
+                               force_full_rank=True,
+                                      covar=covar,
+                                      output_file_name=output_file,count_A1=False
+                                      )
+            frame1 = frame[frame['Pheno']=='pheno2a']
+            del frame1['Pheno']
+            self.compare_files(frame1,"multipheno2")
+
+            frame2 = frame[frame['Pheno']=='pheno2b']
+            del frame2['Pheno']
+            self.compare_files(frame2,"multipheno2")
 
     
         if True:

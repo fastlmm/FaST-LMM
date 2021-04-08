@@ -568,152 +568,146 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                  cache_file, force_full_rank, force_low_rank,
                  output_file_name, block_size, interact_with_snp, runner, xp):
 
+    mixing_ori, h2_ori, log_delta_ori = mixing, h2, log_delta
+    multi_pheno = pheno
     df_list = []
-    for pheno_index in list(range(pheno.sid_count))[::-1]: #!!!cmk
+    for pheno_index in list(range(multi_pheno.sid_count))[::-1]: #!!!cmk
+        mixing, h2, log_delta = mixing_ori, h2_ori, log_delta_ori
+        pheno = multi_pheno[:,pheno_index]
 
-        df = _internal_singleX(K0, test_snps, pheno[:,pheno_index], covar, K1,
-                 mixing, h2, log_delta,
-                 cache_file, force_full_rank, force_low_rank,
-                 output_file_name, block_size, interact_with_snp, runner, xp)
+        assert K0 is not None, "real assert"
+        assert K1 is not None, "real assert"
+        assert block_size is not None, "real assert"
+        assert mixing is None or 0.0 <= mixing <= 1.0
+        if force_full_rank and force_low_rank:
+            raise Exception("Can't force both full rank and low rank")
 
-        if pheno.sid_count > 1:
-            df['Pheno'] = pheno.sid[pheno_index]
+        assert h2 is None or log_delta is None, "if h2 is specified, log_delta may not be specified"
+        if log_delta is not None:
+            h2 = 1.0/(xp.exp(log_delta)+1)
 
-        df_list.append(df)
+        covar_val = xp.asarray(covar.read(view_ok=True,order='A').val)
+        covar_val = xp.c_[covar_val,xp.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
+
+        y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
+        y = xp.asarray(y)
+
+
+        if cache_file is not None and os.path.exists(cache_file):
+            lmm = lmm_cov(X=covar_val, Y=y, G=None, K=None, xp=xp)
+            with xp.load(cache_file) as data: #!! similar code in epistasis
+                lmm.U = data['arr_0']
+                lmm.S = data['arr_1']
+                h2 = data['arr_2'][0]
+                mixing = data['arr_2'][1]
+        else:
+            K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
+            mixing = mixer.mixing
+
+            if mixer.do_g:
+                G = xp.asarray(K.snpreader.val)
+                lmm = lmm_cov(X=covar_val, Y=y, K=None, G=G, inplace=True, xp=xp)
+            else:
+                #print(covar_val.sum(),y.sum(),K.val.sum(),covar_val[0],y[0],K.val[0,0])
+                lmm = lmm_cov(X=covar_val, Y=y, K=K.val, G=None, inplace=True, xp=xp)
+
+            if h2 is None:
+                logging.info("Starting findH2")
+                result = lmm.findH2()
+                if not isinstance(result,list):
+                    result = [result]
+                h2 = np.array([item['h2'] for item in result])
+            logging.info("h2={0}".format(h2))
+
+            if cache_file is not None and not os.path.exists(cache_file):
+                pstutil.create_directory_if_necessary(cache_file)
+                lmm.getSU()
+                xp.savez(cache_file, lmm.U,lmm.S,xp.array([float(h2),float(mixing)])) #using np.savez instead of pickle because it seems to be faster to read and write
+
+        if interact_with_snp is not None:
+            logging.info("interaction with %i" % interact_with_snp)
+            assert 0 <= interact_with_snp < covar_val.shape[1]-1, "interact_with_snp is out of range"
+            interact = covar_val[:,interact_with_snp].copy()
+            interact -=interact.mean()
+            interact /= interact.std()
+        else:
+            interact = None
+
+        work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
+
+        # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
+        def debatch_closure(work_index):
+            return test_snps.sid_count * work_index // work_count
+
+        def mapper_closure(work_index):
+            xp = pstutil.array_module()
+            if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
+
+            do_work_time = time.time()
+            start = debatch_closure(work_index)
+            end = debatch_closure(work_index+1)
+
+            snps_read = test_snps[:,start:end].read()
+            if xp is np:
+                snps_read.standardize()
+                val = xp.asarray(snps_read.val)
+            else:
+                val = xp.asarray(snps_read.val)
+                statsx = xp.empty([val.shape[1],2],dtype=val.dtype,order="F" if val.flags["F_CONTIGUOUS"] else "C")
+                Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx)
+
+            if interact_with_snp is not None:
+                variables_to_test = val * interact[:,xp.newaxis]
+            else:
+                variables_to_test = val
+            res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test) # !!!cmk66
+
+            assert test_snps.iid_count == lmm.U.shape[0]
+
+            pheno_or_none = None if pheno.sid_count == 1 else pheno.sid[i]
+            df = compute_stats(
+                res['beta'],
+                res['variance_beta'],
+                res['fraction_variance_explained_beta'],
+                start,
+                end,
+                snps_read,
+                pheno_or_none,
+                mixing,
+                h2,
+                lmm,
+                xp
+                )
+
+            logging.info("time={0}".format(time.time()-do_work_time))
+            return df
+
+        def reducer_closure(result_sequence):
+            if output_file_name is not None:
+                create_directory_if_necessary(output_file_name)
+
+            frame = pd.concat(result_sequence)
+            frame.sort_values(by="PValue", inplace=True)
+            frame.index = np.arange(len(frame))
+
+            if output_file_name is not None:
+                frame.to_csv(output_file_name, sep="\t", index=False)
+
+            return frame
+
+        frame = map_reduce(range(work_count),
+                            mapper=mapper_closure,reducer=reducer_closure,
+                            input_files=[test_snps],output_files=[output_file_name],
+                            name="single_snp(output_file={0})".format(output_file_name),
+                            runner=runner)
+
+        if multi_pheno.sid_count > 1:
+            frame['Pheno'] = multi_pheno.sid[pheno_index]
+
+        df_list.append(frame)
 
     return pd.concat(df_list)
 
-
-def _internal_singleX(K0, test_snps, pheno, covar, K1,
-                 mixing, h2, log_delta,
-                 cache_file, force_full_rank, force_low_rank,
-                 output_file_name, block_size, interact_with_snp, runner, xp):
-
-    assert K0 is not None, "real assert"
-    assert K1 is not None, "real assert"
-    assert block_size is not None, "real assert"
-    assert mixing is None or 0.0 <= mixing <= 1.0
-    if force_full_rank and force_low_rank:
-        raise Exception("Can't force both full rank and low rank")
-
-    assert h2 is None or log_delta is None, "if h2 is specified, log_delta may not be specified"
-    if log_delta is not None:
-        h2 = 1.0/(xp.exp(log_delta)+1)
-
-    covar = xp.asarray(covar.read(view_ok=True,order='A').val)
-    covar = xp.c_[covar,xp.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
-
-    y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
-    y = xp.asarray(y)
-
-
-    if cache_file is not None and os.path.exists(cache_file):
-        lmm = lmm_cov(X=covar, Y=y, G=None, K=None, xp=xp)
-        with xp.load(cache_file) as data: #!! similar code in epistasis
-            lmm.U = data['arr_0']
-            lmm.S = data['arr_1']
-            h2 = data['arr_2'][0]
-            mixing = data['arr_2'][1]
-    else:
-        K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
-        mixing = mixer.mixing
-
-        if mixer.do_g:
-            G = xp.asarray(K.snpreader.val)
-            lmm = lmm_cov(X=covar, Y=y, K=None, G=G, inplace=True, xp=xp)
-        else:
-            #print(covar.sum(),y.sum(),K.val.sum(),covar[0],y[0],K.val[0,0])
-            lmm = lmm_cov(X=covar, Y=y, K=K.val, G=None, inplace=True, xp=xp)
-
-        if h2 is None:
-            logging.info("Starting findH2")
-            result = lmm.findH2()
-            if not isinstance(result,list):
-                result = [result]
-            h2 = np.array([item['h2'] for item in result])
-        logging.info("h2={0}".format(h2))
-
-        if cache_file is not None and not os.path.exists(cache_file):
-            pstutil.create_directory_if_necessary(cache_file)
-            lmm.getSU()
-            xp.savez(cache_file, lmm.U,lmm.S,xp.array([float(h2),float(mixing)])) #using np.savez instead of pickle because it seems to be faster to read and write
-
-    if interact_with_snp is not None:
-        logging.info("interaction with %i" % interact_with_snp)
-        assert 0 <= interact_with_snp < covar.shape[1]-1, "interact_with_snp is out of range"
-        interact = covar[:,interact_with_snp].copy()
-        interact -=interact.mean()
-        interact /= interact.std()
-    else:
-        interact = None
-
-    work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
-
-    # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
-    def debatch_closure(work_index):
-        return test_snps.sid_count * work_index // work_count
-
-    def mapper_closure(work_index):
-        xp = pstutil.array_module()
-        if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
-
-        do_work_time = time.time()
-        start = debatch_closure(work_index)
-        end = debatch_closure(work_index+1)
-
-        snps_read = test_snps[:,start:end].read()
-        if xp is np:
-            snps_read.standardize()
-            val = xp.asarray(snps_read.val)
-        else:
-            val = xp.asarray(snps_read.val)
-            statsx = xp.empty([val.shape[1],2],dtype=val.dtype,order="F" if val.flags["F_CONTIGUOUS"] else "C")
-            Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx)
-
-        if interact_with_snp is not None:
-            variables_to_test = val * interact[:,xp.newaxis]
-        else:
-            variables_to_test = val
-        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test) # !!!cmk66
-
-        assert test_snps.iid_count == lmm.U.shape[0]
-
-        pheno_or_none = None if pheno.sid_count == 1 else pheno.sid[i]
-        df = compute_stats(
-            res['beta'],
-            res['variance_beta'],
-            res['fraction_variance_explained_beta'],
-            start,
-            end,
-            snps_read,
-            pheno_or_none,
-            mixing,
-            h2,
-            lmm,
-            xp
-            )
-
-        logging.info("time={0}".format(time.time()-do_work_time))
-        return df
-
-    def reducer_closure(result_sequence):
-        if output_file_name is not None:
-            create_directory_if_necessary(output_file_name)
-
-        frame = pd.concat(result_sequence)
-        frame.sort_values(by="PValue", inplace=True)
-        frame.index = np.arange(len(frame))
-
-        if output_file_name is not None:
-            frame.to_csv(output_file_name, sep="\t", index=False)
-
-        return frame
-
-    frame = map_reduce(range(work_count),
-                        mapper=mapper_closure,reducer=reducer_closure,
-                        input_files=[test_snps],output_files=[output_file_name],
-                        name="single_snp(output_file={0})".format(output_file_name),
-                        runner=runner)
 
     return frame
 
