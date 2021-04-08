@@ -585,8 +585,8 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     mixing_ori, h2_ori, log_delta_ori = mixing, h2, log_delta
     multi_pheno = pheno
-    df_list = []
-    for pheno_index in list(range(multi_pheno.sid_count))[::-1]: #!!!cmk
+    part1_list=[]
+    for pheno_index in range(multi_pheno.sid_count):
         mixing, h2, log_delta = mixing_ori, h2_ori, log_delta_ori
         pheno = multi_pheno[:,pheno_index]
         y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
@@ -633,6 +633,13 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         else:
             interact = None
 
+        part1_list.append({'lmm':lmm,'h2':h2,'mixing':mixing})
+
+    df_list = []
+    for pheno_index in range(multi_pheno.sid_count):
+        part1 = part1_list[pheno_index]
+        lmm, h2, mixing = part1['lmm'],part1['h2'],part1['mixing']
+
         frame = snp_tester(test_snps, interact_with_snp, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
         # !!!cmk don't really want output_file_name for each pheno
 
@@ -646,6 +653,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     return frame
 
+#!!!cmk missing 'interact'
 def snp_tester(test_snps, interact_with_snp, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
         
     work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
