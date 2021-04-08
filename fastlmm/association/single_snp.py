@@ -582,6 +582,15 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     covar_val = xp.asarray(covar.read(view_ok=True,order='A').val)
     covar_val = xp.c_[covar_val,xp.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
 
+    if interact_with_snp is not None:
+        logging.info("interaction with %i" % interact_with_snp)
+        assert 0 <= interact_with_snp < covar_val.shape[1]-1, "interact_with_snp is out of range"
+        interact = covar_val[:,interact_with_snp].copy()
+        interact -=interact.mean()
+        interact /= interact.std()
+    else:
+        interact = None
+
 
     mixing_ori, h2_ori, log_delta_ori = mixing, h2, log_delta
     multi_pheno = pheno
@@ -624,23 +633,16 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                 lmm.getSU()
                 xp.savez(cache_file, lmm.U,lmm.S,xp.array([float(h2),float(mixing)])) #using np.savez instead of pickle because it seems to be faster to read and write
 
-        if interact_with_snp is not None:
-            logging.info("interaction with %i" % interact_with_snp)
-            assert 0 <= interact_with_snp < covar_val.shape[1]-1, "interact_with_snp is out of range"
-            interact = covar_val[:,interact_with_snp].copy()
-            interact -=interact.mean()
-            interact /= interact.std()
-        else:
-            interact = None
-
         part1_list.append({'lmm':lmm,'h2':h2,'mixing':mixing})
 
+
     df_list = []
+    #lmm = part1_list[0]['lmm'] #!!!cmk
     for pheno_index in range(multi_pheno.sid_count):
         part1 = part1_list[pheno_index]
         lmm, h2, mixing = part1['lmm'],part1['h2'],part1['mixing']
 
-        frame = snp_tester(test_snps, interact_with_snp, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
+        frame = snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
         # !!!cmk don't really want output_file_name for each pheno
 
         if multi_pheno.sid_count > 1:
@@ -653,8 +655,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     return frame
 
-#!!!cmk missing 'interact'
-def snp_tester(test_snps, interact_with_snp, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
+def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
         
     work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
 
@@ -679,7 +680,7 @@ def snp_tester(test_snps, interact_with_snp, pheno, lmm, block_size, output_file
             statsx = xp.empty([val.shape[1],2],dtype=val.dtype,order="F" if val.flags["F_CONTIGUOUS"] else "C")
             Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx)
 
-        if interact_with_snp is not None:
+        if interact is not None:
             variables_to_test = val * interact[:,xp.newaxis]
         else:
             variables_to_test = val
