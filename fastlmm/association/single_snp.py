@@ -653,32 +653,28 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
             variables_to_test = val * interact[:,xp.newaxis]
         else:
             variables_to_test = val
-        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test)
+        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test) # !!!cmk66
 
-        beta = res['beta']
-        
-        chi2stats = pstutil.asnumpy(beta*beta/res['variance_beta'])
-        #p_values = stats.chi2.sf(chi2stats,1)[:,0]
         assert test_snps.iid_count == lmm.U.shape[0]
-        p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))[:,0]#note that G.shape is the number of individuals#
 
-        dataframe = _create_dataframe(snps_read.sid_count)
-        dataframe['sid_index'] = np.arange(start,end)
-        dataframe['SNP'] = snps_read.sid
-        dataframe['Chr'] = snps_read.pos[:,0]
-        dataframe['GenDist'] = snps_read.pos[:,1]
-        dataframe['ChrPos'] = snps_read.pos[:,2] 
-        dataframe['PValue'] = p_values
-        dataframe['SnpWeight'] = pstutil.asnumpy(beta[:,0])
-        dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(res['variance_beta'][:,0]))
-        dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(res['fraction_variance_explained_beta'][:,0]))
-        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + float(mixing)
-        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + float(h2)
+        pheno_or_none = None if pheno.sid_count == 1 else pheno.sid[i]
+        df = compute_stats(
+            res['beta'],
+            res['variance_beta'],
+            res['fraction_variance_explained_beta'],
+            start,
+            end,
+            snps_read,
+            pheno_or_none,
+            mixing,
+            h2,
+            lmm,
+            xp
+            )
 
         logging.info("time={0}".format(time.time()-do_work_time))
 
-        #logging.info(dataframe)
-        return dataframe
+        return df
 
     def reducer_closure(result_sequence):
         if output_file_name is not None:
@@ -699,6 +695,32 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                        name="single_snp(output_file={0})".format(output_file_name),
                        runner=runner)
     return frame
+
+def compute_stats(beta,variance_beta,fraction_variance_explained_beta,
+                  start,end,snps_read,pheno_or_none,
+                  mixing, h2, lmm, xp):
+
+    
+        
+    chi2stats = pstutil.asnumpy(beta*beta/variance_beta)  # !!!cmk67
+    p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1)) # !!!cmk68
+
+    dataframe = _create_dataframe(snps_read.sid_count)
+    if pheno_or_none is not None:
+        dataframe['Pheno'] = pheno_or_none
+    dataframe['sid_index'] = np.arange(start,end)
+    dataframe['SNP'] = snps_read.sid
+    dataframe['Chr'] = snps_read.pos[:,0]
+    dataframe['GenDist'] = snps_read.pos[:,1]
+    dataframe['ChrPos'] = snps_read.pos[:,2] 
+    dataframe['PValue'] = p_values
+    dataframe['SnpWeight'] = pstutil.asnumpy(beta)
+    dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(variance_beta))
+    dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(fraction_variance_explained_beta))
+    dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + float(mixing)
+    dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + float(h2)
+    return dataframe
+
 
 def _create_covar_chrom(covar, covar_by_chrom, chrom,count_A1=None):
     if covar_by_chrom is not None:

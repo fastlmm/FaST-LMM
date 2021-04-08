@@ -454,7 +454,7 @@ class LMM(object):
                 res = self.nLLeval(h2=x,**kwargs)
                 if (resmin[0] is None) or (res['nLL'] < resmin[0]['nLL']):
                     resmin[0] = res
-                logging.debug("search\t{0}\t{1}".format(x,res['nLL']))
+                print("cmk search\t{0}\t{1}".format(x,res['nLL']))
                 return res['nLL'][0]   
             min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
             #logging.info("search\t{0}\t{1}".format("?",resmin[0]))
@@ -639,16 +639,15 @@ class LMM(object):
         if logdelta is not None:
             delta = np.exp(logdelta)
 
-        if delta is not None: # !!!cmk
+        if delta is not None:
             Sd = (self.S + delta) * scale
             denom = delta * scale         # determine normalization factor
             h2 = 1.0 / (1.0 + delta)
             assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
         else:
-            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
-            Sd = (Sbyh + (1.0 - h2)) * scale
+            Sd = (h2 * self.S + (1.0 - h2)) * scale
             denom = (1.0 - h2) * scale      # determine normalization factor
-        if (h2 < 0.0) or (h2 >= 1.0): #!!!cmk
+        if (h2 < 0.0) or (h2 >= 1.0):
             return {'nLL':3E20,
                     'h2':h2,
                     'scale':scale}
@@ -662,7 +661,7 @@ class LMM(object):
         if weightW is not None:
             #multiply the weight by h2
             weightW = weightW * h2#Christoph: fixes bug with h2_1 parameterization in findA2 and/or findH2 and/or innerLoop 
-
+        # !!!cmk65
         result = self.nLLcore(Sd=Sd, dof=dof, scale=scale, penalty=penalty, UW=UW, UUW=UUW, weightW=weightW, denom=denom, Usnps=Usnps, UUsnps=UUsnps, idx_pheno=idx_pheno)
         result['h2'] = h2
         #logging.info("Ending nLLeval")
@@ -716,7 +715,7 @@ class LMM(object):
         
         if Usnps is not None:
             
-            snpsKsnps = self.computeAKA(Sd=Sd, denom=denom, UA=Usnps, UUA=UUsnps)[:,np.newaxis]
+            snpsKsnps = self.computeAKA(Sd=Sd, denom=denom, UA=Usnps, UUA=UUsnps)[:,np.newaxis] # !!!cmk62
             snpsKY = self.computeAKB(Sd=Sd, denom=denom, UA=Usnps, UB=UY, UUA=UUsnps, UUB=UUY)
         
         if weightW is not None:
@@ -771,7 +770,7 @@ class LMM(object):
                 snpsKY -= UWsnps.T.dot(WY)
                 # perform updates (instantiations for a and b in Equation (1.5) of
                 # Supplement)
-                snpsKsnps -= (UWsnps * Wsnps).sum(0)[:,np.newaxis]
+                snpsKsnps -= (UWsnps * Wsnps).sum(0)[:,np.newaxis] # !!!cmk63
             
             # determinant update
             prod_diags = signw * S_WW
@@ -784,7 +783,7 @@ class LMM(object):
         if Usnps is not None:
             penalty_ = penalty or 0.0
             assert (penalty_ >= 0.0), "penalty has to be non-negative"
-            beta = snpsKY / (snpsKsnps + penalty_)
+            beta = snpsKY / (snpsKsnps + penalty_) # !!!cmk64
             if np.isnan(beta.min()):
                 logging.warning("NaN beta value seen, may be due to an SNC (a constant SNP)")
                 beta[snpsKY==0] = 0.0
