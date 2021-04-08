@@ -568,27 +568,27 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                  cache_file, force_full_rank, force_low_rank,
                  output_file_name, block_size, interact_with_snp, runner, xp):
 
+    assert K0 is not None, "real assert"
+    assert K1 is not None, "real assert"
+    assert block_size is not None, "real assert"
+    assert mixing is None or 0.0 <= mixing <= 1.0
+    if force_full_rank and force_low_rank:
+        raise Exception("Can't force both full rank and low rank")
+
+    assert h2 is None or log_delta is None, "if h2 is specified, log_delta may not be specified"
+    if log_delta is not None:
+        h2 = 1.0/(xp.exp(log_delta)+1)
+
+    covar_val = xp.asarray(covar.read(view_ok=True,order='A').val)
+    covar_val = xp.c_[covar_val,xp.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
+
+
     mixing_ori, h2_ori, log_delta_ori = mixing, h2, log_delta
     multi_pheno = pheno
     df_list = []
     for pheno_index in list(range(multi_pheno.sid_count))[::-1]: #!!!cmk
         mixing, h2, log_delta = mixing_ori, h2_ori, log_delta_ori
         pheno = multi_pheno[:,pheno_index]
-
-        assert K0 is not None, "real assert"
-        assert K1 is not None, "real assert"
-        assert block_size is not None, "real assert"
-        assert mixing is None or 0.0 <= mixing <= 1.0
-        if force_full_rank and force_low_rank:
-            raise Exception("Can't force both full rank and low rank")
-
-        assert h2 is None or log_delta is None, "if h2 is specified, log_delta may not be specified"
-        if log_delta is not None:
-            h2 = 1.0/(xp.exp(log_delta)+1)
-
-        covar_val = xp.asarray(covar.read(view_ok=True,order='A').val)
-        covar_val = xp.c_[covar_val,xp.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
-
         y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
         y = xp.asarray(y)
 
