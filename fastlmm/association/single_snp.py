@@ -633,73 +633,8 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         else:
             interact = None
 
-        work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
-
-        # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
-        def debatch_closure(work_index):
-            return test_snps.sid_count * work_index // work_count
-
-        def mapper_closure(work_index):
-            xp = pstutil.array_module()
-            if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
-
-            do_work_time = time.time()
-            start = debatch_closure(work_index)
-            end = debatch_closure(work_index+1)
-
-            snps_read = test_snps[:,start:end].read()
-            if xp is np:
-                snps_read.standardize()
-                val = xp.asarray(snps_read.val)
-            else:
-                val = xp.asarray(snps_read.val)
-                statsx = xp.empty([val.shape[1],2],dtype=val.dtype,order="F" if val.flags["F_CONTIGUOUS"] else "C")
-                Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx)
-
-            if interact_with_snp is not None:
-                variables_to_test = val * interact[:,xp.newaxis]
-            else:
-                variables_to_test = val
-            res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test) # !!!cmk66
-
-            assert test_snps.iid_count == lmm.U.shape[0]
-
-            pheno_or_none = None if pheno.sid_count == 1 else pheno.sid[i]
-            df = compute_stats(
-                res['beta'],
-                res['variance_beta'],
-                res['fraction_variance_explained_beta'],
-                start,
-                end,
-                snps_read,
-                pheno_or_none,
-                mixing,
-                h2,
-                lmm,
-                xp
-                )
-
-            logging.info("time={0}".format(time.time()-do_work_time))
-            return df
-
-        def reducer_closure(result_sequence):
-            if output_file_name is not None:
-                create_directory_if_necessary(output_file_name)
-
-            frame = pd.concat(result_sequence)
-            frame.sort_values(by="PValue", inplace=True)
-            frame.index = np.arange(len(frame))
-
-            if output_file_name is not None:
-                frame.to_csv(output_file_name, sep="\t", index=False)
-
-            return frame
-
-        frame = map_reduce(range(work_count),
-                            mapper=mapper_closure,reducer=reducer_closure,
-                            input_files=[test_snps],output_files=[output_file_name],
-                            name="single_snp(output_file={0})".format(output_file_name),
-                            runner=runner)
+        frame = snp_tester(test_snps, interact_with_snp, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
+        # !!!cmk don't really want output_file_name for each pheno
 
         if multi_pheno.sid_count > 1:
             frame['Pheno'] = multi_pheno.sid[pheno_index]
@@ -709,6 +644,77 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     return pd.concat(df_list)
 
 
+    return frame
+
+def snp_tester(test_snps, interact_with_snp, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
+        
+    work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
+
+    # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
+    def debatch_closure(work_index):
+        return test_snps.sid_count * work_index // work_count
+
+    def mapper_closure(work_index):
+        xp = pstutil.array_module()
+        if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
+
+        do_work_time = time.time()
+        start = debatch_closure(work_index)
+        end = debatch_closure(work_index+1)
+
+        snps_read = test_snps[:,start:end].read()
+        if xp is np:
+            snps_read.standardize()
+            val = xp.asarray(snps_read.val)
+        else:
+            val = xp.asarray(snps_read.val)
+            statsx = xp.empty([val.shape[1],2],dtype=val.dtype,order="F" if val.flags["F_CONTIGUOUS"] else "C")
+            Standardizer._standardize_unit_python(val,apply_in_place=True,use_stats=False,stats=statsx)
+
+        if interact_with_snp is not None:
+            variables_to_test = val * interact[:,xp.newaxis]
+        else:
+            variables_to_test = val
+        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test) # !!!cmk66
+
+        assert test_snps.iid_count == lmm.U.shape[0]
+
+        pheno_or_none = None if pheno.sid_count == 1 else pheno.sid[i]
+        df = compute_stats(
+            res['beta'],
+            res['variance_beta'],
+            res['fraction_variance_explained_beta'],
+            start,
+            end,
+            snps_read,
+            pheno_or_none,
+            mixing,
+            h2,
+            lmm,
+            xp
+            )
+
+        logging.info("time={0}".format(time.time()-do_work_time))
+        return df
+
+    def reducer_closure(result_sequence):
+        if output_file_name is not None:
+            create_directory_if_necessary(output_file_name)
+
+        frame = pd.concat(result_sequence)
+        frame.sort_values(by="PValue", inplace=True)
+        frame.index = np.arange(len(frame))
+
+        if output_file_name is not None:
+            frame.to_csv(output_file_name, sep="\t", index=False)
+
+        return frame
+
+    frame = map_reduce(range(work_count),
+                        mapper=mapper_closure,reducer=reducer_closure,
+                        input_files=[test_snps],output_files=[output_file_name],
+                        name="single_snp(output_file={0})".format(output_file_name),
+                        runner=runner)
     return frame
 
 def compute_stats(beta,variance_beta,fraction_variance_explained_beta,
