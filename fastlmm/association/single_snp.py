@@ -563,8 +563,28 @@ def _create_dataframe(row_count):
 
     return dataframe
 
-
 def _internal_single(K0, test_snps, pheno, covar, K1,
+                 mixing, h2, log_delta,
+                 cache_file, force_full_rank, force_low_rank,
+                 output_file_name, block_size, interact_with_snp, runner, xp):
+
+    df_list = []
+    for pheno_index in list(range(pheno.sid_count))[::-1]: #!!!cmk
+
+        df = _internal_singleX(K0, test_snps, pheno[:,pheno_index], covar, K1,
+                 mixing, h2, log_delta,
+                 cache_file, force_full_rank, force_low_rank,
+                 output_file_name, block_size, interact_with_snp, runner, xp)
+
+        if pheno.sid_count > 1:
+            df['Pheno'] = pheno.sid[pheno_index]
+
+        df_list.append(df)
+
+    return pd.concat(df_list)
+
+
+def _internal_singleX(K0, test_snps, pheno, covar, K1,
                  mixing, h2, log_delta,
                  cache_file, force_full_rank, force_low_rank,
                  output_file_name, block_size, interact_with_snp, runner, xp):
@@ -585,6 +605,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
     y = xp.asarray(y)
+
 
     if cache_file is not None and os.path.exists(cache_file):
         lmm = lmm_cov(X=covar, Y=y, G=None, K=None, xp=xp)
@@ -673,7 +694,6 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
             )
 
         logging.info("time={0}".format(time.time()-do_work_time))
-
         return df
 
     def reducer_closure(result_sequence):
@@ -690,10 +710,11 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         return frame
 
     frame = map_reduce(range(work_count),
-                       mapper=mapper_closure,reducer=reducer_closure,
-                       input_files=[test_snps],output_files=[output_file_name],
-                       name="single_snp(output_file={0})".format(output_file_name),
-                       runner=runner)
+                        mapper=mapper_closure,reducer=reducer_closure,
+                        input_files=[test_snps],output_files=[output_file_name],
+                        name="single_snp(output_file={0})".format(output_file_name),
+                        runner=runner)
+
     return frame
 
 def compute_stats(beta,variance_beta,fraction_variance_explained_beta,
