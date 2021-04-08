@@ -594,13 +594,14 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     mixing_ori, h2_ori, log_delta_ori = mixing, h2, log_delta
     multi_pheno = pheno
+    #view_ok because this code already did a fresh read to look for any missing values 
+    multi_y = xp.asarray(pheno.read(view_ok=True,order='A').val)
+
     part1_list=[]
     for pheno_index in range(multi_pheno.sid_count):
         mixing, h2, log_delta = mixing_ori, h2_ori, log_delta_ori
         pheno = multi_pheno[:,pheno_index]
-        y = pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values 
-        y = xp.asarray(y)
-
+        y = multi_y[:,pheno_index:pheno_index+1]
 
         if cache_file is not None and os.path.exists(cache_file):
             lmm = lmm_cov(X=covar_val, Y=y, G=None, K=None, xp=xp)
@@ -635,9 +636,17 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
         part1_list.append({'lmm':lmm,'h2':h2,'mixing':mixing})
 
+    lmm0 = part1_list[0]['lmm']
+    multi_lmm = lmm_cov(X=lmm0.X,
+                   Y=multi_y,
+                   K=lmm0.K,
+                   xp=xp)
+    multi_lmm.S,multi_lmm.U = lmm0.S,multi_lmm.U
+    uy_list = [part1['lmm'].UY[:,0] for part1 in part1_list]
+    multi_lmm.UY = np.r_[uy_list].T
+    # !!!cmk assert that P>1, G,UUX,UUY,UX are None and need code
 
     df_list = []
-    #lmm = part1_list[0]['lmm'] #!!!cmk
     for pheno_index in range(multi_pheno.sid_count):
         part1 = part1_list[pheno_index]
         lmm, h2, mixing = part1['lmm'],part1['h2'],part1['mixing']
