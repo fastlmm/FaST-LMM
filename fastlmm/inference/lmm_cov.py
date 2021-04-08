@@ -635,6 +635,7 @@ class LMM(object):
         #N = self.Y.shape[0] - self.linreg.D #number of degrees of freedom - commented out because not use and misleading name for dof
         S,U = self.getSU()
         k = S.shape[0]
+        P = self.Y.shape[1] #number of phenotypes used
 
         if logdelta is not None:
             delta = np.exp(logdelta)
@@ -644,15 +645,16 @@ class LMM(object):
             denom = delta * scale         # determine normalization factor
             h2 = 1.0 / (1.0 + delta)
             assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
-        else:
-            Sd = (h2 * self.S + (1.0 - h2)) * scale
+        else: # !!!cmk need code or assert of delta is not None
+            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
+            Sd = (Sbyh + (1.0 - h2)) * scale
             denom = (1.0 - h2) * scale      # determine normalization factor
-        if (h2 < 0.0) or (h2 >= 1.0):
+        if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
+            assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmk
             return {'nLL':3E20,
                     'h2':h2,
                     'scale':scale}
         UY,UUY = self.getUY(idx_pheno = idx_pheno)
-        P = UY.shape[1] #number of phenotypes used
 
         if (snps is not None) and (Usnps is None):
             assert snps.shape[0] == self.Y.shape[0], "shape mismatch between snps and Y"
@@ -714,7 +716,6 @@ class LMM(object):
             logdetK+=(N - k) * np.log(denom)
         
         if Usnps is not None:
-            
             snpsKsnps = self.computeAKA(Sd=Sd, denom=denom, UA=Usnps, UUA=UUsnps)[:,np.newaxis] # !!!cmk62
             snpsKY = self.computeAKB(Sd=Sd, denom=denom, UA=Usnps, UB=UY, UUA=UUsnps, UUB=UUY)
         
@@ -829,10 +830,14 @@ class LMM(object):
 
         A.T.dot( f(K) ).dot(B)
         """
-        UAS = UA / self._xp.lib.stride_tricks.as_strided(Sd, (Sd.size,UA.shape[1]), (Sd.itemsize,0))
-        AKB = UAS.T.dot(UB)
-        if UUA is not None:
-            AKB += UUA.T.dot(UUB) / denom
+        if len(Sd.shape)==1:
+            Sd = Sd.reshape(-1,1)
+        AKB = np.full((UA.shape[1],Sd.shape[1]),np.nan)
+        for pheno_index in range(Sd.shape[1]):
+            UAS = UA / Sd[:,pheno_index:pheno_index+1]
+            AKB[:,pheno_index]=UAS.T.dot(UB[:,pheno_index])
+            if UUA is not None: #!!!cmk untested
+                AKB[:,pheno_index] += UUA.T.dot(UUB[:,pheno_index]) / denom # !!!cmk
         return AKB
 
     def computeAKA(self, Sd, denom, UA, UUA=None):
