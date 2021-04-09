@@ -499,13 +499,14 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                                       covar=covar,
                                       output_file_name=output_file,count_A1=False
                                       )
+            frame1 = frame[frame['Pheno']=='pheno1']
+            del frame1['Pheno']
+            self.compare_files(frame1,"two_looc")
+
             frame2 = frame[frame['Pheno']=='pheno2']
             del frame2['Pheno']
             self.compare_files(frame2,"multipheno2")
 
-            frame1 = frame[frame['Pheno']=='pheno1']
-            del frame1['Pheno']
-            self.compare_files(frame1,"two_looc")
 
         if True:
             pheno11 = SnpData(iid=pheno2.iid,sid=["pheno1a","pheno1b"],val = np.c_[Pheno(pheno).read().val,Pheno(pheno).read().val])
@@ -515,6 +516,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                                       covar=covar,
                                       output_file_name=output_file,count_A1=False
                                       )
+
             frame1 = frame[frame['Pheno']=='pheno1a']
             del frame1['Pheno']
             self.compare_files(frame1,"two_looc")
@@ -522,6 +524,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
             frame2 = frame[frame['Pheno']=='pheno1b']
             del frame2['Pheno']
             self.compare_files(frame2,"two_looc")
+
 
         if True:
             output_file = self.file_name("multipheno1")
@@ -563,21 +566,8 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
             self.compare_files(frame2,"multipheno2")
 
     
-        if True:
-            pheno21 = SnpData(iid=pheno2.iid,sid=["pheno2","pheno1"],val = np.c_[pheno2.val,Pheno(pheno).read().val])
-            output_file = self.file_name("multipheno21")
-            frame = single_snp(test_snps[:,::10], pheno21,
-                               force_full_rank=True,
-                                      covar=covar,
-                                      output_file_name=output_file,count_A1=False
-                                      )
-            frame1 = frame[frame['Pheno']=='pheno2']
-            del frame1['Pheno']
-            self.compare_files(frame1,"multipheno2")
 
-            frame2 = frame[frame['Pheno']=='pheno1']
-            del frame2['Pheno']
-            self.compare_files(frame2,"two_looc")
+
 
 
 

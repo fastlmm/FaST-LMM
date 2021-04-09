@@ -641,17 +641,17 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                    Y=multi_y,
                    K=lmm0.K,
                    xp=xp)
-    multi_lmm.S,multi_lmm.U = lmm0.S,multi_lmm.U
+    multi_lmm.S,multi_lmm.U = lmm0.S,lmm0.U
     uy_list = [part1['lmm'].UY[:,0] for part1 in part1_list]
     multi_lmm.UY = np.r_[uy_list].T
     # !!!cmk assert that P>1, G,UUX,UUY,UX are None and need code
     h2_list = [part1['h2'][0] for part1 in part1_list]
-    h2 = np.r_[h2_list]
+    multi_h2 = np.r_[h2_list]
     mixing_list = [part1['mixing'] for part1 in part1_list]
-    mixing = np.r_[mixing_list]
+    multi_mixing = np.r_[mixing_list]
 
-    if False:
-        df = snp_tester(test_snps, interact, multi_pheno, multi_lmm, block_size, output_file_name, runner, h2, mixing)
+    if True: #!!!cmk
+        df = snp_tester(test_snps, interact, multi_pheno, multi_lmm, block_size, output_file_name, runner, multi_h2, multi_mixing)
     else:
         df_list = []
         for pheno_index in range(multi_pheno.sid_count):

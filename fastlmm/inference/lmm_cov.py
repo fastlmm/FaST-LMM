@@ -647,13 +647,15 @@ class LMM(object):
             assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
         else: # !!!cmk need code or assert of delta is not None
             Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
-            Sd = (Sbyh + (1.0 - h2)) * scale
-            denom = (1.0 - h2) * scale      # determine normalization factor
+            Sd = (Sbyh + (1.0 - h2.reshape(-1))) * scale
+            denom = (1.0 - h2) * scale      # determine normalization factor cmk60
         if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
             assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmk
             return {'nLL':3E20,
                     'h2':h2,
                     'scale':scale}
+        if P>1:
+            print("cmk")
         UY,UUY = self.getUY(idx_pheno = idx_pheno)
 
         if (snps is not None) and (Usnps is None):
@@ -702,6 +704,7 @@ class LMM(object):
         '''
         #logging.info("Starting self.nLLcore")
         N = self.Y.shape[0] - self.linreg.D
+        denom = denom.reshape(-1)
         
         S,U = self.getSU()#not used, as provided from outside. Remove???
         k = S.shape[0]
@@ -709,15 +712,34 @@ class LMM(object):
 
         UY,UUY = self.getUY(idx_pheno = idx_pheno)
         P = UY.shape[1] #number of phenotypes used
-        YKY = self.computeAKA(Sd=Sd, denom=denom, UA=UY, UUA=UUY)
-        logdetK = np.log(Sd).sum()
+
+        YKY = np.full(P,np.nan)
+        for pheno_index in range(P):
+            YKY[pheno_index] = self.computeAKA(Sd=Sd[:,pheno_index:pheno_index+1],
+                                                denom=denom[pheno_index],
+                                                UA=UY[:,pheno_index:pheno_index+1],
+                                                UUA=None if UUY is None else UUY[:,pheno_index:pheno_index+1]) # !!!cmk61
+
+
+        logdetK = np.log(Sd).sum(0)
 
         if (UUY is not None):#low rank part
-            logdetK+=(N - k) * np.log(denom)
+            logdetK+=(N - k) * np.log(denom) #!!!cmk this should be a pheno loop
         
         if Usnps is not None:
-            snpsKsnps = self.computeAKA(Sd=Sd, denom=denom, UA=Usnps, UUA=UUsnps)[:,np.newaxis] # !!!cmk62
-            snpsKY = self.computeAKB(Sd=Sd, denom=denom, UA=Usnps, UB=UY, UUA=UUsnps, UUB=UUY)
+            snpsKsnps = np.full((Usnps.shape[1],P),np.nan)
+            snpsKY = np.full((Usnps.shape[1],P),np.nan)
+            for pheno_index in range(P):
+                snpsKsnps[:,pheno_index] = self.computeAKA(Sd[:,pheno_index:pheno_index+1],
+                                                denom=denom[pheno_index],
+                                                UA=Usnps,
+                                                UUA=UUsnps) # !!!cmk62
+                snpsKY[:,pheno_index:pheno_index+1] = self.computeAKB(Sd[:,pheno_index],
+                                                denom=denom[pheno_index],
+                                                UA=Usnps,
+                                                UB=UY[:,pheno_index:pheno_index+1],
+                                                UUA=UUsnps,
+                                                UUB=None if UUY is None else UUY[:,pheno_index:pheno_index+1])
         
         if weightW is not None:
             absw = np.absolute(weightW)
@@ -830,14 +852,11 @@ class LMM(object):
 
         A.T.dot( f(K) ).dot(B)
         """
-        if len(Sd.shape)==1:
-            Sd = Sd.reshape(-1,1)
-        AKB = np.full((UA.shape[1],Sd.shape[1]),np.nan)
-        for pheno_index in range(Sd.shape[1]):
-            UAS = UA / Sd[:,pheno_index:pheno_index+1]
-            AKB[:,pheno_index]=UAS.T.dot(UB[:,pheno_index])
-            if UUA is not None: #!!!cmk untested
-                AKB[:,pheno_index] += UUA.T.dot(UUB[:,pheno_index]) / denom # !!!cmk
+        assert len(Sd.shape)==1, "expect Sd to be 1-D"
+        UAS = UA/Sd.reshape(-1,1)
+        AKB = UAS.T.dot(UB)
+        if UUA is not None:
+            AKB += UUA.T.dot(UUB) / denom
         return AKB
 
     def computeAKA(self, Sd, denom, UA, UUA=None):
@@ -846,6 +865,7 @@ class LMM(object):
     
         A.T.dot( f(K) ).dot(A)
         """
+        assert Sd.shape[1]==1, "expect n x 1 Sd"
 
         #To save memory divide the work into 10 pieces
         piece_count = 10 if UA.shape[0] > 10 and UA.shape[1] > 1 else 1
@@ -862,6 +882,7 @@ class LMM(object):
                 AKA += (UUA[start1:end1,:] * UUA[start1:end1,:]).sum(0) / denom
                 start1 = end1
         return AKA
+
     
 
 class Linreg(object):
