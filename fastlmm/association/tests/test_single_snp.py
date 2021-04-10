@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import numpy as np
 import logging
@@ -17,7 +15,6 @@ from pysnptools.kernelreader import  Identity as KernelIdentity
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelreader import SnpKernel
-from six.moves import range
 from unittest.mock import patch
 
 class TestSingleSnp(unittest.TestCase):
