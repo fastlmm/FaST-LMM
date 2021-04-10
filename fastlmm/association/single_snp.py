@@ -597,60 +597,37 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         interact = None
 
 
-    multi_lmm, multi_h2, multi_mixing = find_h2_s_u(mixing, h2, log_delta, pheno, covar_val, xp,
-                force_full_rank, force_low_rank, K0, K1, cache_file)
+    lmm, h2, mixing = find_h2_s_u(mixing, h2, log_delta, pheno, covar_val, xp,
+                force_full_rank, force_low_rank, K0, K1, cache_file, runner)
 
-    df = snp_tester(test_snps, interact, pheno, multi_lmm, block_size, output_file_name, runner, multi_h2, multi_mixing)
+    frame = snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
 
-    return df
 
 
     return frame
 
-def find_h2_s_u(mixing, h2, log_delta, pheno, covar_val, xp,
-                force_full_rank, force_low_rank, K0, K1, cache_file):
-    mixing_ori, h2_ori, log_delta_ori = mixing, h2, log_delta
-    multi_pheno = pheno
+def find_h2_s_u(mixing_ori, h2_ori, log_delta_ori, multi_pheno, covar_val, xp,
+                force_full_rank, force_low_rank, K0, K1, cache_file, runner):
+
+    assert multi_pheno.sid_count >= 1, "Expect at least one phenotype"
+    assert isinstance(K1,KernelIdentity) or multi_pheno.sid_count == 1, "When a 2nd kernel is given, only one phenotype is allowed."
+
+    if cache_file is not None and os.path.exists(cache_file):
+        lmm = lmm_cov(X=covar_val, Y=y, G=None, K=None, xp=xp)
+        with xp.load(cache_file) as data: #!! similar code in epistasis
+            lmm.U = data['arr_0']
+            lmm.S = data['arr_1']
+            h2 = data['arr_2']
+            mixing = data['arr_3']
+        return lmm, h2, mixing
+
     #view_ok because this code already did a fresh read to look for any missing values 
-    multi_y = xp.asarray(pheno.read(view_ok=True,order='A').val)
+    multi_y = xp.asarray(multi_pheno.read(view_ok=True,order='A').val)
 
     part1_list=[]
     for pheno_index in range(multi_pheno.sid_count):
-        mixing, h2, log_delta = mixing_ori, h2_ori, log_delta_ori
-        pheno = multi_pheno[:,pheno_index]
-        y = multi_y[:,pheno_index:pheno_index+1]
-
-        if cache_file is not None and os.path.exists(cache_file):
-            lmm = lmm_cov(X=covar_val, Y=y, G=None, K=None, xp=xp)
-            with xp.load(cache_file) as data: #!! similar code in epistasis
-                lmm.U = data['arr_0']
-                lmm.S = data['arr_1']
-                h2 = data['arr_2'][0]
-                mixing = data['arr_2'][1]
-        else:
-            K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
-            mixing = mixer.mixing
-
-            if mixer.do_g:
-                G = xp.asarray(K.snpreader.val)
-                lmm = lmm_cov(X=covar_val, Y=y, K=None, G=G, inplace=True, xp=xp)
-            else:
-                #print(covar_val.sum(),y.sum(),K.val.sum(),covar_val[0],y[0],K.val[0,0])
-                lmm = lmm_cov(X=covar_val, Y=y, K=K.val, G=None, inplace=True, xp=xp)
-
-            if h2 is None:
-                logging.info("Starting findH2")
-                result = lmm.findH2()
-                if not isinstance(result,list):
-                    result = [result]
-                h2 = np.array([item['h2'] for item in result])
-            logging.info("h2={0}".format(h2))
-
-            if cache_file is not None and not os.path.exists(cache_file):
-                pstutil.create_directory_if_necessary(cache_file)
-                lmm.getSU()
-                xp.savez(cache_file, lmm.U,lmm.S,xp.array([float(h2),float(mixing)])) #using np.savez instead of pickle because it seems to be faster to read and write
-
+        lmm, h2, mixing = find_h2_s_u_for_one_pheno(K0, K1, covar_val, multi_y[:,pheno_index:pheno_index+1],
+                                                    mixing_ori, h2_ori, force_full_rank, force_low_rank, xp)
         part1_list.append({'lmm':lmm,'h2':h2,'mixing':mixing})
 
     lmm0 = part1_list[0]['lmm']
@@ -667,7 +644,37 @@ def find_h2_s_u(mixing, h2, log_delta, pheno, covar_val, xp,
     mixing_list = [part1['mixing'] for part1 in part1_list]
     multi_mixing = np.r_[mixing_list]
 
+
+    if cache_file is not None and not os.path.exists(cache_file):
+        pstutil.create_directory_if_necessary(cache_file)
+        assert multi_lmm.U is not None and multi_lmm.S is not None, "Expect S and U have been computed"
+        xp.savez(cache_file, multi_lmm.U, multi_lmm.S, multi_h2, multi_mixing) #using np.savez instead of pickle because it seems to be faster to read and write
+
+
     return multi_lmm, multi_h2, multi_mixing
+
+def find_h2_s_u_for_one_pheno(K0, K1, covar_val, y, mixing, h2, force_full_rank, force_low_rank, xp):
+
+    K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
+    mixing = mixer.mixing
+
+    if mixer.do_g:
+        G = xp.asarray(K.snpreader.val)
+        lmm = lmm_cov(X=covar_val, Y=y, K=None, G=G, inplace=True, xp=xp)
+    else:
+        #print(covar_val.sum(),y.sum(),K.val.sum(),covar_val[0],y[0],K.val[0,0])
+        lmm = lmm_cov(X=covar_val, Y=y, K=K.val, G=None, inplace=True, xp=xp)
+
+    if h2 is None:
+        logging.info("Starting findH2")
+        result = lmm.findH2()
+        if not isinstance(result,list):
+            result = [result]
+        h2 = np.array([item['h2'] for item in result])
+
+    logging.info("h2={0}".format(h2))
+
+    return lmm, h2, mixing
 
 def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
         
