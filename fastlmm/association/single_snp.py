@@ -629,7 +629,7 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
                                                       covar_val, True, None,
                                                       multi_y[:,0:1],
                                                       mixing, h2, force_full_rank, force_low_rank,
-                                                      None,None,
+                                                      None,None,None,
                                                       xp)
 
     uy_list=[lmm_0.UY[:,0]]
@@ -637,11 +637,11 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     mixing_list = [mixing_0]
     for pheno_index in range(1, multi_pheno.sid_count):
         lmm_p, h2_p, mixing_p = find_h2_s_u_for_one_pheno(
-                                K0=K0, K1=K1, #!!! cmk is this as fast as lmm_0.K?
+                                K0=None, K1=None,
                                 covar_val=lmm_0.X, regressX=lmm_0.regressX, linreg=lmm_0.linreg,
                                 y=multi_y[:,pheno_index:pheno_index+1],
-                                mixing=mixing, h2=h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,
-                                S=lmm_0.S,U=lmm_0.U,
+                                mixing=mixing_0, h2=h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,
+                                K=lmm_0.K,S=lmm_0.S,U=lmm_0.U,
                                 xp=xp)
         uy_list.append(lmm_p.UY[:,0])
         h2_list.append(h2_p)
@@ -662,17 +662,20 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
 
     return lmm_0, multi_h2, multi_mixing
 
-def find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h2, force_full_rank, force_low_rank, S, U, xp):
+def find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h2, force_full_rank, force_low_rank, K, S, U, xp):
 
-    K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
-    mixing = mixer.mixing
+    if K is None:
+        K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
+        mixing = mixer.mixing
 
-    if mixer.do_g:
-        G = xp.asarray(K.snpreader.val)
-        lmm = lmm_cov(X=covar_val, regressX=regressX, linreg=linreg, Y=y, K=None, G=G, inplace=True, S=S, U=U, xp=xp)
+        if mixer.do_g:
+            G = xp.asarray(K.snpreader.val)
+            lmm = lmm_cov(X=covar_val, regressX=regressX, linreg=linreg, Y=y, K=None, G=G, inplace=True, S=None, U=None, xp=xp)
+        else:
+            #print(covar_val.sum(),y.sum(),K.val.sum(),covar_val[0],y[0],K.val[0,0])
+            lmm = lmm_cov(X=covar_val, regressX=regressX, linreg=linreg, Y=y, K=K.val, G=None, inplace=True, S=None, U=None, xp=xp)
     else:
-        #print(covar_val.sum(),y.sum(),K.val.sum(),covar_val[0],y[0],K.val[0,0])
-        lmm = lmm_cov(X=covar_val, regressX=regressX, linreg=linreg, Y=y, K=K.val, G=None, inplace=True, S=S, U=U, xp=xp)
+        lmm = lmm_cov(X=covar_val, regressX=regressX, linreg=linreg, Y=y, K=K, G=None, inplace=True, S=S, U=U, xp=xp)
 
     if h2 is None:
         logging.info("Starting findH2")
