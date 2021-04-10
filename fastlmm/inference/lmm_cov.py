@@ -43,7 +43,7 @@ class LMM(object):
         '''
         self._xp = pstutil.array_module(xp)
         self.numcalls = 0
-        self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first)
+        self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first) #!!!cmk multipheno check
         self.forcefullrank = forcefullrank
         self.setK(K=K, G=G, inplace=inplace)                 #set the kernel, if available
         self.setY(Y=Y)                      #set the phenotypes

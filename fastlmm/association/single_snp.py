@@ -597,7 +597,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         interact = None
 
 
-    lmm, h2, mixing = find_h2_s_u(mixing, h2, log_delta, pheno, covar_val, xp,
+    lmm, h2, mixing = find_h2_s_u(mixing, h2, pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner)
 
     frame = snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
@@ -606,7 +606,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     return frame
 
-def find_h2_s_u(mixing_ori, h2_ori, log_delta_ori, multi_pheno, covar_val, xp,
+def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner):
 
     assert multi_pheno.sid_count >= 1, "Expect at least one phenotype"
@@ -626,9 +626,9 @@ def find_h2_s_u(mixing_ori, h2_ori, log_delta_ori, multi_pheno, covar_val, xp,
 
     part1_list=[]
     for pheno_index in range(multi_pheno.sid_count):
-        lmm, h2, mixing = find_h2_s_u_for_one_pheno(K0, K1, covar_val, multi_y[:,pheno_index:pheno_index+1],
-                                                    mixing_ori, h2_ori, force_full_rank, force_low_rank, xp)
-        part1_list.append({'lmm':lmm,'h2':h2,'mixing':mixing})
+        lmm_p, h2_p, mixing_p = find_h2_s_u_for_one_pheno(K0, K1, covar_val, multi_y[:,pheno_index:pheno_index+1],
+                                                    mixing, h2, force_full_rank, force_low_rank, xp)
+        part1_list.append({'lmm':lmm_p,'h2':h2_p,'mixing':mixing_p})
 
     lmm0 = part1_list[0]['lmm']
     multi_lmm = lmm_cov(X=lmm0.X,
