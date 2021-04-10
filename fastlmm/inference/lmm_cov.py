@@ -643,15 +643,8 @@ class LMM(object):
         if logdelta is not None:
             delta = np.exp(logdelta)
 
-        if delta is not None:
-            Sd = (self.S + delta) * scale
-            denom = delta * scale         # determine normalization factor
-            h2 = 1.0 / (1.0 + delta)
-            assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
-        else: # !!!cmk need code or assert of delta is not None
-            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
-            Sd = (Sbyh + (1.0 - h2.reshape(-1))) * scale
-            denom = (1.0 - h2) * scale      # determine normalization factor cmk60
+        Sd, denom, h2 = self.get_Sd_etc(delta, scale, h2)
+
         if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
             assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmk
             return {'nLL':3E20,
@@ -673,6 +666,18 @@ class LMM(object):
         result['h2'] = h2
         #logging.info("Ending nLLeval")
         return result
+
+    def get_Sd_etc(self, delta, scale, h2):
+        if delta is not None:
+            Sd = (self.S + delta) * scale
+            denom = delta * scale         # determine normalization factor
+            h2 = 1.0 / (1.0 + delta)
+            assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
+        else: # !!!cmk need code or assert of delta is not None
+            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1)) #!!!cmk0 add option to precompute this
+            Sd = (Sbyh + (1.0 - h2.reshape(-1))) * scale
+            denom = (1.0 - h2) * scale      # determine normalization factor cmk60
+        return Sd, denom, h2
 
     def nLLcore(self, Sd=None, dof=None, scale=1.0, penalty=0.0, UW=None, UUW=None, weightW=None, denom=1.0, Usnps=None, UUsnps=None, idx_pheno=None):
         '''

@@ -635,6 +635,7 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     uy_list=[lmm_0.UY[:,0]]
     h2_list=[h2_0]
     mixing_list = [mixing_0]
+    #!!!cmk do this with runner
     for pheno_index in range(1, multi_pheno.sid_count):
         lmm_p, h2_p, mixing_p = find_h2_s_u_for_one_pheno(
                                 K0=None, K1=None,
