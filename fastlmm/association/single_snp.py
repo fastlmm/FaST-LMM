@@ -1,45 +1,43 @@
-import os
-from pysnptools.util.mapreduce1.runner import *
 import logging
-import fastlmm.pyplink.plink as plink
-from pysnptools.snpreader import Pheno
-import pysnptools.util as pstutil
-import numpy as np
-import scipy.stats as stats
-from pysnptools.snpreader import Bed
-from fastlmm.util.pickle_io import load, save
+import os
 import time
-import pandas as pd
-from fastlmm.inference.lmm_cov import LMM as lmm_cov
 import warnings
-from pysnptools.snpreader import SnpReader
-from pysnptools.snpreader import SnpData
-from pysnptools.standardizer import Unit, Standardizer
-from pysnptools.standardizer import Identity as SS_Identity
-from pysnptools.standardizer import DiagKtoN
-from pysnptools.standardizer import UnitTrained
-from pysnptools.kernelreader import Identity as KernelIdentity
-from pysnptools.kernelreader import KernelData
-from pysnptools.kernelreader import SnpKernel
-from pysnptools.kernelreader import KernelNpz
-from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.util import create_directory_if_necessary
-from pysnptools.util.intrangeset import IntRangeSet
-from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
-import fastlmm.inference.linear_regression as lin_reg
 from unittest.mock import patch
 
-def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count, might be a covar mix up.(but only if a SnpKernel
-                 K1=None, mixing=None,
-                 covar=None, covar_by_chrom=None, leave_out_one_chrom=True, output_file_name=None, h2=None, log_delta=None,
-                 cache_file=None, GB_goal=None, interact_with_snp=None, force_full_rank=False, force_low_rank=False, G0=None, G1=None, runner=None,
-                 xp = None,
-                 count_A1=None):
+import numpy as np
+import pandas as pd
+import pysnptools.util as pstutil
+import scipy.stats as stats
+from fastlmm.inference.fastlmm_predictor import (_kernel_fixup, _pheno_fixup,
+                                                 _snps_fixup, _SnpTrainTest)
+from fastlmm.inference.lmm_cov import LMM as lmm_cov
+from pysnptools.kernelreader import Identity as KernelIdentity
+from pysnptools.kernelreader import KernelData, SnpKernel
+from pysnptools.snpreader import Bed, Pheno, SnpData
+from pysnptools.standardizer import DiagKtoN
+from pysnptools.standardizer import Identity as SS_Identity
+from pysnptools.standardizer import Standardizer, Unit
+from pysnptools.util import create_directory_if_necessary
+from pysnptools.util.intrangeset import IntRangeSet
+from pysnptools.util.mapreduce1 import map_reduce
+
+
+# !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
+#  might be a covar mix up.(but only if a SnpKernel
+def single_snp(test_snps, pheno, K0=None,
+                K1=None, mixing=None,
+                covar=None, covar_by_chrom=None, leave_out_one_chrom=True,
+                output_file_name=None, h2=None, log_delta=None,
+                cache_file=None, GB_goal=None, interact_with_snp=None,
+                force_full_rank=False, force_low_rank=False, G0=None, G1=None,
+                runner=None,
+                xp=None,
+                count_A1=None):
     """
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
     (For backwards compatibility, you may use 'leave_out_one_chrom=False' to skip cross validation, but that is not recommended.)
 
-    :param test_snps: SNPs to test. Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. 
+    :param test_snps: SNPs to test. Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
     :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
@@ -52,7 +50,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param K0: similarity matrix or SNPs from which to create a similarity matrix. If not given, will use test_snps.
-           Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_. 
+           Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
            If leave_out_one_chrom is True, can be a dictionary from chromosome number to any `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
            or the name a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file.
@@ -83,7 +81,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
            (Warning: setting False can cause proximal contamination.)
-    :type leave_out_one_chrom: boolean    
+    :type leave_out_one_chrom: boolean
 
     :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
     :type output_file_name: file name
@@ -109,7 +107,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
         which is memory efficient with little overhead on computation time.
     :type GB_goal: number
 
-    :param interact_with_snp: index of a covariate to perform an interaction test with. 
+    :param interact_with_snp: index of a covariate to perform an interaction test with.
             Allows for interaction testing (interact_with_snp x snp will be tested)
             default: None
 
@@ -163,7 +161,7 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
 
-    if K1 or G1: #If 2nd kernel given, use numpy
+    if K1 or G1:  # If 2nd kernel given, use numpy
         xp = 'numpy'
     xp = pstutil.array_module(xp)
     with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
@@ -177,51 +175,57 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
         covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
         if not leave_out_one_chrom:
-            assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"#!!!LATER document covar_by_chrom
-            K0 = _kernel_fixup(K0 or G0 or test_snps, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
-            K1 = _kernel_fixup(K1 or G1, iid_if_none=test_snps.iid, standardizer=Unit(),count_A1=count_A1)
-            K0, K1, test_snps, pheno, covar  = pstutil.intersect_apply([K0, K1, test_snps, pheno, covar])
+            assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"  # !!!LATER document covar_by_chrom
+            K0 = _kernel_fixup(K0 or G0 or test_snps, iid_if_none=test_snps.iid, standardizer=Unit(), count_A1=count_A1)
+            K1 = _kernel_fixup(K1 or G1, iid_if_none=test_snps.iid, standardizer=Unit(), count_A1=count_A1)
+            K0, K1, test_snps, pheno, covar = pstutil.intersect_apply([K0, K1, test_snps, pheno, covar])
             logging.debug("# of iids now {0}".format(K0.iid_count))
             K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal, force_full_rank, force_low_rank)
 
-            frame =  _internal_single(K0=K0, test_snps=test_snps, pheno=pheno,
-                                        covar=covar, K1=K1,
-                                        mixing=mixing, h2=h2, log_delta=log_delta,
-                                        cache_file = cache_file, force_full_rank=force_full_rank,force_low_rank=force_low_rank,
-                                        output_file_name=output_file_name,block_size=block_size, interact_with_snp=interact_with_snp,
+            frame = _internal_single(K0=K0, test_snps=test_snps, pheno=pheno,
+                                        covar=covar,
+                                        K1=K1,
+                                        mixing=mixing,
+                                        h2=h2,
+                                        log_delta=log_delta,
+                                        cache_file=cache_file,
+                                        force_full_rank=force_full_rank,
+                                        force_low_rank=force_low_rank,
+                                        output_file_name=output_file_name,
+                                        block_size=block_size,
+                                        interact_with_snp=interact_with_snp,
                                         runner=runner, xp=xp)
             sid_index_range = IntRangeSet(frame['sid_index'])
-            assert sid_index_range == (0,test_snps.sid_count), "Some SNP rows are missing from the output"
-        else: 
-            chrom_list = list(set(test_snps.pos[:,0])) # find the set of all chroms mentioned in test_snps, the main testing data
+            assert sid_index_range == (0, test_snps.sid_count), "Some SNP rows are missing from the output"
+        else:
+            chrom_list = list(set(test_snps.pos[:, 0]))  # find the set of all chroms mentioned in test_snps, the main testing data
             assert not np.isnan(chrom_list).any(), "chrom list should not contain NaN"
             input_files = [test_snps, pheno, covar] + ([] if covar_by_chrom is None else list(covar_by_chrom.values()))
             for Ki in [K0, G0, K1, G1]:
-                if isinstance(Ki,dict):
+                if isinstance(Ki, dict):
                     input_files += list(Ki.values())
                 else:
                     input_files.append(Ki)
 
             def nested_closure(chrom):
                 xp = pstutil.array_module()
-                test_snps_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
+                test_snps_chrom = test_snps[:, test_snps.pos[:, 0]==chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
                 cache_file_chrom = None if cache_file is None else cache_file + ".{0}".format(chrom)
 
                 K0_chrom = _K_per_chrom(K0 or G0 or test_snps, chrom, test_snps.iid)
                 K1_chrom = _K_per_chrom(K1 or G1, chrom, test_snps.iid)
 
-                K0_chrom, K1_chrom, test_snps_chrom, pheno_chrom, covar_chrom  = pstutil.intersect_apply([K0_chrom, K1_chrom, test_snps_chrom, pheno, covar_chrom])
+                K0_chrom, K1_chrom, test_snps_chrom, pheno_chrom, covar_chrom = pstutil.intersect_apply([K0_chrom, K1_chrom, test_snps_chrom, pheno, covar_chrom])
                 logging.debug("# of iids now {0}".format(K0_chrom.iid_count))
                 K0_chrom, K1_chrom, block_size = _set_block_size(K0_chrom, K1_chrom, mixing, GB_goal, force_full_rank, force_low_rank)
 
                 distributable = _internal_single(K0=K0_chrom, test_snps=test_snps_chrom, pheno=pheno_chrom,
                                             covar=covar_chrom, K1=K1_chrom,
                                             mixing=mixing, h2=h2, log_delta=log_delta, cache_file=cache_file_chrom,
-                                            force_full_rank=force_full_rank,force_low_rank=force_low_rank,
+                                            force_full_rank=force_full_rank, force_low_rank=force_low_rank,
                                             output_file_name=None, block_size=block_size, interact_with_snp=interact_with_snp,
-                                            runner=Local(), xp=xp)
-            
+                                            runner=None, xp=xp)
                 return distributable
 
             def reducer_closure(frame_sequence):
@@ -238,11 +242,11 @@ def single_snp(test_snps, pheno, K0=None,#!!!LATER add warning here (and elsewhe
                 return frame
 
             frame = map_reduce(chrom_list,
-                       mapper = nested_closure,
-                       reducer = reducer_closure,
-                       input_files = input_files,
-                       output_files = [output_file_name],
-                       name = "single_snp (leave_out_one_chrom), out='{0}'".format(output_file_name),
+                       mapper=nested_closure,
+                       reducer=reducer_closure,
+                       input_files=input_files,
+                       output_files=[output_file_name],
+                       name="single_snp (leave_out_one_chrom), out='{0}'".format(output_file_name),
                        runner = runner)
 
     return frame
@@ -650,22 +654,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     mixing_list = [part1['mixing'] for part1 in part1_list]
     multi_mixing = np.r_[mixing_list]
 
-    if True: #!!!cmk
-        df = snp_tester(test_snps, interact, multi_pheno, multi_lmm, block_size, output_file_name, runner, multi_h2, multi_mixing)
-    else:
-        df_list = []
-        for pheno_index in range(multi_pheno.sid_count):
-            part1 = part1_list[pheno_index]
-            lmm, h2, mixing = part1['lmm'],part1['h2'],part1['mixing']
-
-            frame = snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
-            # !!!cmk don't really want output_file_name for each pheno
-
-            if multi_pheno.sid_count > 1:
-                frame['Pheno'] = multi_pheno.sid[pheno_index]
-
-            df_list.append(frame)
-        df = pd.concat(df_list)
+    df = snp_tester(test_snps, interact, multi_pheno, multi_lmm, block_size, output_file_name, runner, multi_h2, multi_mixing)
 
     return df
 
@@ -863,9 +852,10 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.WARN)
 
         if True:
-            from pysnptools.util.filecache import LocalCache
-            from pysnptools.snpreader import Bed, DistributedBed
             from unittest.mock import patch
+
+            from pysnptools.snpreader import Bed, DistributedBed
+            from pysnptools.util.filecache import LocalCache
 
             seed = 1
             iid_count = 1*1000 # number of individuals
@@ -886,7 +876,8 @@ if __name__ == "__main__":
 
                 if not next(test_snps_cache.walk(),None): #If no files in the test_snps folder, generate data (takes about 6 hours)
                     from pysnptools.snpreader import SnpGen
-                    from pysnptools.util.mapreduce1.runner import LocalMultiProc
+                    from pysnptools.util.mapreduce1.runner import \
+                        LocalMultiProc
     
                     snpgen = SnpGen(seed=seed,iid_count=iid_count,sid_count=sid_count,chrom_count=chrom_count,block_size=1000) # Create an on-the-fly SNP generator
                     snp_gen_runner = None#LocalMultiProc(5)
@@ -943,8 +934,10 @@ if __name__ == "__main__":
 
     if False:
         import logging
+
         from fastlmm.association import single_snp
-        from fastlmm.util import example_file # Download and return local file name
+        from fastlmm.util import \
+            example_file  # Download and return local file name
         from pysnptools.snpreader import Bed
         logging.basicConfig(level=logging.INFO)
         pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
@@ -956,7 +949,6 @@ if __name__ == "__main__":
 
         logging.basicConfig(level=logging.INFO)
         import doctest
-
         from unittest.mock import patch
         with patch.dict('os.environ', {'ARRAY_MODULE': 'cupy'}) as _:
             doctest.testmod()
@@ -977,9 +969,9 @@ if __name__ == "__main__":
         first_n = 50 #None for all the chrom
 
         # import the algorithm and reader
+        import numpy as np
         from fastlmm.association import epistasis
         from pysnptools.snpreader import Bed
-        import numpy as np
 
         # define file names
         bed_reader = Bed("datasets/synth/all.bed", count_A1=True)
@@ -1064,9 +1056,9 @@ if __name__ == "__main__":
         h2corr_raw = h2
 
     if False:
+        import matplotlib.pyplot as plt
         from fastlmm.association import single_snp
         from pysnptools.snpreader import Bed
-        import matplotlib.pyplot as plt
 
         plt.ylim()
         plt.show()
