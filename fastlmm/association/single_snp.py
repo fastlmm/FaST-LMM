@@ -216,6 +216,7 @@ def single_snp(test_snps, pheno, K0=None,
                 K0_chrom = _K_per_chrom(K0 or G0 or test_snps, chrom, test_snps.iid)
                 K1_chrom = _K_per_chrom(K1 or G1, chrom, test_snps.iid)
 
+                # !!!cmk do the right thing when multiple pheno and some is missing
                 K0_chrom, K1_chrom, test_snps_chrom, pheno_chrom, covar_chrom = pstutil.intersect_apply([K0_chrom, K1_chrom, test_snps_chrom, pheno, covar_chrom])
                 logging.debug("# of iids now {0}".format(K0_chrom.iid_count))
                 K0_chrom, K1_chrom, block_size = _set_block_size(K0_chrom, K1_chrom, mixing, GB_goal, force_full_rank, force_low_rank)
@@ -596,6 +597,18 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         interact = None
 
 
+    multi_lmm, multi_h2, multi_mixing = find_h2_s_u(mixing, h2, log_delta, pheno, covar_val, xp,
+                force_full_rank, force_low_rank, K0, K1, cache_file)
+
+    df = snp_tester(test_snps, interact, pheno, multi_lmm, block_size, output_file_name, runner, multi_h2, multi_mixing)
+
+    return df
+
+
+    return frame
+
+def find_h2_s_u(mixing, h2, log_delta, pheno, covar_val, xp,
+                force_full_rank, force_low_rank, K0, K1, cache_file):
     mixing_ori, h2_ori, log_delta_ori = mixing, h2, log_delta
     multi_pheno = pheno
     #view_ok because this code already did a fresh read to look for any missing values 
@@ -654,12 +667,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     mixing_list = [part1['mixing'] for part1 in part1_list]
     multi_mixing = np.r_[mixing_list]
 
-    df = snp_tester(test_snps, interact, multi_pheno, multi_lmm, block_size, output_file_name, runner, multi_h2, multi_mixing)
-
-    return df
-
-
-    return frame
+    return multi_lmm, multi_h2, multi_mixing
 
 def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
         
