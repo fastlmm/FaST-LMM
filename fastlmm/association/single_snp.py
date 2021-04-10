@@ -615,8 +615,8 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     if cache_file is not None and os.path.exists(cache_file):
         lmm = lmm_cov(X=covar_val, Y=y, G=None, K=None, xp=xp)
         with xp.load(cache_file) as data: #!! similar code in epistasis
-            lmm.U = data['arr_0']
-            lmm.S = data['arr_1']
+            lmm.S = data['arr_0']
+            lmm.U = data['arr_1']
             h2 = data['arr_2']
             mixing = data['arr_3']
         return lmm, h2, mixing
@@ -624,46 +624,55 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     #view_ok because this code already did a fresh read to look for any missing values 
     multi_y = xp.asarray(multi_pheno.read(view_ok=True,order='A').val)
 
-    part1_list=[]
-    for pheno_index in range(multi_pheno.sid_count):
-        lmm_p, h2_p, mixing_p = find_h2_s_u_for_one_pheno(K0, K1, covar_val, multi_y[:,pheno_index:pheno_index+1],
-                                                    mixing, h2, force_full_rank, force_low_rank, xp)
-        part1_list.append({'lmm':lmm_p,'h2':h2_p,'mixing':mixing_p})
 
-    lmm0 = part1_list[0]['lmm']
-    multi_lmm = lmm_cov(X=lmm0.X,
-                   Y=multi_y,
-                   K=lmm0.K,
-                   xp=xp)
-    multi_lmm.S,multi_lmm.U = lmm0.S,lmm0.U
-    uy_list = [part1['lmm'].UY[:,0] for part1 in part1_list]
-    multi_lmm.UY = np.r_[uy_list].T
+    lmm_0, h2_0, mixing_0 = find_h2_s_u_for_one_pheno(K0, K1, 
+                                                      covar_val, True, None,
+                                                      multi_y[:,0:1],
+                                                      mixing, h2, force_full_rank, force_low_rank,
+                                                      None,None,
+                                                      xp)
+
+    uy_list=[lmm_0.UY[:,0]]
+    h2_list=[h2_0]
+    mixing_list = [mixing_0]
+    for pheno_index in range(1, multi_pheno.sid_count):
+        lmm_p, h2_p, mixing_p = find_h2_s_u_for_one_pheno(
+                                K0=K0, K1=K1, #!!! cmk is this as fast as lmm_0.K?
+                                covar_val=lmm_0.X, regressX=lmm_0.regressX, linreg=lmm_0.linreg,
+                                y=multi_y[:,pheno_index:pheno_index+1],
+                                mixing=mixing, h2=h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,
+                                S=lmm_0.S,U=lmm_0.U,
+                                xp=xp)
+        uy_list.append(lmm_p.UY[:,0])
+        h2_list.append(h2_p)
+        mixing_list.append(mixing_p)
+
+    lmm_0.Y = multi_y #!!!cmk is this needed?
+    lmm_0.UY = np.r_[uy_list].T #!!!cmk is this needed?
     # !!!cmk assert that P>1, G,UUX,UUY,UX are None and need code
-    h2_list = [part1['h2'][0] for part1 in part1_list]
     multi_h2 = np.r_[h2_list]
-    mixing_list = [part1['mixing'] for part1 in part1_list]
     multi_mixing = np.r_[mixing_list]
 
 
     if cache_file is not None and not os.path.exists(cache_file):
         pstutil.create_directory_if_necessary(cache_file)
         assert multi_lmm.U is not None and multi_lmm.S is not None, "Expect S and U have been computed"
-        xp.savez(cache_file, multi_lmm.U, multi_lmm.S, multi_h2, multi_mixing) #using np.savez instead of pickle because it seems to be faster to read and write
+        xp.savez(cache_file, multi_lmm.S, multi_lmm.U, multi_h2, multi_mixing) #using np.savez instead of pickle because it seems to be faster to read and write
+        #!!!cmk should we cache UY?
 
+    return lmm_0, multi_h2, multi_mixing
 
-    return multi_lmm, multi_h2, multi_mixing
-
-def find_h2_s_u_for_one_pheno(K0, K1, covar_val, y, mixing, h2, force_full_rank, force_low_rank, xp):
+def find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h2, force_full_rank, force_low_rank, S, U, xp):
 
     K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
     mixing = mixer.mixing
 
     if mixer.do_g:
         G = xp.asarray(K.snpreader.val)
-        lmm = lmm_cov(X=covar_val, Y=y, K=None, G=G, inplace=True, xp=xp)
+        lmm = lmm_cov(X=covar_val, regressX=regressX, linreg=linreg, Y=y, K=None, G=G, inplace=True, S=S, U=U, xp=xp)
     else:
         #print(covar_val.sum(),y.sum(),K.val.sum(),covar_val[0],y[0],K.val[0,0])
-        lmm = lmm_cov(X=covar_val, Y=y, K=K.val, G=None, inplace=True, xp=xp)
+        lmm = lmm_cov(X=covar_val, regressX=regressX, linreg=linreg, Y=y, K=K.val, G=None, inplace=True, S=S, U=U, xp=xp)
 
     if h2 is None:
         logging.info("Starting findH2")

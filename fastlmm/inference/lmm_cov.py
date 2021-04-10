@@ -26,7 +26,8 @@ class LMM(object):
     '''
     __slots__ = ["linreg","G","Y","X","K","U","S","UX","UY","UUX","UUY","forcefullrank","regressX","numcalls","_xp"]
 
-    def __init__(self, forcefullrank=False, X=None, linreg=None, Y=None, G=None, K=None, regressX=True, inplace=False, xp=None):
+    def __init__(self, forcefullrank=False, X=None, linreg=None, Y=None, G=None, K=None, regressX=True, inplace=False,
+                S=None, U=None, xp=None):
         '''
 
         Args:
@@ -47,6 +48,8 @@ class LMM(object):
         self.forcefullrank = forcefullrank
         self.setK(K=K, G=G, inplace=inplace)                 #set the kernel, if available
         self.setY(Y=Y)                      #set the phenotypes
+        self.S = S
+        self.U = U
 
     def setY(self, Y):
         '''
