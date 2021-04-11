@@ -488,13 +488,16 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         pheno2.val[0,0] = 100
         pheno2.val[1,0] = -100
 
+        cache_file = None # "m:/deldir/cache/cmktest.npz"
+
         if True:
             pheno12 = SnpData(iid=pheno2.iid,sid=["pheno1","pheno2"],val = np.c_[Pheno(pheno).read().val,pheno2.val])
             output_file = self.file_name("multipheno12")
             frame = single_snp(test_snps[:,::10], pheno12,
                                force_full_rank=True,
                                       covar=covar,
-                                      output_file_name=output_file,count_A1=False
+                                      cache_file=cache_file,
+                                      output_file_name=output_file
                                       )
             frame1 = frame[frame['Pheno']=='pheno1']
             del frame1['Pheno']

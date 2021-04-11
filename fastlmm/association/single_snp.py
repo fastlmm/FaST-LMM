@@ -211,7 +211,7 @@ def single_snp(test_snps, pheno, K0=None,
                 xp = pstutil.array_module()
                 test_snps_chrom = test_snps[:, test_snps.pos[:, 0]==chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
-                cache_file_chrom = None if cache_file is None else cache_file + ".{0}".format(chrom)
+                cache_file_chrom = None if cache_file is None else f"{cache_file}.{chrom}.npz"
 
                 K0_chrom = _K_per_chrom(K0 or G0 or test_snps, chrom, test_snps.iid)
                 K1_chrom = _K_per_chrom(K1 or G1, chrom, test_snps.iid)
@@ -602,8 +602,6 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     frame = snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
 
-
-
     return frame
 
 def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
@@ -612,17 +610,20 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     assert multi_pheno.sid_count >= 1, "Expect at least one phenotype"
     assert isinstance(K1,KernelIdentity) or multi_pheno.sid_count == 1, "When a 2nd kernel is given, only one phenotype is allowed."
 
-    if cache_file is not None and os.path.exists(cache_file):
-        lmm = lmm_cov(X=covar_val, Y=y, G=None, K=None, xp=xp)
-        with xp.load(cache_file) as data: #!! similar code in epistasis
-            lmm.S = data['arr_0']
-            lmm.U = data['arr_1']
-            h2 = data['arr_2']
-            mixing = data['arr_3']
-        return lmm, h2, mixing
-
     #view_ok because this code already did a fresh read to look for any missing values 
     multi_y = xp.asarray(multi_pheno.read(view_ok=True,order='A').val)
+
+    if cache_file is not None and os.path.exists(cache_file):
+        lmm_cache = lmm_cov(X=covar_val, Y=multi_y, G=None, K=None, xp=xp)
+        with xp.load(cache_file) as data: #!! similar code in epistasis
+            lmm_cache.S = data['arr_0'] # !!!!cmk add versioning
+            lmm_cache.U = data['arr_1']
+            lmm_cache.UY = data['arr_2']
+            h2 = data['arr_3']
+            mixing = data['arr_4']
+        assert len(h2)==multi_y.shape[1] and multi_y.shape[1]==lmm_cache.UY.shape[1], "Expect cached h2 and lmm_cache.UY to agree with y"
+        return lmm_cache, h2, mixing
+
 
 
     lmm_0, h2_0, mixing_0 = find_h2_s_u_for_one_pheno(K0, K1, 
@@ -657,9 +658,8 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
 
     if cache_file is not None and not os.path.exists(cache_file):
         pstutil.create_directory_if_necessary(cache_file)
-        assert multi_lmm.U is not None and multi_lmm.S is not None, "Expect S and U have been computed"
-        xp.savez(cache_file, multi_lmm.S, multi_lmm.U, multi_h2, multi_mixing) #using np.savez instead of pickle because it seems to be faster to read and write
-        #!!!cmk should we cache UY?
+        assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
+        xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, multi_h2, multi_mixing) #using np.savez instead of pickle because it seems to be faster to read and write
 
     return lmm_0, multi_h2, multi_mixing
 
