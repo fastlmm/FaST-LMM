@@ -580,7 +580,11 @@ class LMM(object):
         return result
 
 
-    def nLLeval(self, h2=0.0, logdelta=None, delta=None, dof=None, scale=1.0, penalty=0.0, snps=None, Usnps=None, UUsnps=None, UW=None, UUW=None, weightW=None, idx_pheno=None):
+    def nLLeval(self, h2=0.0, logdelta=None, delta=None, dof=None, scale=1.0, penalty=0.0,
+               snps=None, Usnps=None, UUsnps=None,
+               UW=None, UUW=None, weightW=None, idx_pheno=None,
+               Sd=None, denom=None
+               ):
         '''
         TODO: rename to be a private function
         This function is a hack to fix a parameterization bug regarding h2_1 parameterization in findA2 or findH2 or innerLoop.
@@ -640,10 +644,7 @@ class LMM(object):
         k = S.shape[0]
         P = self.Y.shape[1] #number of phenotypes used
 
-        if logdelta is not None:
-            delta = np.exp(logdelta)
-
-        Sd, denom, h2 = self.get_Sd_etc(delta, scale, h2)
+        Sd, denom, h2 = self.get_Sd_etc(Sd, denom, h2, logdelta, delta, scale)
 
         if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
             assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmk
@@ -667,7 +668,13 @@ class LMM(object):
         #logging.info("Ending nLLeval")
         return result
 
-    def get_Sd_etc(self, delta, scale, h2):
+    def get_Sd_etc(self, Sd, denom, h2, logdelta, delta, scale, ):
+        if h2 is not None and Sd is not None and denom is not None:
+            return Sd, denom, h2
+
+        if logdelta is not None:
+            delta = np.exp(logdelta)
+
         if delta is not None:
             Sd = (self.S + delta) * scale
             denom = delta * scale         # determine normalization factor

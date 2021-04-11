@@ -693,6 +693,8 @@ def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, ru
         
     work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
 
+    Sd, denom, h2 = lmm.get_Sd_etc(Sd=None, denom=None, h2=h2, logdelta=None, delta=None, scale=1)
+
     # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
     def debatch_closure(work_index):
         return test_snps.sid_count * work_index // work_count
@@ -718,7 +720,8 @@ def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, ru
             variables_to_test = val * interact[:,xp.newaxis]
         else:
             variables_to_test = val
-        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test) # !!!cmk66
+
+        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test, Sd=Sd, denom=denom) # !!!cmk66
 
         assert test_snps.iid_count == lmm.U.shape[0]
 
