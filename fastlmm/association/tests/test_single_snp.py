@@ -488,7 +488,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         pheno2.val[0,0] = 100
         pheno2.val[1,0] = -100
 
-        cache_file = None # "m:/deldir/cache/cmktest.npz"
+        cache_file = "m:/deldir/cache/cmktest.npz"
 
         if True:
             pheno12 = SnpData(iid=pheno2.iid,sid=["pheno1","pheno2"],val = np.c_[Pheno(pheno).read().val,pheno2.val])

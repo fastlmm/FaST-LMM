@@ -621,6 +621,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     multi_y = xp.asarray(multi_pheno.read(view_ok=True,order='A').val)
 
     y_0 = multi_y[:,0:1]
+    cache_file_extra = f"{cache_file}.extra.npz" if cache_file is not None else None
 
     logging.info("Finding SU and then h2 for first phenotype")
     if cache_file is not None and os.path.exists(cache_file):
@@ -644,12 +645,20 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
             pstutil.create_directory_if_necessary(cache_file)
             assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
             xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, h2_0, mixing_0)
+            if os.path.exists(cache_file_extra):
+                os.unlink(cache_file_extra) # !cmk test this
 
     if multi_pheno.sid_count == 1:
         return lmm_0, h2_0, mixing_0
 
 
-
+    if cache_file_extra is not None and os.path.exists(cache_file_extra):
+        with xp.load(cache_file_extra) as data: #!! similar code in epistasis
+            lmm_0.UY = data['arr_0']
+            h2_0 = data['arr_1']
+            mixing_0 = data['arr_2']
+        assert len(h2_0)==multi_y.shape[1] and multi_y.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with multi_y"
+        return lmm_0, h2_0, mixing_0
 
     uy_list=[lmm_0.UY[:,0]]
     h2_list=[h2_0]
@@ -657,6 +666,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
 
     #!!!cmk do this with runner
     for pheno_index in range(1, multi_pheno.sid_count):
+        logging.info(f"working on pheno_index {pheno_index} of {multi_pheno.sid_count}")
         lmm_p, h2_p, mixing_p = _find_h2_s_u_for_one_pheno(
                                 K0=None, K1=None,
                                 covar_val=lmm_0.X, regressX=lmm_0.regressX, linreg=lmm_0.linreg,
@@ -673,6 +683,10 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     # !!!cmk assert that P>1, G,UUX,UUY,UX are None and need code
     multi_h2 = np.r_[h2_list]
     multi_mixing = np.r_[mixing_list]
+
+    if cache_file_extra is not None:
+        pstutil.create_directory_if_necessary(cache_file_extra)
+        xp.savez(cache_file_extra, lmm_0.UY, multi_h2, multi_mixing)
 
     return lmm_0, multi_h2, multi_mixing
 
