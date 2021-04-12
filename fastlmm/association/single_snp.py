@@ -620,29 +620,41 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     #view_ok because this code already did a fresh read to look for any missing values 
     multi_y = xp.asarray(multi_pheno.read(view_ok=True,order='A').val)
 
+    y_0 = multi_y[:,0:1]
+
+    logging.info("Finding SU and then h2 for first phenotype")
     if cache_file is not None and os.path.exists(cache_file):
-        lmm_cache = lmm_cov(X=covar_val, Y=multi_y, G=None, K=None, xp=xp)
+        lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
         with xp.load(cache_file) as data: #!! similar code in epistasis
-            lmm_cache.S = data['arr_0'] # !!!!cmk add versioning
-            lmm_cache.U = data['arr_1']
-            lmm_cache.UY = data['arr_2']
-            h2 = data['arr_3']
-            mixing = data['arr_4']
-        assert len(h2)==multi_y.shape[1] and multi_y.shape[1]==lmm_cache.UY.shape[1], "Expect cached h2 and lmm_cache.UY to agree with y"
-        return lmm_cache, h2, mixing
+            lmm_0.S = data['arr_0'] # !!!!cmk add versioning
+            lmm_0.U = data['arr_1']
+            lmm_0.UY = data['arr_2']
+            h2_0 = data['arr_3']
+            mixing_0 = data['arr_4']
+        assert len(h2_0)==1 and y_0.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with y_0"
+    else:
+        lmm_0, h2_0, mixing_0 = _find_h2_s_u_for_one_pheno(K0, K1, 
+                                                    covar_val, True, None,
+                                                    y_0,
+                                                    mixing, h2, force_full_rank, force_low_rank,
+                                                    None,None,None,
+                                                    xp)
+
+        if cache_file is not None:
+            pstutil.create_directory_if_necessary(cache_file)
+            assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
+            xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, h2_0, mixing_0)
+
+    if multi_pheno.sid_count == 1:
+        return lmm_0, h2_0, mixing_0
 
 
 
-    lmm_0, h2_0, mixing_0 = _find_h2_s_u_for_one_pheno(K0, K1, 
-                                                      covar_val, True, None,
-                                                      multi_y[:,0:1],
-                                                      mixing, h2, force_full_rank, force_low_rank,
-                                                      None,None,None,
-                                                      xp)
 
     uy_list=[lmm_0.UY[:,0]]
     h2_list=[h2_0]
     mixing_list = [mixing_0]
+
     #!!!cmk do this with runner
     for pheno_index in range(1, multi_pheno.sid_count):
         lmm_p, h2_p, mixing_p = _find_h2_s_u_for_one_pheno(
@@ -661,12 +673,6 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     # !!!cmk assert that P>1, G,UUX,UUY,UX are None and need code
     multi_h2 = np.r_[h2_list]
     multi_mixing = np.r_[mixing_list]
-
-
-    if cache_file is not None and not os.path.exists(cache_file):
-        pstutil.create_directory_if_necessary(cache_file)
-        assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
-        xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, multi_h2, multi_mixing) #using np.savez instead of pickle because it seems to be faster to read and write
 
     return lmm_0, multi_h2, multi_mixing
 
