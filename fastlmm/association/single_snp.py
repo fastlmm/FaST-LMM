@@ -30,7 +30,7 @@ def single_snp(test_snps, pheno, K0=None,
                 output_file_name=None, h2=None, log_delta=None,
                 cache_file=None, GB_goal=None, interact_with_snp=None,
                 force_full_rank=False, force_low_rank=False, G0=None, G1=None,
-                runner=None,
+                runner=None, map_reduce_outer=True, # !!! cmk
                 xp=None,
                 count_A1=None):
     """
@@ -198,6 +198,13 @@ def single_snp(test_snps, pheno, K0=None,
             sid_index_range = IntRangeSet(frame['sid_index'])
             assert sid_index_range == (0, test_snps.sid_count), "Some SNP rows are missing from the output"
         else:
+            if map_reduce_outer:
+                runner_outer = runner
+                runner_inner = None
+            else:
+                runner_outer = None
+                runner_inner = runner
+
             chrom_list = list(set(test_snps.pos[:, 0]))  # find the set of all chroms mentioned in test_snps, the main testing data
             assert not np.isnan(chrom_list).any(), "chrom list should not contain NaN"
             input_files = [test_snps, pheno, covar] + ([] if covar_by_chrom is None else list(covar_by_chrom.values()))
@@ -226,7 +233,7 @@ def single_snp(test_snps, pheno, K0=None,
                                             mixing=mixing, h2=h2, log_delta=log_delta, cache_file=cache_file_chrom,
                                             force_full_rank=force_full_rank, force_low_rank=force_low_rank,
                                             output_file_name=None, block_size=block_size, interact_with_snp=interact_with_snp,
-                                            runner=None, xp=xp)
+                                            runner=runner_inner, xp=xp)
                 return distributable
 
             def reducer_closure(frame_sequence):
@@ -248,7 +255,7 @@ def single_snp(test_snps, pheno, K0=None,
                        input_files=input_files,
                        output_files=[output_file_name],
                        name="single_snp (leave_out_one_chrom), out='{0}'".format(output_file_name),
-                       runner = runner)
+                       runner = runner_outer)
 
     return frame
 
@@ -597,14 +604,14 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
         interact = None
 
 
-    lmm, h2, mixing = find_h2_s_u(mixing, h2, pheno, covar_val, xp,
+    lmm, h2, mixing = _find_h2_s_u(mixing, h2, pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner)
 
-    frame = snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
+    frame = _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing)
 
     return frame
 
-def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
+def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner):
 
     assert multi_pheno.sid_count >= 1, "Expect at least one phenotype"
@@ -626,7 +633,7 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
 
 
 
-    lmm_0, h2_0, mixing_0 = find_h2_s_u_for_one_pheno(K0, K1, 
+    lmm_0, h2_0, mixing_0 = _find_h2_s_u_for_one_pheno(K0, K1, 
                                                       covar_val, True, None,
                                                       multi_y[:,0:1],
                                                       mixing, h2, force_full_rank, force_low_rank,
@@ -638,7 +645,7 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     mixing_list = [mixing_0]
     #!!!cmk do this with runner
     for pheno_index in range(1, multi_pheno.sid_count):
-        lmm_p, h2_p, mixing_p = find_h2_s_u_for_one_pheno(
+        lmm_p, h2_p, mixing_p = _find_h2_s_u_for_one_pheno(
                                 K0=None, K1=None,
                                 covar_val=lmm_0.X, regressX=lmm_0.regressX, linreg=lmm_0.linreg,
                                 y=multi_y[:,pheno_index:pheno_index+1],
@@ -663,7 +670,7 @@ def find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
 
     return lmm_0, multi_h2, multi_mixing
 
-def find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h2, force_full_rank, force_low_rank, K, S, U, xp):
+def _find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h2, force_full_rank, force_low_rank, K, S, U, xp):
 
     if K is None:
         K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
@@ -689,7 +696,7 @@ def find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h2
 
     return lmm, h2, mixing
 
-def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
+def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing):
         
     work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
 
@@ -725,7 +732,7 @@ def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, ru
 
         assert test_snps.iid_count == lmm.U.shape[0]
 
-        df = compute_stats(
+        df = _compute_stats(
             res['beta'],
             res['variance_beta'],
             res['fraction_variance_explained_beta'],
@@ -762,7 +769,7 @@ def snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, ru
                         runner=runner)
     return frame
 
-def compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
+def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
                   start,end,snps_read,pheno_sid,
                   mixing, h2, lmm, xp):
 
