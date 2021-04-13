@@ -738,7 +738,7 @@ def cmk_1():
 
 
 if __name__ == '__main__':
-    # cmk_1()
+    cmk_1()
 
     logging.basicConfig(level=logging.INFO)
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts

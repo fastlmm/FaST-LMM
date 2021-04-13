@@ -730,15 +730,15 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
     def mapper_closure(work_index):
         xp = pstutil.array_module()
         if work_count > 1: logging.info(f"single_snp: Working on snp block {work_index} of {work_count}")
-        print(f"cmk single_snp: Working on snp block {work_index} of {work_count}")
+        # print(f"cmk single_snp: Working on snp block {work_index} of {work_count}")
 
         do_work_time = time.time()
         start = debatch_closure(work_index)
         end = debatch_closure(work_index+1)
 
-        print(f"cmk reading {test_snps[:,start:end]}")
+        # print(f"cmk reading {test_snps[:,start:end]}")
         snps_read = test_snps[:,start:end].read()
-        print(f"cmk standardize")
+        # print(f"cmk standardize")
         if xp is np:
             snps_read.standardize()
             val = xp.asarray(snps_read.val)
@@ -752,7 +752,7 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
         else:
             variables_to_test = val
 
-        print(f"cmk ll eval")
+        # print(f"cmk ll eval")
         res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test, Sd=Sd, denom=denom) # !!!cmk66
 
         assert test_snps.iid_count == lmm.U.shape[0]
