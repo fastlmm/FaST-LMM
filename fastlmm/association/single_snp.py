@@ -215,6 +215,7 @@ def single_snp(test_snps, pheno, K0=None,
                     input_files.append(Ki)
 
             def nested_closure(chrom):
+                logging.info(f"working on chrom {chrom}")
                 xp = pstutil.array_module()
                 test_snps_chrom = test_snps[:, test_snps.pos[:, 0]==chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
@@ -692,7 +693,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
 
 def _find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h2, force_full_rank, force_low_rank, K, S, U, xp):
 
-    if K is None:
+    if S is None:
         K, h2, mixer = _Mixer.combine_the_best_way(K0, K1, covar_val, y, mixing, h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,kernel_standardizer=DiagKtoN(),xp=xp)
         mixing = mixer.mixing
 
@@ -728,13 +729,16 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
 
     def mapper_closure(work_index):
         xp = pstutil.array_module()
-        if work_count > 1: logging.info("single_snp: Working on snp block {0} of {1}".format(work_index,work_count))
+        if work_count > 1: logging.info(f"single_snp: Working on snp block {work_index} of {work_count}")
+        print(f"cmk single_snp: Working on snp block {work_index} of {work_count}")
 
         do_work_time = time.time()
         start = debatch_closure(work_index)
         end = debatch_closure(work_index+1)
 
+        print(f"cmk reading {test_snps[:,start:end]}")
         snps_read = test_snps[:,start:end].read()
+        print(f"cmk standardize")
         if xp is np:
             snps_read.standardize()
             val = xp.asarray(snps_read.val)
@@ -748,6 +752,7 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
         else:
             variables_to_test = val
 
+        print(f"cmk ll eval")
         res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test, Sd=Sd, denom=denom) # !!!cmk66
 
         assert test_snps.iid_count == lmm.U.shape[0]
@@ -789,37 +794,61 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
                         runner=runner)
     return frame
 
+#!!!CMK RENAME MULTI_
 def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
                   start,end,snps_read,pheno_sid,
                   mixing, h2, lmm, xp):
 
-    df_list = []    
-    for pheno_index in range(len(pheno_sid)):
-        beta = multi_beta[:,pheno_index]
-        variance_beta = multi_variance_beta[:,pheno_index]
-        fraction_variance_explained_beta = multi_fraction_variance_explained_beta[:,pheno_index]
+    #!!!cmk use np.broadcast_to ???? inplace of tile/repeat
+    chi2stats = pstutil.asnumpy(multi_beta*multi_beta/multi_variance_beta)
+    p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1)) #!!!cmk revisit these inputs
+    dataframe= _create_dataframe(snps_read.sid_count * len(pheno_sid))
+    if len(pheno_sid) > 1:
+        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count)
+    dataframe['sid_index'] = np.tile(np.arange(start,end), len(pheno_sid))
+    dataframe['SNP'] = np.tile(snps_read.sid, len(pheno_sid))
+    dataframe['Chr'] = np.tile(snps_read.pos[:,0], len(pheno_sid))
+    dataframe['GenDist'] = np.tile(snps_read.pos[:,1], len(pheno_sid))
+    dataframe['ChrPos'] = np.tile(snps_read.pos[:,2], len(pheno_sid))
 
-        chi2stats = pstutil.asnumpy(beta*beta/variance_beta)  # !!!cmk67
-        p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1)) # !!!cmk68
+    dataframe['PValue'] = p_values.T.reshape(-1)
+    dataframe['SnpWeight'] = pstutil.asnumpy(multi_beta.T.reshape(-1))
+    dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(multi_variance_beta.T.reshape(-1)))
+    dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(multi_fraction_variance_explained_beta.T.reshape(-1)))
+    dataframe['Mixing'] = np.repeat(mixing, snps_read.sid_count)
+    dataframe['Nullh2'] = np.repeat(h2, snps_read.sid_count)
 
-        dataframe = _create_dataframe(snps_read.sid_count)
-        if len(pheno_sid) > 1:
-            dataframe['Pheno'] = pheno_sid[pheno_index]
-        dataframe['sid_index'] = np.arange(start,end)
-        dataframe['SNP'] = snps_read.sid
-        dataframe['Chr'] = snps_read.pos[:,0]
-        dataframe['GenDist'] = snps_read.pos[:,1]
-        dataframe['ChrPos'] = snps_read.pos[:,2] 
-        dataframe['PValue'] = p_values
-        dataframe['SnpWeight'] = pstutil.asnumpy(beta)
-        dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(variance_beta))
-        dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(fraction_variance_explained_beta))
-        dataframe['Mixing'] = np.zeros((snps_read.sid_count)) + float(mixing[pheno_index] if len(pheno_sid)>1 else mixing) #!!!cmk
-        dataframe['Nullh2'] = np.zeros((snps_read.sid_count)) + float(h2[pheno_index])
-        df_list.append(dataframe)
 
-    df = pd.concat(df_list)
-    return df
+    #df_list = []    
+    #for pheno_index in range(len(pheno_sid)):
+    #    if pheno_index % 1000 == 0 : logging.info(f"compute_stats {pheno_index} of {len(pheno_sid)}")
+    #    beta_0 = multi_beta[:,pheno_index]
+    #    variance_beta_0 = multi_variance_beta[:,pheno_index]
+    #    fraction_variance_explained_beta_0 = multi_fraction_variance_explained_beta[:,pheno_index]
+        
+
+
+    #    chi2stats_0 = pstutil.asnumpy(beta_0*beta_0/variance_beta_0)  # !!!cmk67
+    #    p_values_0 = stats.f.sf(chi2stats_0,1,lmm.U.shape[0]-(lmm.linreg.D+1)) # !!!cmk68
+
+    #    dataframe_0 = _create_dataframe(snps_read.sid_count)
+    #    if len(pheno_sid) > 1:
+    #        dataframe_0['Pheno'] = pheno_sid[pheno_index]
+    #    dataframe_0['sid_index'] = np.arange(start,end)
+    #    dataframe_0['SNP'] = snps_read.sid
+    #    dataframe_0['Chr'] = snps_read.pos[:,0]
+    #    dataframe_0['GenDist'] = snps_read.pos[:,1]
+    #    dataframe_0['ChrPos'] = snps_read.pos[:,2] 
+    #    dataframe_0['PValue'] = p_values_0
+    #    dataframe_0['SnpWeight'] = pstutil.asnumpy(beta_0)
+    #    dataframe_0['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(variance_beta_0))
+    #    dataframe_0['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(fraction_variance_explained_beta_0))
+    #    dataframe_0['Mixing'] = np.zeros((snps_read.sid_count)) + float(mixing[pheno_index] if len(pheno_sid)>1 else mixing) #!!!cmk
+    #    dataframe_0['Nullh2'] = np.zeros((snps_read.sid_count)) + float(h2[pheno_index])
+    #    df_list.append(dataframe_0)
+
+    #df = pd.concat(df_list)
+    return dataframe
 
 
 def _create_covar_chrom(covar, covar_by_chrom, chrom,count_A1=None):

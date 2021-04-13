@@ -659,9 +659,87 @@ def getTestSuite():
     suite2 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpLeaveOutOneChrom)
     return unittest.TestSuite([suite1,suite2])
 
+def cmk_1():
+    import logging
+    import time
+
+    import numpy as np
+    from fastlmm.association import single_snp
+    from pysnptools.snpreader import Bed, Pheno, SnpData
+    from pysnptools.util.mapreduce1.runner import LocalMultiProc
+
+    logging.basicConfig(level=logging.INFO)
+    logging.info("test")
+
+    os.chdir(r"D:\OneDrive\Projects\Science\virginia")
+
+    phenoFile = "Phenotype.txt"
+    covFile = "gender_noHead.txt"
+
+
+    syndata_bedfile = r"m:\deldir\virginia\syndata1.bed"
+    bedData = Bed(syndata_bedfile, count_A1=True)
+    print(bedData.shape)
+
+
+    def pheno_dup(y_count):
+        pheno0 = Pheno(phenoFile).read()
+        iid = pheno0.iid
+        sid = [f"pheno{sid_index}" for sid_index in range(y_count)]
+        val = np.repeat(pheno0.val, y_count, axis=1)
+        snpdata = SnpData(iid=iid, sid=sid, val=val, name=f"pheno_dup({y_count})")
+        return snpdata
+
+
+    #########################
+    # initialize parameters #
+    #########################
+    k_every_n_snps = 1
+    pheno_count = 18_000
+    test_every_n_snps = 1
+    covFile = "gender_noHead.txt"
+    covar_interact_index = 0
+    version = 0
+    runner = None  # LocalMultiProc(8)
+    map_reduce_outer = True
+
+    pheno = pheno_dup(pheno_count)
+    cache_file = f"m:/deldir/cache/{version}_{k_every_n_snps}_100"
+
+    print(
+        bedData[:, ::k_every_n_snps].shape,
+        pheno.shape,
+        bedData[:, ::test_every_n_snps].shape,
+    )
+
+
+    ################
+    # run fastlmm #
+    ################
+
+    # By default, does leave_out_one_chrom
+    # By default, K0 is built from test_snps
+    start = time.time()
+    df = single_snp(
+        cache_file=cache_file,
+        test_snps=bedData[:, ::test_every_n_snps],
+        pheno=pheno,
+        covar=covFile,
+        K0=bedData[:, ::k_every_n_snps],
+        count_A1=True,
+        interact_with_snp=covar_interact_index,
+        runner=runner,
+        map_reduce_outer=map_reduce_outer,
+    )
+
+    print(df)
+    print(time.time() - start)
+
 
 
 if __name__ == '__main__':
+    # cmk_1()
+
     logging.basicConfig(level=logging.INFO)
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
 
