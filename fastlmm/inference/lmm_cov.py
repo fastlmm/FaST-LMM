@@ -192,7 +192,7 @@ class LMM(object):
             UUY     None if kernel is full rank, otherwise Y-U.dot(U.T.dot(Y))
         """
 
-        if self.UY is None:
+        if self.UY is None or self.UUY is None:
             self.UY,self.UUY = self.rotate(A=self.Y)
         if idx_pheno is None:
             return self.UY,self.UUY
@@ -644,7 +644,7 @@ class LMM(object):
         k = S.shape[0]
         P = self.Y.shape[1] #number of phenotypes used
 
-        Sd, denom, h2 = self.get_Sd_etc(Sd, denom, h2, logdelta, delta, scale)
+        Sd, denom, h2 = self.get_Sd_etc(Sd, denom, h2, logdelta, delta, scale, weightW)
 
         if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
             assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmk
@@ -653,7 +653,7 @@ class LMM(object):
                     'scale':scale}
         if P>1:
             print("cmk")
-        UY,UUY = self.getUY(idx_pheno = idx_pheno)
+        UY,UUY = self.getUY(idx_pheno = idx_pheno) #!!!cmk70
 
         if (snps is not None) and (Usnps is None):
             assert snps.shape[0] == self.Y.shape[0], "shape mismatch between snps and Y"
@@ -668,9 +668,11 @@ class LMM(object):
         #logging.info("Ending nLLeval")
         return result
 
-    def get_Sd_etc(self, Sd, denom, h2, logdelta, delta, scale, ):
+    def get_Sd_etc(self, Sd, denom, h2, logdelta, delta, scale, weightW):
         if h2 is not None and Sd is not None and denom is not None:
             return Sd, denom, h2
+
+        S,U = self.getSU()
 
         if logdelta is not None:
             delta = np.exp(logdelta)
@@ -681,6 +683,8 @@ class LMM(object):
             h2 = 1.0 / (1.0 + delta)
             assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
         else: # !!!cmk need code or assert of delta is not None
+            if not isinstance(h2,np.ndarray):
+                h2 = np.repeat(h2,1)
             Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1)) #!!!cmk0 add option to precompute this
             Sd = (Sbyh + (1.0 - h2.reshape(-1))) * scale
             denom = (1.0 - h2) * scale      # determine normalization factor cmk60
@@ -719,11 +723,13 @@ class LMM(object):
         '''
         #logging.info("Starting self.nLLcore")
         N = self.Y.shape[0] - self.linreg.D
+        if len(Sd.shape)==1: Sd=Sd.reshape(-1,1)
+        if not isinstance(denom,np.ndarray): denom=np.array([denom])
         denom = denom.reshape(-1)
         
         S,U = self.getSU()#not used, as provided from outside. Remove???
         k = S.shape[0]
-        assert Sd.shape[0] == k, "shape missmatch"
+        assert Sd.shape[0] == k, "shape mismatch"
 
         UY,UUY = self.getUY(idx_pheno = idx_pheno)
         P = UY.shape[1] #number of phenotypes used
@@ -823,7 +829,7 @@ class LMM(object):
             assert (penalty_ >= 0.0), "penalty has to be non-negative"
             beta = snpsKY / (snpsKsnps + penalty_) # !!!cmk64
             if np.isnan(beta.min()):
-                logging.warning("NaN beta value seen, may be due to an SNC (a constant SNP)")
+                logging.debug("NaN beta value seen, may be due to an SNC (a constant SNP)") #!!!cmk
                 beta[snpsKY==0] = 0.0
             variance_explained_beta = (snpsKY * beta)
             r2 = YKY[np.newaxis,:] - variance_explained_beta 
@@ -867,7 +873,8 @@ class LMM(object):
 
         A.T.dot( f(K) ).dot(B)
         """
-        assert len(Sd.shape)==1, "expect Sd to be 1-D"
+        assert (UUA is None) == (UUB is None), "Expect UUA and UUB to either both be given or both not"
+        assert len(Sd.shape)==1 or (len(Sd.shape)==2 and Sd.shape[1]==1), "expect Sd to be 1-D"
         UAS = UA/Sd.reshape(-1,1)
         AKB = UAS.T.dot(UB)
         if UUA is not None:

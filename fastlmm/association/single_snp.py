@@ -3,6 +3,7 @@ import os
 import time
 import warnings
 from unittest.mock import patch
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -164,6 +165,10 @@ def single_snp(test_snps, pheno, K0=None,
 
     if K1 or G1:  # If 2nd kernel given, use numpy
         xp = 'numpy'
+
+    if output_file_name is not None:
+        os.makedirs(Path(output_file_name).parent,exist_ok=True)
+
     xp = pstutil.array_module(xp)
     with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
 
@@ -595,6 +600,9 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     if log_delta is not None:
         h2 = 1.0/(xp.exp(log_delta)+1)
 
+    if h2 is not None and not isinstance(h2,np.ndarray):
+        h2 = np.repeat(h2,pheno.shape[1])
+
     covar_val = xp.asarray(covar.read(view_ok=True,order='A').val)
     covar_val = xp.c_[covar_val,xp.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
 
@@ -610,6 +618,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
 
     lmm, h2, mixing = _find_h2_s_u(mixing, h2, pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner)
+    assert lmm.Y.shape == pheno.shape, "expect pheno and lmm.Y to have the same shape"
 
     frame = _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, threshold)
 
@@ -661,6 +670,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
             lmm_0.UY = data['arr_0']
             h2_0 = data['arr_1']
             mixing_0 = data['arr_2']
+        lmm_0.Y = multi_y
         assert len(h2_0)==multi_y.shape[1] and multi_y.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with multi_y"
         return lmm_0, h2_0, mixing_0
 
@@ -725,7 +735,7 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
     work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
     row_count = test_snps.sid_count * pheno.sid_count
 
-    Sd, denom, h2 = lmm.get_Sd_etc(Sd=None, denom=None, h2=h2, logdelta=None, delta=None, scale=1)
+    Sd, denom, h2 = lmm.get_Sd_etc(Sd=None, denom=None, h2=h2, logdelta=None, delta=None, scale=1, weightW=None)
 
     # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
     def debatch_closure(work_index):
@@ -760,6 +770,7 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
         res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test, Sd=Sd, denom=denom) # !!!cmk66
 
         assert test_snps.iid_count == lmm.U.shape[0]
+        assert res['beta'].size==(end-start)*pheno.sid_count, "Expect multi_beta to be (end-start)x phenos"
 
         df = _compute_stats(
             res['beta'],
@@ -804,17 +815,19 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
 def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
                   start,end,snps_read,pheno_sid,
                   mixing, h2, lmm, xp, threshold, row_count):
+    assert len(multi_beta.reshape(-1))==(end-start)*len(pheno_sid), "Expect multi_beta to be (end-start)x phenos"
+    assert multi_variance_beta.shape == multi_beta.shape and multi_beta.shape==multi_fraction_variance_explained_beta.shape, "expect beta, variance_beta, and fraction_variance_explained_beta to agree on shape"
 
     #!!!cmk use np.broadcast_to ???? inplace of tile/repeat
     chi2stats = pstutil.asnumpy(multi_beta*multi_beta/multi_variance_beta)
     p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))
-    p_values = p_values.T.reshape(-1)
+    p_values = p_values.T.reshape(-1) # !!!cmk add warning at top level to use threshold
     keep_index = p_values <= (threshold or 1.0)
     dataframe= _create_dataframe(keep_index.sum())
     if len(pheno_sid) > 1:
-        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count)[keep_index]
+        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count) #!!!cmk add test
     if threshold is not None:
-        dataframe['threshold'] = threshhold
+        dataframe['threshold'] = threshold #!!!cmk add test
         dataframe['row_count'] = row_count
     dataframe['sid_index'] = np.tile(np.arange(start,end), len(pheno_sid))[keep_index]
     dataframe['SNP'] = np.tile(snps_read.sid, len(pheno_sid))[keep_index]
@@ -826,8 +839,8 @@ def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explai
     dataframe['SnpWeight'] = pstutil.asnumpy(multi_beta.T.reshape(-1))[keep_index]
     dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(multi_variance_beta.T.reshape(-1)))[keep_index]
     dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(multi_fraction_variance_explained_beta.T.reshape(-1)))[keep_index]
-    dataframe['Mixing'] = np.repeat(mixing, snps_read.sid_count)[keep_index]
-    dataframe['Nullh2'] = np.repeat(h2, snps_read.sid_count)[keep_index]
+    dataframe['Mixing'] = np.repeat(mixing, snps_read.sid_count)
+    dataframe['Nullh2'] = np.repeat(h2, snps_read.sid_count)
 
     return dataframe
 
