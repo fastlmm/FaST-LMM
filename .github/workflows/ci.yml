@@ -22,9 +22,9 @@ jobs:
     - name: Checkout LFS objects
       run: git lfs checkout
 
-    - name: Install GCC 7 on Mac
+    - name: Install GCC 9 on Mac
       if: runner.os == 'macOS'
-      run: brew install gcc@7
+      run: brew install gcc@9
 
 
     - name: Set up Miniconda ${{ matrix.python-version }}
@@ -40,11 +40,11 @@ jobs:
         conda install --file conda_requirements.txt
         conda install cython
         conda install pip
-        pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bed-reader
-        pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple pysnptools
+        pip install bed-reader
+        pip install pysnptools
         pip install -r requirements.txt
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         python setup.py build_ext --inplace
         pip freeze
         python setup.py sdist bdist_wheel
