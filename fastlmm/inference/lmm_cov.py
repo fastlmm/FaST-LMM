@@ -44,7 +44,7 @@ class LMM(object):
         '''
         self._xp = pstutil.array_module(xp)
         self.numcalls = 0
-        self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first) #!!!cmk multipheno check
+        self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first) #!!!cmkx multipheno check
         self.forcefullrank = forcefullrank
         self.setK(K=K, G=G, inplace=inplace)                 #set the kernel, if available
         self.setY(Y=Y)                      #set the phenotypes
@@ -457,7 +457,7 @@ class LMM(object):
                 res = self.nLLeval(h2=x,**kwargs)
                 if (resmin[0] is None) or (res['nLL'] < resmin[0]['nLL']):
                     resmin[0] = res
-                # print("cmk search\t{0}\t{1}".format(x,res['nLL']))
+                # print("cmkx search\t{0}\t{1}".format(x,res['nLL']))
                 return res['nLL'][0]   
             min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
             #logging.info("search\t{0}\t{1}".format("?",resmin[0]))
@@ -647,13 +647,11 @@ class LMM(object):
         Sd, denom, h2 = self.get_Sd_etc(Sd, denom, h2, logdelta, delta, scale, weightW)
 
         if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
-            assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmk
+            assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmkx
             return {'nLL':3E20,
                     'h2':h2,
                     'scale':scale}
-        if P>1:
-            print("cmk")
-        UY,UUY = self.getUY(idx_pheno = idx_pheno) #!!!cmk70
+        UY,UUY = self.getUY(idx_pheno = idx_pheno)
 
         if (snps is not None) and (Usnps is None):
             assert snps.shape[0] == self.Y.shape[0], "shape mismatch between snps and Y"
@@ -662,7 +660,7 @@ class LMM(object):
         if weightW is not None:
             #multiply the weight by h2
             weightW = weightW * h2#Christoph: fixes bug with h2_1 parameterization in findA2 and/or findH2 and/or innerLoop 
-        # !!!cmk65
+
         result = self.nLLcore(Sd=Sd, dof=dof, scale=scale, penalty=penalty, UW=UW, UUW=UUW, weightW=weightW, denom=denom, Usnps=Usnps, UUsnps=UUsnps, idx_pheno=idx_pheno)
         result['h2'] = h2
         #logging.info("Ending nLLeval")
@@ -682,12 +680,12 @@ class LMM(object):
             denom = delta * scale         # determine normalization factor
             h2 = 1.0 / (1.0 + delta)
             assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
-        else: # !!!cmk need code or assert of delta is not None
+        else: # !!!cmkx need code or assert of delta is not None
             if not isinstance(h2,np.ndarray):
                 h2 = np.repeat(h2,1)
-            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1)) #!!!cmk0 add option to precompute this
+            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
             Sd = (Sbyh + (1.0 - h2.reshape(-1))) * scale
-            denom = (1.0 - h2) * scale      # determine normalization factor cmk60
+            denom = (1.0 - h2) * scale      # determine normalization factor
         return Sd, denom, h2
 
     def nLLcore(self, Sd=None, dof=None, scale=1.0, penalty=0.0, UW=None, UUW=None, weightW=None, denom=1.0, Usnps=None, UUsnps=None, idx_pheno=None):
@@ -739,13 +737,13 @@ class LMM(object):
             YKY[pheno_index] = self.computeAKA(Sd=Sd[:,pheno_index:pheno_index+1],
                                                 denom=denom[pheno_index],
                                                 UA=UY[:,pheno_index:pheno_index+1],
-                                                UUA=None if UUY is None else UUY[:,pheno_index:pheno_index+1]) # !!!cmk61
+                                                UUA=None if UUY is None else UUY[:,pheno_index:pheno_index+1])
 
 
         logdetK = np.log(Sd).sum(0)
 
         if (UUY is not None):#low rank part
-            logdetK+=(N - k) * np.log(denom) #!!!cmk this should be a pheno loop
+            logdetK+=(N - k) * np.log(denom) #!!!cmkx this should be a pheno loop
         
         if Usnps is not None:
             snpsKsnps = np.full((Usnps.shape[1],P),np.nan)
@@ -754,7 +752,7 @@ class LMM(object):
                 snpsKsnps[:,pheno_index] = self.computeAKA(Sd[:,pheno_index:pheno_index+1],
                                                 denom=denom[pheno_index],
                                                 UA=Usnps,
-                                                UUA=UUsnps) # !!!cmk62
+                                                UUA=UUsnps)
                 snpsKY[:,pheno_index:pheno_index+1] = self.computeAKB(Sd[:,pheno_index],
                                                 denom=denom[pheno_index],
                                                 UA=Usnps,
@@ -814,7 +812,7 @@ class LMM(object):
                 snpsKY -= UWsnps.T.dot(WY)
                 # perform updates (instantiations for a and b in Equation (1.5) of
                 # Supplement)
-                snpsKsnps -= (UWsnps * Wsnps).sum(0)[:,np.newaxis] # !!!cmk63
+                snpsKsnps -= (UWsnps * Wsnps).sum(0)[:,np.newaxis]
             
             # determinant update
             prod_diags = signw * S_WW
@@ -827,9 +825,9 @@ class LMM(object):
         if Usnps is not None:
             penalty_ = penalty or 0.0
             assert (penalty_ >= 0.0), "penalty has to be non-negative"
-            beta = snpsKY / (snpsKsnps + penalty_) # !!!cmk64
+            beta = snpsKY / (snpsKsnps + penalty_)
             if np.isnan(beta.min()):
-                logging.debug("NaN beta value seen, may be due to an SNC (a constant SNP)") #!!!cmk
+                logging.debug("NaN beta value seen, may be due to an SNC (a constant SNP)") #!!!cmkx
                 beta[snpsKY==0] = 0.0
             variance_explained_beta = (snpsKY * beta)
             r2 = YKY[np.newaxis,:] - variance_explained_beta 

@@ -5,6 +5,7 @@ import unittest
 import os.path
 import doctest
 import pandas as pd
+from numpy.random import RandomState
 
 from fastlmm.association import single_snp
 from fastlmm.association import single_snp_linreg
@@ -488,7 +489,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         pheno2.val[0,0] = 100
         pheno2.val[1,0] = -100
 
-        cache_file = None # "m:/deldir/cache/cmktest.npz" #!!!cmk test cachehing
+        cache_file = None # "m:/deldir/cache/cmktest.npz" #!!!cmkx test cacheing
 
         if True:
             pheno12 = SnpData(iid=pheno2.iid,sid=["pheno1","pheno2"],val = np.c_[Pheno(pheno).read().val,pheno2.val])
@@ -565,9 +566,62 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
             del frame2['Pheno']
             self.compare_files(frame2,"multipheno2")
 
+    def test_multipheno2(self):
+        logging.info("test_multipheno")
+        from fastlmm.util import example_file # Download and return local file name
+
+        bed = Bed(example_file('tests/datasets/synth/all.*','*.bed'),count_A1=True)[:,::10]
+        phen_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
+        cov_fn = example_file("tests/datasets/synth/cov.txt")
+
+
+        random_state =  RandomState(29921)
+        pheno_reference = Pheno(phen_fn).read()
+        for pheno_count in [2,5,1]:
+            val = random_state.normal(loc=pheno_count,scale=pheno_count,size=(pheno_reference.iid_count,pheno_count))
+            pheno_col = ['pheno{0}'.format(i) for i in range(pheno_count)]
+            pheno_multi = SnpData(iid=pheno_reference.iid,sid=pheno_col,val=val)
+
+            reference = pd.concat([single_snp(test_snps=bed, pheno=pheno_multi[:,pheno_index], covar=cov_fn) for pheno_index in range(pheno_count)])
+
+            for force_full_rank, force_low_rank in [(True,False)]: # cmkx,(False,True)]:
+
+                frame = single_snp(test_snps=bed, pheno=pheno_multi, covar=cov_fn,
+                                  force_full_rank=force_full_rank, force_low_rank=force_low_rank)
+
+                assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
+                for sid in sorted(set(reference.SNP)): #This ignores which pheno produces which pvalue
+                    pvalue_frame = np.array(sorted(frame[frame['SNP'] == sid].PValue))
+                    pvalue_reference = np.array(sorted(reference[reference['SNP'] == sid].PValue))
+                    assert (abs(pvalue_frame - pvalue_reference) < 1e-5).all, "pair {0} differs too much from reference".format(sid)
+
+
     
 
+    #def test_multipheno2(self):
+    #    from fastlmm.util import example_file # Download and return local file name
 
+    #    bed_fn = example_file('tests/datasets/synth/all.*','*.bed')
+    #    pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
+    #    cov_fn = example_file("tests/datasets/synth/cov.txt")
+
+    #    old_pheno = Pheno(pheno_fn)
+    #    seed = 1
+    #    np.random.seed(seed)
+    #    pheno_count = 10
+    #    pheno_data = SnpData(iid=old_pheno.iid,sid=['pheno{0}'.format(i) for i in range(pheno_count)],val=np.random.randn(old_pheno.iid_count,pheno_count)*3+2)
+    #    for missing_index in range(20): #Add missing data to the random phenos
+    #         pheno_data.val[np.random.randint(pheno_data.iid_count),np.random.randint(pheno_data.sid_count)] = np.nan
+    #    pheno_data.val[:,0] = old_pheno.read().val[:,0] #Stick the old phenotype into the new
+
+    #    pheno_wo_bad_indivs = pheno_data[(pheno_data.val==pheno_data.val).any(1),:]
+    #    # Standardize the pheno data to mean 0 and std dev 1 and then fill any missing values with 0
+    #    pheno = pheno_wo_bad_indivs.read().standardize()
+
+    #    # Run GWAS
+    #    for force_full_rank, force_low_rank in [(True,False),(False,True)]:
+    #        results_df = single_snp(bed_fn, pheno, covar=cov_fn, count_A1=False)
+    #        print("cmk",results_df)
 
 
 
@@ -739,10 +793,12 @@ def cmk_1():
 
 
 if __name__ == '__main__':
-    #cmk_1()
-
     logging.basicConfig(level=logging.INFO)
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+
+    #cmk_1() #cmkx
+    #TestSingleSnpLeaveOutOneChrom.test_multipheno2(None)
+
 
 
     # this import is needed for the runner
@@ -750,7 +806,7 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([getTestSuite()])
 
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=True) #!!!cmk
+        r = unittest.TextTestRunner(failfast=True) #!!!cmkx
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else: #Cluster test run

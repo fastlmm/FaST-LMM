@@ -31,8 +31,8 @@ def single_snp(test_snps, pheno, K0=None,
                 output_file_name=None, h2=None, log_delta=None,
                 cache_file=None, GB_goal=None, interact_with_snp=None,
                 force_full_rank=False, force_low_rank=False, G0=None, G1=None,
-                runner=None, map_reduce_outer=True, # !!! cmk
-                threshold=None, # !!!cmk
+                runner=None, map_reduce_outer=True, # !!! cmkx
+                threshold=None, # !!!cmkx
                 xp=None,
                 count_A1=None):
     """
@@ -175,9 +175,9 @@ def single_snp(test_snps, pheno, K0=None,
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
-        # !!!cmk need to look for/handle/check missing values in pheno
-        # !!!cmk assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-        # !!!cmk pheno = pheno[(pheno.val==pheno.val)[:,0],:]
+        # !!!cmkx need to look for/handle/check missing values in pheno
+        # !!!cmkx assert pheno.sid_count == 1, "Expect pheno to be just one variable"
+        # !!!cmkx pheno = pheno[(pheno.val==pheno.val)[:,0],:]
         covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
         if not leave_out_one_chrom:
@@ -231,7 +231,7 @@ def single_snp(test_snps, pheno, K0=None,
                 K0_chrom = _K_per_chrom(K0 or G0 or test_snps, chrom, test_snps.iid)
                 K1_chrom = _K_per_chrom(K1 or G1, chrom, test_snps.iid)
 
-                # !!!cmk do the right thing when multiple pheno and some is missing
+                # !!!cmkx do the right thing when multiple pheno and some is missing
                 K0_chrom, K1_chrom, test_snps_chrom, pheno_chrom, covar_chrom = pstutil.intersect_apply([K0_chrom, K1_chrom, test_snps_chrom, pheno, covar_chrom])
                 logging.debug("# of iids now {0}".format(K0_chrom.iid_count))
                 K0_chrom, K1_chrom, block_size = _set_block_size(K0_chrom, K1_chrom, mixing, GB_goal, force_full_rank, force_low_rank)
@@ -640,7 +640,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     if cache_file is not None and os.path.exists(cache_file):
         lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
         with xp.load(cache_file) as data: #!! similar code in epistasis
-            lmm_0.S = data['arr_0'] # !!!!cmk add versioning
+            lmm_0.S = data['arr_0'] # !!!!cmkx add versioning
             lmm_0.U = data['arr_1']
             lmm_0.UY = data['arr_2']
             h2_0 = data['arr_3']
@@ -659,7 +659,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
             assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
             xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, h2_0, mixing_0)
             if os.path.exists(cache_file_extra):
-                os.unlink(cache_file_extra) # !cmk test this
+                os.unlink(cache_file_extra) # !!!cmkx test this
 
     if multi_pheno.sid_count == 1:
         return lmm_0, h2_0, mixing_0
@@ -678,7 +678,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     h2_list=[h2_0]
     mixing_list = [mixing_0]
 
-    #!!!cmk do this with runner
+    #!!!cmkx do this with runner
     for pheno_index in range(1, multi_pheno.sid_count):
         logging.info(f"working on pheno_index {pheno_index} of {multi_pheno.sid_count}")
         lmm_p, h2_p, mixing_p = _find_h2_s_u_for_one_pheno(
@@ -692,9 +692,9 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
         h2_list.append(h2_p)
         mixing_list.append(mixing_p)
 
-    lmm_0.Y = multi_y #!!!cmk is this needed?
-    lmm_0.UY = np.r_[uy_list].T #!!!cmk is this needed?
-    # !!!cmk assert that P>1, G,UUX,UUY,UX are None and need code
+    lmm_0.Y = multi_y #!!!cmkx is this needed?
+    lmm_0.UY = np.r_[uy_list].T #!!!cmkx is this needed?
+    # !!!cmkx assert that P>1, G,UUX,UUY,UX are None and need code
     multi_h2 = np.r_[h2_list]
     multi_mixing = np.r_[mixing_list]
 
@@ -744,15 +744,15 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
     def mapper_closure(work_index):
         xp = pstutil.array_module()
         if work_count > 1: logging.info(f"single_snp: Working on snp block {work_index} of {work_count}")
-        # print(f"cmk single_snp: Working on snp block {work_index} of {work_count}")
+        # print(f"cmkx single_snp: Working on snp block {work_index} of {work_count}")
 
         do_work_time = time.time()
         start = debatch_closure(work_index)
         end = debatch_closure(work_index+1)
 
-        # print(f"cmk reading {test_snps[:,start:end]}")
+        # print(f"cmkx reading {test_snps[:,start:end]}")
         snps_read = test_snps[:,start:end].read()
-        # print(f"cmk standardize")
+        # print(f"cmkx standardize")
         if xp is np:
             snps_read.standardize()
             val = xp.asarray(snps_read.val)
@@ -766,8 +766,8 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
         else:
             variables_to_test = val
 
-        # print(f"cmk ll eval")
-        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test, Sd=Sd, denom=denom) # !!!cmk66
+        # print(f"cmkx ll eval")
+        res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test, Sd=Sd, denom=denom)
 
         assert test_snps.iid_count == lmm.U.shape[0]
         assert res['beta'].size==(end-start)*pheno.sid_count, "Expect multi_beta to be (end-start)x phenos"
@@ -811,23 +811,23 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
                         runner=runner)
     return frame
 
-#!!!CMK RENAME MULTI_
+#!!!cmkx RENAME MULTI_
 def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
                   start,end,snps_read,pheno_sid,
                   mixing, h2, lmm, xp, threshold, row_count):
     assert len(multi_beta.reshape(-1))==(end-start)*len(pheno_sid), "Expect multi_beta to be (end-start)x phenos"
     assert multi_variance_beta.shape == multi_beta.shape and multi_beta.shape==multi_fraction_variance_explained_beta.shape, "expect beta, variance_beta, and fraction_variance_explained_beta to agree on shape"
 
-    #!!!cmk use np.broadcast_to ???? inplace of tile/repeat
+    #!!!cmkx use np.broadcast_to ???? inplace of tile/repeat
     chi2stats = pstutil.asnumpy(multi_beta*multi_beta/multi_variance_beta)
     p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))
-    p_values = p_values.T.reshape(-1) # !!!cmk add warning at top level to use threshold
+    p_values = p_values.T.reshape(-1) # !!!cmkx add warning at top level to use threshold
     keep_index = p_values <= (threshold or 1.0)
     dataframe= _create_dataframe(keep_index.sum())
     if len(pheno_sid) > 1:
-        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count) #!!!cmk add test
+        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count) #!!!cmkx add test
     if threshold is not None:
-        dataframe['threshold'] = threshold #!!!cmk add test
+        dataframe['threshold'] = threshold #!!!cmkx add test
         dataframe['row_count'] = row_count
     dataframe['sid_index'] = np.tile(np.arange(start,end), len(pheno_sid))[keep_index]
     dataframe['SNP'] = np.tile(snps_read.sid, len(pheno_sid))[keep_index]
