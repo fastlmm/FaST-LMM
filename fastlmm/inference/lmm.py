@@ -493,6 +493,7 @@ class LMM(object):
             else:
                 sigma2 = r2 / (N)
                 nLL =  0.5 * ( logdetK + N * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                # variance_beta = r2 / (N - 1.0) / snpsKsnps
             result = {
                   'nLL':nLL,
                   'sigma2':sigma2,

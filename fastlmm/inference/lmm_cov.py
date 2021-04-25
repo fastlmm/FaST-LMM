@@ -701,7 +701,7 @@ class LMM(object):
             scale   : Scale parameter the multiplies the Covariance matrix (default 1.0)
             penalty : L2 penalty for SNP effects (default: 0.0)
             Usnps   : [k x S] np.array holding S rotated SNPs (U.T.dot(snps)) for N individuals to be tested, where k is rank of the kernel used
-            UUsnps  : [N x S] np.array holding S rotated SNPs (snps - U.dot(U.T.dot(snps))), None in full rnak case (k=N)
+            UUsnps  : [N x S] np.array holding S rotated SNPs (snps - U.dot(U.T.dot(snps))), None in full rank case (k=N)
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
             weightW : vector of weights for columns in W 
