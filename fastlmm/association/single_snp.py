@@ -825,7 +825,7 @@ def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explai
     keep_index = p_values <= (threshold or 1.0)
     dataframe= _create_dataframe(keep_index.sum())
     if len(pheno_sid) > 1:
-        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count) #!!!cmkx add test
+        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count)[keep_index] #!!!cmkx add test
     if threshold is not None:
         dataframe['threshold'] = threshold #!!!cmkx add test
         dataframe['row_count'] = row_count
@@ -839,8 +839,8 @@ def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explai
     dataframe['SnpWeight'] = pstutil.asnumpy(multi_beta.T.reshape(-1))[keep_index]
     dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(multi_variance_beta.T.reshape(-1)))[keep_index]
     dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(multi_fraction_variance_explained_beta.T.reshape(-1)))[keep_index]
-    dataframe['Mixing'] = np.repeat(mixing, snps_read.sid_count)
-    dataframe['Nullh2'] = np.repeat(h2, snps_read.sid_count)
+    dataframe['Mixing'] = np.repeat(mixing, snps_read.sid_count)[keep_index]
+    dataframe['Nullh2'] = np.repeat(h2, snps_read.sid_count)[keep_index]
 
     return dataframe
 

@@ -748,17 +748,17 @@ def cmk_1():
     #########################
     # initialize parameters #
     #########################
-    k_every_n_snps = 1
-    pheno_count = 18_000
-    test_every_n_snps = 1
+    k_every_n_snps = 100
+    pheno_count = 18
+    test_every_n_snps = 100
     covFile = "gender_noHead.txt"
     covar_interact_index = 0
-    version = 0
+    version = 1
     runner = None  # LocalMultiProc(8)
     map_reduce_outer = True
 
     pheno = pheno_dup(pheno_count)
-    cache_file = f"m:/deldir/cache/{version}_{k_every_n_snps}_100"
+    cache_file = f"m:/deldir/cache/{version}_{k_every_n_snps}"
 
     print(
         bedData[:, ::k_every_n_snps].shape,
@@ -796,7 +796,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
 
-    #cmk_1() #cmkx
+    #cmk_1() #cmk
     #TestSingleSnpLeaveOutOneChrom.test_multipheno2(None)
 
 
