@@ -478,7 +478,7 @@ class LMM(object):
         if penalty>0.0:
             SxKx+=penalty
         i_pos = SxKx>1E-10
-        beta = SP.dot(UxKx[:,i_pos],(SP.dot(UxKx[:,i_pos].T,XKy)/SxKx[i_pos]))
+        beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
 
         r2 = yKy-XKy.dot(beta)
 

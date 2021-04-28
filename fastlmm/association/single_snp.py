@@ -678,16 +678,19 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     h2_list=[h2_0]
     mixing_list = [mixing_0]
 
-    #!!!cmkx do this with runner
-    for pheno_index in range(1, multi_pheno.sid_count):
+    def mapper(pheno_index):
         logging.info(f"working on pheno_index {pheno_index} of {multi_pheno.sid_count}")
-        lmm_p, h2_p, mixing_p = _find_h2_s_u_for_one_pheno(
+        return _find_h2_s_u_for_one_pheno(
                                 K0=None, K1=None,
                                 covar_val=lmm_0.X, regressX=lmm_0.regressX, linreg=lmm_0.linreg,
                                 y=multi_y[:,pheno_index:pheno_index+1],
                                 mixing=mixing_0, h2=h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,
                                 K=lmm_0.K,S=lmm_0.S,U=lmm_0.U,
                                 xp=xp)
+
+    result_list = map_reduce(range(1, multi_pheno.col_count),mapper=mapper,runner=runner)
+    #!!!cmkx do this with runner
+    for lmm_p, h2_p, mixing_p in result_list:
         uy_list.append(lmm_p.UY[:,0])
         h2_list.append(h2_p)
         mixing_list.append(mixing_p)

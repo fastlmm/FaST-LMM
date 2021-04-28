@@ -790,14 +790,65 @@ def cmk_1():
     print(df)
     print(time.time() - start)
 
+def cmk_2():
+    import os
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logging.info("test")
+    from pysnptools.snpreader import Pheno, SnpMemMap, Bed
+    from fastlmm.association import single_snp
+    from pysnptools.util.mapreduce1.runner import LocalMultiProc
+
+    phenoFile = "gene.txt"
+    covFile = "gender_noHead.txt"
+
+    os.chdir(r"D:\OneDrive\Projects\Science\virginia")
+
+    #cmk todo: test just one chrom at a time
+
+    def time_syndata(K_sid_count,test_sid_count,pheno_count,use_bed=False):
+        version = 1
+
+        if use_bed:
+            snp_data = Bed(r"m:\deldir\virginia\syndata1.bed",count_A1=True)
+        else:
+            snp_data = SnpMemMap("DSout.snp.memmap")
+        K0 =  snp_data[:,::snp_data.sid_count//K_sid_count]
+        test_snps = snp_data[:,::snp_data.sid_count//test_sid_count]
+        pheno = Pheno("gene.txt")[:,:pheno_count]
+
+        # prefix = f"chrom{chrom_to_test}_v{version}_gs{gene_step}_ks{K0_step}"
+        # cache_file = f"cache/{prefix}"
+        # out_file = f"output/{prefix}_ts{test_snp_skip}.csv"
+
+        runner = LocalMultiProc(8,just_one_process=False)
+        map_reduce_outer = True
+
+        df = single_snp(
+            # cache_file=cache_file,
+            K0=K0,
+            test_snps=test_snps,
+            pheno=pheno,
+            covar="gender_noHead.txt",
+            interact_with_snp=0,
+            threshold=None, #.001,
+            # output_file_name=out_file,
+            runner = runner,
+            map_reduce_outer=map_reduce_outer
+        )
+        return df
+
+    # Show that can run 151x(6.3K,6.3K)x1 in about 18 seconds
+    time_syndata(K_sid_count=6_300,test_sid_count=6_300,pheno_count=1,use_bed=False)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
 
-    #cmk_1() #cmk
-    #TestSingleSnpLeaveOutOneChrom.test_multipheno2(None)
+    # cmk_1() #cmk
+    cmk_2() #cmk
+    # TestSingleSnpLeaveOutOneChrom.test_multipheno2(None)
 
 
 
