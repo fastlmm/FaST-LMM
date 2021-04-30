@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import scipy as SP
 import numpy as NP
 import scipy.linalg as LA
@@ -322,7 +321,7 @@ class LMM(object):
         min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2 )
         return resmin[0]
 
-    def find_log_delta(self, sid_count, min_log_delta=-5, max_log_delta=10, nGrid=10, **kwargs):
+    def find_log_delta(self, sid_count, min_log_delta=-5, max_log_delta=10, nGrid=10, REML=False, **kwargs):
         '''
         #Need comments
         '''
@@ -331,7 +330,7 @@ class LMM(object):
         def f(x,resmin=resmin,**kwargs):
             h2 = 1.0/(np.exp(x)*sid_count+1) #We convert from external log_delta to h2 and then back again so that this code is most similar to findH2
 
-            res = self.nLLeval(h2=h2,**kwargs)
+            res = self.nLLeval(h2=h2, REML=REML, **kwargs)
             if (resmin[0] is None) or (res['nLL']<resmin[0]['nLL']):
                 resmin[0]=res
             #logging.info("search\t{0}\t{1}".format(x,res['nLL']))
@@ -345,7 +344,7 @@ class LMM(object):
 
 
 
-    def nLLeval(self,h2=0.0,REML=True, logdelta = None, delta = None, dof = None, scale = 1.0,penalty=0.0):
+    def nLLeval(self,h2=0.0,REML=False, logdelta = None, delta = None, dof = None, scale = 1.0,penalty=0.0): # !!!cmk should this default be changed to REML=False (may change delta search)
         '''
         evaluate -ln( N( U^T*y | U^T*X*beta , h2*S + (1-h2)*I ) ),
         where ((1-a2)*K0 + a2*K1) = USU^T
@@ -382,9 +381,9 @@ class LMM(object):
         N=self.y.shape[0]
         D=self.UX.shape[1]
         
-        #if REML == True:
-        #    # this needs to be fixed, please see test_gwas.py for details
-        #    raise NotImplementedError("this feature is not ready to use at this time, please use lmm_cov.py instead")
+        if REML == True:
+            # this needs to be fixed, please see test_gwas.py for details
+            raise NotImplementedError("REML in lmm object not supported, please use lmm_cov.py instead")
 
         if logdelta is not None:
             delta = SP.exp(logdelta)
@@ -490,13 +489,18 @@ class LMM(object):
                 logdetXKX = SP.log(SxKx).sum()
                 sigma2 = r2 / (N - D)
                 nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (N-D) * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                variance_beta = None
             else:
                 sigma2 = r2 / (N)
                 nLL =  0.5 * ( logdetK + N * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                if delta is not None:
+                    h2 = 1.0/(delta+1)
+                variance_beta = h2 * sigma2 * np.diag(UxKx[:,i_pos].dot(np.diag(1.0/SxKx[i_pos])).dot(UxKx[:,i_pos].T)) # !!!cmk make optional?
             result = {
                   'nLL':nLL,
                   'sigma2':sigma2,
                   'beta':beta,
+                  'variance_beta': variance_beta,
                   'h2':h2,
                   'REML':REML,
                   'a2':self.a2,
@@ -518,6 +522,7 @@ class LMM(object):
                   'nLL':nLL,
                   'dof':dof,
                   'beta':beta,
+                  'variance_beta': None,
                   'h2':h2,
                   'REML':REML,
                   'a2':self.a2,

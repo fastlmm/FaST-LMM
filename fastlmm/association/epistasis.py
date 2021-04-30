@@ -435,7 +435,7 @@ class _Epistasis(object) : #implements IDistributable
         if not os.path.exists(self.cache_file):
             logging.info("Precomputing eigen")
             lmm = LMM()
-            G0_standardized = self.G0.read().standardize()
+            G0_standardized = self.G0.read().standardize() #!!!cmk does G1 (if any) get standardized?
             lmm.setG(G0_standardized.val, self.G1val_or_none, a2=self.mixing)
             logging.info("Saving precomputation to {0}".format(self.cache_file))
             pstutil.create_directory_if_necessary(self.cache_file)
@@ -463,7 +463,7 @@ class _Epistasis(object) : #implements IDistributable
     def do_work(self, lmm, sid0_list, sid1_list):
         dataframe = pd.DataFrame(
             index=np.arange(len(sid0_list)),
-            columns=('SNP0', 'Chr0', 'GenDist0', 'ChrPos0', 'SNP1', 'Chr1', 'GenDist1', 'ChrPos1', 'PValue', 'NullLogLike', 'AltLogLike')
+            columns=('SNP0', 'Chr0', 'GenDist0', 'ChrPos0', 'SNP1', 'Chr1', 'GenDist1', 'ChrPos1', 'PValue', 'NullLogLike', 'AltLogLike', 'H2', 'Beta', 'Variance_Beta')
             )
         #!!Is this the only way to set types in a dataframe?
         dataframe['Chr0'] = dataframe['Chr0'].astype(np.float)
@@ -475,6 +475,9 @@ class _Epistasis(object) : #implements IDistributable
         dataframe['PValue'] = dataframe['PValue'].astype(np.float)
         dataframe['NullLogLike'] = dataframe['NullLogLike'].astype(np.float)
         dataframe['AltLogLike'] = dataframe['AltLogLike'].astype(np.float)
+        dataframe['H2'] = dataframe['H2'].astype(np.float)
+        dataframe['Beta'] = dataframe['Beta'].astype(np.float)
+        dataframe['Variance_Beta'] = dataframe['Variance_Beta'].astype(np.float)
 
 
         #This is some of the code for a different way that reads and dot-products 50% more, but does less copying. Seems about the same speed
@@ -536,6 +539,10 @@ class _Epistasis(object) : #implements IDistributable
             res_alt = lmm.nLLeval(delta=self.internal_delta, REML=False)
             ll_alt = -res_alt["nLL"]
 
+            h2 = res_alt['h2']
+            beta = res_alt['beta'][-1]
+            variance_beta = res_alt['variance_beta'][-1] if 'variance_beta' in res_alt else np.nan
+
             test_statistic = ll_alt - ll_null
             degrees_of_freedom = 1
             pvalue = stats.chi2.sf(2.0 * test_statistic, degrees_of_freedom)
@@ -544,7 +551,7 @@ class _Epistasis(object) : #implements IDistributable
             dataframe.iloc[pair_index] = [
                  sid0, snps_read.pos[sid0_index,0],  snps_read.pos[sid0_index,1], snps_read.pos[sid0_index,2],
                  sid1, snps_read.pos[sid1_index,0],  snps_read.pos[sid1_index,1], snps_read.pos[sid1_index,2],
-                 pvalue, ll_null, ll_alt]
+                 pvalue, ll_null, ll_alt, h2, beta, variance_beta]
 
             self.do_pair_count += 1
             if self.do_pair_count % 100 == 0:

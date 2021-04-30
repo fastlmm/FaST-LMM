@@ -15,7 +15,6 @@ import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
 from pysnptools.util.mapreduce1.runner import Local,LocalMultiProc, LocalInParts
-from six.moves import range
 
 class TestEpistasis(unittest.TestCase):
 
