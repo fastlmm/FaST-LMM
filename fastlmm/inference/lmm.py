@@ -296,7 +296,7 @@ class LMM(object):
         #print "numcalls to innerLoopTwoKernel= " + str(self.numcalls)
         return resmin[0]
 
-    def findH2(self, nGridH2=10, minH2 = 0.0, maxH2 = 0.99999, **kwargs):
+    def findH2(self, nGridH2=10, minH2 = 0.0, maxH2 = 0.99999, REML=True, **kwargs):
         '''
         Find the optimal h2 for a given K. Note that this is the single kernel case. So there is no a2.
         (default maxH2 value is set to a value smaller than 1 to avoid loss of positive definiteness of the final model covariance)
@@ -313,7 +313,7 @@ class LMM(object):
         #f = lambda x : (self.nLLeval(h2=x,**kwargs)['nLL'])
         resmin=[None]
         def f(x,resmin=resmin,**kwargs):
-            res = self.nLLeval(h2=x,**kwargs)
+            res = self.nLLeval(h2=x,REML=REML, **kwargs)
             if (resmin[0] is None) or (res['nLL']<resmin[0]['nLL']):
                 resmin[0]=res
             logging.debug("search\t{0}\t{1}".format(x,res['nLL']))
@@ -321,7 +321,7 @@ class LMM(object):
         min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2 )
         return resmin[0]
 
-    def find_log_delta(self, sid_count, min_log_delta=-5, max_log_delta=10, nGrid=10, REML=False, **kwargs):
+    def find_log_delta(self, sid_count, min_log_delta=-5, max_log_delta=10, nGrid=10, REML=True, **kwargs):
         '''
         #Need comments
         '''
@@ -344,7 +344,7 @@ class LMM(object):
 
 
 
-    def nLLeval(self,h2=0.0,REML=False, logdelta = None, delta = None, dof = None, scale = 1.0,penalty=0.0): # !!!cmk should this default be changed to REML=False (may change delta search)
+    def nLLeval(self,h2=0.0, REML=True, logdelta = None, delta = None, dof = None, scale = 1.0,penalty=0.0): # !!!cmk should this default be changed to REML=False (may change delta search)
         '''
         evaluate -ln( N( U^T*y | U^T*X*beta , h2*S + (1-h2)*I ) ),
         where ((1-a2)*K0 + a2*K1) = USU^T
@@ -381,9 +381,9 @@ class LMM(object):
         N=self.y.shape[0]
         D=self.UX.shape[1]
         
-        if REML == True:
-            # this needs to be fixed, please see test_gwas.py for details
-            raise NotImplementedError("REML in lmm object not supported, please use lmm_cov.py instead")
+        #if REML == True:
+        #    # this needs to be fixed, please see test_gwas.py for details
+        #    raise NotImplementedError("REML in lmm object not supported, please use lmm_cov.py instead")
 
         if logdelta is not None:
             delta = SP.exp(logdelta)
@@ -495,7 +495,9 @@ class LMM(object):
                 nLL =  0.5 * ( logdetK + N * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
                 if delta is not None:
                     h2 = 1.0/(delta+1)
-                variance_beta = h2 * sigma2 * np.diag(UxKx[:,i_pos].dot(np.diag(1.0/SxKx[i_pos])).dot(UxKx[:,i_pos].T)) # !!!cmk make optional?
+                # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
+                # where h2*sigma2 is sigma2_g
+                variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
             result = {
                   'nLL':nLL,
                   'sigma2':sigma2,

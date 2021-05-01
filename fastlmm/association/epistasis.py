@@ -423,7 +423,7 @@ class _Epistasis(object) : #implements IDistributable
         if self.G1_or_none is None:
             self.G1val_or_none = None
         else:
-            self.G1val_or_none = self.G1_or_none.read().val
+            self.G1val_or_none = self.G1_or_none.read().standardize().val
 
         # The S and U are always cached, in case they are needed for the cluster or for multi-threaded runs
         if self.cache_file is None:
@@ -435,7 +435,7 @@ class _Epistasis(object) : #implements IDistributable
         if not os.path.exists(self.cache_file):
             logging.info("Precomputing eigen")
             lmm = LMM()
-            G0_standardized = self.G0.read().standardize() #!!!cmk does G1 (if any) get standardized?
+            G0_standardized = self.G0.read().standardize()
             lmm.setG(G0_standardized.val, self.G1val_or_none, a2=self.mixing)
             logging.info("Saving precomputation to {0}".format(self.cache_file))
             pstutil.create_directory_if_necessary(self.cache_file)
@@ -449,7 +449,10 @@ class _Epistasis(object) : #implements IDistributable
             lmm.setX(self.covar)
             lmm.sety(self.pheno['vals'])
             #log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
-            result = lmm.find_log_delta(REML=False, sid_count=self.G0.sid_count, min_log_delta=self.min_log_delta, max_log_delta=self.max_log_delta  ) #!!what about findA2H2? minH2=0.00001
+
+            # As per the paper, we optimized delta with REML=True, but
+            # we will later optimize beta and find log likelihood with ML (REML=False)
+            result = lmm.find_log_delta(REML=True, sid_count=self.G0.sid_count, min_log_delta=self.min_log_delta, max_log_delta=self.max_log_delta  ) #!!what about findA2H2? minH2=0.00001
             self.external_log_delta = result['log_delta']
 
         self.internal_delta = np.exp(self.external_log_delta) * self.G0.sid_count
@@ -526,6 +529,9 @@ class _Epistasis(object) : #implements IDistributable
                 lmm.UUX = UUX[:,index_list_less_product]
             else:
                 lmm.UUX = None
+
+            # As per the paper, we previously optimized delta with REML=True, but
+            # we optimize beta and find loglikelihood with ML (REML=False)
             res_null = lmm.nLLeval(delta=self.internal_delta, REML=False)
             ll_null = -res_null["nLL"]
 
