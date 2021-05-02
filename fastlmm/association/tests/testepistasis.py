@@ -384,7 +384,28 @@ def getTestSuite():
 
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
+
+    if True: # !!!cmk
+        # import the algorithm and reader
+        import numpy as np
+        from fastlmm.association import epistasis
+        from pysnptools.snpreader import Bed
+        from fastlmm.util import example_file # Download and return local file name
+
+        # define file names
+        bed_fn = example_file('tests/datasets/synth/all.*','*.bed')
+        bed_reader = Bed(bed_fn, count_A1=True)
+        pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
+        cov_fn = example_file("tests/datasets/synth/cov.txt")
+
+        # partition data into the first 50 SNPs on chr1 and all but chr1
+        G0 = bed_reader[:,bed_reader.pos[:,0] != 1]
+        test_snps = bed_reader[:,bed_reader.pos[:,0] == 1][:,0:50]
+
+        # run epistasis analysis
+        results_df = epistasis(test_snps[::-1,:], pheno_fn, G0=G0, covar=cov_fn)
+        print(results_df)
     
       
     from fastlmm.association.tests.testepistasis import TestEpistasis
