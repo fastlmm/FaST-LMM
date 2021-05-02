@@ -423,7 +423,7 @@ class _Epistasis(object) : #implements IDistributable
         if self.G1_or_none is None:
             self.G1val_or_none = None
         else:
-            self.G1val_or_none = self.G1_or_none.read().standardize().val
+            self.G1val_or_none = self.G1_or_none.read().val # !!!cmk add fix? standardize().val
 
         # The S and U are always cached, in case they are needed for the cluster or for multi-threaded runs
         if self.cache_file is None:

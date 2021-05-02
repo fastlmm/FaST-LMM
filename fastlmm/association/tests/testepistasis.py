@@ -386,7 +386,7 @@ def getTestSuite():
 
 if __name__ == '__main__':
 
-    if True: # !!!cmk
+    if False: # !!!cmk
         # import the algorithm and reader
         import numpy as np
         from fastlmm.association import epistasis
