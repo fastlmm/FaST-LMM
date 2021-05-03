@@ -386,7 +386,7 @@ def getTestSuite():
 
 if __name__ == '__main__':
 
-    if False: # !!!cmk
+    if True: # !!!cmk
         # import the algorithm and reader
         import numpy as np
         from fastlmm.association import epistasis
@@ -404,8 +404,38 @@ if __name__ == '__main__':
         test_snps = bed_reader[:,bed_reader.pos[:,0] == 1][:,0:50]
 
         # run epistasis analysis
-        results_df = epistasis(test_snps[::-1,:], pheno_fn, G0=G0, covar=cov_fn)
-        print(results_df)
+        # results_df = epistasis(test_snps[::-1,:], pheno_fn, G0=G0, covar=cov_fn)
+        # print(results_df)
+
+        from pathlib import Path
+        from pysnptools.snpreader import SnpData
+        from pysnptools.util import intersect_apply
+
+        # Let S,U
+        G = G0[::-1,:] # We change the order of the individuals, just to show that it is allowed.
+        Gval = G.read().standardize().val
+        K = Gval.dot(Gval.T)
+        # So the Eigen values and vector are:
+        S,U = np.linalg.eigh(K)
+        # and the order individuals in the eigenvector is
+        eigen_iid = G.iid
+        print(f"{eigen_iid[:3]}...")
+
+        # We write the vector and the values to a npz file.
+        cache_file = "cache/us.npz"
+        Path(cache_file).parent.mkdir(exist_ok=True)
+        # note that U goes before S
+        np.savez(cache_file,U,S)
+        # We create a stub for G, the SNPs that created the kinship matrix to which we applied 'eigh'
+        stub_g0 = SnpData(iid=eigen_iid,sid=["stub_sid"],val=np.full((test_snps.iid_count,1),np.nan))
+
+        # Reorder test_snps to match the order in the eigenvector
+        stub_g0_after, test_snps_reordered = intersect_apply([stub_g0, test_snps])
+        assert np.all(stub_g0_after.iid == stub_g0.iid) # prove that we didn't re-order these
+        print(f"{test_snps_reordered.iid[:3]}...")
+
+        df = epistasis(test_snps_reordered, pheno_fn, G0=stub_g0, covar=cov_fn, cache_file=cache_file)
+        df
     
       
     from fastlmm.association.tests.testepistasis import TestEpistasis
