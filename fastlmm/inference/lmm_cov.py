@@ -262,7 +262,7 @@ class LMM(object):
             minA2   : minimum value for a2 optimization
             maxA2   : maximum value for a2 optimization
             i_up    : indices of columns in W corresponding to columns from first kernel that are subtracted of
-            i_G1    : indeces of columns in W corresponding to columns of the design matrix for second kernel G1
+            i_G1    : indices of columns in W corresponding to columns of the design matrix for second kernel G1
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
 
@@ -304,7 +304,7 @@ class LMM(object):
             maxA2   : maximum value for a2 optimization
             verbose : verbose output? (default: False)
             i_up    : indices of columns in W corresponding to columns from first kernel that are subtracted of
-            i_G1    : indeces of columns in W corresponding to columns of the design matrix for second kernel G1
+            i_G1    : indices of columns in W corresponding to columns of the design matrix for second kernel G1
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
 
@@ -352,7 +352,7 @@ class LMM(object):
             minA2   : minimum value for a2 optimization
             maxA2   : maximum value for a2 optimization
             i_up    : indices of columns in W corresponding to columns from first kernel that are subtracted of
-            i_G1    : indeces of columns in W corresponding to columns of the design matrix for second kernel G1
+            i_G1    : indices of columns in W corresponding to columns of the design matrix for second kernel G1
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
 
