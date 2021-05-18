@@ -32,7 +32,9 @@ def single_snp(test_snps, pheno, K0=None,
                 cache_file=None, GB_goal=None, interact_with_snp=None,
                 force_full_rank=False, force_low_rank=False, G0=None, G1=None,
                 runner=None, map_reduce_outer=True, # !!! cmkx
-                threshold=None, # !!!cmkx
+                pvalue_threshold=None, # !!!cmkx
+                random_threshold=None, # !!!cmkx
+                random_seed = 0, # !!!cmkx
                 xp=None,
                 count_A1=None):
     """
@@ -200,8 +202,12 @@ def single_snp(test_snps, pheno, K0=None,
                                         output_file_name=output_file_name,
                                         block_size=block_size,
                                         interact_with_snp=interact_with_snp,
-                                        runner=runner, xp=xp,
-                                        threshold=threshold)
+                                        runner=runner, 
+                                        pvalue_threshold=pvalue_threshold,
+                                        random_threshold=random_threshold,
+                                        random_seed = random_seed,
+                                        xp=xp, 
+                                        )
             sid_index_range = IntRangeSet(frame['sid_index'])
             assert sid_index_range == (0, test_snps.sid_count), "Some SNP rows are missing from the output"
         else:
@@ -241,7 +247,11 @@ def single_snp(test_snps, pheno, K0=None,
                                             mixing=mixing, h2=h2, log_delta=log_delta, cache_file=cache_file_chrom,
                                             force_full_rank=force_full_rank, force_low_rank=force_low_rank,
                                             output_file_name=None, block_size=block_size, interact_with_snp=interact_with_snp,
-                                            runner=runner_inner, xp=xp, threshold=threshold)
+                                            runner=runner_inner,
+                                            pvalue_threshold=pvalue_threshold,
+                                            random_threshold=random_threshold,
+                                            random_seed=random_seed,
+                                            xp=xp)
                 return distributable
 
             def reducer_closure(frame_sequence):
@@ -586,8 +596,11 @@ def _create_dataframe(row_count):
 def _internal_single(K0, test_snps, pheno, covar, K1,
                  mixing, h2, log_delta,
                  cache_file, force_full_rank, force_low_rank,
-                 output_file_name, block_size, interact_with_snp, runner, xp,
-                 threshold):
+                 output_file_name, block_size, interact_with_snp, runner,
+                 pvalue_threshold,
+                 random_threshold,
+                 random_seed,
+                 xp):
 
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
@@ -620,7 +633,7 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner)
     assert lmm.Y.shape == pheno.shape, "expect pheno and lmm.Y to have the same shape"
 
-    frame = _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, threshold)
+    frame = _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, pvalue_threshold, random_threshold, random_seed)
 
     return frame
 
@@ -733,7 +746,7 @@ def _find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h
 
     return lmm, h2, mixing
 
-def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, threshold):
+def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, pvalue_threshold, random_threshold, random_seed):
         
     work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
     row_count = test_snps.sid_count * pheno.sid_count
@@ -786,9 +799,11 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
             mixing,
             h2,
             lmm,
-            xp,
-            threshold=threshold,
-            row_count=row_count
+            pvalue_threshold=pvalue_threshold,
+            random_threshold=random_threshold,
+            random_seed=random_seed,
+            row_count=row_count,
+            xp=xp
             )
 
         logging.info("time={0}".format(time.time()-do_work_time))
@@ -817,7 +832,7 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
 #!!!cmkx RENAME MULTI_
 def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
                   start,end,snps_read,pheno_sid,
-                  mixing, h2, lmm, xp, threshold, row_count):
+                  mixing, h2, lmm, pvalue_threshold, random_threshold, random_seed, row_count, xp):
     assert len(multi_beta.reshape(-1))==(end-start)*len(pheno_sid), "Expect multi_beta to be (end-start)x phenos"
     assert multi_variance_beta.shape == multi_beta.shape and multi_beta.shape==multi_fraction_variance_explained_beta.shape, "expect beta, variance_beta, and fraction_variance_explained_beta to agree on shape"
 
@@ -825,13 +840,28 @@ def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explai
     chi2stats = pstutil.asnumpy(multi_beta*multi_beta/multi_variance_beta)
     p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))
     p_values = p_values.T.reshape(-1) # !!!cmkx add warning at top level to use threshold
-    keep_index = p_values <= (threshold or 1.0)
-    dataframe= _create_dataframe(keep_index.sum())
+    pvalue_keep_index = p_values <= (pvalue_threshold or 1.0)
+    if random_threshold is not None:
+        rng = np.random.RandomState((start,random_seed))
+        random_values = rng.random(len(pvalue_keep_index))
+        random_keep_index = random_values <= random_threshold
+        keep_index = random_keep_index + pvalue_keep_index
+    else:
+        keep_index = pvalue_keep_index
+    dataframe = _create_dataframe(keep_index.sum())
+
     if len(pheno_sid) > 1:
         dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count)[keep_index] #!!!cmkx add test
-    if threshold is not None:
-        dataframe['threshold'] = threshold #!!!cmkx add test
+        dataframe['PhenoCount'] = len(pheno_sid) #!!!cmkx add test
+    if pvalue_threshold is not None:
+        dataframe['PValueThreshold'] = pvalue_threshold #!!!cmkx add test
+    if random_threshold is not None:
+        dataframe['RandomValue'] = random_values[keep_index] #!!!cmkx add test
+        dataframe['RandomThreshold'] = random_threshold #!!!cmkx add test
+        dataframe['RandomSeed'] = random_seed #!!!cmkx add test
+    if pvalue_threshold is not None or random_threshold is not None:
         dataframe['row_count'] = row_count
+
     dataframe['sid_index'] = np.tile(np.arange(start,end), len(pheno_sid))[keep_index]
     dataframe['SNP'] = np.tile(snps_read.sid, len(pheno_sid))[keep_index]
     dataframe['Chr'] = np.tile(snps_read.pos[:,0], len(pheno_sid))[keep_index]

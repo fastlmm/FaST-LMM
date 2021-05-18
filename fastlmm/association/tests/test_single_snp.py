@@ -821,7 +821,7 @@ def cmk_2():
         # cache_file = f"cache/{prefix}"
         # out_file = f"output/{prefix}_ts{test_snp_skip}.csv"
 
-        runner = LocalMultiProc(8,just_one_process=False)
+        runner = None # LocalMultiProc(8,just_one_process=False)
         map_reduce_outer = True
 
         df = single_snp(
@@ -831,7 +831,8 @@ def cmk_2():
             pheno=pheno,
             covar="gender_noHead.txt",
             interact_with_snp=0,
-            threshold=None, #.001,
+            pvalue_threshold=.5, #.001,
+            random_threshold=.5,
             # output_file_name=out_file,
             runner = runner,
             map_reduce_outer=map_reduce_outer
