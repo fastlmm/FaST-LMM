@@ -50,6 +50,7 @@ def single_snp(test_snps, pheno, K0=None,
            `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            Any IIDs with missing values will be removed.
+            #!!!cmk multiple phenos can given, but if so, K1 can't be given
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
     :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
@@ -177,10 +178,10 @@ def single_snp(test_snps, pheno, K0=None,
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
-        # !!!cmkx need to look for/handle/check missing values in pheno
-        # !!!cmkx assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-        # !!!cmkx pheno = pheno[(pheno.val==pheno.val)[:,0],:]
-        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
+        good_values_per_iid = (pheno.val==pheno.val).sum(axis=1)
+        assert not np.any((good_values_per_iid>0) * (good_values_per_iid<pheno.sid_count)), "With multiple phenotypes, an individual's values must either be all missing or have no missing."
+        pheno = pheno[good_values_per_iid>0,:] # drop individuals with no good pheno values. #!!!cmk test this
+        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1) #!!!cmk what happens with missing data in covar??? and covar_per_chrom?
 
         if not leave_out_one_chrom:
             assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"  # !!!LATER document covar_by_chrom
@@ -632,10 +633,47 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     lmm, h2, mixing = _find_h2_s_u(mixing, h2, pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner)
     assert lmm.Y.shape == pheno.shape, "expect pheno and lmm.Y to have the same shape"
+    if lmm.UUY is not None:
+        assert lmm.UUY.shape == pheno.shape, "expect pheno and lmm.UUY to have the same shape"
+
 
     frame = _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, pvalue_threshold, random_threshold, random_seed)
 
     return frame
+
+def load_cache(covar_val, y_0, cache_file, xp):
+    lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
+    with xp.load(cache_file) as data: #!! similar code in epistasis
+        lmm_0.S = data['arr_0'] # !!!!cmkx add versioning
+        lmm_0.U = data['arr_1']
+        lmm_0.UY = data['arr_2'] #!!!cmk add uuY??????
+        h2_0 = data['arr_3']
+        mixing_0 = data['arr_4']
+    assert len(h2_0)==1 and y_0.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with y_0"
+    #!!!cmk shouldn't h2_0 match y_0?
+    #!!!cmk how about checking UUY when low rank?
+    return lmm_0, h2_0, mixing_0
+
+def save_cache(lmm_0, h2_0, mixing_0, cache_file, cache_file_extra, xp):
+    pstutil.create_directory_if_necessary(cache_file)
+    assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
+    xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, h2_0, mixing_0)
+    if os.path.exists(cache_file_extra):
+        os.unlink(cache_file_extra) # !!!cmkx test this
+
+def load_cache_extra(lmm_0, multi_y, cache_file_extra, xp):
+    with xp.load(cache_file_extra) as data: #!! similar code in epistasis
+        lmm_0.UY = data['arr_0']
+        h2_0 = data['arr_1']
+        mixing_0 = data['arr_2']
+    lmm_0.Y = multi_y
+    assert len(h2_0)==multi_y.shape[1] and multi_y.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with multi_y"
+    #!!!cmk how about checking UUY when low rank?
+    return lmm_0, h2_0, mixing_0
+
+def save_cache_extra(lmm_0, multi_h2, multi_mixing, cache_file_extra, xp):
+        pstutil.create_directory_if_necessary(cache_file_extra)
+        xp.savez(cache_file_extra, lmm_0.UY, multi_h2, multi_mixing) #!!!cmk save UUY
 
 def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner):
@@ -651,14 +689,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
 
     logging.info("Finding SU and then h2 for first phenotype")
     if cache_file is not None and os.path.exists(cache_file):
-        lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
-        with xp.load(cache_file) as data: #!! similar code in epistasis
-            lmm_0.S = data['arr_0'] # !!!!cmkx add versioning
-            lmm_0.U = data['arr_1']
-            lmm_0.UY = data['arr_2']
-            h2_0 = data['arr_3']
-            mixing_0 = data['arr_4']
-        assert len(h2_0)==1 and y_0.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with y_0"
+        lmm_0, h2_0, mixing_0 = load_cache(covar_val, y_0, cache_file, xp)
     else:
         lmm_0, h2_0, mixing_0 = _find_h2_s_u_for_one_pheno(K0, K1, 
                                                     covar_val, True, None,
@@ -668,26 +699,22 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
                                                     xp)
 
         if cache_file is not None:
-            pstutil.create_directory_if_necessary(cache_file)
-            assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
-            xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, h2_0, mixing_0)
-            if os.path.exists(cache_file_extra):
-                os.unlink(cache_file_extra) # !!!cmkx test this
+            save_cache(lmm_0, h2_0, mixing_0, cache_file, cache_file_extra, xp)
 
     if multi_pheno.sid_count == 1:
         return lmm_0, h2_0, mixing_0
+    elif cache_file_extra is not None and os.path.exists(cache_file_extra):
+        return load_cache_extra(lmm_0, multi_y, cache_file_extra, xp)
+    else:
+        lmm_0, multi_h2, multi_mixing = compute_extra(lmm_0, h2_0, mixing_0, multi_y, cache_file_extra)
+        if cache_file_extra is not None:
+            save_cache_extra(lmm_0, multi_h2, multi_mixing, cache_file_extra, xp)
+        return lmm_0, multi_h2, multi_mixing
 
-
-    if cache_file_extra is not None and os.path.exists(cache_file_extra):
-        with xp.load(cache_file_extra) as data: #!! similar code in epistasis
-            lmm_0.UY = data['arr_0']
-            h2_0 = data['arr_1']
-            mixing_0 = data['arr_2']
-        lmm_0.Y = multi_y
-        assert len(h2_0)==multi_y.shape[1] and multi_y.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with multi_y"
-        return lmm_0, h2_0, mixing_0
-
+def compute_extra(lmm_0, h2_0, mixing_0, multi_y, cache_file_extra):
     uy_list=[lmm_0.UY[:,0]]
+    if lmm_0.UUY is not None:
+        uuy_list=[lmm_0.UUY[:,0]]
     h2_list=[h2_0]
     mixing_list = [mixing_0]
 
@@ -702,21 +729,24 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
                                 xp=xp)
 
     result_list = map_reduce(range(1, multi_pheno.col_count),mapper=mapper,runner=runner)
-    #!!!cmkx do this with runner
+    #could do this with runner
     for lmm_p, h2_p, mixing_p in result_list:
         uy_list.append(lmm_p.UY[:,0])
+        if lmm_p.UUY is not None:
+            uuy_list.append(lmm_p.UUY[:,0])
         h2_list.append(h2_p)
         mixing_list.append(mixing_p)
 
     lmm_0.Y = multi_y #!!!cmkx is this needed?
     lmm_0.UY = np.r_[uy_list].T #!!!cmkx is this needed?
+    if lmm_0.UUY is not None:
+        lmm_0.UUY = np.r_[uuy_list].T #!!!cmkx is this needed?
     # !!!cmkx assert that P>1, G,UUX,UUY,UX are None and need code
     multi_h2 = np.r_[h2_list]
     multi_mixing = np.r_[mixing_list]
 
-    if cache_file_extra is not None:
-        pstutil.create_directory_if_necessary(cache_file_extra)
-        xp.savez(cache_file_extra, lmm_0.UY, multi_h2, multi_mixing)
+    if lmm_0.UUY is not None:
+        assert lmm_0.UUY.shape == multi_pheno.shape, "expect pheno and lmm.UUY to have the same shape"
 
     return lmm_0, multi_h2, multi_mixing
 

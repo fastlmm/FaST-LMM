@@ -836,8 +836,6 @@ class LMM(object):
                 #variance estimate is conservative, due to N-1 for penalty case
                 variance_explained_beta *= (snpsKsnps/(snpsKsnps+penalty_)) * (snpsKsnps/(snpsKsnps + penalty_))
             else:
-                # sigma2_cmk = r2 / N
-                # variance_beta_cmk = sigma2_cmk * np.sqrt(beta)
                 variance_beta = r2 / (N - 1.0) / snpsKsnps
                 fraction_variance_explained_beta = variance_explained_beta / YKY[np.newaxis,:] # variance explained by beta over total variance
         
