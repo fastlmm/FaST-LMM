@@ -596,13 +596,9 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                     pvalue_reference = np.array(sorted(reference[reference['SNP'] == sid].PValue))
                     assert (abs(pvalue_frame - pvalue_reference) < 1e-5).all, "pair {0} differs too much from reference".format(sid)
 
-    def cmktest_multipheno3(self):
-        from pysnptools.kernelreader import SnpKernel
+    def create_phen3(self,phen):
         from fastlmm.util import example_file # Download and return local file name
-        from pysnptools.standardizer import Standardizer, Unit
-
-        bed = Bed(example_file('tests/datasets/synth/all.*','*.bed'),count_A1=True)[:,::10]
-        phen = Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt")).read()
+        phen = phen.read()
         rng = np.random.RandomState(seed=0)
         val1 = phen.val.copy()
         rng.shuffle(val1)
@@ -611,6 +607,15 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         phen3 = SnpData(iid=phen.iid,sid=["phen0","phen1","phen2"],
                         val = np.c_[phen.val, val1, val2]
                         )
+        return phen3
+        
+    def cmktest_multipheno3(self):
+        from pysnptools.kernelreader import SnpKernel
+        from fastlmm.util import example_file # Download and return local file name
+        from pysnptools.standardizer import Standardizer, Unit
+
+        bed = Bed(example_file('tests/datasets/synth/all.*','*.bed'),count_A1=True)[:,::10]
+        phen3 = self.create_phen3(Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt")))
 
         combo_index = 0
         for covar,interact in [(None,None),
@@ -650,17 +655,8 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         from pysnptools.standardizer import Standardizer, Unit
 
         bed = Bed(example_file('tests/datasets/synth/all.*','*.bed'),count_A1=True)[:,::10]
-        phen = Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt")).read()
-        rng = np.random.RandomState(seed=0)
-        val1 = phen.val.copy()
-        rng.shuffle(val1)
-        val2 = phen.val.copy()
-        rng.shuffle(val2)
-        phen3 = SnpData(iid=phen.iid,sid=["phen0","phen1","phen2"],
-                        val = np.c_[phen.val, val1, val2]
-                        )
-
-
+        phen = Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt"))
+        phen3 = self.create_phen3(phen)
 
         try:
             single_snp(test_snps=bed,pheno=phen3,covar=None,
@@ -684,30 +680,32 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
     def test_cache(self):
         #!!!cmk need to test with 1pheno and multipheno
         test_snpsx = Bed(self.bedbase, count_A1=False)
-        pheno = self.phen_fn
+        phen1 = self.phen_fn
+        phen3 = self.create_phen3(Pheno(self.phen_fn))
         covar = self.cov_fn
 
-        for leave_out_one_chrom, ref_file, test_snps in [(True,"one_looc",test_snpsx),(False,"one",test_snpsx[:,:10])]:
+        for leave_out_one_chrom, ref_file1, ref_file3, test_snps in [(True,"one_looc","one_looc3", test_snpsx),(False,"one","one3",test_snpsx[:,:10])]:
             for force_full_rank, force_low_rank in [(False,True),(True,False),(False,False)]:
-                output_file = self.file_name(f"cache{leave_out_one_chrom}{force_full_rank}{force_low_rank}")
-                cache_file = self.file_name(output_file+"cache")
-                for p in Path(cache_file).parent.glob(Path(cache_file).name+".*"):
-                    p.unlink()
-                frame = single_snp(test_snps, pheno,
-                                            cache_file=cache_file,
-                                            covar=covar, mixing=0,
-                                            output_file_name=output_file,count_A1=False,
-                                            leave_out_one_chrom=leave_out_one_chrom,force_full_rank=force_full_rank,force_low_rank=force_low_rank
-                                            )
+                for pheno, ref_file in [(phen3,ref_file3),(phen1,ref_file1)]:
+                    output_file = self.file_name(f"cache{leave_out_one_chrom}{force_full_rank}{force_low_rank}")
+                    cache_file = self.file_name(output_file+"cache")
+                    for p in Path(cache_file).parent.glob(Path(cache_file).name+".*"):
+                        p.unlink()
+                    frame = single_snp(test_snps, pheno,
+                                                cache_file=cache_file,
+                                                covar=covar, mixing=0,
+                                                output_file_name=output_file,count_A1=False,
+                                                leave_out_one_chrom=leave_out_one_chrom,force_full_rank=force_full_rank,force_low_rank=force_low_rank
+                                                )
 
-                self.compare_files(frame, ref_file)
-                frame = single_snp(test_snps, pheno,
-                                            cache_file=cache_file,
-                                            covar=covar, mixing=0,
-                                            output_file_name=output_file,count_A1=False,
-                                            leave_out_one_chrom=leave_out_one_chrom,force_full_rank=force_full_rank,force_low_rank=force_low_rank
-                                            )
-                self.compare_files(frame, ref_file)
+                    self.compare_files(frame, ref_file)
+                    frame = single_snp(test_snps, pheno,
+                                                cache_file=cache_file,
+                                                covar=covar, mixing=0,
+                                                output_file_name=output_file,count_A1=False,
+                                                leave_out_one_chrom=leave_out_one_chrom,force_full_rank=force_full_rank,force_low_rank=force_low_rank
+                                                )
+                    self.compare_files(frame, ref_file)
 
 
     
@@ -815,8 +813,13 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
     def compare_df(self,frame,reference,name):
         assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(name)
-        frame.set_index('SNP',inplace=True)
-        reference.set_index('SNP',inplace=True)
+        if 'Pheno' not in frame.columns:
+            frame.set_index('SNP',inplace=True)
+            reference.set_index('SNP',inplace=True)
+        else:
+            frame.set_index(['Pheno','SNP'],inplace=True)
+            reference.set_index(['Pheno','SNP'],inplace=True)
+
         diff = (frame.PValue-reference.PValue)
         bad = diff[np.abs(diff)>1e-5]
         if len(bad) > 0:

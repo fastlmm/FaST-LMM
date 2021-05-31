@@ -706,12 +706,12 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     elif cache_file_extra is not None and os.path.exists(cache_file_extra):
         return load_cache_extra(lmm_0, multi_y, cache_file_extra, xp)
     else:
-        lmm_0, multi_h2, multi_mixing = compute_extra(lmm_0, h2_0, mixing_0, multi_y, cache_file_extra)
+        lmm_0, multi_h2, multi_mixing = compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp)
         if cache_file_extra is not None:
             save_cache_extra(lmm_0, multi_h2, multi_mixing, cache_file_extra, xp)
         return lmm_0, multi_h2, multi_mixing
 
-def compute_extra(lmm_0, h2_0, mixing_0, multi_y, cache_file_extra):
+def compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp):
     uy_list=[lmm_0.UY[:,0]]
     if lmm_0.UUY is not None:
         uuy_list=[lmm_0.UUY[:,0]]
