@@ -633,47 +633,69 @@ def _internal_single(K0, test_snps, pheno, covar, K1,
     lmm, h2, mixing = _find_h2_s_u(mixing, h2, pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner)
     assert lmm.Y.shape == pheno.shape, "expect pheno and lmm.Y to have the same shape"
-    if lmm.UUY is not None:
-        assert lmm.UUY.shape == pheno.shape, "expect pheno and lmm.UUY to have the same shape"
-
 
     frame = _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, pvalue_threshold, random_threshold, random_seed)
 
     return frame
 
-def load_cache(covar_val, y_0, cache_file, xp):
-    lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
-    with xp.load(cache_file) as data: #!! similar code in epistasis
-        lmm_0.S = data['arr_0'] # !!!!cmkx add versioning
-        lmm_0.U = data['arr_1']
-        lmm_0.UY = data['arr_2'] #!!!cmk add uuY??????
-        h2_0 = data['arr_3']
-        mixing_0 = data['arr_4']
-    assert len(h2_0)==1 and y_0.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with y_0"
-    #!!!cmk shouldn't h2_0 match y_0?
-    #!!!cmk how about checking UUY when low rank?
-    return lmm_0, h2_0, mixing_0
+cache_version = 3
 
 def save_cache(lmm_0, h2_0, mixing_0, cache_file, cache_file_extra, xp):
     pstutil.create_directory_if_necessary(cache_file)
     assert lmm_0.U is not None and lmm_0.S is not None, "Expect S and U have been computed"
-    xp.savez(cache_file, lmm_0.S, lmm_0.U, lmm_0.UY, h2_0, mixing_0)
+    xp.savez(cache_file,
+             version=cache_version,
+             S=lmm_0.S,
+             U=lmm_0.U,
+             UY=lmm_0.UY,
+             UUY=lmm_0.UUY if lmm_0.UUY is not None else [False],
+             h2_0=h2_0,
+             mixing_0=mixing_0
+             )
     if os.path.exists(cache_file_extra):
-        os.unlink(cache_file_extra) # !!!cmkx test this
+        os.unlink(cache_file_extra)
 
-def load_cache_extra(lmm_0, multi_y, cache_file_extra, xp):
-    with xp.load(cache_file_extra) as data: #!! similar code in epistasis
-        lmm_0.UY = data['arr_0']
-        h2_0 = data['arr_1']
-        mixing_0 = data['arr_2']
-    lmm_0.Y = multi_y
-    assert len(h2_0)==multi_y.shape[1] and multi_y.shape[1]==lmm_0.UY.shape[1], "Expect cached h2 and lmm_0.UY to agree with multi_y"
-    #!!!cmk how about checking UUY when low rank?
+def load_cache(covar_val, y_0, cache_file, xp):
+    lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
+    with xp.load(cache_file) as data: #!! similar code in epistasis
+        version = data['version']
+        assert version==cache_version, f"Expect cache version {cache_version}"
+        lmm_0.S = data['S']
+        lmm_0.U = data['U']
+        lmm_0.UY = data['UY']
+        lmm_0.UUY = None if data['UUY'].dtype != 'float64' else data['UUY']
+        h2_0 = data['h2_0']
+        mixing_0 = data['mixing_0']
+
+    assert len(h2_0)==1 and len(mixing_0.shape)==0 and y_0.shape[1]==1 and lmm_0.UY.shape[1]==1, "Expect cached h2_0, mixing_0, y_0, and lmm_0.UY to have dimension one"
+    assert lmm_0.UUY is None or lmm_0.UUY.shape[1]==1, "Expect lmm_0.UUY to have dimension 1"
+
     return lmm_0, h2_0, mixing_0
 
-def save_cache_extra(lmm_0, multi_h2, multi_mixing, cache_file_extra, xp):
+def save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp):
         pstutil.create_directory_if_necessary(cache_file_extra)
-        xp.savez(cache_file_extra, lmm_0.UY, multi_h2, multi_mixing) #!!!cmk save UUY
+        assert lmm_multi.UY is not None and lmm_multi.S is not None, "Expect UY have been computed"
+        xp.savez(cache_file_extra,
+                 version=cache_version,
+                 UY=lmm_multi.UY,
+                 UUY=lmm_multi.UUY if lmm_multi.UUY is not None else [False],
+                 h2=multi_h2,
+                 mixing=multi_mixing
+                 )
+
+def load_cache_extra(lmm_multi, multi_y, cache_file_extra, xp):
+    with xp.load(cache_file_extra) as data: #!! similar code in epistasis
+        version = data['version']
+        assert version==cache_version, f"Expect cache version {cache_version}"
+        lmm_multi.UY = data['UY']
+        lmm_multi.UUY = None if data['UUY'].dtype != 'float64' else data['UUY']
+        h2_multi = data['h2']
+        mixing_multi = data['mixing']
+    lmm_multi.Y = multi_y
+    assert len(h2_multi)==multi_y.shape[1] and lmm_multi.UY.shape[1]==multi_y.shape[1] and mixing_multi.shape[0]==multi_y.shape[1], "Expect cached h2, mixing, UY to agree with multi_y"
+    assert lmm_multi.UUY is None or lmm_multi.UUY.shape[1]==multi_y.shape[1], "Expect cached UUY to agree with multi_y"
+    return lmm_multi, h2_multi, mixing_multi
+
 
 def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
                 force_full_rank, force_low_rank, K0, K1, cache_file, runner):
@@ -706,10 +728,10 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     elif cache_file_extra is not None and os.path.exists(cache_file_extra):
         return load_cache_extra(lmm_0, multi_y, cache_file_extra, xp)
     else:
-        lmm_0, multi_h2, multi_mixing = compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp)
+        lmm_multi, multi_h2, multi_mixing = compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp)
         if cache_file_extra is not None:
-            save_cache_extra(lmm_0, multi_h2, multi_mixing, cache_file_extra, xp)
-        return lmm_0, multi_h2, multi_mixing
+            save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp)
+        return lmm_multi, multi_h2, multi_mixing
 
 def compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp):
     uy_list=[lmm_0.UY[:,0]]
