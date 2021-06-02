@@ -126,6 +126,86 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
+    def test_zero_pheno(self):
+        logging.info("TestSingleSnp test_zero_pheno")
+        test_snps = Bed(self.bedbase, count_A1=False)
+        pheno = Pheno(self.phen_fn)[:,0:0]
+        covar = self.cov_fn
+
+        try:
+            frame = single_snp(test_snps=test_snps[:,:10], pheno=pheno, mixing=0,leave_out_one_chrom=False,
+                                      G0=test_snps, covar=covar, 
+                                      count_A1=False
+                                      )
+        except Exception as e:
+            pass
+
+
+    def test_missing_covar(self):
+        logging.info("TestSingleSnp test_missing_covar")
+        test_snps = Bed(self.bedbase, count_A1=False)
+        pheno = self.phen_fn
+        covar = Pheno(self.cov_fn).read()
+        covar.val[0,0] = np.nan
+
+        try:
+            frame = single_snp(test_snps=test_snps[:,:10], pheno=pheno, mixing=0,leave_out_one_chrom=False,
+                                      G0=test_snps, covar=covar, 
+                                      count_A1=False
+                                      )
+        except Exception as e:
+            pass
+
+        covar_by_chrom = {chrom:covar for chrom in set(test_snps.pos[:,0])}
+        try:
+            frame = single_snp(test_snps=test_snps[:,:10], pheno=pheno, mixing=0,leave_out_one_chrom=True,
+                                      G0=test_snps, covar_by_chrom=covar_by_chrom, 
+                                      count_A1=False
+                                      )
+        except Exception as e:
+            pass
+
+
+
+
+    def test_thres(self):
+        logging.info("TestSingleSnp test_thres")
+        test_snps = Bed(self.bedbase, count_A1=False)
+        pheno = self.phen_fn
+        covar = self.cov_fn
+
+        reffile = TestFeatureSelection.reference_file("single_snp/one.txt")
+        reference=pd.read_csv(reffile,delimiter='\s',comment=None,engine='python')
+
+        for random_seed in [0,1]:
+            for pvalue_threshold in [.5, None, 1.0]:
+                for random_threshold in [.5, None, 1.0]:
+                    frame = single_snp(test_snps=test_snps[:,:10], pheno=pheno, mixing=0,leave_out_one_chrom=False,
+                                              G0=test_snps, covar=covar, pvalue_threshold=pvalue_threshold, random_threshold=random_threshold,
+                                              random_seed=random_seed,
+                                              count_A1=False
+                                              )
+
+                    assert len(frame) <= len(reference), "# of pairs differs from file '{0}'".format(reffile)
+                    if len(frame) < len(reference):
+                        assert frame['PValueCount'].iloc[0] == len(reference), "row_count doesn't match the reference # of rows"
+                    if random_threshold is not None:
+                        assert np.all(frame['RandomThreshold']==random_threshold), "Expect all rows to have 'RandomThreshold'"
+                        assert np.all(frame['RandomSeed']==random_seed), "Expect all rows to have right 'RandomSeed'"
+                        if pvalue_threshold is not None:
+                            assert np.all((frame['RandomValue']<=random_threshold) + (frame['PValue']<=pvalue_threshold)), "Expect all rows have random value or pvalue less than threshold"
+                    if pvalue_threshold is not None:
+                        assert np.all(frame['PValueThreshold']==pvalue_threshold), "Expect all rows to have 'PValueThreshold'"
+                    for _, row in frame.iterrows():
+                        sid = row.SNP
+                        pvalue = reference[reference['SNP'] == sid].iloc[0].PValue
+                        diff = abs(row.PValue - pvalue)
+                        if diff > 1e-5 or np.isnan(diff):
+                            raise Exception("pair {0} differs too much from file '{1}'".format(sid,reffile))
+                        assert abs(row.PValue - pvalue) < 1e-5, "wrong"
+
+
+
     def test_linreg(self):
         logging.info("TestSingleSnp test_linreg")
         test_snps = Bed(self.bedbase, count_A1=False)
@@ -480,6 +560,24 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
         self.compare_files(frame,"one_looc")
 
+    def test_runner(self):
+        logging.info("TestRunner")
+        test_snps = Bed(self.bedbase, count_A1=False)
+        pheno = self.phen_fn
+        covar = self.cov_fn
+
+        runner = LocalMultiProc(6,just_one_process=True)
+        for map_reduce_outer  in [True,False]:
+            frame = single_snp(test_snps, pheno,
+                                      covar=covar, mixing=0,
+                                      count_A1=False,
+                                      runner=runner, map_reduce_outer=map_reduce_outer
+                                      )
+
+            self.compare_files(frame,"one_looc")
+
+
+
     def test_multipheno(self):
         logging.info("TestSingleSnpLeaveOutOneChrom test_multipheno")
         test_snps = Bed(self.bedbase, count_A1=False)
@@ -490,7 +588,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         pheno2.val[0,0] = 100
         pheno2.val[1,0] = -100
 
-        cache_file = None # "m:/deldir/cache/cmktest.npz" #!!!cmkx test cacheing
+        cache_file = None
 
         if True:
             pheno12 = SnpData(iid=pheno2.iid,sid=["pheno1","pheno2"],val = np.c_[Pheno(pheno).read().val,pheno2.val])
@@ -678,7 +776,6 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
             assert "multiple phenotypes" in str(e)
 
     def test_cache(self):
-        #!!!cmk need to test with 1pheno and multipheno
         test_snpsx = Bed(self.bedbase, count_A1=False)
         phen1 = self.phen_fn
         phen3 = self.create_phen3(Pheno(self.phen_fn))
@@ -706,35 +803,6 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                                                 leave_out_one_chrom=leave_out_one_chrom,force_full_rank=force_full_rank,force_low_rank=force_low_rank
                                                 )
                     self.compare_files(frame, ref_file)
-
-
-    
-
-    #def test_multipheno2(self):
-    #    from fastlmm.util import example_file # Download and return local file name
-
-    #    bed_fn = example_file('tests/datasets/synth/all.*','*.bed')
-    #    pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
-    #    cov_fn = example_file("tests/datasets/synth/cov.txt")
-
-    #    old_pheno = Pheno(pheno_fn)
-    #    seed = 1
-    #    np.random.seed(seed)
-    #    pheno_count = 10
-    #    pheno_data = SnpData(iid=old_pheno.iid,sid=['pheno{0}'.format(i) for i in range(pheno_count)],val=np.random.randn(old_pheno.iid_count,pheno_count)*3+2)
-    #    for missing_index in range(20): #Add missing data to the random phenos
-    #         pheno_data.val[np.random.randint(pheno_data.iid_count),np.random.randint(pheno_data.sid_count)] = np.nan
-    #    pheno_data.val[:,0] = old_pheno.read().val[:,0] #Stick the old phenotype into the new
-
-    #    pheno_wo_bad_indivs = pheno_data[(pheno_data.val==pheno_data.val).any(1),:]
-    #    # Standardize the pheno data to mean 0 and std dev 1 and then fill any missing values with 0
-    #    pheno = pheno_wo_bad_indivs.read().standardize()
-
-    #    # Run GWAS
-    #    for force_full_rank, force_low_rank in [(True,False),(False,True)]:
-    #        results_df = single_snp(bed_fn, pheno, covar=cov_fn, count_A1=False)
-    #        print("cmk",results_df)
-
 
 
     def test_two_looc(self):
@@ -827,151 +895,13 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
 
 def getTestSuite():
-    
-
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnp)
     suite2 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpLeaveOutOneChrom)
     return unittest.TestSuite([suite1,suite2])
 
-def cmk_1():
-    import logging
-    import time
-
-    import numpy as np
-    from fastlmm.association import single_snp
-    from pysnptools.snpreader import Bed, Pheno, SnpData
-    from pysnptools.util.mapreduce1.runner import LocalMultiProc
-
-    logging.basicConfig(level=logging.INFO)
-    logging.info("test")
-
-    os.chdir(r"D:\OneDrive\Projects\Science\virginia")
-
-    phenoFile = "Phenotype.txt"
-    covFile = "gender_noHead.txt"
-
-
-    syndata_bedfile = r"m:\deldir\virginia\syndata1.bed"
-    bedData = Bed(syndata_bedfile, count_A1=True)
-    print(bedData.shape)
-
-
-    def pheno_dup(y_count):
-        pheno0 = Pheno(phenoFile).read()
-        iid = pheno0.iid
-        sid = [f"pheno{sid_index}" for sid_index in range(y_count)]
-        val = np.repeat(pheno0.val, y_count, axis=1)
-        snpdata = SnpData(iid=iid, sid=sid, val=val, name=f"pheno_dup({y_count})")
-        return snpdata
-
-
-    #########################
-    # initialize parameters #
-    #########################
-    k_every_n_snps = 100
-    pheno_count = 18
-    test_every_n_snps = 100
-    covFile = "gender_noHead.txt"
-    covar_interact_index = 0
-    version = 1
-    runner = None  # LocalMultiProc(8)
-    map_reduce_outer = True
-
-    pheno = pheno_dup(pheno_count)
-    cache_file = f"m:/deldir/cache/{version}_{k_every_n_snps}"
-
-    print(
-        bedData[:, ::k_every_n_snps].shape,
-        pheno.shape,
-        bedData[:, ::test_every_n_snps].shape,
-    )
-
-
-    ################
-    # run fastlmm #
-    ################
-
-    # By default, does leave_out_one_chrom
-    # By default, K0 is built from test_snps
-    start = time.time()
-    df = single_snp(
-        cache_file=cache_file,
-        test_snps=bedData[:, ::test_every_n_snps],
-        pheno=pheno,
-        covar=covFile,
-        K0=bedData[:, ::k_every_n_snps],
-        count_A1=True,
-        interact_with_snp=covar_interact_index,
-        threshold=.001,
-        runner=runner,
-        map_reduce_outer=map_reduce_outer,
-    )
-
-    print(df)
-    print(time.time() - start)
-
-def cmk_2():
-    import os
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    logging.info("test")
-    from pysnptools.snpreader import Pheno, SnpMemMap, Bed
-    from fastlmm.association import single_snp
-    from pysnptools.util.mapreduce1.runner import LocalMultiProc
-
-    phenoFile = "gene.txt"
-    covFile = "gender_noHead.txt"
-
-    os.chdir(r"D:\OneDrive\Projects\Science\virginia")
-
-    #cmk todo: test just one chrom at a time
-
-    def time_syndata(K_sid_count,test_sid_count,pheno_count,use_bed=False):
-        version = 1
-
-        if use_bed:
-            snp_data = Bed(r"m:\deldir\virginia\syndata1.bed",count_A1=True)
-        else:
-            snp_data = SnpMemMap("DSout.snp.memmap")
-        K0 =  snp_data[:,::snp_data.sid_count//K_sid_count]
-        test_snps = snp_data[:,::snp_data.sid_count//test_sid_count]
-        pheno = Pheno("gene.txt")[:,:pheno_count]
-
-        # prefix = f"chrom{chrom_to_test}_v{version}_gs{gene_step}_ks{K0_step}"
-        # cache_file = f"cache/{prefix}"
-        # out_file = f"output/{prefix}_ts{test_snp_skip}.csv"
-
-        runner = None # LocalMultiProc(8,just_one_process=False)
-        map_reduce_outer = True
-
-        df = single_snp(
-            # cache_file=cache_file,
-            K0=K0,
-            test_snps=test_snps,
-            pheno=pheno,
-            covar="gender_noHead.txt",
-            interact_with_snp=0,
-            pvalue_threshold=.5, #.001,
-            random_threshold=.5,
-            # output_file_name=out_file,
-            runner = runner,
-            map_reduce_outer=map_reduce_outer
-        )
-        return df
-
-    # Show that can run 151x(6.3K,6.3K)x1 in about 18 seconds
-    time_syndata(K_sid_count=6_300,test_sid_count=6_300,pheno_count=1,use_bed=False)
-
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
-
-    # cmk_1() #cmk
-    # cmk_2() #cmk
-    # TestSingleSnpLeaveOutOneChrom.test_multipheno2(None)
-
-
 
     # this import is needed for the runner
     from fastlmm.association.tests.test_single_snp import TestSingleSnp,TestSingleSnpLeaveOutOneChrom

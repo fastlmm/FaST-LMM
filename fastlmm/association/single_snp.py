@@ -31,10 +31,10 @@ def single_snp(test_snps, pheno, K0=None,
                 output_file_name=None, h2=None, log_delta=None,
                 cache_file=None, GB_goal=None, interact_with_snp=None,
                 force_full_rank=False, force_low_rank=False, G0=None, G1=None,
-                runner=None, map_reduce_outer=True, # !!! cmkx
-                pvalue_threshold=None, # !!!cmkx
-                random_threshold=None, # !!!cmkx
-                random_seed = 0, # !!!cmkx
+                runner=None, map_reduce_outer=True, # !!! cmkdoc
+                pvalue_threshold=None, # !!!cmkdoc
+                random_threshold=None, # !!!cmkdoc
+                random_seed = 0, # !!!cmkdoc
                 xp=None,
                 count_A1=None):
     """
@@ -50,7 +50,7 @@ def single_snp(test_snps, pheno, K0=None,
            `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            Any IIDs with missing values will be removed.
-            #!!!cmk multiple phenos can given, but if so, K1 can't be given
+            #!!!cmkdoc multiple phenos can given, but if so, K1 can't be given
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
     :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
@@ -180,8 +180,9 @@ def single_snp(test_snps, pheno, K0=None,
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
         good_values_per_iid = (pheno.val==pheno.val).sum(axis=1)
         assert not np.any((good_values_per_iid>0) * (good_values_per_iid<pheno.sid_count)), "With multiple phenotypes, an individual's values must either be all missing or have no missing."
-        pheno = pheno[good_values_per_iid>0,:] # drop individuals with no good pheno values. #!!!cmk test this
-        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1) #!!!cmk what happens with missing data in covar??? and covar_per_chrom?
+        pheno = pheno[good_values_per_iid>0,:] # drop individuals with no good pheno values.
+        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1) #!!!cmkdoc what happens with missing data in covar??? and covar_per_chrom?
+
 
         if not leave_out_one_chrom:
             assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"  # !!!LATER document covar_by_chrom
@@ -209,8 +210,9 @@ def single_snp(test_snps, pheno, K0=None,
                                         random_seed = random_seed,
                                         xp=xp, 
                                         )
-            sid_index_range = IntRangeSet(frame['sid_index'])
-            assert sid_index_range == (0, test_snps.sid_count), "Some SNP rows are missing from the output"
+            if pvalue_threshold is None and random_threshold is None:
+                sid_index_range = IntRangeSet(frame['sid_index'])
+                assert sid_index_range == (0, test_snps.sid_count), "Some SNP rows are missing from the output"
         else:
             if map_reduce_outer:
                 runner_outer = runner
@@ -238,7 +240,6 @@ def single_snp(test_snps, pheno, K0=None,
                 K0_chrom = _K_per_chrom(K0 or G0 or test_snps, chrom, test_snps.iid)
                 K1_chrom = _K_per_chrom(K1 or G1, chrom, test_snps.iid)
 
-                # !!!cmkx do the right thing when multiple pheno and some is missing
                 K0_chrom, K1_chrom, test_snps_chrom, pheno_chrom, covar_chrom = pstutil.intersect_apply([K0_chrom, K1_chrom, test_snps_chrom, pheno, covar_chrom])
                 logging.debug("# of iids now {0}".format(K0_chrom.iid_count))
                 K0_chrom, K1_chrom, block_size = _set_block_size(K0_chrom, K1_chrom, mixing, GB_goal, force_full_rank, force_low_rank)
@@ -575,9 +576,9 @@ def _internal_determine_block_size(K0, K1, mixing, force_full_rank, force_low_ra
     ##########################
     return K0.iid_count
 
-def _create_dataframe(row_count):
+def _create_dataframe(pvalue_count):
     dataframe = pd.DataFrame(
-        index=np.arange(row_count),
+        index=np.arange(pvalue_count),
         columns=('sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue', 'SnpWeight', 'SnpWeightSE','SnpFractVarExpl','Mixing', 'Nullh2')
         )
     #!!Is this the only way to set types in a dataframe?
@@ -759,16 +760,13 @@ def compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_ex
         h2_list.append(h2_p)
         mixing_list.append(mixing_p)
 
-    lmm_0.Y = multi_y #!!!cmkx is this needed?
-    lmm_0.UY = np.r_[uy_list].T #!!!cmkx is this needed?
+    lmm_0.Y = multi_y
+    lmm_0.UY = np.r_[uy_list].T
     if lmm_0.UUY is not None:
-        lmm_0.UUY = np.r_[uuy_list].T #!!!cmkx is this needed?
-    # !!!cmkx assert that P>1, G,UUX,UUY,UX are None and need code
+        lmm_0.UUY = np.r_[uuy_list].T
+        assert lmm_0.UUY.shape == multi_pheno.shape, "expect pheno and lmm.UUY to have the same shape"
     multi_h2 = np.r_[h2_list]
     multi_mixing = np.r_[mixing_list]
-
-    if lmm_0.UUY is not None:
-        assert lmm_0.UUY.shape == multi_pheno.shape, "expect pheno and lmm.UUY to have the same shape"
 
     return lmm_0, multi_h2, multi_mixing
 
@@ -801,7 +799,7 @@ def _find_h2_s_u_for_one_pheno(K0, K1, covar_val, regressX, linreg, y, mixing, h
 def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, runner, h2, mixing, pvalue_threshold, random_threshold, random_seed):
         
     work_count = -(test_snps.sid_count // -block_size) #Find the work count based on batch size (rounding up)
-    row_count = test_snps.sid_count * pheno.sid_count
+    pvalue_count = test_snps.sid_count * pheno.sid_count
 
     Sd, denom, h2 = lmm.get_Sd_etc(Sd=None, denom=None, h2=h2, logdelta=None, delta=None, scale=1, weightW=None)
 
@@ -812,15 +810,12 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
     def mapper_closure(work_index):
         xp = pstutil.array_module()
         if work_count > 1: logging.info(f"single_snp: Working on snp block {work_index} of {work_count}")
-        # print(f"cmkx single_snp: Working on snp block {work_index} of {work_count}")
 
         do_work_time = time.time()
         start = debatch_closure(work_index)
         end = debatch_closure(work_index+1)
 
-        # print(f"cmkx reading {test_snps[:,start:end]}")
         snps_read = test_snps[:,start:end].read()
-        # print(f"cmkx standardize")
         if xp is np:
             snps_read.standardize()
             val = xp.asarray(snps_read.val)
@@ -834,13 +829,12 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
         else:
             variables_to_test = val
 
-        # print(f"cmkx ll eval")
         res = lmm.nLLeval(h2=h2, dof=None, scale=1.0, penalty=0.0, snps=variables_to_test, Sd=Sd, denom=denom)
 
         assert test_snps.iid_count == lmm.U.shape[0]
         assert res['beta'].size==(end-start)*pheno.sid_count, "Expect multi_beta to be (end-start)x phenos"
 
-        df = _compute_stats(
+        df = _multi_compute_stats(
             res['beta'],
             res['variance_beta'],
             res['fraction_variance_explained_beta'],
@@ -854,7 +848,7 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
             pvalue_threshold=pvalue_threshold,
             random_threshold=random_threshold,
             random_seed=random_seed,
-            row_count=row_count,
+            pvalue_count=pvalue_count,
             xp=xp
             )
 
@@ -881,17 +875,15 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
                         runner=runner)
     return frame
 
-#!!!cmkx RENAME MULTI_
-def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
+def _multi_compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
                   start,end,snps_read,pheno_sid,
-                  mixing, h2, lmm, pvalue_threshold, random_threshold, random_seed, row_count, xp):
+                  mixing, h2, lmm, pvalue_threshold, random_threshold, random_seed, pvalue_count, xp):
     assert len(multi_beta.reshape(-1))==(end-start)*len(pheno_sid), "Expect multi_beta to be (end-start)x phenos"
     assert multi_variance_beta.shape == multi_beta.shape and multi_beta.shape==multi_fraction_variance_explained_beta.shape, "expect beta, variance_beta, and fraction_variance_explained_beta to agree on shape"
 
-    #!!!cmkx use np.broadcast_to ???? inplace of tile/repeat
     chi2stats = pstutil.asnumpy(multi_beta*multi_beta/multi_variance_beta)
     p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))
-    p_values = p_values.T.reshape(-1) # !!!cmkx add warning at top level to use threshold
+    p_values = p_values.T.reshape(-1)
     pvalue_keep_index = p_values <= (pvalue_threshold or 1.0)
     if random_threshold is not None:
         rng = np.random.RandomState((start,random_seed))
@@ -903,16 +895,16 @@ def _compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explai
     dataframe = _create_dataframe(keep_index.sum())
 
     if len(pheno_sid) > 1:
-        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count)[keep_index] #!!!cmkx add test
-        dataframe['PhenoCount'] = len(pheno_sid) #!!!cmkx add test
-    if pvalue_threshold is not None:
-        dataframe['PValueThreshold'] = pvalue_threshold #!!!cmkx add test
-    if random_threshold is not None:
-        dataframe['RandomValue'] = random_values[keep_index] #!!!cmkx add test
-        dataframe['RandomThreshold'] = random_threshold #!!!cmkx add test
-        dataframe['RandomSeed'] = random_seed #!!!cmkx add test
+        dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count)[keep_index]
+        dataframe['PhenoCount'] = len(pheno_sid) #!!!cmk doc
+    if pvalue_threshold is not None:#!!!cmk doc
+        dataframe['PValueThreshold'] = pvalue_threshold
+    if random_threshold is not None:#!!!cmk doc
+        dataframe['RandomValue'] = random_values[keep_index]
+        dataframe['RandomThreshold'] = random_threshold
+        dataframe['RandomSeed'] = random_seed
     if pvalue_threshold is not None or random_threshold is not None:
-        dataframe['row_count'] = row_count
+        dataframe['PValueCount'] = pvalue_count
 
     dataframe['sid_index'] = np.tile(np.arange(start,end), len(pheno_sid))[keep_index]
     dataframe['SNP'] = np.tile(snps_read.sid, len(pheno_sid))[keep_index]

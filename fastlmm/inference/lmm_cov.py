@@ -44,7 +44,7 @@ class LMM(object):
         '''
         self._xp = pstutil.array_module(xp)
         self.numcalls = 0
-        self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first) #!!!cmkx multipheno check
+        self.setX(X=X, regressX=regressX, linreg=linreg)    #set the covariates (needs to be first)
         self.forcefullrank = forcefullrank
         self.setK(K=K, G=G, inplace=inplace)                 #set the kernel, if available
         self.setY(Y=Y)                      #set the phenotypes
@@ -457,10 +457,8 @@ class LMM(object):
                 res = self.nLLeval(h2=x,**kwargs)
                 if (resmin[0] is None) or (res['nLL'] < resmin[0]['nLL']):
                     resmin[0] = res
-                # print("cmkx search\t{0}\t{1}".format(x,res['nLL']))
                 return res['nLL'][0]   
             min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
-            #logging.info("search\t{0}\t{1}".format("?",resmin[0]))
             return resmin[0]
 
     def posterior_h2(self, nGridH2=1000, minH2=0.0, maxH2=0.99999, **kwargs):
@@ -647,7 +645,7 @@ class LMM(object):
         Sd, denom, h2 = self.get_Sd_etc(Sd, denom, h2, logdelta, delta, scale, weightW)
 
         if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
-            assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time" # !!!cmkx
+            assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time"
             return {'nLL':3E20,
                     'h2':h2,
                     'scale':scale}
@@ -680,7 +678,7 @@ class LMM(object):
             denom = delta * scale         # determine normalization factor
             h2 = 1.0 / (1.0 + delta)
             assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
-        else: # !!!cmkx need code or assert of delta is not None
+        else:
             if not isinstance(h2,np.ndarray):
                 h2 = np.repeat(h2,1)
             Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
@@ -743,7 +741,7 @@ class LMM(object):
         logdetK = np.log(Sd).sum(0)
 
         if (UUY is not None):#low rank part
-            logdetK+=(N - k) * np.log(denom) #!!!cmkx this should be a pheno loop
+            logdetK+=(N - k) * np.log(denom)
         
         if Usnps is not None:
             snpsKsnps = np.full((Usnps.shape[1],P),np.nan)
@@ -764,6 +762,7 @@ class LMM(object):
             absw = np.absolute(weightW)
             weightW_nonz = absw > 1e-10
         if (UW is not None and weightW_nonz.any()):#low rank updates
+            assert P==1, "currently no support for this code path and multiple phenotypes"
             multsign = False
             absw = np.sqrt(absw)
             signw = np.sign(weightW)
@@ -812,7 +811,7 @@ class LMM(object):
                 snpsKY -= UWsnps.T.dot(WY)
                 # perform updates (instantiations for a and b in Equation (1.5) of
                 # Supplement)
-                snpsKsnps -= (UWsnps * Wsnps).sum(0)[:,np.newaxis] #!!!cmk what if there are mulitple phenos?
+                snpsKsnps -= (UWsnps * Wsnps).sum(0)[:,np.newaxis]
             
             # determinant update
             prod_diags = signw * S_WW
@@ -827,7 +826,7 @@ class LMM(object):
             assert (penalty_ >= 0.0), "penalty has to be non-negative"
             beta = snpsKY / (snpsKsnps + penalty_)
             if np.isnan(beta.min()):
-                logging.debug("NaN beta value seen, may be due to an SNC (a constant SNP)") #!!!cmkx
+                logging.debug("NaN beta value seen, may be due to an SNC (a constant SNP)")
                 beta[snpsKY==0] = 0.0
             variance_explained_beta = (snpsKY * beta)
             r2 = YKY[np.newaxis,:] - variance_explained_beta 
