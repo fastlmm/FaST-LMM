@@ -25,7 +25,7 @@ from pysnptools.util.mapreduce1 import map_reduce
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
 #  might be a covar mix up.(but only if a SnpKernel
-def single_snp(test_snps, pheno, K0=None,
+def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing and caching.
                 K1=None, mixing=None,
                 covar=None, covar_by_chrom=None, leave_out_one_chrom=True,
                 output_file_name=None, h2=None, log_delta=None,
@@ -171,7 +171,7 @@ def single_snp(test_snps, pheno, K0=None,
 
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent,exist_ok=True)
-
+    #cmkfix: Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
     xp = pstutil.array_module(xp)
     with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
 

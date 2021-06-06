@@ -126,6 +126,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
+    #cmk fix all these test of error runs so they will fail if they don't fail
     def test_zero_pheno(self):
         logging.info("TestSingleSnp test_zero_pheno")
         test_snps = Bed(self.bedbase, count_A1=False)
