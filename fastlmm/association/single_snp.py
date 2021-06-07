@@ -75,7 +75,7 @@ def single_snp(test_snps, pheno, K0=None,
     :param covar: covariate information, optional: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
            Missing values are not supported.
-           (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header') #!!!LATER raise error if covar has NaN
+           (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
     :type covar: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param covar_by_chrom: dictionary from chromosome number to covariate information, optional:
@@ -176,10 +176,12 @@ def single_snp(test_snps, pheno, K0=None,
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_576 1e-07 10000
 
-    For more examples, see: 
-        https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
-        https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb
+    For more examples, see:
+
+    * `Main FaST-LMM notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_
+    * `Multiple phenotypes and related new features <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb>`_
     """
+    #!!!LATER raise error if covar has NaN
     t0 = time.time()
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
