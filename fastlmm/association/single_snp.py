@@ -25,16 +25,16 @@ from pysnptools.util.mapreduce1 import map_reduce
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
 #  might be a covar mix up.(but only if a SnpKernel
-def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing and caching.
+def single_snp(test_snps, pheno, K0=None,
                 K1=None, mixing=None,
                 covar=None, covar_by_chrom=None, leave_out_one_chrom=True,
                 output_file_name=None, h2=None, log_delta=None,
                 cache_file=None, GB_goal=None, interact_with_snp=None,
                 force_full_rank=False, force_low_rank=False, G0=None, G1=None,
-                runner=None, map_reduce_outer=True, # !!! cmkdoc
-                pvalue_threshold=None, # !!!cmkdoc
-                random_threshold=None, # !!!cmkdoc
-                random_seed = 0, # !!!cmkdoc
+                runner=None, map_reduce_outer=True,
+                pvalue_threshold=None,
+                random_threshold=None,
+                random_seed = 0,
                 xp=None,
                 count_A1=None):
     """
@@ -46,11 +46,11 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
     :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
-    :param pheno: A single phenotype: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
+    :param pheno: A one or more phenotypes: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example,
            `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-           Any IIDs with missing values will be removed.
-            #!!!cmkdoc multiple phenos can given, but if so, K1 can't be given
+           Any individual with missing all values will be removed.
+           If more than one phenotype is given, then K1 (the 2nd kernel) cannot be given.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header')
     :type pheno: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
@@ -74,6 +74,7 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
 
     :param covar: covariate information, optional: Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_, for example, `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`_ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`_.
            If you give a string, it should be the file name of a PLINK phenotype-formatted file.
+           Missing values are not supported.
            (For backwards compatibility can also be dictionary with keys 'vals', 'iid', 'header') #!!!LATER raise error if covar has NaN
     :type covar: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
@@ -82,6 +83,7 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
            can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
            If given, leave_out_one_chrom must be True.
            Both covar and covar_by_chrom can be given.
+           Missing values are not supported.
     :type covar_by_chrom: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
@@ -103,9 +105,9 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
                 If not given, no cache file will be used.
                 If given and file does not exist, will write precomputation values to file.
                 If given and file does exist, will read precomputation values from file.
-                The file contains the U and S matrix from the decomposition of the training matrix. It is in Python's np.savez (\*.npz) format.
-                Calls using the same cache file should have the same 'K0' and 'K1'
-                If given and the file does exist then K0 and K1 need not be given.
+                The file contains the S and U from the decomposition of the training matrix and other values.
+                It is in Python's np.savez (\*.npz) format.
+                Calls using the same cache file should have the same inputs (pheno, K0, K1, covar) but test_snps can differ.
     :type cache_file: file name
 
     :param GB_goal: gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
@@ -131,6 +133,20 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
     :param runner: a `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_, optional: Tells how to run locally, multi-processor, or on a cluster.
         If not given, the function is run locally.
     :type runner: `Runner <http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner>`_
+
+    :param pvalue_threshold: All output rows with p-values less than this threshold will be included. By default, all rows are included.
+        This is used to exclude rows with large p-values.
+    :type pvalue_threshold: number between 0 and 1
+
+    :param random_threshold: All potential output rows are assigned a random value. All rows with a random value less than this threshold will be included.
+        By default, all rows are included. This is used to create a random sample of output rows.
+    :type random_threshold: number between 0 and 1
+
+    :param random_seed: Seed used to assign a random values to rows. Used with random_threshold.
+    :type random_threshold: integer
+
+    :param map_reduce_outer: If true (default), divides work by chromosome. If false, divides test_snp work into chunks.
+    :type map_reduce_outer: bool
 
     :param xp: The array module to use (optional), for example, 'numpy' (normal CPU-based module)
                or 'cupy' (GPU-based module). If not given, will try to read
@@ -160,7 +176,9 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     null_576 1e-07 10000
 
-
+    For more examples, see: 
+        https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb
+        https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb
     """
     t0 = time.time()
     if force_full_rank and force_low_rank:
@@ -171,7 +189,7 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
 
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent,exist_ok=True)
-    #cmkfix: Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+    
     xp = pstutil.array_module(xp)
     with patch.dict('os.environ', {'ARRAY_MODULE': xp.__name__}) as _:
 
@@ -181,8 +199,7 @@ def single_snp(test_snps, pheno, K0=None, #!!!cmktest add test of K1 and mixing 
         good_values_per_iid = (pheno.val==pheno.val).sum(axis=1)
         assert not np.any((good_values_per_iid>0) * (good_values_per_iid<pheno.sid_count)), "With multiple phenotypes, an individual's values must either be all missing or have no missing."
         pheno = pheno[good_values_per_iid>0,:] # drop individuals with no good pheno values.
-        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1) #!!!cmkdoc what happens with missing data in covar??? and covar_per_chrom?
-
+        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
         if not leave_out_one_chrom:
             assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"  # !!!LATER document covar_by_chrom
@@ -896,10 +913,10 @@ def _multi_compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_
 
     if len(pheno_sid) > 1:
         dataframe['Pheno'] = np.repeat(pheno_sid, snps_read.sid_count)[keep_index]
-        dataframe['PhenoCount'] = len(pheno_sid) #!!!cmk doc
-    if pvalue_threshold is not None:#!!!cmk doc
+        dataframe['PhenoCount'] = len(pheno_sid)
+    if pvalue_threshold is not None:
         dataframe['PValueThreshold'] = pvalue_threshold
-    if random_threshold is not None:#!!!cmk doc
+    if random_threshold is not None:
         dataframe['RandomValue'] = random_values[keep_index]
         dataframe['RandomThreshold'] = random_threshold
         dataframe['RandomSeed'] = random_seed

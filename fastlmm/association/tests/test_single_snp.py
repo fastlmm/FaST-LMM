@@ -126,20 +126,21 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame,"one")
 
-    #cmk fix all these test of error runs so they will fail if they don't fail
     def test_zero_pheno(self):
         logging.info("TestSingleSnp test_zero_pheno")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = Pheno(self.phen_fn)[:,0:0]
         covar = self.cov_fn
 
+        got_expected_fail = False
         try:
             frame = single_snp(test_snps=test_snps[:,:10], pheno=pheno, mixing=0,leave_out_one_chrom=False,
                                       G0=test_snps, covar=covar, 
                                       count_A1=False
                                       )
         except Exception as e:
-            pass
+            got_expected_fail = True
+        assert got_expected_fail, "Did not get expected fail"
 
 
     def test_missing_covar(self):
@@ -149,23 +150,26 @@ class TestSingleSnp(unittest.TestCase):
         covar = Pheno(self.cov_fn).read()
         covar.val[0,0] = np.nan
 
+        got_expected_fail = False
         try:
             frame = single_snp(test_snps=test_snps[:,:10], pheno=pheno, mixing=0,leave_out_one_chrom=False,
                                       G0=test_snps, covar=covar, 
                                       count_A1=False
                                       )
         except Exception as e:
-            pass
+            got_expected_fail = True
+        assert got_expected_fail, "Did not get expected fail"
 
         covar_by_chrom = {chrom:covar for chrom in set(test_snps.pos[:,0])}
+        got_expected_fail = False
         try:
             frame = single_snp(test_snps=test_snps[:,:10], pheno=pheno, mixing=0,leave_out_one_chrom=True,
                                       G0=test_snps, covar_by_chrom=covar_by_chrom, 
                                       count_A1=False
                                       )
         except Exception as e:
-            pass
-
+            got_expected_fail = True
+        assert got_expected_fail, "Did not get expected fail"
 
 
 
@@ -757,24 +761,30 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         phen = Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt"))
         phen3 = self.create_phen3(phen)
 
+        got_expected_fail = false
         try:
             single_snp(test_snps=bed,pheno=phen3,covar=None,
                                             K0=bed, K1=bed, interact_with_snp=None,
                                             force_full_rank=False, force_low_rank=False)
         except Exception as e:
             assert "2nd kernel" in str(e)
+            got_expected_fail = True
+        assert got_expected_fail, "Did not get expected fail"
 
         phen3.val[1,:] = np.nan # Add a missing value to all phenos
         single_snp(test_snps=bed,pheno=phen3,covar=None,
                                         K0=bed, interact_with_snp=None,
                                         force_full_rank=False, force_low_rank=False)
         phen3.val[0,0] = np.nan # Add a missing value to one pheno, but not the others
+        got_expected_fail = False
         try:
             single_snp(test_snps=bed,pheno=phen3,covar=None,
                                             K0=bed, interact_with_snp=None,
                                             force_full_rank=False, force_low_rank=False)
         except Exception as e:
             assert "multiple phenotypes" in str(e)
+            got_expected_fail = True
+        assert got_expected_fail, "Did not get expected fail"
 
     def test_cache(self):
         test_snpsx = Bed(self.bedbase, count_A1=False)
