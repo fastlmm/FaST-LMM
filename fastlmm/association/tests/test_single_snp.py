@@ -761,7 +761,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         phen = Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt"))
         phen3 = self.create_phen3(phen)
 
-        got_expected_fail = false
+        got_expected_fail = False
         try:
             single_snp(test_snps=bed,pheno=phen3,covar=None,
                                             K0=bed, K1=bed, interact_with_snp=None,
