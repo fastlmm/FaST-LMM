@@ -512,7 +512,7 @@ def qqplotfile(filein,fileout = None, pnames=pnames(), rownames=rownames(),alpha
 
 def qqplotp(pv,fileout = None, pnames=pnames(), rownames=rownames(),alphalevel = 0.05,legend=None,xlim=None,ylim=None,ycoord=10,plotsize="652x526",title=None,dohist=True):
      '''
-     Read in p-values from filein and make a qqplot adn histogram.
+     Read in p-values from filein and make a qqplot and histogram.
      If fileout is provided, saves the qqplot only at present.
      Searches through p until one is found.   '''       
      
@@ -584,7 +584,7 @@ def qqplotavg(pvallist, fileout = None, alphalevel = 0.05,legend=None,xlim=None,
     
 def qqplotfromq(qnull,qemp):
     '''
-    Given uniform quartile values, and emprirical ones, make a qq plot
+    Given uniform quartile values, and empirical ones, make a qq plot
     '''    
     pl.ion()
     pl.plot(qnull, qemp, '.',markersize = 2)                

@@ -43,7 +43,7 @@ single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large
 <dt class="field-odd">new</dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<p><a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> runs on both CPU (default) and GPU (optional).</p>
+<p><a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> now supports multiple phenotypes and related features (<a class="reference external" href="https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb">notebook demonstrating new features</a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Code</dt>
 <dd class="field-odd"><p></p></dd>
@@ -67,23 +67,24 @@ list (or use <a class="reference external" href="https://mail.python.org/mailman
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp</span></code><a class="headerlink" href="#single-snp" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="fastlmm.association.single_snp">
-<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">K0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar_by_chrom</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">leave_out_one_chrom</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_delta</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">interact_with_snp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">G0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">G1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">xp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">fastlmm.association.</code><code class="sig-name descname">single_snp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_snps</span></em>, <em class="sig-param"><span class="n">pheno</span></em>, <em class="sig-param"><span class="n">K0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">K1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixing</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar_by_chrom</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">leave_out_one_chrom</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">h2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_delta</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">GB_goal</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">interact_with_snp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_full_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force_low_rank</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">G0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">G1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">runner</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">map_reduce_outer</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">pvalue_threshold</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random_threshold</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random_seed</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">xp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">count_A1</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.single_snp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
 (For backwards compatibility, you may use ‘leave_out_one_chrom=False’ to skip cross validation, but that is not recommended.)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>test_snps</strong> – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
+<li><p><strong>test_snps</strong> – SNPs to test. Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p></li>
-<li><p><strong>pheno</strong> – <p>A single phenotype: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example,
+<li><p><strong>pheno</strong> – <p>A one or more phenotypes: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example,
 <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-Any IIDs with missing values will be removed.
+Any individual with missing all values will be removed.
+If more than one phenotype is given, then K1 (the 2nd kernel) cannot be given.
 (For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
 <li><p><strong>K0</strong> – <p>similarity matrix or SNPs from which to create a similarity matrix. If not given, will use test_snps.
-Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>. 
+Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
 If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
 If leave_out_one_chrom is True, can be a dictionary from chromosome number to any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader">KernelReader</a>
 or the name a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz">KernelNpz</a>-formated file.
@@ -95,13 +96,15 @@ name of a <a class="reference external" href="http://fastlmm.github.io/PySnpTool
 If you give no mixing number and a K1 is given, the best weight will be learned.</p></li>
 <li><p><strong>covar</strong> – <p>covariate information, optional: Can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>, for example, <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-pheno">Pheno</a> or <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpdata">SnpData</a>.
 If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’) #!!!LATER raise error if covar has NaN</p>
+Missing values are not supported.
+(For backwards compatibility can also be dictionary with keys ‘vals’, ‘iid’, ‘header’)</p>
 </p></li>
 <li><p><strong>covar_by_chrom</strong> – <p>dictionary from chromosome number to covariate information, optional:
 The covariate information
 can be any <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#snpreader-snpreader">SnpReader</a>.
 If given, leave_out_one_chrom must be True.
-Both covar and covar_by_chrom can be given.</p>
+Both covar and covar_by_chrom can be given.
+Missing values are not supported.</p>
 </p></li>
 <li><p><strong>leave_out_one_chrom</strong> (<em>boolean</em>) – Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
 (Warning: setting False can cause proximal contamination.)</p></li>
@@ -114,12 +117,12 @@ If mixing is unspecified, then h2 must also be unspecified.</p></li>
 If not given, no cache file will be used.
 If given and file does not exist, will write precomputation values to file.
 If given and file does exist, will read precomputation values from file.
-The file contains the U and S matrix from the decomposition of the training matrix. It is in Python’s np.savez (*.npz) format.
-Calls using the same cache file should have the same ‘K0’ and ‘K1’
-If given and the file does exist then K0 and K1 need not be given.</p></li>
+The file contains the S and U from the decomposition of the training matrix and other values.
+It is in Python’s np.savez (*.npz) format.
+Calls using the same cache file should have the same inputs (pheno, K0, K1, covar) but test_snps can differ.</p></li>
 <li><p><strong>GB_goal</strong> (<em>number</em>) – gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
 which is memory efficient with little overhead on computation time.</p></li>
-<li><p><strong>interact_with_snp</strong> – index of a covariate to perform an interaction test with. 
+<li><p><strong>interact_with_snp</strong> – index of a covariate to perform an interaction test with.
 Allows for interaction testing (interact_with_snp x snp will be tested)
 default: None</p></li>
 <li><p><strong>force_full_rank</strong> (<em>Boolean</em>) – Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.</p></li>
@@ -128,6 +131,12 @@ default: None</p></li>
 <li><p><strong>G1</strong> (<em>Same as K1.</em>) – Same as K1. Provided for backwards compatibility. Cannot be given if K1 is given.</p></li>
 <li><p><strong>runner</strong> – a <a class="reference external" href="http://fastlmm.github.io/PySnpTools/#util-mapreduce1-runner-runner">Runner</a>, optional: Tells how to run locally, multi-processor, or on a cluster.
 If not given, the function is run locally.</p></li>
+<li><p><strong>pvalue_threshold</strong> (<em>number between 0 and 1</em>) – All output rows with p-values less than this threshold will be included. By default, all rows are included.
+This is used to exclude rows with large p-values.</p></li>
+<li><p><strong>random_threshold</strong> (<em>integer</em>) – All potential output rows are assigned a random value. All rows with a random value less than this threshold will be included.
+By default, all rows are included. This is used to create a random sample of output rows.</p></li>
+<li><p><strong>random_seed</strong> – Seed used to assign a random values to rows. Used with random_threshold.</p></li>
+<li><p><strong>map_reduce_outer</strong> (<em>bool</em>) – If true (default), divides work by chromosome. If false, divides test_snp work into chunks.</p></li>
 <li><p><strong>xp</strong> (<em>string</em><em> or </em><em>Python module</em>) – The array module to use (optional), for example, ‘numpy’ (normal CPU-based module)
 or ‘cupy’ (GPU-based module). If not given, will try to read
 from the ARRAY_MODULE environment variable. If not given and ARRAY_MODULE is not set,
@@ -159,6 +168,11 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <span class="go">null_576 1e-07 10000</span>
 </pre></div>
 </div>
+<p>For more examples, see:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb">Main FaST-LMM notebook</a></p></li>
+<li><p><a class="reference external" href="https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb">Multiple phenotypes and related new features</a></p></li>
+</ul>
 </dd></dl>
 
 </div>

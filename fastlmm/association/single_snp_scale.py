@@ -939,7 +939,7 @@ def get_U_h2(chrom, gtg_npz_lambda, memory_factor, chrom_cache, G0_iid_count, G0
     S, U_memmap, UY, UUY = get_U(chrom, chrom_cache) #!!!y: at the end, U is multiplied twice with yish things
     
     #=============================================================
-    # 25K x about 30
+    # 25K x about 30 x 3
     #=============================================================
     UYUY = UY * UY
     UUYUUYsum0 = (UUY * UUY).sum(0)

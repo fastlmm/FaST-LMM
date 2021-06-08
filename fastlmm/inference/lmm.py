@@ -478,7 +478,7 @@ class LMM(object):
         if penalty>0.0:
             SxKx+=penalty
         i_pos = SxKx>1E-10
-        beta = SP.dot(UxKx[:,i_pos],(SP.dot(UxKx[:,i_pos].T,XKy)/SxKx[i_pos]))
+        beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
 
         r2 = yKy-XKy.dot(beta)
 
@@ -493,6 +493,7 @@ class LMM(object):
             else:
                 sigma2 = r2 / (N)
                 nLL =  0.5 * ( logdetK + N * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                # variance_beta = r2 / (N - 1.0) / snpsKsnps
             result = {
                   'nLL':nLL,
                   'sigma2':sigma2,
