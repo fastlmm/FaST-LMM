@@ -26,7 +26,8 @@ class LMM(object):
     '''
     __slots__ = ["linreg","G","Y","X","K","U","S","UX","UY","UUX","UUY","forcefullrank","regressX","numcalls","_xp"]
 
-    def __init__(self, forcefullrank=False, X=None, linreg=None, Y=None, G=None, K=None, regressX=True, inplace=False, xp=None):
+    def __init__(self, forcefullrank=False, X=None, linreg=None, Y=None, G=None, K=None, regressX=True, inplace=False,
+                S=None, U=None, xp=None):
         '''
 
         Args:
@@ -47,6 +48,8 @@ class LMM(object):
         self.forcefullrank = forcefullrank
         self.setK(K=K, G=G, inplace=inplace)                 #set the kernel, if available
         self.setY(Y=Y)                      #set the phenotypes
+        self.S = S
+        self.U = U
 
     def setY(self, Y):
         '''
@@ -189,7 +192,7 @@ class LMM(object):
             UUY     None if kernel is full rank, otherwise Y-U.dot(U.T.dot(Y))
         """
 
-        if self.UY is None:
+        if self.UY is None or self.UUY is None:
             self.UY,self.UUY = self.rotate(A=self.Y)
         if idx_pheno is None:
             return self.UY,self.UUY
@@ -259,7 +262,7 @@ class LMM(object):
             minA2   : minimum value for a2 optimization
             maxA2   : maximum value for a2 optimization
             i_up    : indices of columns in W corresponding to columns from first kernel that are subtracted of
-            i_G1    : indeces of columns in W corresponding to columns of the design matrix for second kernel G1
+            i_G1    : indices of columns in W corresponding to columns of the design matrix for second kernel G1
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
 
@@ -301,7 +304,7 @@ class LMM(object):
             maxA2   : maximum value for a2 optimization
             verbose : verbose output? (default: False)
             i_up    : indices of columns in W corresponding to columns from first kernel that are subtracted of
-            i_G1    : indeces of columns in W corresponding to columns of the design matrix for second kernel G1
+            i_G1    : indices of columns in W corresponding to columns of the design matrix for second kernel G1
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
 
@@ -349,7 +352,7 @@ class LMM(object):
             minA2   : minimum value for a2 optimization
             maxA2   : maximum value for a2 optimization
             i_up    : indices of columns in W corresponding to columns from first kernel that are subtracted of
-            i_G1    : indeces of columns in W corresponding to columns of the design matrix for second kernel G1
+            i_G1    : indices of columns in W corresponding to columns of the design matrix for second kernel G1
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
 
@@ -454,10 +457,8 @@ class LMM(object):
                 res = self.nLLeval(h2=x,**kwargs)
                 if (resmin[0] is None) or (res['nLL'] < resmin[0]['nLL']):
                     resmin[0] = res
-                logging.debug("search\t{0}\t{1}".format(x,res['nLL']))
                 return res['nLL'][0]   
             min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
-            #logging.info("search\t{0}\t{1}".format("?",resmin[0]))
             return resmin[0]
 
     def posterior_h2(self, nGridH2=1000, minH2=0.0, maxH2=0.99999, **kwargs):
@@ -577,7 +578,11 @@ class LMM(object):
         return result
 
 
-    def nLLeval(self, h2=0.0, logdelta=None, delta=None, dof=None, scale=1.0, penalty=0.0, snps=None, Usnps=None, UUsnps=None, UW=None, UUW=None, weightW=None, idx_pheno=None):
+    def nLLeval(self, h2=0.0, logdelta=None, delta=None, dof=None, scale=1.0, penalty=0.0,
+               snps=None, Usnps=None, UUsnps=None,
+               UW=None, UUW=None, weightW=None, idx_pheno=None,
+               Sd=None, denom=None
+               ):
         '''
         TODO: rename to be a private function
         This function is a hack to fix a parameterization bug regarding h2_1 parameterization in findA2 or findH2 or innerLoop.
@@ -635,24 +640,16 @@ class LMM(object):
         #N = self.Y.shape[0] - self.linreg.D #number of degrees of freedom - commented out because not use and misleading name for dof
         S,U = self.getSU()
         k = S.shape[0]
+        P = self.Y.shape[1] #number of phenotypes used
 
-        if logdelta is not None:
-            delta = np.exp(logdelta)
+        Sd, denom, h2 = self.get_Sd_etc(Sd, denom, h2, logdelta, delta, scale, weightW)
 
-        if delta is not None:
-            Sd = (self.S + delta) * scale
-            denom = delta * scale         # determine normalization factor
-            h2 = 1.0 / (1.0 + delta)
-            assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
-        else:
-            Sd = (h2 * self.S + (1.0 - h2)) * scale
-            denom = (1.0 - h2) * scale      # determine normalization factor
-        if (h2 < 0.0) or (h2 >= 1.0):
+        if np.any(h2 < 0.0) or np.any(h2 >= 1.0):
+            assert P==1, "Expect h2 to be out of range only when looking at one phenotype at a time"
             return {'nLL':3E20,
                     'h2':h2,
                     'scale':scale}
         UY,UUY = self.getUY(idx_pheno = idx_pheno)
-        P = UY.shape[1] #number of phenotypes used
 
         if (snps is not None) and (Usnps is None):
             assert snps.shape[0] == self.Y.shape[0], "shape mismatch between snps and Y"
@@ -667,6 +664,28 @@ class LMM(object):
         #logging.info("Ending nLLeval")
         return result
 
+    def get_Sd_etc(self, Sd, denom, h2, logdelta, delta, scale, weightW):
+        if h2 is not None and Sd is not None and denom is not None:
+            return Sd, denom, h2
+
+        S,U = self.getSU()
+
+        if logdelta is not None:
+            delta = np.exp(logdelta)
+
+        if delta is not None:
+            Sd = (self.S + delta) * scale
+            denom = delta * scale         # determine normalization factor
+            h2 = 1.0 / (1.0 + delta)
+            assert weightW is None, 'weightW should be none when used with delta or logdelta parameterization, which support only a single Kernel'
+        else:
+            if not isinstance(h2,np.ndarray):
+                h2 = np.repeat(h2,1)
+            Sbyh = self.S.reshape(-1,1).dot(h2.reshape(1,-1))
+            Sd = (Sbyh + (1.0 - h2.reshape(-1))) * scale
+            denom = (1.0 - h2) * scale      # determine normalization factor
+        return Sd, denom, h2
+
     def nLLcore(self, Sd=None, dof=None, scale=1.0, penalty=0.0, UW=None, UUW=None, weightW=None, denom=1.0, Usnps=None, UUsnps=None, idx_pheno=None):
         '''
         evaluate -ln( N( U^T y | U^T X*beta , diag(Sd)^-1 + U^T*W*diag(weightW)*W^T*U)) ),
@@ -680,7 +699,7 @@ class LMM(object):
             scale   : Scale parameter the multiplies the Covariance matrix (default 1.0)
             penalty : L2 penalty for SNP effects (default: 0.0)
             Usnps   : [k x S] np.array holding S rotated SNPs (U.T.dot(snps)) for N individuals to be tested, where k is rank of the kernel used
-            UUsnps  : [N x S] np.array holding S rotated SNPs (snps - U.dot(U.T.dot(snps))), None in full rnak case (k=N)
+            UUsnps  : [N x S] np.array holding S rotated SNPs (snps - U.dot(U.T.dot(snps))), None in full rank case (k=N)
             UW      : U.T.dot(W), where W is [N x S2] np.array holding the design matrix of the second kernel
             UUW     : W - U.dot(U.T.dot(W))     (provide None if U is full rank)
             weightW : vector of weights for columns in W 
@@ -700,28 +719,50 @@ class LMM(object):
         '''
         #logging.info("Starting self.nLLcore")
         N = self.Y.shape[0] - self.linreg.D
+        if len(Sd.shape)==1: Sd=Sd.reshape(-1,1)
+        if not isinstance(denom,np.ndarray): denom=np.array([denom])
+        denom = denom.reshape(-1)
         
         S,U = self.getSU()#not used, as provided from outside. Remove???
         k = S.shape[0]
-        assert Sd.shape[0] == k, "shape missmatch"
+        assert Sd.shape[0] == k, "shape mismatch"
 
         UY,UUY = self.getUY(idx_pheno = idx_pheno)
         P = UY.shape[1] #number of phenotypes used
-        YKY = self.computeAKA(Sd=Sd, denom=denom, UA=UY, UUA=UUY)
-        logdetK = np.log(Sd).sum()
+
+        YKY = np.full(P,np.nan)
+        for pheno_index in range(P):
+            YKY[pheno_index] = self.computeAKA(Sd=Sd[:,pheno_index:pheno_index+1],
+                                                denom=denom[pheno_index],
+                                                UA=UY[:,pheno_index:pheno_index+1],
+                                                UUA=None if UUY is None else UUY[:,pheno_index:pheno_index+1])
+
+
+        logdetK = np.log(Sd).sum(0)
 
         if (UUY is not None):#low rank part
             logdetK+=(N - k) * np.log(denom)
         
         if Usnps is not None:
-            
-            snpsKsnps = self.computeAKA(Sd=Sd, denom=denom, UA=Usnps, UUA=UUsnps)[:,np.newaxis]
-            snpsKY = self.computeAKB(Sd=Sd, denom=denom, UA=Usnps, UB=UY, UUA=UUsnps, UUB=UUY)
+            snpsKsnps = np.full((Usnps.shape[1],P),np.nan)
+            snpsKY = np.full((Usnps.shape[1],P),np.nan)
+            for pheno_index in range(P):
+                snpsKsnps[:,pheno_index] = self.computeAKA(Sd[:,pheno_index:pheno_index+1],
+                                                denom=denom[pheno_index],
+                                                UA=Usnps,
+                                                UUA=UUsnps)
+                snpsKY[:,pheno_index:pheno_index+1] = self.computeAKB(Sd[:,pheno_index],
+                                                denom=denom[pheno_index],
+                                                UA=Usnps,
+                                                UB=UY[:,pheno_index:pheno_index+1],
+                                                UUA=UUsnps,
+                                                UUB=None if UUY is None else UUY[:,pheno_index:pheno_index+1])
         
         if weightW is not None:
             absw = np.absolute(weightW)
             weightW_nonz = absw > 1e-10
         if (UW is not None and weightW_nonz.any()):#low rank updates
+            assert P==1, "currently no support for this code path and multiple phenotypes"
             multsign = False
             absw = np.sqrt(absw)
             signw = np.sign(weightW)
@@ -785,7 +826,7 @@ class LMM(object):
             assert (penalty_ >= 0.0), "penalty has to be non-negative"
             beta = snpsKY / (snpsKsnps + penalty_)
             if np.isnan(beta.min()):
-                logging.warning("NaN beta value seen, may be due to an SNC (a constant SNP)")
+                logging.debug("NaN beta value seen, may be due to an SNC (a constant SNP)")
                 beta[snpsKY==0] = 0.0
             variance_explained_beta = (snpsKY * beta)
             r2 = YKY[np.newaxis,:] - variance_explained_beta 
@@ -829,7 +870,9 @@ class LMM(object):
 
         A.T.dot( f(K) ).dot(B)
         """
-        UAS = UA / self._xp.lib.stride_tricks.as_strided(Sd, (Sd.size,UA.shape[1]), (Sd.itemsize,0))
+        assert (UUA is None) == (UUB is None), "Expect UUA and UUB to either both be given or both not"
+        assert len(Sd.shape)==1 or (len(Sd.shape)==2 and Sd.shape[1]==1), "expect Sd to be 1-D"
+        UAS = UA/Sd.reshape(-1,1)
         AKB = UAS.T.dot(UB)
         if UUA is not None:
             AKB += UUA.T.dot(UUB) / denom
@@ -841,6 +884,7 @@ class LMM(object):
     
         A.T.dot( f(K) ).dot(A)
         """
+        assert Sd.shape[1]==1, "expect n x 1 Sd"
 
         #To save memory divide the work into 10 pieces
         piece_count = 10 if UA.shape[0] > 10 and UA.shape[1] > 1 else 1
@@ -857,6 +901,7 @@ class LMM(object):
                 AKA += (UUA[start1:end1,:] * UUA[start1:end1,:]).sum(0) / denom
                 start1 = end1
         return AKA
+
     
 
 class Linreg(object):
