@@ -529,8 +529,10 @@ class LMM(object):
                   'REML':REML,
                   'a2':self.a2,
                   'scale':scale
-                  }        
+                  }      
         assert SP.all(SP.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
+        if result['variance_beta'] is None:
+            del result['variance_beta']
         return result
 
 

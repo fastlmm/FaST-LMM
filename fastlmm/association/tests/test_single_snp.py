@@ -919,7 +919,7 @@ if __name__ == '__main__':
     suites = unittest.TestSuite([getTestSuite()])
 
     if True: #Standard test run
-        r = unittest.TextTestRunner(failfast=True) #!!!cmkx
+        r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else: #Cluster test run

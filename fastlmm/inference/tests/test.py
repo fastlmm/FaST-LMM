@@ -76,7 +76,8 @@ class TestLmmKernel(unittest.TestCase):
         model.sety(self._y)
         result = model.nLLeval(REML=False,delta=1.0)
 
-        target_result = {'scale': 1.0, 'h2': 0.0, 'beta': NP.array([ 0.05863443]), 'a2': 0.4, 'REML': False, 'nLL': 91.92983775736522, 'sigma2': 0.94826207355429604}
+        target_result = {'scale': 1.0, 'h2': 0.0, 'beta': NP.array([ 0.05863443]), 'a2': 0.4, 'REML': False, 'nLL': 91.92983775736522, 'sigma2': 0.94826207355429604,
+                         'variance_beta':0.0118125903, 'h2':.5}
 
         # make sure results are the same
         for key in result.keys():
@@ -316,6 +317,7 @@ class TestProximalContamination(unittest.TestCase):
         lmm_cut.set_exclude_idx(exclude_idx)
 
         ret_cut = lmm_cut.nLLeval(REML=True,delta=delta)
+
 
         # make sure results are the same
         for key in ret_nocut.keys():
