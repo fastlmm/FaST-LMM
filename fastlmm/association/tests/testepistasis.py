@@ -359,7 +359,7 @@ class TestEpistasis(unittest.TestCase):
                 key = (sid1, sid0)
             pair_to_pvalue[key] = pvalue_list[index]
 
-        reference=sp.loadtxt(reffile,dtype='str',comments=None,skiprows=1)
+        reference=sp.loadtxt(reffile,dtype='str',delimiter='\t',comments=None,skiprows=1)
         assert len(pvalue_list) == len(reference), "# of pairs differs from file '{0}'".format(reffile)
         for row in reference:
             sid0 = row[0]
