@@ -344,7 +344,7 @@ class LMM(object):
 
 
 
-    def nLLeval(self,h2=0.0, REML=True, logdelta = None, delta = None, dof = None, scale = 1.0,penalty=0.0): # !!!cmk should this default be changed to REML=False (may change delta search)
+    def nLLeval(self,h2=0.0, REML=True, logdelta = None, delta = None, dof = None, scale = 1.0,penalty=0.0):
         '''
         evaluate -ln( N( U^T*y | U^T*X*beta , h2*S + (1-h2)*I ) ),
         where ((1-a2)*K0 + a2*K1) = USU^T

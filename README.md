@@ -32,9 +32,10 @@ Documentation
 
 * IPython Notebooks:
 	* [Core, Epistasis, Set Analysis, Two Kernels](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)
+    * [Multiple-Phenotype GWAS and related features](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb)
 	* [Heritability with Spatial Correction](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb)
 	* [Ludicrous-Speed GWAS](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/SingleSnpScale.ipynb)
-* [API Documentation](http://fastlmm.github.io/FaST-LMM/)
+* [Main Documentation](http://fastlmm.github.io/FaST-LMM/)
 * [Project Home and Full Annotated Bibliography](https://fastlmm.github.io/)
 
 

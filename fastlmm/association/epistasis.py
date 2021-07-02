@@ -17,8 +17,8 @@ def epistasis(test_snps,pheno,G0, G1=None, mixing=0.0, covar=None,output_file_na
                  cache_file = None,
                  runner=None, count_A1=None):
     """
-    Function performing epistasis GWAS with ML (never REML).  See http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html.
-    # !!!cmk update this to say REML is used to optimize H2 and beta is always estimated via maximum likelihood (see https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1681/MediaObjects/41592_2011_BFnmeth1681_MOESM290_ESM.pdf).
+    Function performing epistasis GWAS.  See http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html.
+    REML is used to optimize H2 and beta is always estimated via ML (maximum likelihood, see https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1681/MediaObjects/41592_2011_BFnmeth1681_MOESM290_ESM.pdf).
 
     :param test_snps: SNPs from which to test pairs. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
     :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
