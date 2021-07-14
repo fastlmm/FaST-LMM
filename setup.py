@@ -199,7 +199,7 @@ setup(
         "pandas>=1.1.1",
         "matplotlib>=1.5.1",
         "scikit-learn>=0.19.1",
-        "pysnptools>=0.5.1",
+        "pysnptools>=0.5.3",
         "dill>=0.2.9",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
