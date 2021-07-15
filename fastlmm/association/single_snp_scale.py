@@ -23,7 +23,6 @@ from pysnptools.snpreader import SnpGen
 from pysnptools.util.filecache import LocalCache, FileCache
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
 from fastlmm.util.mingrid import minimize1D
-from fastlmm.util.matrix.bigsvd import big_sdd
 from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
 from unittest.mock import patch
 
@@ -675,7 +674,7 @@ def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_c
         num_threads = get_num_threads()
         logging.info("About to svd on square {0}. Expected time ({2} procs)={1}".format(ata.iid_count,format_delta((ata.iid_count*.000707)**3*20.0/num_threads),num_threads))
         t0 = time.time()
-        [Uata3,Sata3,_] = big_sdd(ata.val, work_around=True) #wrecks ata.val
+        [Uata3,Sata3,_] = la.svd(ata.val, full_matrices=False, compute_uv=True)
         logging.info("Actual time for svd on square={0}".format(format_delta(time.time()-t0)))
         Sata3 *= (factor / factor_tall_skinny) #make the results match one_step_svd
         S3 = Sata3**.5

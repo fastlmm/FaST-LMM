@@ -5,7 +5,6 @@ import scipy.special as ss
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
 import time
-from fastlmm.util.matrix.bigsvd import big_sdd
 import pysnptools.util as pstutil
 
 class LMM(object):
@@ -111,10 +110,7 @@ class LMM(object):
                 PxG = self.linreg.regress(Y=self.G)
                 #was
                 logging.info("Starting SVD")
-                if self._xp is np:
-                    [self.U,self.S,V] = big_sdd(PxG, work_around=True) #destroys PxG, returns NxN, min, kxk
-                else:
-                    [self.U,self.S,V] = self._xp.linalg.svd(PxG,full_matrices=False,compute_uv=True) #, N x min, min, min x k
+                [self.U,self.S,V] = self._xp.linalg.svd(PxG,full_matrices=False,compute_uv=True) #, N x min, min, min x k
                 logging.info("Ending SVD")
                 inonzero = self._xp.arange(len(self.S))[self.S > 1E-10] #This 'arange' trick allows this indexing to work whether the svd is "full_matrix" or not.
                 self.S = self.S[inonzero]

@@ -490,12 +490,9 @@ def test_svd(size, which_list, threads=None):
     if threads is not None:
         os.environ["MKL_NUM_THREADS"] = str(threads)
     import numpy as np
-    from fastlmm.util.matrix.bigsvd import big_sdd, lapack_svd
-
+    
     short_output_pattern = f"svd/svd_{'{0}'}.tsv"
     which_list = which_list or [
-        "big_sdd",
-        "lapack_svd",
         "np.linalg.svd",
         "cp.linalg.svd",
     ]
@@ -509,33 +506,7 @@ def test_svd(size, which_list, threads=None):
         a = np.random.randn(m_row, n_col).astype(
             np.float
         )  # what's the "float about?"
-        if which == "big_sdd":
-            logging.info("doing large big_sdd")
-            start_time = time.time()
-            # _ = lapack_svd(np.array([[1],[-2],[3]],order="F"))
-            ux, sx, vtx = big_sdd(
-                np.array(a, order="F"),
-                work_around=True
-            ) 
-            delta_time = time.time() - start_time
-            logging.info(f"done with big_sdd {m_row}x{n_col} in time {delta_time}")
-            Sx = np.zeros((m_row, n_col))
-            Sx[:min_row_col, :min_row_col] = np.diag(sx)
-            assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
-            xp = np
-        elif which == "lapack_svd":
-            logging.info("doing lapack_svd")
-            start_time = time.time()
-            ux, sx, vtx = lapack_svd(np.array(a, order="F"))
-            delta_time = time.time() - start_time
-            logging.info(
-                f"done with xp.linalg.svd {m_row}x{n_col} in time {delta_time}"
-            )
-            Sx = np.zeros((m_row, n_col))
-            Sx[:min_row_col, :min_row_col] = np.diag(sx)
-            assert np.allclose(a, np.dot(ux, np.dot(Sx, vtx)))
-            xp = np
-        elif which == "np.linalg.svd":
+        if which == "np.linalg.svd":
             xp = np
             logging.info(f"Doing large np.linalg.svd ({m_row}x{n_col})")
             start_time = time.time()
