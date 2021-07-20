@@ -28,7 +28,7 @@ jobs:
     - name: Install Project
       shell: bash -l {0}
       run: |
-        conta install numpy
+        conda install numpy
         pip install --index-url https://test.pypi.org/simple/ fastlmmclib
         pip freeze
         pip install .
