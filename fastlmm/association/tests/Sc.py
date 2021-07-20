@@ -74,7 +74,7 @@ class Sc(object):
 
     @staticmethod
     def pv_davies_eig(squaredform,eigvals):
-            import fastlmm.util.stats.quadform as qf
+            import fastlmmclib.quadform as qf
             #result = qf.qf(squaredform, eigvals,acc=1e-04,lim=10000)    #settings to match R-based results
             result = qf.qf(squaredform, eigvals,acc=1e-07) #decided on 1e-7 after experimentation between -4 and -12. Thresh on exp in QFC.C seems to have no effect
             return result[0]

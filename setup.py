@@ -1,8 +1,7 @@
 import platform
 import os
 import shutil
-from setuptools import setup, Extension
-from distutils.command.clean import clean as Clean
+from setuptools import setup
 import numpy
 
 # Work around https://github.com/pypa/pip/issues/7953
@@ -11,78 +10,12 @@ import sys
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
 # Version number
-version = '0.5.10'
+version = '0.5.11'
 
 
 def readme():
     with open("README.md") as f:
         return f.read()
-
-
-try:
-    from Cython.Distutils import build_ext
-except ImportError:
-    use_cython = False
-else:
-    use_cython = True
-
-
-class CleanCommand(Clean):
-    description = "Remove build directories, and compiled files (including .pyc)"
-
-    def run(self):
-        Clean.run(self)
-        if os.path.exists("build"):
-            shutil.rmtree("build")
-        for dirpath, dirnames, filenames in os.walk("."):
-            for filename in filenames:
-                if (   (filename.endswith('.so') and not filename.startswith('libmkl_core.'))
-                    or filename.endswith('.pyd')
-                    or (use_cython and filename.find("wrap_qfc.cpp") != -1) # remove automatically generated source file
-                    or filename.endswith('.pyc')
-                                ):
-                    tmp_fn = os.path.join(dirpath, filename)
-                    print("removing", tmp_fn)
-                    os.unlink(tmp_fn)
-
-
-# set up macros
-if platform.system() == "Darwin":
-    macros = [("__APPLE__", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
-    extra_compile_args0 = []
-elif platform.system() == "Windows":
-    macros = [("_WIN32", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/windows")
-    extra_compile_args0 = ['/EHsc']
-else:
-    macros = [("_UNIX", "1")]
-    intel_root = os.path.join(os.path.dirname(__file__),"external/intel/linux")
-    extra_compile_args0 = []
-
-# see http://stackoverflow.com/questions/4505747/how-should-i-structure-a-python-package-that-contains-cython-code
-print("use_cython? {0}".format(use_cython))
-if use_cython:
-    ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
-                             language="c++",                             
-                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
-                             include_dirs=[numpy.get_include()],
-                             extra_compile_args = extra_compile_args0,
-                             define_macros=macros),
-                     ]
-    cmdclass = {'build_ext': build_ext, 'clean': CleanCommand}
-else:
-    ext_modules = [Extension(name="fastlmm.util.stats.quadform.qfc_src.wrap_qfc",
-                             language="c++",
-                             sources=["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.cpp", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"],
-                             include_dirs=[numpy.get_include()],
-                             extra_compile_args = extra_compile_args0,
-                             define_macros=macros),
-                    ]
-    cmdclass = {}
-
-for e in ext_modules:
-    e.cython_directives = {"language_level": "3"}  # all are Python-3
 
 # python setup.py sdist bdist_wininst upload
 setup(
@@ -126,8 +59,6 @@ setup(
         "fastlmm/util/matrix",
         "fastlmm/util/standardizer",
         "fastlmm/util/stats",
-        "fastlmm/util/stats/quadform",
-        "fastlmm/util/stats/quadform/qfc_src",
     ],
     package_data={
         "fastlmm/association": [
@@ -163,7 +94,6 @@ setup(
         "dill>=0.2.9",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
+        "fastlmmclib>=0.0.1"
     ],
-    cmdclass=cmdclass,
-    ext_modules=ext_modules,
 )

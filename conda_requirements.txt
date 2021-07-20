@@ -1,3 +1,0 @@
-mkl==2019.4
-scipy
-numpy

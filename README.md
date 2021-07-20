@@ -23,10 +23,9 @@ Improvements:
 Quick install:
 =================================
 
-If you have Miniconda or Anaconda installed, installation is as easy as:
+pip install fastlmm
 
-    conda install "mkl==2019.4" "scipy" "numpy"
-    pip install --no-build-isolation fastlmm
+
 Documentation
 =================================
 

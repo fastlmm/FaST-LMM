@@ -3,22 +3,13 @@ file to set up python package, see http://docs.python.org/2/distutils/setupscrip
 """
 
 
-from __future__ import absolute_import
-from __future__ import print_function
 import platform
 import os
 import sys
 import shutil
 
 from distutils.core import setup
-from distutils.extension import Extension
 from distutils.command.clean import clean as Clean
-
-try:
-    from Cython.Distutils import build_ext
-except Exception:
-    print("cython needed for installation, please install cython first")
-    sys.exit()
 
 try:
     import numpy
@@ -39,21 +30,7 @@ class CleanCommand(Clean):
         Clean.run(self)
         if os.path.exists('build'):
             shutil.rmtree('build')
-        for dirpath, dirnames, filenames in os.walk('fastlmm'):
-            for filename in filenames:
-                if (filename.endswith('.so') or filename.endswith('.pyd')
-                             #or filename.endswith('.dll')
-                             #or filename.endswith('.pyc')
-                             ):
-                    os.unlink(os.path.join(dirpath, filename))
 
-# set up macro
-if platform.system() == "Darwin":
-    macros = [("__APPLE__", "1")]
-elif platform.system() == "Windows":
-    macros = [("_WIN32", "1")]
-
-ext = [Extension("fastlmm.util.stats.quadform.qfc_src.wrap_qfc", ["fastlmm/util/stats/quadform/qfc_src/wrap_qfc.pyx", "fastlmm/util/stats/quadform/qfc_src/QFC.cpp"], language="c++", define_macros=macros)]
 
 setup(
     name='fastlmm',
@@ -79,16 +56,12 @@ setup(
         "fastlmm/pyplink/snpreader",
         "fastlmm/pyplink/snpset",
         "fastlmm/pyplink",
-        "fastlmm/util/stats/quadform",
         "fastlmm/util/stats",
         "fastlmm/util",
         "fastlmm"
     ],
-    install_requires=['cython', 'numpy', 'scipy', 'pandas', 'scikit-learn', 'matplotlib'],
-    #zip_safe=False,
-    # extensions
-    cmdclass = {'build_ext': build_ext, 'clean': CleanCommand},
-    ext_modules = ext,
+    install_requires=['numpy', 'scipy', 'pandas', 'scikit-learn', 'matplotlib'],
+    cmdclass = {'clean': CleanCommand},
     include_dirs = [numpy.get_include()],
   )
 

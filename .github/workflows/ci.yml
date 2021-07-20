@@ -17,37 +17,20 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v2
-      with:
-        lfs: true
-    - name: Checkout LFS objects
-      run: git lfs checkout
-
-    - name: Install GCC 9 on Mac
-      if: runner.os == 'macOS'
-      run: brew install gcc@9
-
-
+      
     - name: Set up Miniconda ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
       with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
 
-    # cmk installing bed-reader from test pypi
-    - name: Install Prerequisites and build
+    # cmk install fastlmmclib from test
+    - name: Build source distribution
       shell: bash -l {0}
       run: |
-        conda install --file conda_requirements.txt
-        conda install cython
-        conda install pip
-        pip install bed-reader
-        pip install pysnptools
-        pip install -r requirements.txt
-        export CC=gcc-9
-        export CXX=g++-9
-        python setup.py build_ext --inplace
+        pip install --index-url https://test.pypi.org/simple/ fastlmmclib
         pip freeze
-        python setup.py sdist bdist_wheel
+        python setup.py sdist
 
     - name: Test
       shell: bash -l {0}
@@ -56,13 +39,6 @@ jobs:
         export PYTHONPATH=${GITHUB_WORKSPACE}
         cd tests
         python test.py
-
-    - name: Save Windows and Mac Wheels
-      if: matrix.os != 'ubuntu-latest'
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: dist/*.whl
 
     - name: Save SDist
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7'
