@@ -25,11 +25,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
     # cmk install fastlmmclib from test
-    - name: Build source distribution
+    - name: Install Project
       shell: bash -l {0}
       run: |
+        conta install numpy
         pip install --index-url https://test.pypi.org/simple/ fastlmmclib
         pip freeze
+        pip install .
         python setup.py sdist
 
     - name: Test
@@ -41,8 +43,8 @@ jobs:
         python test.py
 
     - name: Save SDist
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7'
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
       uses: actions/upload-artifact@v2
       with:
-        name: wheels
+        name: sdist
         path: dist/*.tar.gz
