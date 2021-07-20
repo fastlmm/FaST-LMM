@@ -8,6 +8,7 @@ import numpy.linalg as la
 import time
 from datetime import datetime
 import pysnptools.util as pstutil
+from bed_reader import get_num_threads
 from pysnptools.snpreader import Bed, Pheno, SnpData, SnpReader, SnpNpz
 from pysnptools.kernelreader import KernelData, KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
@@ -23,7 +24,7 @@ from pysnptools.snpreader import SnpGen
 from pysnptools.util.filecache import LocalCache, FileCache
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
 from fastlmm.util.mingrid import minimize1D
-from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,get_num_threads,mmultfile_ata
+from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb,mmultfile_ata
 from unittest.mock import patch
 
 def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor=1,
@@ -671,7 +672,7 @@ def svd(chrom_list, gtg_npz_lambda, memory_factor, common_cache_parent, G0_iid_c
         ##############################################################
         # 25K x 25K x 25K -> 25K x 25K
         #=============================================================
-        num_threads = get_num_threads()
+        num_threads = get_num_threads(None)
         logging.info("About to svd on square {0}. Expected time ({2} procs)={1}".format(ata.iid_count,format_delta((ata.iid_count*.000707)**3*20.0/num_threads),num_threads))
         t0 = time.time()
         [Uata3,Sata3,_] = la.svd(ata.val, full_matrices=False, compute_uv=True)

@@ -86,7 +86,7 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
         file_dot_piece(str(a_filename),a.offset,a.iid_count,
             start,
             ata_piece,
-            num_threads=get_num_threads(),
+            num_threads=get_num_threads(None),
             log_frequency=log_frequency)
 
     if do_both:
@@ -134,7 +134,7 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=0, force_python_only=F
                         b1,   #B copy 1 in "F" order
                         aaTb, #B copy 2 in "F" order
                         aTb, # result
-                        num_threads = get_num_threads(),
+                        num_threads = get_num_threads(None),
                         log_frequency=log_frequency,
             )
         
