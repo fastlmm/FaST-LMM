@@ -75,7 +75,6 @@ setup(
             "examples/toydata.5chrom.bim",
             "examples/toydata.5chrom.fam",
             "examples/toydata.cov",
-            "examples/toydata.dat",
             "examples/toydata.map",
             "examples/toydata.phe",
             "examples/toydata.shufflePlus.phe",

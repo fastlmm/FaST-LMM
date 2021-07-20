@@ -8,13 +8,8 @@ from pysnptools.kernelreader import KernelData, KernelNpz
 import time
 from pysnptools.util import format_delta
 from pysnptools.snpreader import SnpMemMap
-from bed_reader import file_dot_piece, file_b_less_aatbx
+from bed_reader import file_dot_piece, file_b_less_aatbx, get_num_threads
 
-def get_num_threads():
-    if 'MKL_NUM_THREADS' in os.environ:
-        return int(os.environ['MKL_NUM_THREADS'])
-    else:
-        return multiprocessing.cpu_count()
 
 def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_only=False):
     sid_count = len(sid)

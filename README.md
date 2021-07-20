@@ -10,7 +10,7 @@ This release contains the following features, each illustrated with an IPython n
 
 Improvements:
 
-* New features for single_snp (including multiple phenotype support) and epistasis (including reporting \beta and using pre-computed eigenvalue decompositions) ([notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb))  -- [Lippert *et al.*, *Nature Methods* 2011](http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html)
+* New features for single_snp (including multiple phenotype support) and epistasis (including reporting beta and using pre-computed eigenvalue decompositions) ([notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb))  -- [Lippert *et al.*, *Nature Methods* 2011](http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html)
 * Ludicrous-Speed GWAS ([notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/SingleSnpScale.ipynb)) -- [Kadie and Heckerman, *bioRxiv* 2018](https://www.biorxiv.org/content/10.1101/154682v2)
 * Heritability with Spatial Correction ([notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/heritability_si.ipynb)), [Heckerman *et al.*, *PNAS* 2016](http://www.pnas.org/content/113/27/7377.abstract)
 * Two Kernels ([notebook](https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb)) -- [Widmer *et al.*, *Scientific Reports* 2014](http://www.nature.com/srep/2014/141112/srep06874/full/srep06874.html)
@@ -23,8 +23,9 @@ Improvements:
 Quick install:
 =================================
 
-pip install fastlmm
+`pip install fastlmm`
 
+For best performance, be sure your Python distribution includes a fast version of NumPy. We use Anaconda's [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
 Documentation
 =================================
@@ -49,49 +50,3 @@ Contacts
 * Email the developers at fastlmm-dev@python.org.
 * [Join](mailto:fastlmm-user-join@python.org?subject=Subscribe) the user discussion and announcement list (or use [web sign up](https://mail.python.org/mailman3/lists/fastlmm-user.python.org)).
 * [Open an issue](https://github.com/fastlmm/FaST-LMM/issues) on GitHub.
-
-Installing for developers and regression tests
-=====================================================
-
-When working on the developer version, first add the src directory of the package to your PYTHONPATH 
-environment variable.
-
-For building C-extensions, first make sure all of the above dependencies are installed (including cython)
-
-To build extension (from .\src dir), type the following at the OS prompt:
-
-    python setup.py build_ext --inplace
-
-
-Don't forget to set your PYTHONPATH to point to the directory above the one named fastlmm in
-the fastlmm source code. For e.g. if fastlmm is in the [somedir] directory, then
-in the unix shell use:
-
-    export PYTHONPATH=$PYTHONPATH:[somedir]
-
-Or in the Windows DOS terminal,
-one can use: 
-
-    set PYTHONPATH=%PYTHONPATH%;[somedir]
-
-(or use the Windows GUI for env variables).
-
-Note for Windows: You must have Visual Studio installed.
-
-Running regression tests
---------------------------------------
-
-From the directory tests at the top level, run:
-
-    python test.py
-
-This will run a
-series of regression tests, reporting "." for each one that passes, "F" for each
-one that does not match up, and "E" for any which produce a run-time error. After
-they have all run, you should see the string "............" indicating that they 
-all passed, or if they did not, something such as "....F...E......", after which
-you can see the specific errors.
-
-Note that you must use "python setup.py build_ext --inplace" to run the 
-regression tests, and not "python setup.py install".
-
