@@ -1,5 +1,5 @@
 ################################
-:mod:`fastlmm` API Documentation
+:mod:`fastlmm` Documentation
 ################################
 
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both

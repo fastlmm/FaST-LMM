@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>fastlmm API Documentation &#8212; fastlmm 0.0.1 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fastlmm Documentation &#8212; fastlmm 0.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
@@ -25,7 +24,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation</a></li> 
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> Documentation</a></li> 
       </ul>
     </div>  
 
@@ -34,8 +33,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="fastlmm-api-documentation">
-<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation<a class="headerlink" href="#fastlmm-api-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="fastlmm-documentation">
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> Documentation<a class="headerlink" href="#fastlmm-documentation" title="Permalink to this headline">¶</a></h1>
 <p>FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.</p>
 <p>See <a class="reference external" href="https://github.com/fastlmm/FaST-LMM/blob/master/README.md">FaST-LMM’s README.md</a> for installation instructions, documentation, code, and a bibliography.</p>
@@ -63,7 +62,7 @@ list (or use <a class="reference external" href="https://mail.python.org/mailman
 <li><p><a class="reference external" href="https://github.com/fastlmm/PySnpTools/issues">Open an issue</a> on GitHub.</p></li>
 <li><p><a class="reference external" href="https://fastlmm.github.io/">Project Home</a> (including bibliography).</p></li>
 </ul>
-<section id="single-snp">
+<div class="section" id="single-snp">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp</span></code><a class="headerlink" href="#single-snp" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.single_snp">
@@ -175,8 +174,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </ul>
 </dd></dl>
 
-</section>
-<section id="single-snp-scale">
+</div>
+<div class="section" id="single-snp-scale">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_scale</span></code><a class="headerlink" href="#single-snp-scale" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.single_snp_scale">
@@ -184,6 +183,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dd><p>Function performing single SNP GWAS using REML and cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
 It gives the same results as <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a> but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
 runs require appropriate modules for parameters <code class="docutils literal notranslate"><span class="pre">cache</span></code> and <code class="docutils literal notranslate"><span class="pre">runner</span></code>.)</p>
+<p>To work with a G0 kernel larger than about 16K, requires a NumPy library that can do eigenvalue decompositions larger than 16K,
+for example, one that uses MKL IPL64. Alternatively, use an older version of FaST-LMM (version 0.5.*) which includes its own version of MKL IPL64.</p>
 <p>Compared to <a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>, <a class="reference internal" href="#fastlmm.association.single_snp_scale" title="fastlmm.association.single_snp_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp_scale()</span></code></a> always:</p>
 <ul class="simple">
 <li><p>does cross validation of chromosomes (<a class="reference internal" href="#fastlmm.association.single_snp" title="fastlmm.association.single_snp"><code class="xref py py-func docutils literal notranslate"><span class="pre">single_snp()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">leave_out_one_chrom=True</span></code>)</p></li>
@@ -272,8 +273,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <p>All stages cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.</p>
 </dd></dl>
 
-</section>
-<section id="single-snp-all-plus-select">
+</div>
+<div class="section" id="single-snp-all-plus-select">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_all_plus_select</span></code><a class="headerlink" href="#single-snp-all-plus-select" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.single_snp_all_plus_select">
@@ -344,8 +345,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 </dd></dl>
 
-</section>
-<section id="single-snp-linreg">
+</div>
+<div class="section" id="single-snp-linreg">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_linreg</span></code><a class="headerlink" href="#single-snp-linreg" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.single_snp_linreg">
@@ -394,8 +395,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 </dd></dl>
 
-</section>
-<section id="single-snp-select">
+</div>
+<div class="section" id="single-snp-select">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_select</span></code><a class="headerlink" href="#single-snp-select" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.single_snp_select">
@@ -455,8 +456,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 </dd></dl>
 
-</section>
-<section id="epistasis">
+</div>
+<div class="section" id="epistasis">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">epistasis</span></code><a class="headerlink" href="#epistasis" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.epistasis">
@@ -527,8 +528,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 </dd></dl>
 
-</section>
-<section id="snp-set">
+</div>
+<div class="section" id="snp-set">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">snp_set</span></code><a class="headerlink" href="#snp-set" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.snp_set">
@@ -580,8 +581,8 @@ Provided for backwards compatibility.</p></li>
 </div>
 </dd></dl>
 
-</section>
-<section id="fastlmm">
+</div>
+<div class="section" id="fastlmm">
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code><a class="headerlink" href="#fastlmm" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="fastlmm.inference.FastLMM">
@@ -728,8 +729,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 
 </dd></dl>
 
-</section>
-<section id="linearregression">
+</div>
+<div class="section" id="linearregression">
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearRegression</span></code><a class="headerlink" href="#linearregression" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="fastlmm.inference.LinearRegression">
@@ -844,8 +845,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 
 </dd></dl>
 
-</section>
-<section id="heritability-spatial-correction">
+</div>
+<div class="section" id="heritability-spatial-correction">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">heritability_spatial_correction</span></code><a class="headerlink" href="#heritability-spatial-correction" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.heritability_spatial_correction">
@@ -888,10 +889,10 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </dl>
 </dd></dl>
 
-</section>
-<section id="util-module">
+</div>
+<div class="section" id="util-module">
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">util</span></code> Module<a class="headerlink" href="#util-module" title="Permalink to this headline">¶</a></h2>
-<section id="util-compute-auto-pcs">
+<div class="section" id="util-compute-auto-pcs">
 <h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.compute_auto_pcs</span></code><a class="headerlink" href="#util-compute-auto-pcs" title="Permalink to this headline">¶</a></h3>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.util.compute_auto_pcs">
@@ -927,8 +928,8 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 </div>
 </dd></dl>
 
-</section>
-<section id="util-manhattan-plot">
+</div>
+<div class="section" id="util-manhattan-plot">
 <h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.manhattan_plot</span></code><a class="headerlink" href="#util-manhattan-plot" title="Permalink to this headline">¶</a></h3>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.util.manhattan_plot">
@@ -972,9 +973,9 @@ cumulative chromosome starts used in plotting.</p>
 </dl>
 </dd></dl>
 
-</section>
-</section>
-<section id="indices-and-tables">
+</div>
+</div>
+<div class="section" id="indices-and-tables">
 <h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><ul class="simple">
@@ -983,8 +984,8 @@ cumulative chromosome starts used in plotting.</p>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </div></blockquote>
-</section>
-</section>
+</div>
+</div>
 
 
             <div class="clearer"></div>
@@ -995,7 +996,7 @@ cumulative chromosome starts used in plotting.</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation</a><ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> Documentation</a><ul>
 <li><a class="reference internal" href="#single-snp"><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp</span></code></a></li>
 <li><a class="reference internal" href="#single-snp-scale"><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_scale</span></code></a></li>
 <li><a class="reference internal" href="#single-snp-all-plus-select"><code class="xref py py-mod docutils literal notranslate"><span class="pre">single_snp_all_plus_select</span></code></a></li>
@@ -1044,7 +1045,7 @@ cumulative chromosome starts used in plotting.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> API Documentation</a></li> 
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

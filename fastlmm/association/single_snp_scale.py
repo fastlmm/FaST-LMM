@@ -39,6 +39,9 @@ def single_snp_scale(test_snps,pheno,G0=None,covar=None,cache=None,memory_factor
     It gives the same results as :func:`.single_snp` but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
     runs require appropriate modules for parameters ``cache`` and ``runner``.)
 
+    To work with a G0 kernel larger than about 16K, requires a NumPy library that can do eigenvalue decompositions larger than 16K,
+    for example, one that uses MKL IPL64. Alternatively, use an older version of FaST-LMM (version 0.5.\*) which includes its own version of MKL IPL64.
+
     Compared to :func:`.single_snp`, :func:`.single_snp_scale` always:
 
     * does cross validation of chromosomes (:func:`.single_snp`'s ``leave_out_one_chrom=True``)
