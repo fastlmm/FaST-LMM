@@ -8,3 +8,5 @@ from fastlmm.association.single_snp_all_plus_select import single_snp_all_plus_s
 from fastlmm.association.single_snp_linreg import single_snp_linreg
 from fastlmm.association.single_snp_select import single_snp_select #must be listed after single_snp_linreg
 from fastlmm.association.single_snp_scale import single_snp_scale
+from fastlmm.association.single_snp_eigen import single_snp_eigen
+from fastlmm.association.single_snp_eigen import eigen_from_kernel

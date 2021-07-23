@@ -204,7 +204,7 @@ def single_snp(test_snps, pheno, K0=None,
         covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
         if not leave_out_one_chrom:
-            assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"  # !!!LATER document covar_by_chrom
+            assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False, 'covar_by_chrom' must be None"
             K0 = _kernel_fixup(K0 or G0 or test_snps, iid_if_none=test_snps.iid, standardizer=Unit(), count_A1=count_A1)
             K1 = _kernel_fixup(K1 or G1, iid_if_none=test_snps.iid, standardizer=Unit(), count_A1=count_A1)
             K0, K1, test_snps, pheno, covar = pstutil.intersect_apply([K0, K1, test_snps, pheno, covar])
