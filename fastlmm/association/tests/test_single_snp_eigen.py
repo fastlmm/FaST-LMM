@@ -41,14 +41,16 @@ class TestSingleSnpEigen(unittest.TestCase):
         covar = self.cov_fn
 
         output_file = self.file_name("one")
-        w, v = eigen_from_kernel(test_snps)
+        eigenvalues, eigenvectors = eigen_from_kernel(test_snps)
         frame = single_snp_eigen(
             test_snps=test_snps[:, :10],
             pheno=pheno,
-            w=w,
-            v=v,
+            eigenvalues=eigenvalues,
+            eigenvectors=eigenvectors,
             covar=covar,
             output_file_name=output_file,
+            fit_log_delta_via_reml = False,
+            test_via_reml = False,
             count_A1=False,
         )
 

@@ -904,6 +904,9 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         if len(bad) > 0:
             raise Exception("snps differ too much from file '{0}' at these snps {1}".format(name,bad))
 
+# !!! cmk why does one pheno work with all-but-one and one chrom (and nonuquiue sid), but multipheno does not
+# !!! cmk add test that bed file must have unique names
+# !!! cmk add test that all-but-one has more than one chrom
 
 def getTestSuite():
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnp)

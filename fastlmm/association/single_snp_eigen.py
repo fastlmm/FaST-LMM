@@ -1,7 +1,9 @@
 import logging
+import pandas as pd
 import os
 from pathlib import Path
 import numpy as np
+import scipy.stats as stats
 import pysnptools.util as pstutil
 from unittest.mock import patch
 from fastlmm.inference.fastlmm_predictor import (
@@ -35,8 +37,8 @@ def eigen_from_kernel(K, count_A1=None):
 def single_snp_eigen(
     test_snps,
     pheno,
-    w,
-    v,
+    eigenvalues,
+    eigenvectors,
     covar=None,  # !!!cmk covar_by_chrom=None, leave_out_one_chrom=True,
     output_file_name=None,
     log_delta=None,
@@ -48,6 +50,8 @@ def single_snp_eigen(
     min_log_delta=-5,  # !!!cmk make this a range???
     max_log_delta=10,
     # !!!cmk xp=None,
+    fit_log_delta_via_reml = True,
+    test_via_reml = False,
     count_A1=None,
 ):
     """cmk documentation"""
@@ -98,50 +102,124 @@ def single_snp_eigen(
         multi_y = xp.asarray(pheno.read(view_ok=True, order="A").val)
 
         lmm = LMM()
-        lmm.U = w
-        lmm.S = v
+        lmm.U = eigenvectors
+        lmm.S = eigenvalues
+
+        covar_val = covar.read().val
 
         if log_delta is None:
             logging.info("searching for internal delta")
             # !!! cmk so covar and pheno don't matter if log delta is given, right????
-            lmm.setX(
-                covar
-            )  # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-            lmm.sety(multi_y)  # !!! cmk need to check that just one pheno for now
+            # !!! cmk with multipheno is it going to be O(covar*covar*y)???
+            lmm.setX(covar_val)
+            lmm.sety(multi_y[:, 0])  # !!! cmk need to check that just one pheno for now
             # log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             # As per the paper, we optimized delta with REML=True, but
             # we will later optimize beta and find log likelihood with ML (REML=False)
             # !!! cmk so sid_count need not be given if doing full rank, right?
             result = lmm.find_log_delta(
-                REML=True,
+                REML=fit_log_delta_via_reml,
                 sid_count=1,
                 min_log_delta=min_log_delta,
                 max_log_delta=max_log_delta,
             )
-            # !!! cmkwhat about findA2H2? minH2=0.00001
+            # !!! cmk what about findA2H2? minH2=0.00001
             log_delta = result["log_delta"]
+            h2 = result["h2"]
 
         # !!!cmk internal/external doesn't matter if full rank, right???
         delta = np.exp(log_delta)
         logging.info("delta={0}".format(delta))
         logging.info("log_delta={0}".format(log_delta))
 
-        frame = _snp_tester(
-            test_snps,
-            interact,
-            pheno,
-            lmm,
-            block_size,
-            output_file_name,
-            runner,
-            h2,
-            mixing,
-            pvalue_threshold,
-            random_threshold,
-            random_seed,
-        )
+        # As per the paper, we previously optimized delta with REML=True, but
+        # we optimize beta and find loglikelihood with ML (REML=False)
+        # !!! cmk if test_via_reml and fit_log_delta_via_reml this could be skipped
+        res_null = lmm.nLLeval(delta=delta, REML=test_via_reml)
+        ll_null = -res_null["nLL"]
 
-        return frame
+        dataframe = _create_dataframe(test_snps.sid_count)
 
-    return frame
+        # !!!cmk real in batches
+
+        pvalue_list = []
+        beta_list = []
+        variance_beta_list = []
+        for sid_index in range(test_snps.sid_count):
+            snps_read = test_snps[:, sid_index].read().standardize()
+            X = np.hstack((covar_val, snps_read.val))
+             # !!!cmk make sure always full rank. Also, only
+             # !!!cmk do the change to UX and X
+            lmm.setX(X)
+            res_alt = lmm.nLLeval(delta=delta, REML=test_via_reml)
+            ll_alt = -res_alt["nLL"]
+
+            h2 = res_alt["h2"]
+            beta = res_alt["beta"][-1]
+            variance_beta = (
+                res_alt["variance_beta"][-1] if "variance_beta" in res_alt else np.nan
+            )
+
+            test_statistic = ll_alt - ll_null
+            degrees_of_freedom = 1
+            pvalue = stats.chi2.sf(2.0 * test_statistic, degrees_of_freedom)
+            pvalue_list.append(pvalue)
+            beta_list.append(beta)
+            variance_beta_list.append(variance_beta)
+            logging.info(f"cmk {ll_null},{ll_alt},{pvalue}")
+
+        dataframe["sid_index"] = range(test_snps.sid_count)
+        dataframe['SNP'] = test_snps.sid
+        dataframe['Chr'] = test_snps.pos[:,0]
+        dataframe['GenDist'] = test_snps.pos[:,1]
+        dataframe['ChrPos'] = test_snps.pos[:,2]
+        dataframe["PValue"] = pvalue_list
+        dataframe['SnpWeight'] = beta_list
+        dataframe['SnpWeightSE'] = np.sqrt(np.array(variance_beta_list))
+        # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
+        # dataframe['Mixing'] = np.zeros((len(sid))) + 0
+        dataframe['Nullh2'] = np.zeros(test_snps.sid_count) + h2
+
+    dataframe.sort_values(by="PValue", inplace=True)
+    dataframe.index = np.arange(len(dataframe))
+
+
+    if output_file_name is not None:
+        dataframe.to_csv(output_file_name, sep="\t", index=False)
+
+
+    return dataframe
+
+
+# !!!cmk similar to single_snp.py and single_snp_scale
+def _create_dataframe(row_count):
+    dataframe = pd.DataFrame(
+        index=np.arange(row_count),
+        columns=(
+            "sid_index",
+            "SNP",
+            "Chr",
+            "GenDist",
+            "ChrPos",
+            "PValue",
+            "SnpWeight",
+            "SnpWeightSE",
+            "SnpFractVarExpl",
+            "Mixing",
+            "Nullh2",
+        ),
+    )
+    #!!Is this the only way to set types in a dataframe?
+    dataframe["sid_index"] = dataframe["sid_index"].astype(np.float)
+    dataframe["Chr"] = dataframe["Chr"].astype(np.float)
+    dataframe["GenDist"] = dataframe["GenDist"].astype(np.float)
+    dataframe["ChrPos"] = dataframe["ChrPos"].astype(np.float)
+    dataframe["PValue"] = dataframe["PValue"].astype(np.float)
+    dataframe["SnpWeight"] = dataframe["SnpWeight"].astype(np.float)
+    dataframe["SnpWeightSE"] = dataframe["SnpWeightSE"].astype(np.float)
+    dataframe["SnpFractVarExpl"] = dataframe["SnpFractVarExpl"].astype(np.float)
+    dataframe["Mixing"] = dataframe["Mixing"].astype(np.float)
+    dataframe["Nullh2"] = dataframe["Nullh2"].astype(np.float)
+
+    return dataframe
