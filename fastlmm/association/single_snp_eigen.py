@@ -102,10 +102,12 @@ def single_snp_eigen(
         multi_y = xp.asarray(pheno.read(view_ok=True, order="A").val)
 
         lmm = LMM()
+        lmm.X = covar_val
+        lmm.y = multi_y[:,0]
         lmm.U = eigenvectors
         lmm.S = eigenvalues
-
-        covar_val = covar.read().val
+        lmm.UX = lmm.U.T.dot(lmm.X)
+        lmm.Uy = lmm.U.T.dot(lmm.y)
 
         if log_delta is None:
             logging.info("searching for internal delta")
@@ -167,7 +169,7 @@ def single_snp_eigen(
             pvalue_list.append(pvalue)
             beta_list.append(beta)
             variance_beta_list.append(variance_beta)
-            logging.info(f"cmk {ll_null},{ll_alt},{pvalue}")
+            #logging.info(f"cmk {ll_null},{ll_alt},{pvalue}")
 
         dataframe["sid_index"] = range(test_snps.sid_count)
         dataframe['SNP'] = test_snps.sid

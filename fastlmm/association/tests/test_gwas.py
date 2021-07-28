@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import numpy as np
 import scipy as sp
 import logging
@@ -13,7 +12,6 @@ from fastlmm.inference import LMM
 import unittest
 import os.path
 import time
-from six.moves import range
 import platform
 
 currentFolder = os.path.dirname(os.path.realpath(__file__))
@@ -147,9 +145,9 @@ class TestGwas(unittest.TestCase):
 
         # check p-values in log-space!
         np.testing.assert_array_almost_equal(np.log(gwas.p_values), np.log(gwas_c_reml.p_values), decimal=3)
-        if False:
+        if False: #!!!cmk
             import pylab
-            pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas_f.p_values_F), "x")
+            pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas.p_values), "x")
             pylab.plot(list(range(-66,0,1)), list(range(-66,0,1)))
             pylab.show()
 
@@ -159,6 +157,11 @@ class TestGwas(unittest.TestCase):
         gwas_f = FastGwas(G_chr1, G_chr2, y, delta, findh2=False)
         gwas_f.run_gwas()
         np.testing.assert_array_almost_equal(np.log(gwas_c.p_values), np.log(gwas_f.p_values_F), decimal=2)
+        if True: #!!!cmk
+            import pylab
+            pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas_f.p_values_F), "x")
+            pylab.plot(list(range(-66,0,1)), list(range(-66,0,1)))
+            pylab.show()
 
         # additional testing code for the new wrapper functions
 

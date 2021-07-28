@@ -1,10 +1,13 @@
 import logging
 import unittest
 import os.path
+import numpy as np
 
-from pysnptools.snpreader.bed import Bed
+from pysnptools.snpreader import Bed, Pheno
 
+from fastlmm.util import example_file # Download and return local file name
 from fastlmm.association import single_snp_eigen, eigen_from_kernel
+from fastlmm.association.tests.test_gwas import GwasPrototype
 
 
 class TestSingleSnpEigen(unittest.TestCase):
@@ -34,7 +37,38 @@ class TestSingleSnpEigen(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def test_one(self):
+    def test_same_as_old_code(self):
+
+        bed_fn = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
+        pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
+        snp_reader = Bed(bed_fn)
+        delta = 1.0
+
+        if True:
+            eigenvalues, eigenvectors = eigen_from_kernel(snp_reader)
+            frame = single_snp_eigen(
+                test_snps=bed_fn,
+                pheno=pheno_fn,
+                eigenvalues=eigenvalues,
+                eigenvectors=eigenvectors,
+                covar=None,
+                output_file_name=None,
+                log_delta = np.log(delta),
+                test_via_reml = False,
+                count_A1=False,
+            )
+            frame.PValue
+
+        G = snp_reader.read().standardize().val
+        y = Pheno(pheno_fn).read().val[:,0]
+        G_chr1, G_chr2 = G[:,0:5000], G[:,5000:10_000]
+        gwas = GwasPrototype(G_chr1, G_chr2, y, delta, REML=False)
+        gwas.run_gwas()
+
+        # check p-values in log-space!
+        np.testing.assert_array_almost_equal(np.log(gwas.p_values), np.log(gwas_c_reml.p_values), decimal=3)
+
+    def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")
         test_snps = Bed(self.bedbase, count_A1=False)
         pheno = self.phen_fn
