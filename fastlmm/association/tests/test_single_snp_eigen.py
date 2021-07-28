@@ -45,9 +45,9 @@ class TestSingleSnpEigen(unittest.TestCase):
         delta = 1.0
 
         if True:
-            eigenvalues, eigenvectors = eigen_from_kernel(snp_reader)
+            eigenvalues, eigenvectors = eigen_from_kernel(snp_reader[:,:5000])
             frame = single_snp_eigen(
-                test_snps=bed_fn,
+                test_snps=Bed(bed_fn,count_A1=False)[:,5000:10_000],
                 pheno=pheno_fn,
                 eigenvalues=eigenvalues,
                 eigenvectors=eigenvectors,
@@ -61,12 +61,12 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         G = snp_reader.read().standardize().val
         y = Pheno(pheno_fn).read().val[:,0]
-        G_chr1, G_chr2 = G[:,0:5000], G[:,5000:10_000]
+        G_chr1, G_chr2 = G[:,:5000], G[:,5000:10_000]
         gwas = GwasPrototype(G_chr1, G_chr2, y, delta, REML=False)
         gwas.run_gwas()
 
         # check p-values in log-space!
-        np.testing.assert_array_almost_equal(np.log(gwas.p_values), np.log(gwas_c_reml.p_values), decimal=3)
+        np.testing.assert_array_almost_equal(np.log(sorted(gwas.p_values)), np.log(frame.PValue), decimal=9)
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")
