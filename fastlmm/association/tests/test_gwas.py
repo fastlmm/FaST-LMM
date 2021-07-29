@@ -194,6 +194,8 @@ class TestGwas(unittest.TestCase):
 class GwasPrototype(object):
     """
     class to perform genome-wide scan
+
+    Warning: if cov is given, be sure it includes a column of 1's (If it is not given, a column of 1's will be provided.)
     """
     
 
