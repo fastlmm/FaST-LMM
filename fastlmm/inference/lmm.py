@@ -533,6 +533,7 @@ class LMM(object):
         assert SP.all(SP.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
         if result['variance_beta'] is None:
             del result['variance_beta']
+        logging.debug(result)
         return result
 
 

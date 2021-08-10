@@ -272,8 +272,8 @@ class GwasPrototype(object):
         self.lmm.setX(self.cov)
         self.lmm.sety(self.phen)
 
-        logging.info("finding delta")
         if self.delta is None:
+            logging.info("finding delta")
             result = self.lmm.findH2(REML=self.REML, minH2=0.00001 )
             self.delta = 1.0/result['h2']-1.0
             
