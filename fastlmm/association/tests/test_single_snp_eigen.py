@@ -79,11 +79,11 @@ class TestSingleSnpEigen(unittest.TestCase):
                 else:
                     cov_val =  None
                 G_chr1, G_chr2 = G[:,:train_count], G[:,train_count:train_count+test_count]
-                gwas = GwasPrototype(G_chr1, G_chr2, y, delta, cov=cov_val, REML=False)
+                gwas = GwasPrototype(G_chr1, G_chr2, y, internal_delta=delta, cov=cov_val, REML=False)
                 gwas.run_gwas()
 
                 # check p-values in log-space!
-                np.testing.assert_array_almost_equal(np.log(sorted(gwas.p_values)), np.log(frame.PValue), decimal=9)
+                np.testing.assert_array_almost_equal(np.log(sorted(gwas.p_values)), np.log(frame.PValue), decimal=7)
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")

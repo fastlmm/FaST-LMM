@@ -194,12 +194,12 @@ class TestGwas(unittest.TestCase):
 class GwasPrototype(object):
     """
     class to perform genome-wide scan
-
+     
     Warning: if cov is given, be sure it includes a column of 1's (If it is not given, a column of 1's will be provided.)
     """
     
 
-    def __init__(self, train_snps, test_snps, phen, delta=None, cov=None, REML=False, train_pcs=None, mixing=0.0):
+    def __init__(self, train_snps, test_snps, phen, delta=None, internal_delta=None, cov=None, REML=False, train_pcs=None, mixing=0.0):
         """
         set up GWAS object
         """
@@ -208,7 +208,10 @@ class GwasPrototype(object):
         self.train_snps = train_snps
         self.test_snps = test_snps
         self.phen = phen
-        if delta is None:
+        assert internal_delta is None or delta is None, "At lease one of delta and internal_delta must be None"
+        if internal_delta is not None:
+            self.delta = internal_delta
+        elif delta is None:
             self.delta=None
         else:
             self.delta = delta * train_snps.shape[1]
