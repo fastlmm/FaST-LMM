@@ -6,12 +6,13 @@ import numpy as np
 import scipy.stats as stats
 import pysnptools.util as pstutil
 from unittest.mock import patch
+from pysnptools.standardizer import Unit
+from pysnptools.eigenreader import EigenData
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
     _snps_fixup,
     _kernel_fixup,
 )
-from pysnptools.standardizer import Unit
 from fastlmm.inference import LMM
 
 
@@ -28,8 +29,11 @@ def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
     w, v = np.linalg.eigh(K.val)  # !!! cmk do SVD sometimes?
     logging.debug("Done with to eigh")
     if np.any(w < -0.1):
-        logging.warning("kernel contains a negative Eigenvalue")
-    return w, v
+        logging.warning("kernel contains a negative Eigenvalue") #!!!cmk this shouldn't happen with a RRM, right?
+    # !!!cmk remove very small eigenvalues
+    # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
+    eigen = EigenData(values=w, vectors=v, iid=K.iid)
+    return eigen
 
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
@@ -37,8 +41,7 @@ def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
 def single_snp_eigen(
     test_snps,
     pheno,
-    eigenvalues,
-    eigenvectors,
+    eigenreader,
     covar=None,  # !!!cmk covar_by_chrom=None, leave_out_one_chrom=True,
     output_file_name=None,
     log_delta=None,
@@ -79,10 +82,12 @@ def single_snp_eigen(
         # !!!cmk assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False,
         #  'covar_by_chrom' must be None"
         # !!!cmk fix up w and v
-        test_snps, pheno, covar = pstutil.intersect_apply(
-            [test_snps, pheno, covar]
-        )  # !!!cmk w and v
+        iid_count_before = eigenreader.iid_count
+        test_snps, pheno, eigenreader, covar = pstutil.intersect_apply(
+            [test_snps, pheno, eigenreader, covar]
+        ) 
         logging.debug("# of iids now {0}".format(test_snps.iid_count))
+        assert eigenreader.iid_count == iid_count_before, "Expect all of eigenreader's individuals to be in test_snps, pheno, and covar." #cmk ok to lose some?
         # !!!cmk K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal,
         #  force_full_rank, force_low_rank)
 
@@ -100,12 +105,13 @@ def single_snp_eigen(
         # view_ok because this code already did a fresh read to look for any
         #  missing values
         multi_y = xp.asarray(pheno.read(view_ok=True, order="A").val)
+        eigendata = eigenreader.read(view_ok=True, order="A")
 
         lmm = LMM()
         lmm.X = covar_val
         lmm.y = multi_y[:,0]
-        lmm.U = eigenvectors
-        lmm.S = eigenvalues
+        lmm.U = eigendata.vectors
+        lmm.S = eigendata.values
         lmm.UX = lmm.U.T.dot(lmm.X)
         lmm.Uy = lmm.U.T.dot(lmm.y)
 

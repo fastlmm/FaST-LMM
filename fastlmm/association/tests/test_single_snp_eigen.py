@@ -57,12 +57,11 @@ class TestSingleSnpEigen(unittest.TestCase):
         for cov in [cov_reader, None]:
             for delta in [0.20000600000000002, None, delta_default]:
                 if True:
-                    eigenvalues, eigenvectors = eigen_from_kernel(snp_reader[:,:train_count], kernel_standardizer=KernelIdentity()) # !!!cmk why not diag standardize?
+                    eigenreader = eigen_from_kernel(snp_reader[:,:train_count], kernel_standardizer=KernelIdentity()) # !!!cmk why not diag standardize?
                     frame = single_snp_eigen(
                         test_snps=Bed(bed_fn,count_A1=False)[:,train_count:train_count+test_count],
                         pheno=pheno_fn,
-                        eigenvalues=eigenvalues,
-                        eigenvectors=eigenvectors,
+                        eigenreader = eigenreader,
                         covar=cov,
                         output_file_name=None,
                         log_delta = np.log(delta) if delta is not None else None,
