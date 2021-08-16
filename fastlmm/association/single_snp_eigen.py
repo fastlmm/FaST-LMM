@@ -23,6 +23,8 @@ def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
     K = _kernel_fixup(K, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
     assert K.iid0 is K.iid1, "Expect K to be square"
 
+    #!!!cmk understand _read_kernel, _read_with_standardizing
+
     K = K._read_with_standardizing(kernel_standardizer=kernel_standardizer,to_kerneldata=True, return_trained=False)
     # !!! cmk ??? pass in a new argument, the kernel_standardizer(???)
     logging.debug("About to eigh")
@@ -33,6 +35,8 @@ def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
     # !!!cmk remove very small eigenvalues
     # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
     eigen = EigenData(values=w, vectors=v, iid=K.iid)
+    eigen.values[eigen.values<.0001]=0.0
+    #eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
 
 
@@ -107,18 +111,26 @@ def single_snp_eigen(
         multi_y = xp.asarray(pheno.read(view_ok=True, order="A").val)
         eigendata = eigenreader.read(view_ok=True, order="A")
 
-        lmm = LMM()
+        lmm = LMM(forcefullrank=True)
         lmm.X = covar_val
+        # !!! cmk with multipheno is it going to be O(covar*covar*y)???
         lmm.y = multi_y[:,0]
         lmm.U = eigendata.vectors
         lmm.S = eigendata.values
+
+        #============
+        # iid_count x eid_count  *  iid_count x covar => eid_count * covar
+        # O(iid_count x eid_count x covar)
+        #=============
         lmm.UX = lmm.U.T.dot(lmm.X)
+
+        #============
+        # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
+        # O(iid_count x eid_count x pheno_count)
+        #=============
         lmm.Uy = lmm.U.T.dot(lmm.y)
 
         if log_delta is None:
-            # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-            lmm.setX(covar_val)
-            lmm.sety(multi_y[:, 0])  # !!! cmk need to check that just one pheno for now
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")

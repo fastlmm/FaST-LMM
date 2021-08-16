@@ -69,7 +69,7 @@ class LMM(object):
         self.UX  = self.U.T.dot(X)
         k=self.S.shape[0]
         N=self.X.shape[0]
-        if (k<N):
+        if not self.forcefullrank and k<N: # low rank part # !!!cmklow
             self.UUX = X - self.U.dot(self.UX)
 
     def setX2(self, X):
@@ -93,7 +93,7 @@ class LMM(object):
         self.Uy  = self.U.T.dot(y)
         k=self.S.shape[0]
         N=self.y.shape[0]
-        if (k<N):
+        if not self.forcefullrank and k<N: # low rank part # !!!cmklow
             self.UUy = y - self.U.dot(self.Uy)
 
     def sety2(self, y):
@@ -151,7 +151,7 @@ class LMM(object):
             N = K0.shape[0]
             k=N
         if k>0:
-            if ((not self.forcefullrank) and (k<N)):
+            if ((not self.forcefullrank) and (k<N)): #!!!cmklow
                 #it is faster using the eigen decomposition of G.T*G but this is more accurate
                 try:
                     [U,S,V] = LA.svd(self.G,full_matrices = False) #!!!use big_svd?
@@ -344,7 +344,7 @@ class LMM(object):
 
 
 
-    def nLLeval(self,h2=0.0, REML=True, logdelta = None, delta = None, dof = None, scale = 1.0,penalty=0.0):
+    def nLLeval(self,h2=0.0, REML=True, logdelta = None, delta = None, dof = None, scale = 1.0, penalty=0.0):
         '''
         evaluate -ln( N( U^T*y | U^T*X*beta , h2*S + (1-h2)*I ) ),
         where ((1-a2)*K0 + a2*K1) = USU^T
@@ -377,9 +377,9 @@ class LMM(object):
                     'h2':h2,
                     'REML':REML,
                     'scale':scale}
-        k=self.S.shape[0]
-        N=self.y.shape[0]
-        D=self.UX.shape[1]
+        k = len(self.S)       # number of eigenvalues (and eigenvectors)
+        N = self.y.shape[0]   # number of individuals
+        D = self.UX.shape[1]  # number of covariates (usually includes a bias term)
         
         #if REML == True:
         #    # this needs to be fixed, please see test_gwas.py for details
@@ -393,7 +393,7 @@ class LMM(object):
         else:
             Sd = (h2*self.S + (1.0-h2))*scale
 
-        UXS = self.UX / NP.lib.stride_tricks.as_strided(Sd, (Sd.size,self.UX.shape[1]), (Sd.itemsize,0))
+        UXS = self.UX / Sd.reshape(-1,1)
         UyS = self.Uy / Sd
 
         XKX = UXS.T.dot(self.UX)
@@ -402,7 +402,7 @@ class LMM(object):
 
         logdetK = SP.log(Sd).sum()
                 
-        if (k<N):#low rank part
+        if not self.forcefullrank and k<N: # low rank part # !!!cmklow
         
             # determine normalization factor
             if delta is not None:
@@ -413,7 +413,7 @@ class LMM(object):
             XKX += self.UUX.T.dot(self.UUX)/(denom)
             XKy += self.UUX.T.dot(self.UUy)/(denom)
             yKy += self.UUy.T.dot(self.UUy)/(denom)      
-            logdetK+=(N-k) * SP.log(denom)
+            logdetK += (N-k) * SP.log(denom)
  
         # proximal contamination (see Supplement Note 2: An Efficient Algorithm for Avoiding Proximal Contamination)
         # available at: http://www.nature.com/nmeth/journal/v9/n6/extref/nmeth.2037-S1.pdf
@@ -437,7 +437,7 @@ class LMM(object):
             assert WX.shape == (num_exclude, D)
             assert Wy.shape == (num_exclude,)
             
-            if (k<N):#low rank part
+            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
             
                 self.UUW = G_exclude - self.U.dot(self.UW)
                 
@@ -626,7 +626,7 @@ class LMM(object):
         if self.G is not None:
             k = self.G.shape[1]
             N = self.G.shape[0]
-            if k<N:
+            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
                 # see e.g. Equation 3.17 in Supplement of FaST LMM paper
                 self.UUKstar = self.Kstar.T - SP.dot(self.U, self.UKstar)
    
@@ -690,7 +690,7 @@ class LMM(object):
             Gstar_exclude = self.Gstar[:,self.exclude_idx]
             #G_exclude = self.G[:,self.exclude_idx]
             UKstar = self.UKstar - SP.dot(self.UW,Gstar_exclude.T)
-            if k<N:
+            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
                 UUKstar = self.UUKstar - SP.dot(self.UUW,Gstar_exclude.T)
         else:
             UKstar = self.UKstar 
@@ -724,7 +724,7 @@ class LMM(object):
             assert WKstar.shape == (num_exclude, M)
             assert Wyres.shape == (num_exclude,)
             
-            if (k<N):#low rank part
+            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
                 WW += self.UUW.T.dot(self.UUW)/denom
                 WKstar += self.UUW.T.dot(UUKstar)/denom
                 Wyres += self.UUW.T.dot(UUyres)/denom
