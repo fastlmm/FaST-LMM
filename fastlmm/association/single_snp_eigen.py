@@ -189,30 +189,36 @@ def single_snp_eigen(
         XKy = np.full(shape=(ncov+1,npheno),fill_value=np.NaN)
         XKy[:ncov,:] = covarKy
 
-        for sid_index in range(test_snps.sid_count):
-            snps_read = test_snps[:, sid_index].read().standardize()
-            Ualt = lmm.U.T.dot(snps_read.val)
+        batch_size = 1000
+        for sid_start in range(0,test_snps.sid_count,batch_size):
+            sid_end = np.min([sid_start+batch_size,test_snps.sid_count])
+            snps_batch = test_snps[:, sid_start:sid_end].read().standardize()
+            Ualt_batch = lmm.U.T.dot(snps_batch.val)
+            covarSalt_batch = covarS.T.dot(Ualt_batch)
 
-            # every combination of (covar+1test) x (covar+1test), take a column0 dot column1 dot Sd
-            # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
-            XKX[:ncov,ncov:] = covarS.T.dot(Ualt)
-            XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
-            XKX[ncov:,ncov:] = (Ualt / Sd.reshape(-1,1)).T.dot(Ualt)
+            for sid_index in range(sid_start,sid_end):
 
-            # every combination of (covar+test) x (pheno/Sd), take a column0 dot column1
-            # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
-            XKy[ncov:,:] = Ualt.T.dot(UyS)
+                # every combination of (covar+1test) x (covar+1test), take a column0 dot column1 dot Sd
+                # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
+                XKX[:ncov,ncov:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
+                XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
+                Ualt = Ualt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
+                XKX[ncov:,ncov:] = (Ualt / Sd.reshape(-1,1)).T.dot(Ualt)
 
-            ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
+                # every combination of (covar+test) x (pheno/Sd), take a column0 dot column1
+                # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
+                XKy[ncov:,:] = Ualt.T.dot(UyS)
+
+                ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
 
 
 
-            test_statistic = ll_alt - ll_null
-            pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
+                test_statistic = ll_alt - ll_null
+                pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
-            pvalue_list.append(pvalue)
-            beta_list.append(beta)
-            variance_beta_list.append(variance_beta)
+                pvalue_list.append(pvalue)
+                beta_list.append(beta)
+                variance_beta_list.append(variance_beta)
 
         dataframe["sid_index"] = range(test_snps.sid_count)
         dataframe['SNP'] = test_snps.sid
