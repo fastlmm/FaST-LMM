@@ -154,7 +154,6 @@ def single_snp_eigen(
         # we optimize beta and find loglikelihood with ML (REML=False)
         # !!! cmk if test_via_reml == fit_log_delta_via_reml this could be skipped
         assert not test_via_reml # !!!cmk
-        res_null = nLLevalx(lmm, delta=delta)
 
         k = len(lmm.S)       # number of eigenvalues (and eigenvectors)
         N = lmm.y.shape[0]   # number of individuals
@@ -192,7 +191,6 @@ def single_snp_eigen(
             snps_read = test_snps[:, sid_index].read().standardize()
             lmm.X = np.hstack((covar_val, snps_read.val))
             lmm.UX  = lmm.U.T.dot(lmm.X)
-
             UXS = lmm.UX / Sd.reshape(-1,1)
             XKX = UXS.T.dot(lmm.UX)
             XKy = UXS.T.dot(lmm.Uy)
@@ -203,7 +201,6 @@ def single_snp_eigen(
             r2 = yKy-XKy.dot(beta)
             sigma2 = r2 / N
             nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
-            h2 = 1.0/(delta+1)
             variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
             assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
             ll_alt = -nLL
