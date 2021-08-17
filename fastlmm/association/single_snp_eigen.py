@@ -166,12 +166,12 @@ def single_snp_eigen(
         UyS = lmm.Uy / Sd
 
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
-        covarKcovar = (lmm.UX / Sd.reshape(-1,1)).T.dot(lmm.UX)
+        covarS = lmm.UX / Sd.reshape(-1,1)
+        covarKcovar = covarS.T.dot(lmm.UX)
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        covarKy = lmm.UX.T.dot(UyS)
+        covarKy = lmm.UX.T.dot(UyS).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
         ll_null, beta, variance_beta=  ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
-        covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
 
         dataframe = _create_dataframe(test_snps.sid_count)
@@ -191,24 +191,19 @@ def single_snp_eigen(
 
         for sid_index in range(test_snps.sid_count):
             snps_read = test_snps[:, sid_index].read().standardize()
-            # X = np.hstack((covar_val, snps_read.val))
-            # UX  = lmm.U.T.dot(X)
             Ualt = lmm.U.T.dot(snps_read.val)
-            # UXAndalt = np.hstack((lmm.UX, Ualt))
 
             # every combination of (covar+1test) x (covar+1test), take a column0 dot column1 dot Sd
             # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
-            # XKX = (UXAndalt / Sd.reshape(-1,1)).T.dot(UXAndalt)
-            XKX[:ncov,ncov:] = (lmm.UX / Sd.reshape(-1,1)).T.dot(Ualt)
+            XKX[:ncov,ncov:] = covarS.T.dot(Ualt)
             XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
             XKX[ncov:,ncov:] = (Ualt / Sd.reshape(-1,1)).T.dot(Ualt)
 
             # every combination of (covar+test) x (pheno/Sd), take a column0 dot column1
             # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
-            # XKy = UXAndalt.T.dot(UyS)
             XKy[ncov:,:] = Ualt.T.dot(UyS)
 
-            ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy.reshape(-1))
+            ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
 
 
 
@@ -243,6 +238,7 @@ def single_snp_eigen(
 
 
 def ll_eval(iid_count, logdetK, h2, yKy, XKX, XKy):
+    XKy = XKy.reshape(-1) # cmk should be 2-D to support multiple phenos
     # Must do one test at a time
     SxKx,UxKx= np.linalg.eigh(XKX)
     # Remove tiny eigenvectors
