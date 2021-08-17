@@ -165,11 +165,17 @@ def single_snp_eigen(
         h2 = 1.0/(delta+1)
         UyS = lmm.Uy / Sd
 
-        ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, lmm.UX, UyS, yKy, Sd, logdetK, h2)
+        # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
+        covarKcovar = (lmm.UX / Sd.reshape(-1,1)).T.dot(lmm.UX)
+        # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
+        covarKy = lmm.UX.T.dot(UyS)
+
+        ll_null, beta, variance_beta=  ll_eval2(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
+
 
         dataframe = _create_dataframe(test_snps.sid_count)
 
-        # !!!cmk real in batches
+        # !!!cmk really do this in in batches
 
         pvalue_list = []
         beta_list = [] 
@@ -181,7 +187,21 @@ def single_snp_eigen(
             Ualt = lmm.U.T.dot(snps_read.val)
             UXAndalt = np.hstack((lmm.UX, Ualt))
 
-            ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, UXAndalt, UyS, yKy, Sd, logdetK, h2)
+            # ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, UXAndalt, UyS, yKy, Sd, logdetK, h2)
+
+
+            # every combination of (covar+1test) x (covar+1test), take a column0 dot column1 dot Sd
+            # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
+            XKX = (UXAndalt / Sd.reshape(-1,1)).T.dot(UXAndalt)
+
+            # every combination of (covar+test) x (pheno/Sd), take a column0 dot column1
+            # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
+            XKy = UXAndalt.T.dot(UyS)
+
+            ll_alt, beta, variance_beta = ll_eval2(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
+
+
+
             test_statistic = ll_alt - ll_null
             pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
