@@ -152,10 +152,11 @@ def single_snp_eigen(
 
         # As per the paper, we previously optimized delta with REML=True, but
         # we optimize beta and find loglikelihood with ML (REML=False)
-        # !!! cmk if test_via_reml and fit_log_delta_via_reml this could be skipped
+        # !!! cmk if test_via_reml == fit_log_delta_via_reml this could be skipped
         assert not test_via_reml # !!!cmk
         res_null = nLLevalx(lmm, delta=delta)
         ll_null = -res_null["nLL"]
+        h2 = res_null["h2"]
 
         dataframe = _create_dataframe(test_snps.sid_count)
 
@@ -166,26 +167,24 @@ def single_snp_eigen(
         variance_beta_list = []
         for sid_index in range(test_snps.sid_count):
             snps_read = test_snps[:, sid_index].read().standardize()
-            X = np.hstack((covar_val, snps_read.val))
-             # !!!cmk make sure always full rank. Also, only
-             # !!!cmk do the change to UX and X
-            lmm.setX(X)
-            res_alt = nLLevalx(lmm, delta)
-            ll_alt = -res_alt["nLL"]
+            lmm.X = np.hstack((covar_val, snps_read.val))
+            lmm.UX  = lmm.U.T.dot(lmm.X)
 
-            h2 = res_alt["h2"]
+
+            res_alt = nLLevalx(lmm, delta)
+
+
+            ll_alt = -res_alt["nLL"]
             beta = res_alt["beta"][-1]
             variance_beta = (
                 res_alt["variance_beta"][-1] if "variance_beta" in res_alt else np.nan
             )
-
             test_statistic = ll_alt - ll_null
-            degrees_of_freedom = 1
-            pvalue = stats.chi2.sf(2.0 * test_statistic, degrees_of_freedom)
+            pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
+
             pvalue_list.append(pvalue)
             beta_list.append(beta)
             variance_beta_list.append(variance_beta)
-            #logging.info(f"cmk {ll_null},{ll_alt},{pvalue}")
 
         dataframe["sid_index"] = range(test_snps.sid_count)
         dataframe['SNP'] = test_snps.sid
