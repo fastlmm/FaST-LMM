@@ -236,49 +236,7 @@ def ll_eval(UX, Uy, yKy, Sd, logdetK, h2):
     variance_beta = h2 * sigma2 * (UxKx/SxKx * UxKx).sum(-1)
     return -nLL, beta, variance_beta
 
-def cmknLLevalx(self, delta):
-        k = len(self.S)       # number of eigenvalues (and eigenvectors)
-        N = self.y.shape[0]   # number of individuals
-        D = self.UX.shape[1]  # number of covariates (usually includes a bias term)
-        
-        Sd = (self.S+delta)
 
-        UXS = self.UX / Sd.reshape(-1,1)
-        UyS = self.Uy / Sd
-
-        XKX = UXS.T.dot(self.UX)
-        XKy = UXS.T.dot(self.Uy)
-        yKy = UyS.T.dot(self.Uy)
-
-        logdetK = np.log(Sd).sum()
-                
-        [SxKx,UxKx]= np.linalg.eigh(XKX)
-        #optionally regularize the beta weights by penalty
-        i_pos = SxKx>1E-10
-        beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
-
-        r2 = yKy-XKy.dot(beta)
-
-        sigma2 = r2 / (N)
-        nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
-        h2 = 1.0/(delta+1)
-        # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
-        # where h2*sigma2 is sigma2_g
-        variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
-        result = {
-                'nLL':nLL,
-                'sigma2':sigma2,
-                'beta':beta,
-                'variance_beta': variance_beta,
-                'h2':h2,
-                'REML':False,
-                'a2':self.a2,
-                'scale':1.0
-                }
-
-        assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
-        logging.debug(result)
-        return result
 
 
 # !!!cmk similar to single_snp.py and single_snp_scale
