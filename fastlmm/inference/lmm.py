@@ -10,6 +10,8 @@ import time
 import warnings
 import logging
 
+# !!!cmklow expected an eigenvalue of 0 to given the same result as removing its eigenvector, but it doesn't. May need to remove some cmklow lines and put back
+
 class LMM(object):
     """
     linear mixed model with up to two kernels
