@@ -175,23 +175,10 @@ def single_snp_eigen(
         variance_beta_list = []
         for sid_index in range(test_snps.sid_count):
             snps_read = test_snps[:, sid_index].read().standardize()
-            lmm.X = np.hstack((covar_val, snps_read.val))
-            lmm.UX  = lmm.U.T.dot(lmm.X)
+            X = np.hstack((covar_val, snps_read.val))
+            UX  = lmm.U.T.dot(X)
 
-
-            UXS = lmm.UX / Sd.reshape(-1,1)
-            XKX = UXS.T.dot(lmm.UX)
-            XKy = UXS.T.dot(lmm.Uy)
-            SxKx,UxKx= np.linalg.eigh(XKX)
-            i_pos = SxKx>1E-10
-            beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
-            r2 = yKy-XKy.dot(beta)
-            sigma2 = r2 / N
-            nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
-            variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
-            assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
-            ll_alt = -nLL
-
+            ll_alt, beta, variance_beta = ll_eval(UX, lmm.Uy, yKy, Sd, logdetK, h2)
             test_statistic = ll_alt - ll_null
             pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
