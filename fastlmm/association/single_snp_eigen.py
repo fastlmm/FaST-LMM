@@ -170,7 +170,7 @@ def single_snp_eigen(
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
         covarKy = lmm.UX.T.dot(UyS)
 
-        ll_null, beta, variance_beta=  ll_eval2(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
+        ll_null, beta, variance_beta=  ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
 
         dataframe = _create_dataframe(test_snps.sid_count)
@@ -187,9 +187,6 @@ def single_snp_eigen(
             Ualt = lmm.U.T.dot(snps_read.val)
             UXAndalt = np.hstack((lmm.UX, Ualt))
 
-            # ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, UXAndalt, UyS, yKy, Sd, logdetK, h2)
-
-
             # every combination of (covar+1test) x (covar+1test), take a column0 dot column1 dot Sd
             # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
             XKX = (UXAndalt / Sd.reshape(-1,1)).T.dot(UXAndalt)
@@ -198,7 +195,7 @@ def single_snp_eigen(
             # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
             XKy = UXAndalt.T.dot(UyS)
 
-            ll_alt, beta, variance_beta = ll_eval2(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
+            ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
 
 
 
@@ -231,7 +228,7 @@ def single_snp_eigen(
 
     return dataframe
 
-def ll_eval(iid_count, UX, UyS, yKy, Sd, logdetK, h2):
+def cmkdelll_eval(iid_count, UX, UyS, yKy, Sd, logdetK, h2):
 
     # every combination of (covar+1test) x (covar+1test), take a column0 dot column1 dot Sd
     # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
@@ -241,9 +238,9 @@ def ll_eval(iid_count, UX, UyS, yKy, Sd, logdetK, h2):
     # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
     XKy = UX.T.dot(UyS)
 
-    return ll_eval2(iid_count, logdetK, h2, yKy, XKX, XKy)
+    return ll_eval(iid_count, logdetK, h2, yKy, XKX, XKy)
 
-def ll_eval2(iid_count, logdetK, h2, yKy, XKX, XKy):
+def ll_eval(iid_count, logdetK, h2, yKy, XKX, XKy):
     # Must do one test at a time
     SxKx,UxKx= np.linalg.eigh(XKX)
     # Remove tiny eigenvectors
