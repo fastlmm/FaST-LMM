@@ -157,28 +157,14 @@ def single_snp_eigen(
 
         k = len(lmm.S)       # number of eigenvalues (and eigenvectors)
         N = lmm.y.shape[0]   # number of individuals
-        #D = lmm.UX.shape[1]  # number of covariates (usually includes a bias term)
         
-        Sd = (lmm.S+delta)
+        Sd = lmm.S+delta
         logdetK = np.log(Sd).sum()
-
         UyS = lmm.Uy / Sd
         yKy = UyS.T.dot(lmm.Uy)
-
-        UXS = lmm.UX / Sd.reshape(-1,1)
-        XKX = UXS.T.dot(lmm.UX)
-        XKy = UXS.T.dot(lmm.Uy)
-        SxKx,UxKx= np.linalg.eigh(XKX)
-        #optionally regularize the beta weights by penalty
-        i_pos = SxKx>1E-10
-        beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
-        r2 = yKy-XKy.dot(beta)
-        sigma2 = r2 / N
-        nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
         h2 = 1.0/(delta+1)
-        variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
-        assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
-        ll_null = -nLL
+
+        ll_null, beta, variance_beta = ll_eval(lmm.UX, lmm.Uy, yKy, Sd, logdetK, h2)
 
         dataframe = _create_dataframe(test_snps.sid_count)
 
@@ -191,11 +177,12 @@ def single_snp_eigen(
             snps_read = test_snps[:, sid_index].read().standardize()
             lmm.X = np.hstack((covar_val, snps_read.val))
             lmm.UX  = lmm.U.T.dot(lmm.X)
+
+
             UXS = lmm.UX / Sd.reshape(-1,1)
             XKX = UXS.T.dot(lmm.UX)
             XKy = UXS.T.dot(lmm.Uy)
             SxKx,UxKx= np.linalg.eigh(XKX)
-            #optionally regularize the beta weights by penalty
             i_pos = SxKx>1E-10
             beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
             r2 = yKy-XKy.dot(beta)
@@ -234,7 +221,22 @@ def single_snp_eigen(
 
     return dataframe
 
-def nLLevalx(self, delta):
+def ll_eval(UX, Uy, yKy, Sd, logdetK, h2):
+    N = len(Uy)
+    UXS = UX / Sd.reshape(-1,1)
+    XKX = UXS.T.dot(UX)
+    XKy = UXS.T.dot(Uy)
+    SxKx,UxKx= np.linalg.eigh(XKX)
+    i_pos = SxKx>1E-10
+    beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
+    r2 = yKy-XKy.dot(beta)
+    sigma2 = r2 / N
+    nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
+    assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
+    variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
+    return -nLL, beta, variance_beta
+
+def cmknLLevalx(self, delta):
         k = len(self.S)       # number of eigenvalues (and eigenvectors)
         N = self.y.shape[0]   # number of individuals
         D = self.UX.shape[1]  # number of covariates (usually includes a bias term)
