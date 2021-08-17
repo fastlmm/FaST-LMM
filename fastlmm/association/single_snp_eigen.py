@@ -155,8 +155,31 @@ def single_snp_eigen(
         # !!! cmk if test_via_reml == fit_log_delta_via_reml this could be skipped
         assert not test_via_reml # !!!cmk
         res_null = nLLevalx(lmm, delta=delta)
-        ll_null = -res_null["nLL"]
-        h2 = res_null["h2"]
+
+        k = len(lmm.S)       # number of eigenvalues (and eigenvectors)
+        N = lmm.y.shape[0]   # number of individuals
+        #D = lmm.UX.shape[1]  # number of covariates (usually includes a bias term)
+        
+        Sd = (lmm.S+delta)
+        logdetK = np.log(Sd).sum()
+
+        UXS = lmm.UX / Sd.reshape(-1,1)
+        UyS = lmm.Uy / Sd
+        yKy = UyS.T.dot(lmm.Uy)
+
+        XKX = UXS.T.dot(lmm.UX)
+        XKy = UXS.T.dot(lmm.Uy)
+        SxKx,UxKx= np.linalg.eigh(XKX)
+        #optionally regularize the beta weights by penalty
+        i_pos = SxKx>1E-10
+        beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
+        r2 = yKy-XKy.dot(beta)
+        sigma2 = r2 / N
+        nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
+        h2 = 1.0/(delta+1)
+        variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
+        assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
+        ll_null = -nLL
 
         dataframe = _create_dataframe(test_snps.sid_count)
 
@@ -233,8 +256,7 @@ def nLLevalx(self, delta):
 
         sigma2 = r2 / (N)
         nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
-        if delta is not None:
-            h2 = 1.0/(delta+1)
+        h2 = 1.0/(delta+1)
         # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
         # where h2*sigma2 is sigma2_g
         variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
@@ -250,8 +272,6 @@ def nLLevalx(self, delta):
                 }
 
         assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
-        if result['variance_beta'] is None:
-            del result['variance_beta']
         logging.debug(result)
         return result
 
