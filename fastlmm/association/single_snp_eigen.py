@@ -163,10 +163,10 @@ def single_snp_eigen(
         Sd = (lmm.S+delta)
         logdetK = np.log(Sd).sum()
 
-        UXS = lmm.UX / Sd.reshape(-1,1)
         UyS = lmm.Uy / Sd
         yKy = UyS.T.dot(lmm.Uy)
 
+        UXS = lmm.UX / Sd.reshape(-1,1)
         XKX = UXS.T.dot(lmm.UX)
         XKy = UXS.T.dot(lmm.Uy)
         SxKx,UxKx= np.linalg.eigh(XKX)
@@ -193,15 +193,21 @@ def single_snp_eigen(
             lmm.X = np.hstack((covar_val, snps_read.val))
             lmm.UX  = lmm.U.T.dot(lmm.X)
 
+            UXS = lmm.UX / Sd.reshape(-1,1)
+            XKX = UXS.T.dot(lmm.UX)
+            XKy = UXS.T.dot(lmm.Uy)
+            SxKx,UxKx= np.linalg.eigh(XKX)
+            #optionally regularize the beta weights by penalty
+            i_pos = SxKx>1E-10
+            beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
+            r2 = yKy-XKy.dot(beta)
+            sigma2 = r2 / N
+            nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
+            h2 = 1.0/(delta+1)
+            variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
+            assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
+            ll_alt = -nLL
 
-            res_alt = nLLevalx(lmm, delta)
-
-
-            ll_alt = -res_alt["nLL"]
-            beta = res_alt["beta"][-1]
-            variance_beta = (
-                res_alt["variance_beta"][-1] if "variance_beta" in res_alt else np.nan
-            )
             test_statistic = ll_alt - ll_null
             pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
