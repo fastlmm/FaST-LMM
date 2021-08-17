@@ -219,15 +219,16 @@ def ll_eval(UX, Uy, yKy, Sd, logdetK, h2):
 
     # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
     XKX = UXS.T.dot(UX)
+    # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
+    XKy = UXS.T.dot(Uy)
 
+    # Must do one test at a time
     SxKx,UxKx= np.linalg.eigh(XKX)
     # Remove tiny eigenvectors
     i_pos = SxKx>1E-10
     UxKx = UxKx[:,i_pos]
     SxKx = SxKx[i_pos]
 
-    # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
-    XKy = UXS.T.dot(Uy)
     beta = UxKx.dot(UxKx.T.dot(XKy)/SxKx)
     r2 = yKy-XKy.dot(beta)
     sigma2 = r2 / iid_count
