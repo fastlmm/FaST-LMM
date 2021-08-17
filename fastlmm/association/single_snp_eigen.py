@@ -153,7 +153,8 @@ def single_snp_eigen(
         # As per the paper, we previously optimized delta with REML=True, but
         # we optimize beta and find loglikelihood with ML (REML=False)
         # !!! cmk if test_via_reml and fit_log_delta_via_reml this could be skipped
-        res_null = nLLevalx(lmm, delta=delta, REML=test_via_reml)
+        assert not test_via_reml # !!!cmk
+        res_null = nLLevalx(lmm, delta=delta)
         ll_null = -res_null["nLL"]
 
         dataframe = _create_dataframe(test_snps.sid_count)
@@ -169,7 +170,7 @@ def single_snp_eigen(
              # !!!cmk make sure always full rank. Also, only
              # !!!cmk do the change to UX and X
             lmm.setX(X)
-            res_alt = nLLevalx(lmm, delta=delta, REML=test_via_reml)
+            res_alt = nLLevalx(lmm, delta)
             ll_alt = -res_alt["nLL"]
 
             h2 = res_alt["h2"]
@@ -208,54 +209,12 @@ def single_snp_eigen(
 
     return dataframe
 
-def nLLevalx(self,h2=0.0, REML=True, logdelta = None, delta = None, dof = None, scale = 1.0, penalty=0.0):
-        '''
-        evaluate -ln( N( U^T*y | U^T*X*beta , h2*S + (1-h2)*I ) ),
-        where ((1-a2)*K0 + a2*K1) = USU^T
-        --------------------------------------------------------------------------
-        Input:
-        h2      : mixture weight between K and Identity (environmental noise)
-        REML    : boolean
-                  if True   : compute REML
-                  if False  : compute ML
-        dof     : Degrees of freedom of the Multivariate student-t
-                        (default None uses multivariate Normal likelihood)
-        logdelta: log(delta) allows to optionally parameterize in delta space
-        delta   : delta     allows to optionally parameterize in delta space
-        scale   : Scale parameter the multiplies the Covariance matrix (default 1.0)
-        --------------------------------------------------------------------------
-        Output dictionary:
-        'nLL'       : negative log-likelihood
-        'sigma2'    : the model variance sigma^2
-        'beta'      : [D*1] array of fixed effects weights beta
-        'h2'        : mixture weight between Covariance and noise
-        'REML'      : True: REML was computed, False: ML was computed
-        'a2'        : mixture weight between K0 and K1
-        'dof'       : Degrees of freedom of the Multivariate student-t
-                        (default None uses multivariate Normal likelihood)
-        'scale'     : Scale parameter that multiplies the Covariance matrix (default 1.0)
-        --------------------------------------------------------------------------
-        '''
-        if (h2<0.0) or (h2>1.0):
-            return {'nLL':3E20,
-                    'h2':h2,
-                    'REML':REML,
-                    'scale':scale}
+def nLLevalx(self, delta):
         k = len(self.S)       # number of eigenvalues (and eigenvectors)
         N = self.y.shape[0]   # number of individuals
         D = self.UX.shape[1]  # number of covariates (usually includes a bias term)
         
-        #if REML == True:
-        #    # this needs to be fixed, please see test_gwas.py for details
-        #    raise NotImplementedError("REML in lmm object not supported, please use lmm_cov.py instead")
-
-        if logdelta is not None:
-            delta = SP.exp(logdelta)
-
-        if delta is not None:
-            Sd = (self.S+delta)*scale
-        else:
-            Sd = (h2*self.S + (1.0-h2))*scale
+        Sd = (self.S+delta)
 
         UXS = self.UX / Sd.reshape(-1,1)
         UyS = self.Uy / Sd
@@ -266,134 +225,31 @@ def nLLevalx(self,h2=0.0, REML=True, logdelta = None, delta = None, dof = None, 
 
         logdetK = np.log(Sd).sum()
                 
-        if not self.forcefullrank and k<N: # low rank part # !!!cmklow
-        
-            # determine normalization factor
-            if delta is not None:
-                denom = (delta*scale)
-            else:
-                denom = ((1.0-h2)*scale)
-            
-            XKX += self.UUX.T.dot(self.UUX)/(denom)
-            XKy += self.UUX.T.dot(self.UUy)/(denom)
-            yKy += self.UUy.T.dot(self.UUy)/(denom)      
-            logdetK += (N-k) * SP.log(denom)
- 
-        # proximal contamination (see Supplement Note 2: An Efficient Algorithm for Avoiding Proximal Contamination)
-        # available at: http://www.nature.com/nmeth/journal/v9/n6/extref/nmeth.2037-S1.pdf
-        # exclude SNPs from the RRM in the likelihood evaluation
-        
-
-        if len(self.exclude_idx) > 0:          
-            num_exclude = len(self.exclude_idx)
-            
-            # consider only excluded SNPs
-            G_exclude = self.G[:,self.exclude_idx]
-            
-            self.UW = self.U.T.dot(G_exclude) # needed for proximal contamination
-            UWS = self.UW / NP.lib.stride_tricks.as_strided(Sd, (Sd.size,num_exclude), (Sd.itemsize,0))
-            assert UWS.shape == (k, num_exclude)
-            
-            WW = NP.eye(num_exclude) - UWS.T.dot(self.UW)
-            WX = UWS.T.dot(self.UX)
-            Wy = UWS.T.dot(self.Uy)
-            assert WW.shape == (num_exclude, num_exclude)
-            assert WX.shape == (num_exclude, D)
-            assert Wy.shape == (num_exclude,)
-            
-            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
-            
-                self.UUW = G_exclude - self.U.dot(self.UW)
-                
-                WW += self.UUW.T.dot(self.UUW)/denom
-                WX += self.UUW.T.dot(self.UUX)/denom
-                Wy += self.UUW.T.dot(self.UUy)/denom
-            
-            
-            #TODO: do cholesky, if fails do eigh
-            # compute inverse efficiently
-            [S_WW,U_WW] = LA.eigh(WW)
-            
-            UWX = U_WW.T.dot(WX)
-            UWy = U_WW.T.dot(Wy)
-            assert UWX.shape == (num_exclude, D)
-            assert UWy.shape == (num_exclude,)
-            
-            # compute S_WW^{-1} * UWX
-            WX = UWX / NP.lib.stride_tricks.as_strided(S_WW, (S_WW.size,UWX.shape[1]), (S_WW.itemsize,0))
-            # compute S_WW^{-1} * UWy
-            Wy = UWy / S_WW
-            # determinant update
-            logdetK += SP.log(S_WW).sum()
-            assert WX.shape == (num_exclude, D)
-            assert Wy.shape == (num_exclude,)
-            
-            # perform updates (instantiations for a and b in Equation (1.5) of Supplement)
-            yKy += UWy.T.dot(Wy)
-            XKy += UWX.T.dot(Wy)
-            XKX += UWX.T.dot(WX)
-            
-
-        #######
-        
         [SxKx,UxKx]= np.linalg.eigh(XKX)
         #optionally regularize the beta weights by penalty
-        if penalty>0.0:
-            SxKx+=penalty
         i_pos = SxKx>1E-10
         beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
 
         r2 = yKy-XKy.dot(beta)
 
-        if dof is None:#Use the Multivariate Gaussian
-            if REML:
-                XX = self.X.T.dot(self.X)
-                [Sxx,Uxx]= LA.eigh(XX)
-                logdetXX  = SP.log(Sxx).sum()
-                logdetXKX = SP.log(SxKx).sum()
-                sigma2 = r2 / (N - D)
-                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (N-D) * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
-                variance_beta = None
-            else:
-                sigma2 = r2 / (N)
-                nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
-                if delta is not None:
-                    h2 = 1.0/(delta+1)
-                # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
-                # where h2*sigma2 is sigma2_g
-                variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
-            result = {
-                  'nLL':nLL,
-                  'sigma2':sigma2,
-                  'beta':beta,
-                  'variance_beta': variance_beta,
-                  'h2':h2,
-                  'REML':REML,
-                  'a2':self.a2,
-                  'scale':scale
-                  }
-        else:#Use multivariate student-t
-            if REML:
-                XX = self.X.T.dot(self.X)
-                [Sxx,Uxx]= LA.eigh(XX)
-                logdetXX  = SP.log(Sxx).sum()
-                logdetXKX = SP.log(SxKx).sum()
+        sigma2 = r2 / (N)
+        nLL =  0.5 * ( logdetK + N * ( np.log(2.0*np.pi*sigma2) + 1 ) )
+        if delta is not None:
+            h2 = 1.0/(delta+1)
+        # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
+        # where h2*sigma2 is sigma2_g
+        variance_beta = h2 * sigma2 * (UxKx[:,i_pos]/SxKx[i_pos] * UxKx[:,i_pos]).sum(-1)
+        result = {
+                'nLL':nLL,
+                'sigma2':sigma2,
+                'beta':beta,
+                'variance_beta': variance_beta,
+                'h2':h2,
+                'REML':False,
+                'a2':self.a2,
+                'scale':1.0
+                }
 
-                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (dof + (N-D)) * SP.log(1.0+r2/dof) )
-                nLL += 0.5 * (N-D)*SP.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + (N-D) ))
-            else:
-                nLL =   0.5 * ( logdetK + (dof + N) * SP.log(1.0+r2/dof) )
-                nLL +=  0.5 * N*SP.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + N ))
-            result = {
-                  'nLL':nLL,
-                  'dof':dof,
-                  'beta':beta,
-                  'variance_beta': None,
-                  'h2':h2,
-                  'REML':REML,
-                  'a2':self.a2,
-                  'scale':scale
-                  }      
         assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
         if result['variance_beta'] is None:
             del result['variance_beta']
