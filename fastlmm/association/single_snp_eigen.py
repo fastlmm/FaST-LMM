@@ -221,6 +221,9 @@ def ll_eval(iid_count, UX, UyS, yKy, Sd, logdetK, h2):
     # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
     XKy = UX.T.dot(UyS)
 
+    return ll_eval2(iid_count, logdetK, h2, yKy, XKX, XKy)
+
+def ll_eval2(iid_count, logdetK, h2, yKy, XKX, XKy):
     # Must do one test at a time
     SxKx,UxKx= np.linalg.eigh(XKX)
     # Remove tiny eigenvectors
