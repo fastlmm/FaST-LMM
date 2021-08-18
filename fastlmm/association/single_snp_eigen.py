@@ -176,7 +176,7 @@ def single_snp_eigen(
 
         dataframe = _create_dataframe(test_snps.sid_count)
 
-        # !!!cmk really do this in in batches
+        # !!!cmk really do this in batches in different processes
 
         pvalue_list = []
         beta_list = [] 
@@ -189,11 +189,16 @@ def single_snp_eigen(
         XKy = np.full(shape=(ncov+1,npheno),fill_value=np.NaN)
         XKy[:ncov,:] = covarKy
 
-        batch_size = 1000
+        batch_size = 1000 #!!!cmk const
         for sid_start in range(0,test_snps.sid_count,batch_size):
             sid_end = np.min([sid_start+batch_size,test_snps.sid_count])
             snps_batch = test_snps[:, sid_start:sid_end].read().standardize()
+
+            # eid_count x iid_count * iid_count x sid_count -> eid_count x sid_count, O(eid_count * iid_count * sid_count)
+            # !!!cmk should biobank precompute this?
             Ualt_batch = lmm.U.T.dot(snps_batch.val)
+
+            # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar x eid_count x sid_count)
             covarSalt_batch = covarS.T.dot(Ualt_batch)
 
             for sid_index in range(sid_start,sid_end):
@@ -210,9 +215,6 @@ def single_snp_eigen(
                 XKy[ncov:,:] = Ualt.T.dot(UyS)
 
                 ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
-
-
-
                 test_statistic = ll_alt - ll_null
                 pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
