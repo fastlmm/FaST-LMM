@@ -10,8 +10,6 @@ import time
 import warnings
 import logging
 
-# !!!cmklow expected an eigenvalue of 0 to given the same result as removing its eigenvector, but it doesn't. May need to remove some cmklow lines and put back
-
 class LMM(object):
     """
     linear mixed model with up to two kernels
@@ -71,7 +69,7 @@ class LMM(object):
         self.UX  = self.U.T.dot(X)
         k=self.S.shape[0]
         N=self.X.shape[0]
-        if not self.forcefullrank and k<N: # low rank part # !!!cmklow
+        if k<N:
             self.UUX = X - self.U.dot(self.UX)
 
     def setX2(self, X):
@@ -95,7 +93,7 @@ class LMM(object):
         self.Uy  = self.U.T.dot(y)
         k=self.S.shape[0]
         N=self.y.shape[0]
-        if not self.forcefullrank and k<N: # low rank part # !!!cmklow
+        if k<N:
             self.UUy = y - self.U.dot(self.Uy)
 
     def sety2(self, y):
@@ -153,7 +151,7 @@ class LMM(object):
             N = K0.shape[0]
             k=N
         if k>0:
-            if ((not self.forcefullrank) and (k<N)): #!!!cmklow
+            if ((not self.forcefullrank) and (k<N)):
                 #it is faster using the eigen decomposition of G.T*G but this is more accurate
                 try:
                     [U,S,V] = LA.svd(self.G,full_matrices = False) #!!!use big_svd?
@@ -404,7 +402,7 @@ class LMM(object):
 
         logdetK = SP.log(Sd).sum()
                 
-        if not self.forcefullrank and k<N: # low rank part # !!!cmklow
+        if k<N: # low rank part
         
             # determine normalization factor
             if delta is not None:
@@ -439,7 +437,7 @@ class LMM(object):
             assert WX.shape == (num_exclude, D)
             assert Wy.shape == (num_exclude,)
             
-            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
+            if k<N: # low rank part
             
                 self.UUW = G_exclude - self.U.dot(self.UW)
                 
@@ -573,7 +571,7 @@ class LMM(object):
         UG = SP.dot(self.U.T, self.G)
         weights = SP.dot(UG.T , Uyres/Sd)
 
-        if k < N: # low-rank part
+        if k<N: # low-rank part
             # determine normalization factor
             if delta is not None:
                 denom = (delta*scale)
@@ -628,7 +626,7 @@ class LMM(object):
         if self.G is not None:
             k = self.G.shape[1]
             N = self.G.shape[0]
-            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
+            if k<N:
                 # see e.g. Equation 3.17 in Supplement of FaST LMM paper
                 self.UUKstar = self.Kstar.T - SP.dot(self.U, self.UKstar)
    
@@ -692,7 +690,7 @@ class LMM(object):
             Gstar_exclude = self.Gstar[:,self.exclude_idx]
             #G_exclude = self.G[:,self.exclude_idx]
             UKstar = self.UKstar - SP.dot(self.UW,Gstar_exclude.T)
-            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
+            if k<N: # low rank part
                 UUKstar = self.UUKstar - SP.dot(self.UUW,Gstar_exclude.T)
         else:
             UKstar = self.UKstar 
@@ -704,7 +702,7 @@ class LMM(object):
         Sdi = 1./Sd
         yrandom = SP.dot(Sdi*UKstar.T,Uyres)
         
-        if k < N: # low-rank part
+        if k<N: # low-rank part
             # determine normalization factor
             if delta is not None:
                 denom = (delta*scale)
@@ -726,7 +724,7 @@ class LMM(object):
             assert WKstar.shape == (num_exclude, M)
             assert Wyres.shape == (num_exclude,)
             
-            if not self.forcefullrank and k<N: # low rank part # !!!cmklow
+            if k<N: # low rank part
                 WW += self.UUW.T.dot(self.UUW)/denom
                 WKstar += self.UUW.T.dot(UUKstar)/denom
                 Wyres += self.UUW.T.dot(UUyres)/denom
@@ -863,7 +861,7 @@ class LMM(object):
         #print "SUK", SUKstarTUkStar[0,0]
         
         # part 3&4 from c-code
-        if k < N: # low-rank part
+        if k<N: # low-rank part
             # determine normalization factor
             if delta is not None:
                 denom = (delta*sigma2)

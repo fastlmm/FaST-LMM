@@ -198,22 +198,18 @@ def single_snp_eigen(
             # !!!cmk should biobank precompute this?
             Ualt_batch = lmm.U.T.dot(snps_batch.val)
 
-            # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar x eid_count x sid_count)
+            # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
             covarSalt_batch = covarS.T.dot(Ualt_batch)
 
             for sid_index in range(sid_start,sid_end):
-
-                # every combination of (covar+1test) x (covar+1test), take a column0 dot column1 dot Sd
-                # (covar+test) x eid_count * eid_count x (covar+test)  -> (covar+test) x (covar+test), O((covar+test)^2*eid_count)
                 XKX[:ncov,ncov:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
                 XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
                 Ualt = Ualt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
                 XKX[ncov:,ncov:] = (Ualt / Sd.reshape(-1,1)).T.dot(Ualt)
-
-                # every combination of (covar+test) x (pheno/Sd), take a column0 dot column1
-                # (covar+test) x eid_count * eid_count x pheno_count -> (covar+test) x pheno_count
+                # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
                 XKy[ncov:,:] = Ualt.T.dot(UyS)
 
+                # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
                 test_statistic = ll_alt - ll_null
                 pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
