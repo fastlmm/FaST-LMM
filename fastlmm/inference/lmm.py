@@ -378,7 +378,7 @@ class LMM(object):
                     'REML':REML,
                     'scale':scale}
         k = len(self.S)       # number of eigenvalues (and eigenvectors)
-        N = self.y.shape[0]   # number of individuals
+        N = len(self.U)       # number of individuals
         D = self.UX.shape[1]  # number of covariates (usually includes a bias term)
         
         #if REML == True:

@@ -112,30 +112,30 @@ def single_snp_eigen(
         multi_y = xp.asarray(pheno.read(view_ok=True, order="A").val)
         eigendata = eigenreader.read(view_ok=True, order="A")
 
-        lmm = LMM(forcefullrank=True)
-        lmm.X = covar_val
+        # !!!cmk  lmm_search = LMM(forcefullrank=True) - what if low rank?
+        lmm_search_X = covar_val
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        lmm.y = multi_y[:,0]
-        lmm.U = eigendata.vectors
-        lmm.S = eigendata.values
+        lmm_search_y = multi_y[:,0]
+        #cmklmm_search.U = eigendata.vectors
+        #cmklmm_search.S = eigendata.values
 
         #============
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        lmm.UX = lmm.U.T.dot(lmm.X)
+        lmm_search_UX, lmm_search_UUX = eigendata.rotate(lmm_search_X)
 
         #============
         # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
         # O(iid_count x eid_count x pheno_count)
         #=============
-        lmm.Uy = lmm.U.T.dot(lmm.y)
+        lmm_search_Uy, lmm_search_UUy = eigendata.rotate(lmm_search_y)
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")
-            result = lmm.findH2(REML=fit_log_delta_via_reml, minH2=0.00001 )
+            result = _lmm_search_findH2(eigendata, lmm_search_UX, lmm_search_UUX, lmm_search_Uy, lmm_search_UUy, REML=fit_log_delta_via_reml, minH2=0.00001)
             h2 = result["h2"]
             delta = 1.0/h2-1.0
             log_delta = np.log(delta)
@@ -145,6 +145,7 @@ def single_snp_eigen(
         else:
             # !!!cmk internal/external doesn't matter if full rank, right???
             delta = np.exp(log_delta)
+            h2 = 1.0/(delta+1)
 
 
         logging.info("delta={0}".format(delta))
@@ -155,23 +156,21 @@ def single_snp_eigen(
         # !!! cmk if test_via_reml == fit_log_delta_via_reml this could be skipped
         assert not test_via_reml # !!!cmk
 
-        k = len(lmm.S)       # number of eigenvalues (and eigenvectors)
-        N = lmm.y.shape[0]   # number of individuals
+        k = eigendata.eid_count       # number of eigenvalues (and eigenvectors)
+        N = eigendata.iid_count       # number of individuals
         
-        Sd = lmm.S+delta
+        Sd = eigendata.values+delta
         logdetK = np.log(Sd).sum()
-        UyS = lmm.Uy / Sd
-        yKy = UyS.T.dot(lmm.Uy)
-        h2 = 1.0/(delta+1)
-        UyS = lmm.Uy / Sd
+        UyS = lmm_search_Uy / Sd
+        yKy = UyS.T.dot(lmm_search_Uy)
 
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
-        covarS = lmm.UX / Sd.reshape(-1,1)
-        covarKcovar = covarS.T.dot(lmm.UX)
+        covarS = lmm_search_UX / Sd.reshape(-1,1)
+        covarKcovar = covarS.T.dot(lmm_search_UX)
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        covarKy = lmm.UX.T.dot(UyS).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
+        covarKy = lmm_search_UX.T.dot(UyS).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
-        ll_null, beta, variance_beta=  ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
+        ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
 
         dataframe = _create_dataframe(test_snps.sid_count)
@@ -196,7 +195,7 @@ def single_snp_eigen(
 
             # eid_count x iid_count * iid_count x sid_count -> eid_count x sid_count, O(eid_count * iid_count * sid_count)
             # !!!cmk should biobank precompute this?
-            Ualt_batch = lmm.U.T.dot(snps_batch.val)
+            Ualt_batch, UUalt_batch = eigendata.rotate(snps_batch.val)
 
             # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
             covarSalt_batch = covarS.T.dot(Ualt_batch)
@@ -240,7 +239,21 @@ def single_snp_eigen(
 
     return dataframe
 
+def _lmm_search_findH2(eigendata, UX, UUX, Uy, UUy, REML, minH2=0.00001):
 
+    #!!!cmk what if low rank?
+    lmm = LMM(forcefullrank=True)
+    lmm.S = eigendata.values
+    lmm.U = eigendata.vectors
+    lmm.UX = UX # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
+    lmm.Uy = Uy # !!!cmk precomputed for the same reason
+    if eigendata.is_low_rank:
+        lmm.UUX = UUX
+        lmm.UUy = UUy
+
+    return lmm.findH2(REML=REML, minH2=0.00001)
+
+#!!!cmk add _ll_eval
 def ll_eval(iid_count, logdetK, h2, yKy, XKX, XKy):
     XKy = XKy.reshape(-1) # cmk should be 2-D to support multiple phenos
     # Must do one test at a time
