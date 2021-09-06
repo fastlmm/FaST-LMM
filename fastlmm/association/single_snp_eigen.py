@@ -112,30 +112,24 @@ def single_snp_eigen(
         multi_y = xp.asarray(pheno.read(view_ok=True, order="A").val)
         eigendata = eigenreader.read(view_ok=True, order="A")
 
-        # !!!cmk  lmm_search = LMM(forcefullrank=True) - what if low rank?
-        lmm_search_X = covar_val
-        # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        lmm_search_y = multi_y[:,0]
-        #cmklmm_search.U = eigendata.vectors
-        #cmklmm_search.S = eigendata.values
-
         #============
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        lmm_search_UX, lmm_search_UUX = eigendata.rotate(lmm_search_X)
+        lmm_search_UX, lmm_search_UUX = eigendata.rotate(covar_val)
 
         #============
         # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
         # O(iid_count x eid_count x pheno_count)
         #=============
-        lmm_search_Uy, lmm_search_UUy = eigendata.rotate(lmm_search_y)
+        # !!! cmk with multipheno is it going to be O(covar*covar*y)???
+        rotated_y, double_rotated_y = eigendata.rotate(multi_y[:,0])
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")
-            result = _lmm_search_findH2(eigendata, lmm_search_UX, lmm_search_UUX, lmm_search_Uy, lmm_search_UUy, REML=fit_log_delta_via_reml, minH2=0.00001)
+            result = _lmm_search_findH2(eigendata, lmm_search_UX, lmm_search_UUX, rotated_y, double_rotated_y, REML=fit_log_delta_via_reml, minH2=0.00001)
             h2 = result["h2"]
             delta = 1.0/h2-1.0
             log_delta = np.log(delta)
@@ -161,8 +155,8 @@ def single_snp_eigen(
         
         Sd = eigendata.values+delta
         logdetK = np.log(Sd).sum()
-        UyS = lmm_search_Uy / Sd
-        yKy = UyS.T.dot(lmm_search_Uy)
+        UyS = rotated_y / Sd
+        yKy = UyS.T.dot(rotated_y)
 
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
         covarS = lmm_search_UX / Sd.reshape(-1,1)
