@@ -153,11 +153,12 @@ def single_snp_eigen(
         Sd = eigendata.values+delta
         logdetK = np.log(Sd).sum()
 
-        yKy, UyS = AKB(None, Sd, rotated_y_pair)
+        # pheno_count x eid_count * eid_count x pheno_count -> pheno_count x pheno_count, O(pheno^2*eid_count)
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
-        covarKcovar, covarS = AKB(None, Sd.reshape(-1,1), rotated_covar_pair) # cmk "reshape" lets it broadcast
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        covarKy, _ = AKB(covarS, None, rotated_y_pair)
+        yKy, UyS = _AKB(rotated_y_pair, delta, Sd, rotated_y_pair, a_by_Sd=None)
+        covarKcovar, covarS = _AKB(rotated_covar_pair, delta, Sd.reshape(-1,1), rotated_covar_pair, a_by_Sd=None) # cmk "reshape" lets it broadcast
+        covarKy, _ = _AKB(rotated_covar_pair, delta, Sd, rotated_y_pair, a_by_Sd=covarS)
         covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
         ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
@@ -230,11 +231,14 @@ def single_snp_eigen(
     return dataframe
 
 # !!!cmk what is this mathematically? What's a better name
-def AKB(a_by_Sd, Sd, rotated_pair_b):
+def _AKB(rotated_pair_a, delta, Sd, rotated_pair_b, a_by_Sd=None):
     if a_by_Sd is None:
-        a_by_Sd = rotated_pair_b[0] / Sd
-    aKa = a_by_Sd.T.dot(rotated_pair_b[0])
-    return aKa, a_by_Sd
+        a_by_Sd = rotated_pair_a[0] / Sd
+    aKb = a_by_Sd.T.dot(rotated_pair_b[0])
+    assert (rotated_pair_a[1] is None) == (rotated_pair_b[1] is None), "Real assert expect both to have low-rank info or neither"
+    if rotated_pair_a[1] is not None:
+        aKb += rotated_pair_a[1].T.dot(rotated_pair_b[1])/delta # !!!cmk test this
+    return aKb, a_by_Sd
 
 
 def _find_h2(eigendata, rotated_X_pair, rotated_y_pair, REML, minH2=0.00001):
