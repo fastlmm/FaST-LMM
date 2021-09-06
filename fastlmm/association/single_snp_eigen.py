@@ -116,20 +116,20 @@ def single_snp_eigen(
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        rotated_covar, double_rotated_covar = eigendata.rotate(covar_val)
+        rotated_covar_pair = eigendata.rotate(covar_val)
 
         #============
         # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        rotated_y, double_rotated_y = eigendata.rotate(y[:,0])
+        rotated_y_pair = eigendata.rotate(y[:,0])
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")
-            result = _lmm_search_findH2(eigendata, rotated_covar, double_rotated_covar, rotated_y, double_rotated_y, REML=fit_log_delta_via_reml, minH2=0.00001)
+            result = _find_h2(eigendata, rotated_covar_pair, rotated_y_pair, REML=fit_log_delta_via_reml, minH2=0.00001)
             h2 = result["h2"]
             delta = 1.0/h2-1.0
             log_delta = np.log(delta)
@@ -152,17 +152,15 @@ def single_snp_eigen(
 
         Sd = eigendata.values+delta
         logdetK = np.log(Sd).sum()
-        UyS = rotated_y / Sd
-        yKy = UyS.T.dot(rotated_y)
+        UyS = rotated_y_pair[0] / Sd
+        yKy = UyS.T.dot(rotated_y_pair[0])
 
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
-        covarS = rotated_covar / Sd.reshape(-1,1)
-        covarKcovar = covarS.T.dot(rotated_covar)
+        covarS = rotated_covar_pair[0] / Sd.reshape(-1,1)
+        covarKcovar = covarS.T.dot(rotated_covar_pair[0])
 
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        # Same as covarS.T.dot(rotated_y)
-        covarKy = covarS.T.dot(rotated_y).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
-        # !!!cmk covarKy = rotated_covar.T.dot(UyS).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
+        covarKy = covarS.T.dot(rotated_y_pair[0]).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
         ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
@@ -233,17 +231,15 @@ def single_snp_eigen(
 
     return dataframe
 
-def _lmm_search_findH2(eigendata, UX, UUX, Uy, UUy, REML, minH2=0.00001):
+def _find_h2(eigendata, rotated_X_pair, rotated_y_pair, REML, minH2=0.00001):
 
-    #!!!cmk what if low rank?
-    lmm = LMM(forcefullrank=True)
+    lmm = LMM()
     lmm.S = eigendata.values
     lmm.U = eigendata.vectors
-    lmm.UX = UX # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
-    lmm.Uy = Uy # !!!cmk precomputed for the same reason
-    if eigendata.is_low_rank:
-        lmm.UUX = UUX
-        lmm.UUy = UUy
+    lmm.UX = rotated_X_pair[0] # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
+    lmm.UUX = rotated_X_pair[1]
+    lmm.Uy = rotated_y_pair[0]  # !!!cmk precomputed for the same reason
+    lmm.UUy = rotated_y_pair[1]
 
     return lmm.findH2(REML=REML, minH2=0.00001)
 
