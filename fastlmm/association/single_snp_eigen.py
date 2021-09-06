@@ -109,27 +109,27 @@ def single_snp_eigen(
 
         # view_ok because this code already did a fresh read to look for any
         #  missing values
-        multi_y = xp.asarray(pheno.read(view_ok=True, order="A").val)
+        y = xp.asarray(pheno.read(view_ok=True, order="A").val)
         eigendata = eigenreader.read(view_ok=True, order="A")
 
         #============
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        lmm_search_UX, lmm_search_UUX = eigendata.rotate(covar_val)
+        rotated_covar, double_rotated_covar = eigendata.rotate(covar_val)
 
         #============
         # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        rotated_y, double_rotated_y = eigendata.rotate(multi_y[:,0])
+        rotated_y, double_rotated_y = eigendata.rotate(y[:,0])
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")
-            result = _lmm_search_findH2(eigendata, lmm_search_UX, lmm_search_UUX, rotated_y, double_rotated_y, REML=fit_log_delta_via_reml, minH2=0.00001)
+            result = _lmm_search_findH2(eigendata, rotated_covar, double_rotated_covar, rotated_y, double_rotated_y, REML=fit_log_delta_via_reml, minH2=0.00001)
             h2 = result["h2"]
             delta = 1.0/h2-1.0
             log_delta = np.log(delta)
@@ -150,19 +150,19 @@ def single_snp_eigen(
         # !!! cmk if test_via_reml == fit_log_delta_via_reml this could be skipped
         assert not test_via_reml # !!!cmk
 
-        k = eigendata.eid_count       # number of eigenvalues (and eigenvectors)
-        N = eigendata.iid_count       # number of individuals
-        
         Sd = eigendata.values+delta
         logdetK = np.log(Sd).sum()
         UyS = rotated_y / Sd
         yKy = UyS.T.dot(rotated_y)
 
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
-        covarS = lmm_search_UX / Sd.reshape(-1,1)
-        covarKcovar = covarS.T.dot(lmm_search_UX)
+        covarS = rotated_covar / Sd.reshape(-1,1)
+        covarKcovar = covarS.T.dot(rotated_covar)
+
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        covarKy = lmm_search_UX.T.dot(UyS).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
+        # Same as covarS.T.dot(rotated_y)
+        covarKy = covarS.T.dot(rotated_y).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
+        # !!!cmk covarKy = rotated_covar.T.dot(UyS).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
         ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
