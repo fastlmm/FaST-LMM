@@ -152,15 +152,13 @@ def single_snp_eigen(
 
         Sd = eigendata.values+delta
         logdetK = np.log(Sd).sum()
-        UyS = rotated_y_pair[0] / Sd
-        yKy = UyS.T.dot(rotated_y_pair[0])
 
+        yKy, UyS = AKA(rotated_y_pair, Sd, None)
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
-        covarS = rotated_covar_pair[0] / Sd.reshape(-1,1)
-        covarKcovar = covarS.T.dot(rotated_covar_pair[0])
-
+        covarKcovar, covarS = AKA(rotated_covar_pair, Sd.reshape(-1,1), None) # cmk "reshape" lets it broadcast
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        covarKy = covarS.T.dot(rotated_y_pair[0]).reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
+        covarKy, _ = AKA(rotated_y_pair, None, covarS)
+        covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
         ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
@@ -231,8 +229,16 @@ def single_snp_eigen(
 
     return dataframe
 
-def _find_h2(eigendata, rotated_X_pair, rotated_y_pair, REML, minH2=0.00001):
+# !!!cmk what is this mathematically? What's a better name
+def AKA(rotated_pair, Sd, by_Sd = None):
+    if by_Sd is None:
+        by_Sd = rotated_pair[0] / Sd
+    aKa = by_Sd.T.dot(rotated_pair[0])
+    return aKa, by_Sd
 
+
+def _find_h2(eigendata, rotated_X_pair, rotated_y_pair, REML, minH2=0.00001):
+    #!!!cmk expect one pass per y column
     lmm = LMM()
     lmm.S = eigendata.values
     lmm.U = eigendata.vectors
