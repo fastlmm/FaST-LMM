@@ -197,19 +197,20 @@ def single_snp_eigen(
                 XKX[:ncov,ncov:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
                 XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
 
-                Ualt = alt_batch_pair[0][:,sid_index-sid_start:sid_index-sid_start+1]
-                XKX[ncov:,ncov:] = (Ualt / Sd.reshape(-1,1)).T.dot(Ualt)
-                # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
-                XKy[ncov:,:] = Ualt.T.dot(UyS)
+                alt_pair = (alt_batch_pair[0][:,sid_index-sid_start:sid_index-sid_start+1],
+                            alt_batch_pair[1][:,sid_index-sid_start:sid_index-sid_start+1] if alt_batch_pair[1] is not None else None)
 
-                #alt_pair = (alt_batch_pair[0][:,sid_index-sid_start:sid_index-sid_start+1],
-                #            alt_batch_pair[1][:,sid_index-sid_start:sid_index-sid_start+1] if alt_batch_pair[1] is not None else None)
+
+                Ualt = alt_batch_pair[0][:,sid_index-sid_start:sid_index-sid_start+1]
+                # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
+                altKalt = (alt_pair[0] / Sd.reshape(-1,1)).T.dot(alt_pair[0])
                 #altKalt,_,_,_ = _AKB(eigendata, alt_pair, delta, alt_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None)
-                #XKX[ncov:,ncov:] = altKalt
+                XKX[ncov:,ncov:] = altKalt
 
                 ## sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
+                altKy = alt_pair[0].T.dot(UyS)
                 #altKy,_,_,_ = _AKB(eigendata, alt_pair, delta, rotated_y_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UyS)
-                #XKy[ncov:,:] = altKy
+                XKy[ncov:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
