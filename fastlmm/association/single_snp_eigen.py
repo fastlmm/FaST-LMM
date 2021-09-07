@@ -218,7 +218,7 @@ def single_snp_eigen(
                 XKX[ncov:,ncov:] = altKalt
 
                 # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
-                altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated0, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UaltS)
+                altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated1, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UaltS)
                 XKy[ncov:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
