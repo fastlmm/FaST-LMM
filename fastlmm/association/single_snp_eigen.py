@@ -201,15 +201,12 @@ def single_snp_eigen(
                             alt_batch_pair[1][:,sid_index-sid_start:sid_index-sid_start+1] if alt_batch_pair[1] is not None else None)
 
 
-                Ualt = alt_batch_pair[0][:,sid_index-sid_start:sid_index-sid_start+1]
                 # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
-                altKalt = (alt_pair[0] / Sd.reshape(-1,1)).T.dot(alt_pair[0])
-                #altKalt,_,_,_ = _AKB(eigendata, alt_pair, delta, alt_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None)
+                altKalt,_,_, UaltS = _AKB(eigendata, alt_pair, delta, alt_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None)
                 XKX[ncov:,ncov:] = altKalt
 
                 ## sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
-                altKy = alt_pair[0].T.dot(UyS)
-                #altKy,_,_,_ = _AKB(eigendata, alt_pair, delta, rotated_y_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UyS)
+                altKy,_,_,_ = _AKB(eigendata, alt_pair, delta, rotated_y_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UaltS)
                 XKy[ncov:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
