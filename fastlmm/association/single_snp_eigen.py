@@ -150,15 +150,15 @@ def single_snp_eigen(
         # !!! cmk if test_via_reml == fit_log_delta_via_reml this could be skipped
         assert not test_via_reml # !!!cmk
 
-        Sd = eigendata.values+delta
-        logdetK = np.log(Sd).sum()
+        
 
         # pheno_count x eid_count * eid_count x pheno_count -> pheno_count x pheno_count, O(pheno^2*eid_count)
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        yKy, UyS = _AKB(rotated_y_pair, delta, Sd, rotated_y_pair, a_by_Sd=None)
-        covarKcovar, covarS = _AKB(rotated_covar_pair, delta, Sd.reshape(-1,1), rotated_covar_pair, a_by_Sd=None) # cmk "reshape" lets it broadcast
-        covarKy, _ = _AKB(rotated_covar_pair, delta, Sd, rotated_y_pair, a_by_Sd=covarS)
+        yKy, Sd, logdetK, UyS = _AKB(eigendata, rotated_y_pair, delta, rotated_y_pair, Sd=None, logdetK=None, a_by_Sd=None)
+        covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
+        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, rotated_y_pair, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
+
         covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
         ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
@@ -186,18 +186,30 @@ def single_snp_eigen(
 
             # eid_count x iid_count * iid_count x sid_count -> eid_count x sid_count, O(eid_count * iid_count * sid_count)
             # !!!cmk should biobank precompute this?
-            Ualt_batch, UUalt_batch = eigendata.rotate(snps_batch.val)
+            alt_batch_pair = eigendata.rotate(snps_batch.val)
 
             # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
-            covarSalt_batch = covarS.T.dot(Ualt_batch)
+            #covarSalt_batch, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, alt_batch_pair, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
+            covarSalt_batch = covarS.T.dot(alt_batch_pair[0])
+
 
             for sid_index in range(sid_start,sid_end):
                 XKX[:ncov,ncov:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
                 XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
-                Ualt = Ualt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
+
+                Ualt = alt_batch_pair[0][:,sid_index-sid_start:sid_index-sid_start+1]
                 XKX[ncov:,ncov:] = (Ualt / Sd.reshape(-1,1)).T.dot(Ualt)
                 # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
                 XKy[ncov:,:] = Ualt.T.dot(UyS)
+
+                #alt_pair = (alt_batch_pair[0][:,sid_index-sid_start:sid_index-sid_start+1],
+                #            alt_batch_pair[1][:,sid_index-sid_start:sid_index-sid_start+1] if alt_batch_pair[1] is not None else None)
+                #altKalt,_,_,_ = _AKB(eigendata, alt_pair, delta, alt_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None)
+                #XKX[ncov:,ncov:] = altKalt
+
+                ## sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
+                #altKy,_,_,_ = _AKB(eigendata, alt_pair, delta, rotated_y_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UyS)
+                #XKy[ncov:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
@@ -231,14 +243,23 @@ def single_snp_eigen(
     return dataframe
 
 # !!!cmk what is this mathematically? What's a better name
-def _AKB(rotated_pair_a, delta, Sd, rotated_pair_b, a_by_Sd=None):
+def _AKB(eigendata, rotated_pair_a, delta, rotated_pair_b, Sd=None, logdetK=None, a_by_Sd=None):
+    if Sd is None:
+        Sd = eigendata.values+delta
+
+    if logdetK is None:
+        logdetK = np.log(Sd).sum()
+        if eigendata.is_low_rank: # !!!cmk test this
+            logdetK += (eigendata.iid_count - eigendata.eid_count) * np.log(delta)
+
     if a_by_Sd is None:
         a_by_Sd = rotated_pair_a[0] / Sd
+
     aKb = a_by_Sd.T.dot(rotated_pair_b[0])
-    assert (rotated_pair_a[1] is None) == (rotated_pair_b[1] is None), "Real assert expect both to have low-rank info or neither"
-    if rotated_pair_a[1] is not None:
+    if eigendata.is_low_rank:
         aKb += rotated_pair_a[1].T.dot(rotated_pair_b[1])/delta # !!!cmk test this
-    return aKb, a_by_Sd
+
+    return aKb, Sd, logdetK, a_by_Sd
 
 
 def _find_h2(eigendata, rotated_X_pair, rotated_y_pair, REML, minH2=0.00001):
