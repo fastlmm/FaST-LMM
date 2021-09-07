@@ -172,7 +172,7 @@ def single_snp_eigen(
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
         yKy, Sd, logdetK, UyS = _AKB(eigendata, y_rotated0, delta, y_rotated0, Sd=None, logdetK=None, a_by_Sd=None)
         covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
-        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated0, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
+        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated1, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
 
         covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
