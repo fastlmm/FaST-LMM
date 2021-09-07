@@ -44,9 +44,7 @@ class TestSingleSnpEigen(unittest.TestCase):
     #!!!cmk0 understand REML vs not
 
     def test_same_as_old_code(self): #!!!cmk too slow???
-        train_count = 750
         test_count = 750
-
 
         bed_fn = example_file("fastlmm/feature_selection/examples/toydata.5chrom.*","*.bed")
         pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
@@ -54,35 +52,36 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
 
-        for cov in [cov_reader, None]:
-            for delta in [0.20000600000000002, None, delta_default]:
-                if True:
-                    eigenreader = eigen_from_kernel(snp_reader[:,:train_count], kernel_standardizer=KernelIdentity()) # !!!cmk why not diag standardize?
-                    frame = single_snp_eigen(
-                        test_snps=Bed(bed_fn,count_A1=False)[:,train_count:train_count+test_count],
-                        pheno=pheno_fn,
-                        eigenreader = eigenreader,
-                        covar=cov,
-                        output_file_name=None,
-                        log_delta = np.log(delta) if delta is not None else None,
-                        fit_log_delta_via_reml = False,
-                        test_via_reml = False,
-                        count_A1=False,
-                    )
-                    frame.PValue
+        for train_count in [50, 750]:
+            for cov in [cov_reader, None]:
+                for delta in [0.20000600000000002, None, delta_default]:
+                    if True:
+                        eigenreader = eigen_from_kernel(snp_reader[:,:train_count], kernel_standardizer=KernelIdentity()) # !!!cmk why not diag standardize?
+                        frame = single_snp_eigen(
+                            test_snps=Bed(bed_fn,count_A1=False)[:,train_count:train_count+test_count],
+                            pheno=pheno_fn,
+                            eigenreader = eigenreader,
+                            covar=cov,
+                            output_file_name=None,
+                            log_delta = np.log(delta) if delta is not None else None,
+                            fit_log_delta_via_reml = False,
+                            test_via_reml = False,
+                            count_A1=False,
+                        )
+                        frame.PValue
 
-                G = snp_reader.read().standardize().val
-                y = Pheno(pheno_fn).read().val[:,0]
-                if cov is not None:
-                    cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
-                else:
-                    cov_val =  None
-                G_chr1, G_chr2 = G[:,:train_count], G[:,train_count:train_count+test_count]
-                gwas = GwasPrototype(G_chr1, G_chr2, y, internal_delta=delta, cov=cov_val, REML=False)
-                gwas.run_gwas()
+                    G = snp_reader.read().standardize().val
+                    y = Pheno(pheno_fn).read().val[:,0]
+                    if cov is not None:
+                        cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
+                    else:
+                        cov_val =  None
+                    G_chr1, G_chr2 = G[:,:train_count], G[:,train_count:train_count+test_count]
+                    gwas = GwasPrototype(G_chr1, G_chr2, y, internal_delta=delta, cov=cov_val, REML=False)
+                    gwas.run_gwas()
 
-                # check p-values in log-space!
-                np.testing.assert_array_almost_equal(np.log(sorted(gwas.p_values)), np.log(frame.PValue), decimal=7)
+                    # check p-values in log-space!
+                    np.testing.assert_array_almost_equal(np.log(sorted(gwas.p_values)), np.log(frame.PValue), decimal=7)
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")

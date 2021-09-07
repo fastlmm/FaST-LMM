@@ -16,28 +16,39 @@ from fastlmm.inference.fastlmm_predictor import (
 from fastlmm.inference import LMM
 
 
+#!!!cmk move to pysnptools
 def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
     """!!!cmk documentation"""
     # !!!cmk could offer a low-memory path that uses memmapped files
+    from pysnptools.kernelreader import SnpKernel
+    from pysnptools.kernelstandardizer import Identity as KS_Identity
+
     assert K is not None
     K = _kernel_fixup(K, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
     assert K.iid0 is K.iid1, "Expect K to be square"
 
-    #!!!cmk understand _read_kernel, _read_with_standardizing
+    if isinstance(K,SnpKernel): #!!!make eigen creation a method on all kernel readers
+        assert isinstance(kernel_standardizer, KS_Identity), "cmk need code for other kernel standardizers"
+        vectors,sqrt_values,_ = np.linalg.svd(K.snpreader.read().standardize(K.standardizer).val, full_matrices=False)
+        if np.any(sqrt_values < -0.1):
+            logging.warning("kernel contains a negative Eigenvalue")
+        eigen = EigenData(values=sqrt_values*sqrt_values, vectors=vectors, iid=K.iid)
+    else:
+        #!!!cmk understand _read_kernel, _read_with_standardizing
 
-    K = K._read_with_standardizing(kernel_standardizer=kernel_standardizer,to_kerneldata=True, return_trained=False)
-    # !!! cmk ??? pass in a new argument, the kernel_standardizer(???)
-    logging.debug("About to eigh")
-    w, v = np.linalg.eigh(K.val)  # !!! cmk do SVD sometimes?
-    logging.debug("Done with to eigh")
-    if np.any(w < -0.1):
-        logging.warning("kernel contains a negative Eigenvalue") #!!!cmk this shouldn't happen with a RRM, right?
-    # !!!cmk remove very small eigenvalues
-    # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
-    eigen = EigenData(values=w, vectors=v, iid=K.iid)
-    #eigen.vectors[:,eigen.values<.0001]=0.0
-    #eigen.values[eigen.values<.0001]=0.0
-    #eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
+        K = K._read_with_standardizing(kernel_standardizer=kernel_standardizer,to_kerneldata=True, return_trained=False)
+        # !!! cmk ??? pass in a new argument, the kernel_standardizer(???)
+        logging.debug("About to eigh")
+        w, v = np.linalg.eigh(K.val)  # !!! cmk do SVD sometimes?
+        logging.debug("Done with to eigh")
+        if np.any(w < -0.1):
+            logging.warning("kernel contains a negative Eigenvalue") #!!!cmk this shouldn't happen with a RRM, right?
+        # !!!cmk remove very small eigenvalues
+        # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
+        eigen = EigenData(values=w, vectors=v, iid=K.iid)
+        #eigen.vectors[:,eigen.values<.0001]=0.0
+        #eigen.values[eigen.values<.0001]=0.0
+        #eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
 
 
@@ -161,7 +172,7 @@ def single_snp_eigen(
 
         covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
-        ll_null, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
+        ll_null, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
 
         dataframe = _create_dataframe(test_snps.sid_count)
@@ -210,7 +221,7 @@ def single_snp_eigen(
                 XKy[ncov:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
-                ll_alt, beta, variance_beta = ll_eval(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
+                ll_alt, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
                 test_statistic = ll_alt - ll_null
                 pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
@@ -241,6 +252,7 @@ def single_snp_eigen(
     return dataframe
 
 # !!!cmk what is this mathematically? What's a better name
+#!!!cmk move to pysnptools
 def _AKB(eigendata, rotated_pair_a, delta, rotated_pair_b, Sd=None, logdetK=None, a_by_Sd=None):
     if Sd is None:
         Sd = eigendata.values+delta
@@ -272,8 +284,8 @@ def _find_h2(eigendata, rotated_X_pair, rotated_y_pair, REML, minH2=0.00001):
 
     return lmm.findH2(REML=REML, minH2=0.00001)
 
-#!!!cmk add _ll_eval
-def ll_eval(iid_count, logdetK, h2, yKy, XKX, XKy):
+#!!!cmk add __loglikelihood_ml
+def _loglikelihood_ml(iid_count, logdetK, h2, yKy, XKX, XKy):
     XKy = XKy.reshape(-1) # cmk should be 2-D to support multiple phenos
     # Must do one test at a time
     SxKx,UxKx= np.linalg.eigh(XKX)
