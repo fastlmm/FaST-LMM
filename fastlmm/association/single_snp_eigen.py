@@ -137,13 +137,14 @@ def single_snp_eigen(
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        y_rotated = eigendata.rotate(y.val[:,0]) #!!!cmkx
+        y_rotated0 = eigendata.rotate(y.val[:,0]) #!!!cmkx
+        y_rotated1 = eigendata.rotate(y.val) # [:,0]) #!!!cmkx
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")
-            result = _find_h2(eigendata, rotated_covar_pair, y_rotated, REML=fit_log_delta_via_reml, minH2=0.00001)
+            result = _find_h2(eigendata, rotated_covar_pair, y_rotated1, REML=fit_log_delta_via_reml, minH2=0.00001)
             h2 = result["h2"]
             delta = 1.0/h2-1.0
             log_delta = np.log(delta)
@@ -169,9 +170,9 @@ def single_snp_eigen(
         # pheno_count x eid_count * eid_count x pheno_count -> pheno_count x pheno_count, O(pheno^2*eid_count)
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        yKy, Sd, logdetK, UyS = _AKB(eigendata, y_rotated, delta, y_rotated, Sd=None, logdetK=None, a_by_Sd=None)
+        yKy, Sd, logdetK, UyS = _AKB(eigendata, y_rotated0, delta, y_rotated0, Sd=None, logdetK=None, a_by_Sd=None)
         covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
-        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
+        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated0, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
 
         covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
@@ -217,7 +218,7 @@ def single_snp_eigen(
                 XKX[ncov:,ncov:] = altKalt
 
                 # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
-                altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UaltS)
+                altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated0, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=UaltS)
                 XKy[ncov:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
@@ -279,8 +280,8 @@ def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
     lmm.U = eigendata.vectors
     lmm.UX = X_rotated.rotated # !!!cmkx .rotated.val # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
     lmm.UUX = X_rotated.double_rotated # !!!cmkx .double_rotated.val
-    lmm.Uy = y_rotated.rotated # !!!cmkx .rotated.val  # !!!cmk precomputed for the same reason
-    lmm.UUy = y_rotated.double_rotated # !!!cmkx .double_rotated.val
+    lmm.Uy = y_rotated.rotated[:,0] # !!!cmkx .rotated.val  # !!!cmk precomputed for the same reason
+    lmm.UUy = y_rotated.double_rotated[:,0] if y_rotated.double_rotated is not None else None # !!!cmkx .double_rotated.val
 
     return lmm.findH2(REML=REML, minH2=0.00001)
 
