@@ -189,8 +189,8 @@ def single_snp_eigen(
             alt_batch_pair = eigendata.rotate(snps_batch.val)
 
             # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
-            #covarSalt_batch, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, alt_batch_pair, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
-            covarSalt_batch = covarS.T.dot(alt_batch_pair[0])
+            covarSalt_batch, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, alt_batch_pair, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
+            #covarSalt_batch = covarS.T.dot(alt_batch_pair[0])
 
 
             for sid_index in range(sid_start,sid_end):
