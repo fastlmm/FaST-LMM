@@ -117,14 +117,14 @@ def single_snp_eigen(
         eigendata = eigenreader.read(view_ok=True, order="A")
 
         covar_val0 = covar.read(view_ok=True, order="A").val
-        covar_val = np.c_[covar_val0, np.ones((test_snps.iid_count, 1))]  # view_ok because np.c_ will allocation new memory
+        covar_val1 = np.c_[covar_val0, np.ones((test_snps.iid_count, 1))]  # view_ok because np.c_ will allocation new memory
         #!!!cmk what is "bias' is already used as column name
-        #!!!cmkx covar_and_bias = SnpData(iid=covar.iid, sid=list(covar.sid)+["bias"], val=covar_val1, name=f"{covar}&bias")
+        covar_and_bias = SnpData(iid=covar.iid, sid=list(covar.sid)+["bias"], val=covar_val1, name=f"{covar}&bias")
         #============
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        rotated_covar_pair = eigendata.rotate(covar_val)
+        rotated_covar_pair = eigendata.rotate(covar_and_bias.val)
 
 
         assert pheno.sid_count >= 1, "Expect at least one phenotype"
@@ -132,13 +132,12 @@ def single_snp_eigen(
         # view_ok because this code already did a fresh read to look for any
         #  missing values
         y = pheno.read(view_ok=True, order="A")
-        y = y.val #!!!cmkx
         #============
         # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        y_rotated = eigendata.rotate(y[:,0]) #!!!cmkx
+        y_rotated = eigendata.rotate(y.val[:,0]) #!!!cmkx
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
@@ -205,11 +204,10 @@ def single_snp_eigen(
 
             # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
             covarSalt_batch, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
-            #covarSalt_batch = covarS.T.dot(alt_batch_rotated[0])
 
 
             for sid_index in range(sid_start,sid_end):
-                XKX[:ncov,ncov:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1]
+                XKX[:ncov,ncov:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1] 
                 XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
 
                 alt_rotated = alt_batch_rotated[sid_index-sid_start]
