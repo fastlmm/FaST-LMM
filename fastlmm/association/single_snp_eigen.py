@@ -124,26 +124,25 @@ def single_snp_eigen(
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        rotated_covar_pair = eigendata.rotate(covar_and_bias)
+        covar_rotated = eigendata.rotate(covar_and_bias)
 
 
         assert pheno.sid_count >= 1, "Expect at least one phenotype"
         assert pheno.sid_count == 1, "currently only have code for one pheno"
         # view_ok because this code already did a fresh read to look for any
-        #  missing values
-        y = pheno.read(view_ok=True, order="A")
+        # missing values
         #============
         # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        y_rotated = eigendata.rotate(y)
+        y_rotated = eigendata.rotate(pheno.read(view_ok=True, order="A"))
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")
-            result = _find_h2(eigendata, rotated_covar_pair, y_rotated, REML=fit_log_delta_via_reml, minH2=0.00001)
+            result = _find_h2(eigendata, covar_rotated, y_rotated, REML=fit_log_delta_via_reml, minH2=0.00001)
             h2 = result["h2"]
             delta = 1.0/h2-1.0
             log_delta = np.log(delta)
@@ -154,27 +153,17 @@ def single_snp_eigen(
             # !!!cmk internal/external doesn't matter if full rank, right???
             delta = np.exp(log_delta)
             h2 = 1.0/(delta+1)
-
-
         logging.info("delta={0}".format(delta))
         logging.info("log_delta={0}".format(log_delta))
 
-        # As per the paper, we previously optimized delta with REML=True, but
-        # we optimize beta and find loglikelihood with ML (REML=False)
-        # !!! cmk if test_via_reml == fit_log_delta_via_reml this could be skipped
+       
+
+        yKy, Sd, logdetK, _       = _AKB(eigendata, y_rotated,     delta, y_rotated,     Sd=None, logdetK=None,    a_by_Sd=None)
+        covarKcovar, _, _, covarS = _AKB(eigendata, covar_rotated, delta, covar_rotated, Sd=Sd,   logdetK=logdetK, a_by_Sd=None)
+        covarKy, _, _, _          = _AKB(eigendata, covar_rotated, delta, y_rotated,     Sd=Sd,   logdetK=logdetK, a_by_Sd=covarS)
+
         assert not test_via_reml # !!!cmk
-
-        
-
-        # pheno_count x eid_count * eid_count x pheno_count -> pheno_count x pheno_count, O(pheno^2*eid_count)
-        # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
-        # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        yKy, Sd, logdetK, _ = _AKB(eigendata, y_rotated, delta, y_rotated, Sd=None, logdetK=None, a_by_Sd=None)
-        covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd, logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
-        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
-
         ll_null, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
-
 
 
         # !!!cmk really do this in batches in different processes
@@ -184,36 +173,33 @@ def single_snp_eigen(
         variance_beta_list = []
 
         cc = covar_and_bias.sid_count # number of covariates including bias
+
         XKX = np.full(shape=(cc+1,cc+1),fill_value=np.NaN)
         XKX[:cc,:cc] = covarKcovar
+
         XKy = np.full(shape=(cc+1,pheno.sid_count),fill_value=np.NaN)
         XKy[:cc,:] = covarKy
 
         batch_size = 1000 #!!!cmk const
         for sid_start in range(0,test_snps.sid_count,batch_size):
             sid_end = np.min([sid_start+batch_size,test_snps.sid_count])
-            snps_batch = test_snps[:, sid_start:sid_end].read().standardize()
 
-            # eid_count x iid_count * iid_count x sid_count -> eid_count x sid_count, O(eid_count * iid_count * sid_count)
+            snps_batch = test_snps[:, sid_start:sid_end].read().standardize()
             # !!!cmk should biobank precompute this?
             alt_batch_rotated = eigendata.rotate(snps_batch)
 
-            # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
-            covarSalt_batch, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
-
+            covarSalt_batch, _, _, _ = _AKB(eigendata, covar_rotated, delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
 
             for sid_index in range(sid_start,sid_end):
-                XKX[:cc,cc:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1] 
-                XKX[cc:,:cc] = XKX[:cc,cc:].T
+                i = sid_index-sid_start
+                alt_rotated = alt_batch_rotated[i]
 
-                alt_rotated = alt_batch_rotated[sid_index-sid_start]
-
-                # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
                 altKalt,_,_, UaltS = _AKB(eigendata, alt_rotated, delta, alt_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=None)
-                XKX[cc:,cc:] = altKalt
+                altKy,_,_,_        = _AKB(eigendata, alt_rotated, delta, y_rotated,   Sd=Sd, logdetK=logdetK, a_by_Sd=UaltS)
 
-                # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
-                altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=UaltS)
+                XKX[:cc,cc:] = covarSalt_batch[:,i:i+1] 
+                XKX[cc:,:cc] = XKX[:cc,cc:].T
+                XKX[cc:,cc:] = altKalt
                 XKy[cc:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
@@ -251,6 +237,7 @@ def single_snp_eigen(
 #!!!cmk move to pysnptools
 def _AKB(eigendata, a_rotated, delta, b_rotated, Sd=None, logdetK=None, a_by_Sd=None):
     if Sd is None:
+        # cmk "reshape" lets it broadcast
         Sd = (eigendata.values+delta).reshape(-1,1)
 
     if logdetK is None:
