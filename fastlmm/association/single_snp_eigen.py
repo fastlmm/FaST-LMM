@@ -170,7 +170,9 @@ def single_snp_eigen(
         # pheno_count x eid_count * eid_count x pheno_count -> pheno_count x pheno_count, O(pheno^2*eid_count)
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        yKy, Sd, logdetK, _ = _AKB(eigendata, y_rotated0, delta, y_rotated0, Sd=None, logdetK=None, a_by_Sd=None)
+        yKy, Sd, logdetK, _ = _AKB(eigendata, y_rotated1, delta, y_rotated1, Sd=None, logdetK=None, a_by_Sd=None)
+        yKy = float(yKy)
+        Sd = Sd.reshape(-1)
         covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd.reshape(-1,1), logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
         covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated1, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
 
@@ -256,7 +258,7 @@ def single_snp_eigen(
 #!!!cmk move to pysnptools
 def _AKB(eigendata, a_rotated, delta, b_rotated, Sd=None, logdetK=None, a_by_Sd=None):
     if Sd is None:
-        Sd = (eigendata.values+delta)
+        Sd = (eigendata.values+delta).reshape(-1,1)
 
     if logdetK is None:
         logdetK = np.log(Sd).sum()
