@@ -179,7 +179,7 @@ def single_snp_eigen(
 
         XKy = np.full(shape=(cc+1,pheno.sid_count),fill_value=np.NaN)
         XKy[:cc,:] = covarKy
-
+         
         batch_size = 1000 #!!!cmk const
         for sid_start in range(0,test_snps.sid_count,batch_size):
             sid_end = np.min([sid_start+batch_size,test_snps.sid_count])
@@ -188,19 +188,18 @@ def single_snp_eigen(
             # !!!cmk should biobank precompute this?
             alt_batch_rotated = eigendata.rotate(snps_batch)
 
-            covarSalt_batch, _, _, _ = _AKB(eigendata, covar_rotated, delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
+            covarSalt_batch, _, _, _    = _AKB(eigendata, covar_rotated,     delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
+            alt_batchKy,_,_,Ualt_batchS = _AKB(eigendata, alt_batch_rotated, delta, y_rotated,         Sd=Sd, logdetK=logdetK, a_by_Sd=None)
 
-            for sid_index in range(sid_start,sid_end):
-                i = sid_index-sid_start
+            for i in range(sid_end-sid_start):
+
                 alt_rotated = alt_batch_rotated[i]
-
-                altKalt,_,_, UaltS = _AKB(eigendata, alt_rotated, delta, alt_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=None)
-                altKy,_,_,_        = _AKB(eigendata, alt_rotated, delta, y_rotated,   Sd=Sd, logdetK=logdetK, a_by_Sd=UaltS)
+                altKalt,_,_,_ = _AKB(eigendata, alt_rotated, delta, alt_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=Ualt_batchS[:,i:i+1])
 
                 XKX[:cc,cc:] = covarSalt_batch[:,i:i+1] 
                 XKX[cc:,:cc] = XKX[:cc,cc:].T
                 XKX[cc:,cc:] = altKalt
-                XKy[cc:,:] = altKy
+                XKy[cc:,:] = alt_batchKy[i:i+1,:]
 
                 # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
