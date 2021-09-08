@@ -173,25 +173,21 @@ def single_snp_eigen(
         covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd, logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
         covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
 
-        covarKy = covarKy.reshape(-1,1) # cmkx make 2-d now so eaiser to support multiphenotype later
-
         ll_null, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
 
-        dataframe = _create_dataframe(test_snps.sid_count)
 
         # !!!cmk really do this in batches in different processes
-
+        dataframe = _create_dataframe(test_snps.sid_count)
         pvalue_list = []
         beta_list = [] 
         variance_beta_list = []
 
-        ncov = len(covarKcovar) # number of covariates (usually includes a bias term)
-        npheno = covarKy.shape[1] # number of phenotypes
-        XKX = np.full(shape=(ncov+1,ncov+1),fill_value=np.NaN)
-        XKX[:ncov,:ncov] = covarKcovar
-        XKy = np.full(shape=(ncov+1,npheno),fill_value=np.NaN)
-        XKy[:ncov,:] = covarKy
+        cc = covar_and_bias.sid_count # number of covariates including bias
+        XKX = np.full(shape=(cc+1,cc+1),fill_value=np.NaN)
+        XKX[:cc,:cc] = covarKcovar
+        XKy = np.full(shape=(cc+1,pheno.sid_count),fill_value=np.NaN)
+        XKy[:cc,:] = covarKy
 
         batch_size = 1000 #!!!cmk const
         for sid_start in range(0,test_snps.sid_count,batch_size):
@@ -200,25 +196,25 @@ def single_snp_eigen(
 
             # eid_count x iid_count * iid_count x sid_count -> eid_count x sid_count, O(eid_count * iid_count * sid_count)
             # !!!cmk should biobank precompute this?
-            alt_batch_rotated = eigendata.rotate(snps_batch) #!!!cmkx
+            alt_batch_rotated = eigendata.rotate(snps_batch)
 
             # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
             covarSalt_batch, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
 
 
             for sid_index in range(sid_start,sid_end):
-                XKX[:ncov,ncov:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1] 
-                XKX[ncov:,:ncov] = XKX[:ncov,ncov:].T
+                XKX[:cc,cc:] = covarSalt_batch[:,sid_index-sid_start:sid_index-sid_start+1] 
+                XKX[cc:,:cc] = XKX[:cc,cc:].T
 
                 alt_rotated = alt_batch_rotated[sid_index-sid_start]
 
                 # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
                 altKalt,_,_, UaltS = _AKB(eigendata, alt_rotated, delta, alt_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=None)
-                XKX[ncov:,ncov:] = altKalt
+                XKX[cc:,cc:] = altKalt
 
                 # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
                 altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=UaltS)
-                XKy[ncov:,:] = altKy
+                XKy[cc:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
@@ -278,9 +274,9 @@ def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
     lmm.S = eigendata.values
     lmm.U = eigendata.vectors
     lmm.UX = X_rotated.rotated.val # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
-    lmm.UUX = X_rotated.double_rotated.val
+    lmm.UUX = X_rotated.double_rotated.val if X_rotated.double_rotated is not None else None
     lmm.Uy = y_rotated.rotated.val[:,0]  # !!!cmk precomputed for the same reason
-    lmm.UUy = y_rotated.double_rotated.val[:,0] if y_rotated.double_rotated is not None else None # !!!cmkx .double_rotated.val
+    lmm.UUy = y_rotated.double_rotated.val[:,0] if y_rotated.double_rotated is not None else None
 
     return lmm.findH2(REML=REML, minH2=0.00001)
 
