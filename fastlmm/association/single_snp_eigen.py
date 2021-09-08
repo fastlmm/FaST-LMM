@@ -137,14 +137,13 @@ def single_snp_eigen(
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        y_rotated0 = eigendata.rotate(y.val[:,0]) #!!!cmkx
-        y_rotated1 = eigendata.rotate(y.val) # [:,0]) #!!!cmkx
+        y_rotated = eigendata.rotate(y.val)
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             logging.info("searching for delta/h2/logdelta")
-            result = _find_h2(eigendata, rotated_covar_pair, y_rotated1, REML=fit_log_delta_via_reml, minH2=0.00001)
+            result = _find_h2(eigendata, rotated_covar_pair, y_rotated, REML=fit_log_delta_via_reml, minH2=0.00001)
             h2 = result["h2"]
             delta = 1.0/h2-1.0
             log_delta = np.log(delta)
@@ -170,10 +169,9 @@ def single_snp_eigen(
         # pheno_count x eid_count * eid_count x pheno_count -> pheno_count x pheno_count, O(pheno^2*eid_count)
         # covar x eid_count * eid_count x covar  -> covar x covar, O(covar^2*eid_count)
         # covar x eid_count * eid_count x pheno_count -> covar x pheno_count, O(covar*pheno*eid_count)
-        yKy, Sd, logdetK, _ = _AKB(eigendata, y_rotated1, delta, y_rotated1, Sd=None, logdetK=None, a_by_Sd=None)
-        yKy = float(yKy)
+        yKy, Sd, logdetK, _ = _AKB(eigendata, y_rotated, delta, y_rotated, Sd=None, logdetK=None, a_by_Sd=None)
         covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd, logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
-        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated1, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
+        covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
 
         covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
 
@@ -219,7 +217,7 @@ def single_snp_eigen(
                 XKX[ncov:,ncov:] = altKalt
 
                 # sid_count x eid_count * eid_count x pheno_count -> sid_count x pheno_count, O(sid_count * eid_count * pheno_count)
-                altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated1, Sd=Sd, logdetK=logdetK, a_by_Sd=UaltS)
+                altKy,_,_,_ = _AKB(eigendata, alt_rotated, delta, y_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=UaltS)
                 XKy[ncov:,:] = altKy
 
                 # O(sid_count * (covar+1)^6)
@@ -288,6 +286,7 @@ def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
 
 #!!!cmk add __loglikelihood_ml
 def _loglikelihood_ml(iid_count, logdetK, h2, yKy, XKX, XKy):
+    yKy = float(yKy) # !!!cmk assuming one pheno
     XKy = XKy.reshape(-1) # cmk should be 2-D to support multiple phenos
     # Must do one test at a time
     SxKx,UxKx= np.linalg.eigh(XKX)
