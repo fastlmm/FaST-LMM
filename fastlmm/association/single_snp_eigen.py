@@ -124,7 +124,7 @@ def single_snp_eigen(
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        rotated_covar_pair = eigendata.rotate(covar_and_bias.val)
+        rotated_covar_pair = eigendata.rotate(covar_and_bias)
 
 
         assert pheno.sid_count >= 1, "Expect at least one phenotype"
@@ -137,7 +137,7 @@ def single_snp_eigen(
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        y_rotated = eigendata.rotate(y.val)
+        y_rotated = eigendata.rotate(y)
 
         if log_delta is None:
             # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
@@ -173,7 +173,7 @@ def single_snp_eigen(
         covarKcovar, _, _, covarS = _AKB(eigendata, rotated_covar_pair, delta, rotated_covar_pair, Sd=Sd, logdetK=logdetK, a_by_Sd=None) # cmk "reshape" lets it broadcast
         covarKy, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, y_rotated, Sd=Sd,  logdetK=logdetK, a_by_Sd=covarS)
 
-        covarKy = covarKy.reshape(-1,1) # cmk make 2-d now so eaiser to support multiphenotype later
+        covarKy = covarKy.reshape(-1,1) # cmkx make 2-d now so eaiser to support multiphenotype later
 
         ll_null, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
 
@@ -200,7 +200,7 @@ def single_snp_eigen(
 
             # eid_count x iid_count * iid_count x sid_count -> eid_count x sid_count, O(eid_count * iid_count * sid_count)
             # !!!cmk should biobank precompute this?
-            alt_batch_rotated = eigendata.rotate(snps_batch.val) #!!!cmkx
+            alt_batch_rotated = eigendata.rotate(snps_batch) #!!!cmkx
 
             # covar x eid_count * eid_count x sid_count -> covar * sid_count,  O(covar * eid_count * sid_count)
             covarSalt_batch, _, _, _ = _AKB(eigendata, rotated_covar_pair, delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
@@ -263,11 +263,11 @@ def _AKB(eigendata, a_rotated, delta, b_rotated, Sd=None, logdetK=None, a_by_Sd=
             logdetK += (eigendata.iid_count - eigendata.eid_count) * np.log(delta)
 
     if a_by_Sd is None:
-        a_by_Sd = a_rotated.rotated / Sd #!!!cmkx a_rotated.rotated.val
+        a_by_Sd = a_rotated.rotated.val / Sd
 
-    aKb = a_by_Sd.T.dot(b_rotated.rotated) # b_rotated.rotated.val
+    aKb = a_by_Sd.T.dot(b_rotated.rotated.val)
     if eigendata.is_low_rank:
-        aKb += a_rotated.double_rotated.T.dot(b_rotated.double_rotated)/delta # !!!cmk test this
+        aKb += a_rotated.double_rotated.val.T.dot(b_rotated.double_rotated.val)/delta
 
     return aKb, Sd, logdetK, a_by_Sd
 
@@ -277,10 +277,10 @@ def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
     lmm = LMM()
     lmm.S = eigendata.values
     lmm.U = eigendata.vectors
-    lmm.UX = X_rotated.rotated # !!!cmkx .rotated.val # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
-    lmm.UUX = X_rotated.double_rotated # !!!cmkx .double_rotated.val
-    lmm.Uy = y_rotated.rotated[:,0] # !!!cmkx .rotated.val  # !!!cmk precomputed for the same reason
-    lmm.UUy = y_rotated.double_rotated[:,0] if y_rotated.double_rotated is not None else None # !!!cmkx .double_rotated.val
+    lmm.UX = X_rotated.rotated.val # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
+    lmm.UUX = X_rotated.double_rotated.val
+    lmm.Uy = y_rotated.rotated.val[:,0]  # !!!cmk precomputed for the same reason
+    lmm.UUy = y_rotated.double_rotated.val[:,0] if y_rotated.double_rotated is not None else None # !!!cmkx .double_rotated.val
 
     return lmm.findH2(REML=REML, minH2=0.00001)
 
