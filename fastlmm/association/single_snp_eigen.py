@@ -156,14 +156,14 @@ def single_snp_eigen(
         logging.info("delta={0}".format(delta))
         logging.info("log_delta={0}".format(log_delta))
 
-       
+        K = Kthing(eigendata, delta)
 
-        yKy, Sd, logdetK, _       = _AKB(eigendata, y_rotated,     delta, y_rotated,     Sd=None, logdetK=None,    a_by_Sd=None)
-        covarKcovar, _, _, covarS = _AKB(eigendata, covar_rotated, delta, covar_rotated, Sd=Sd,   logdetK=logdetK, a_by_Sd=None)
-        covarKy, _, _, _          = _AKB(eigendata, covar_rotated, delta, y_rotated,     Sd=Sd,   logdetK=logdetK, a_by_Sd=covarS)
+        yKy         = AKB(y_rotated,     K, y_rotated)
+        covarKcovar = AKB(covar_rotated, K, covar_rotated)
+        covarKy     = AKB(covar_rotated, K, y_rotated, a_by_Sd=covarKcovar.a_by_Sd)
 
         assert not test_via_reml # !!!cmk
-        ll_null, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, covarKcovar, covarKy)
+        ll_null, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, K.logdet, h2, yKy.aKb, covarKcovar.aKb, covarKy.aKb)
 
 
         # !!!cmk really do this in batches in different processes
@@ -175,10 +175,10 @@ def single_snp_eigen(
         cc = covar_and_bias.sid_count # number of covariates including bias
 
         XKX = np.full(shape=(cc+1,cc+1),fill_value=np.NaN)
-        XKX[:cc,:cc] = covarKcovar
+        XKX[:cc,:cc] = covarKcovar.aKb
 
         XKy = np.full(shape=(cc+1,pheno.sid_count),fill_value=np.NaN)
-        XKy[:cc,:] = covarKy
+        XKy[:cc,:] = covarKy.aKb
          
         batch_size = 1000 #!!!cmk const
         for sid_start in range(0,test_snps.sid_count,batch_size):
@@ -188,21 +188,23 @@ def single_snp_eigen(
             # !!!cmk should biobank precompute this?
             alt_batch_rotated = eigendata.rotate(snps_batch)
 
-            covarSalt_batch, _, _, _    = _AKB(eigendata, covar_rotated,     delta, alt_batch_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=covarS)
-            alt_batchKy,_,_,Ualt_batchS = _AKB(eigendata, alt_batch_rotated, delta, y_rotated,         Sd=Sd, logdetK=logdetK, a_by_Sd=None)
+            covarKalt_batch = AKB(covar_rotated,     K, alt_batch_rotated, a_by_Sd=covarKcovar.a_by_Sd)
+            alt_batchKy     = AKB(alt_batch_rotated, K, y_rotated)
 
             for i in range(sid_end-sid_start):
 
                 alt_rotated = alt_batch_rotated[i]
-                altKalt,_,_,_ = _AKB(eigendata, alt_rotated, delta, alt_rotated, Sd=Sd, logdetK=logdetK, a_by_Sd=Ualt_batchS[:,i:i+1])
+                altKy = alt_batchKy[i]
+                altKalt = AKB(alt_rotated, K, alt_rotated, a_by_Sd=altKy.a_by_Sd)
 
-                XKX[:cc,cc:] = covarSalt_batch[:,i:i+1] 
+                XKX[:cc,cc:] = covarKalt_batch.aKb[:,i:i+1]
                 XKX[cc:,:cc] = XKX[:cc,cc:].T
-                XKX[cc:,cc:] = altKalt
-                XKy[cc:,:] = alt_batchKy[i:i+1,:]
+                XKX[cc:,cc:] = altKalt.aKb
+
+                XKy[cc:,:]   = altKy.aKb
 
                 # O(sid_count * (covar+1)^6)
-                ll_alt, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, logdetK, h2, yKy, XKX, XKy)
+                ll_alt, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, K.logdet, h2, yKy.aKb, XKX, XKy)
                 test_statistic = ll_alt - ll_null
                 pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
@@ -232,26 +234,34 @@ def single_snp_eigen(
 
     return dataframe
 
-# !!!cmk what is this mathematically? What's a better name
-#!!!cmk move to pysnptools
-def _AKB(eigendata, a_rotated, delta, b_rotated, Sd=None, logdetK=None, a_by_Sd=None):
-    if Sd is None:
-        # cmk "reshape" lets it broadcast
-        Sd = (eigendata.values+delta).reshape(-1,1)
-
-    if logdetK is None:
-        logdetK = np.log(Sd).sum()
+class Kthing:
+    def __init__(self, eigendata, delta):
+        self.delta = delta
+        self.Sd = (eigendata.values+delta).reshape(-1,1)
+        self.logdet = np.log(self.Sd).sum()
+        self.is_low_rank = eigendata.is_low_rank
         if eigendata.is_low_rank: # !!!cmk test this
-            logdetK += (eigendata.iid_count - eigendata.eid_count) * np.log(delta)
+            self.logdet += (eigendata.iid_count - eigendata.eid_count) * np.log(delta)
 
-    if a_by_Sd is None:
-        a_by_Sd = a_rotated.rotated.val / Sd
 
-    aKb = a_by_Sd.T.dot(b_rotated.rotated.val)
-    if eigendata.is_low_rank:
-        aKb += a_rotated.double_rotated.val.T.dot(b_rotated.double_rotated.val)/delta
+class AKB:
+    def __init__(self, a_rotated, K, b_rotated, a_by_Sd=None):
+        if a_by_Sd is None:
+            # "reshape" lets it broadcast
+            self.a_by_Sd = a_rotated.rotated.val / K.Sd
+        else:
+            self.a_by_Sd = a_by_Sd
 
-    return aKb, Sd, logdetK, a_by_Sd
+        self.aKb = self.a_by_Sd.T.dot(b_rotated.rotated.val)
+        if K.is_low_rank:
+            self.aKb += a_rotated.double_rotated.val.T.dot(b_rotated.double_rotated.val)/K.delta
+
+    def __getitem__(self, index):
+        akbi = AKB.__new__(AKB)
+        akbi.a_by_Sd = self.a_by_Sd[:,index:index+1]
+        akbi.aKb = self.aKb[index:index+1,:]
+        return akbi
+
 
 
 def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
