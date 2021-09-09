@@ -139,31 +139,22 @@ def single_snp_eigen(
         y_rotated = eigendata.rotate(pheno.read(view_ok=True, order="A"))
 
         if log_delta is None:
-            # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
-
-            logging.info("searching for delta/h2/logdelta")
-            result = _find_h2(eigendata, covar_rotated, y_rotated, REML=fit_log_delta_via_reml, minH2=0.00001)
-            h2 = result["h2"]
-            delta = 1.0/h2-1.0
-            log_delta = np.log(delta)
             # cmk As per the paper, we optimized delta with REML=True, but
             # cmk we will later optimize beta and find log likelihood with ML (REML=False)
-            # !!! cmk so sid_count need not be given if doing full rank, right?
+            # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
+            logging.info("searching for delta/h2/logdelta")
+            result = _find_h2(eigendata, covar_rotated, y_rotated, REML=fit_log_delta_via_reml, minH2=0.00001)
+            K = Kthing(eigendata, h2=result["h2"])
         else:
+            K = Kthing(eigendata, log_delta=log_delta)
             # !!!cmk internal/external doesn't matter if full rank, right???
-            delta = np.exp(log_delta)
-            h2 = 1.0/(delta+1)
-        logging.info("delta={0}".format(delta))
-        logging.info("log_delta={0}".format(log_delta))
-
-        K = Kthing(eigendata, delta)
 
         yKy         = AKB(y_rotated,     K, y_rotated)
         covarKcovar = AKB(covar_rotated, K, covar_rotated)
-        covarKy     = AKB(covar_rotated, K, y_rotated, a_by_Sd=covarKcovar.a_by_Sd)
+        covarKy     = AKB(covar_rotated, K, y_rotated, aK=covarKcovar.aK)
 
         assert not test_via_reml # !!!cmk
-        ll_null, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, K.logdet, h2, yKy.aKb, covarKcovar.aKb, covarKy.aKb)
+        ll_null, beta, variance_beta = _loglikelihood_ml(K, yKy, covarKcovar, covarKy)
 
 
         # !!!cmk really do this in batches in different processes
@@ -188,23 +179,22 @@ def single_snp_eigen(
             # !!!cmk should biobank precompute this?
             alt_batch_rotated = eigendata.rotate(snps_batch)
 
-            covarKalt_batch = AKB(covar_rotated,     K, alt_batch_rotated, a_by_Sd=covarKcovar.a_by_Sd)
+            covarKalt_batch = AKB(covar_rotated,     K, alt_batch_rotated, aK=covarKcovar.aK)
             alt_batchKy     = AKB(alt_batch_rotated, K, y_rotated)
 
             for i in range(sid_end-sid_start):
 
                 alt_rotated = alt_batch_rotated[i]
-                altKy = alt_batchKy[i]
-                altKalt = AKB(alt_rotated, K, alt_rotated, a_by_Sd=altKy.a_by_Sd)
+                altKalt = AKB(alt_rotated, K, alt_rotated, aK=alt_batchKy.aK[:,i:i+1])
 
                 XKX[:cc,cc:] = covarKalt_batch.aKb[:,i:i+1]
                 XKX[cc:,:cc] = XKX[:cc,cc:].T
                 XKX[cc:,cc:] = altKalt.aKb
 
-                XKy[cc:,:]   = altKy.aKb
+                XKy[cc:,:]   = alt_batchKy.aKb[i:i+1,:]
 
                 # O(sid_count * (covar+1)^6)
-                ll_alt, beta, variance_beta = _loglikelihood_ml(eigenreader.iid_count, K.logdet, h2, yKy.aKb, XKX, XKy)
+                ll_alt, beta, variance_beta = _loglikelihood_ml(K, yKy, XKX, XKy)
                 test_statistic = ll_alt - ll_null
                 pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
 
@@ -222,7 +212,7 @@ def single_snp_eigen(
         dataframe['SnpWeightSE'] = np.sqrt(np.array(variance_beta_list))
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
         # dataframe['Mixing'] = np.zeros((len(sid))) + 0
-        dataframe['Nullh2'] = np.zeros(test_snps.sid_count) + h2
+        dataframe['Nullh2'] = np.zeros(test_snps.sid_count) + K.h2
 
     dataframe.sort_values(by="PValue", inplace=True)
     dataframe.index = np.arange(len(dataframe))
@@ -235,33 +225,38 @@ def single_snp_eigen(
     return dataframe
 
 class Kthing:
-    def __init__(self, eigendata, delta):
-        self.delta = delta
-        self.Sd = (eigendata.values+delta).reshape(-1,1)
+    def __init__(self, eigendata, h2=None, log_delta=None):
+        assert sum([h2 is not None, log_delta is not None])==1, "Exactly one of h2, etc should have a value"
+        if h2 is not None:
+            self.h2 = h2
+            self.delta = 1.0/h2-1.0
+            self.log_delta = np.log(self.delta)
+        elif log_delta is not None:
+            self.log_delta = log_delta
+            self.delta = np.exp(log_delta)
+            self.h2 = 1.0/(self.delta+1)
+        else:
+            assert False, "real assert"
+
+        self.iid_count = eigendata.iid_count
+        self.Sd = (eigendata.values+self.delta).reshape(-1,1)
         self.logdet = np.log(self.Sd).sum()
         self.is_low_rank = eigendata.is_low_rank
         if eigendata.is_low_rank: # !!!cmk test this
-            self.logdet += (eigendata.iid_count - eigendata.eid_count) * np.log(delta)
+            self.logdet += (eigendata.iid_count - eigendata.eid_count) * self.log_delta
 
 
 class AKB:
-    def __init__(self, a_rotated, K, b_rotated, a_by_Sd=None):
-        if a_by_Sd is None:
+    def __init__(self, a_rotated, K, b_rotated, aK=None):
+        if aK is None:
             # "reshape" lets it broadcast
-            self.a_by_Sd = a_rotated.rotated.val / K.Sd
+            self.aK = a_rotated.rotated.val / K.Sd
         else:
-            self.a_by_Sd = a_by_Sd
+            self.aK = aK
 
-        self.aKb = self.a_by_Sd.T.dot(b_rotated.rotated.val)
+        self.aKb = self.aK.T.dot(b_rotated.rotated.val)
         if K.is_low_rank:
             self.aKb += a_rotated.double_rotated.val.T.dot(b_rotated.double_rotated.val)/K.delta
-
-    def __getitem__(self, index):
-        akbi = AKB.__new__(AKB)
-        akbi.a_by_Sd = self.a_by_Sd[:,index:index+1]
-        akbi.aKb = self.aKb[index:index+1,:]
-        return akbi
-
 
 
 def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
@@ -277,7 +272,14 @@ def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
     return lmm.findH2(REML=REML, minH2=0.00001)
 
 #!!!cmk add __loglikelihood_ml
-def _loglikelihood_ml(iid_count, logdetK, h2, yKy, XKX, XKy):
+def _loglikelihood_ml(K, yKy, XKX, XKy):
+    if isinstance(yKy,AKB):
+        yKy = yKy.aKb
+    if isinstance(XKX,AKB):
+        XKX = XKX.aKb
+    if isinstance(XKy,AKB):
+        XKy = XKy.aKb
+
     yKy = float(yKy) # !!!cmk assuming one pheno
     XKy = XKy.reshape(-1) # cmk should be 2-D to support multiple phenos
     # Must do one test at a time
@@ -289,10 +291,10 @@ def _loglikelihood_ml(iid_count, logdetK, h2, yKy, XKX, XKy):
 
     beta = UxKx.dot(UxKx.T.dot(XKy)/SxKx)
     r2 = yKy-XKy.dot(beta)
-    sigma2 = r2 / iid_count
-    nLL =  0.5 * ( logdetK + iid_count * ( np.log(2.0*np.pi*sigma2) + 1 ))
+    sigma2 = r2 / K.iid_count
+    nLL =  0.5 * ( K.logdet + K.iid_count * (np.log(2.0*np.pi*sigma2) + 1 ))
     assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
-    variance_beta = h2 * sigma2 * (UxKx/SxKx * UxKx).sum(-1)
+    variance_beta = K.h2 * sigma2 * (UxKx/SxKx * UxKx).sum(-1)
     return -nLL, beta, variance_beta
 
 
