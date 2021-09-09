@@ -116,42 +116,34 @@ def single_snp_eigen(
         #  missing values
         eigendata = eigenreader.read(view_ok=True, order="A")
 
-        covar_val0 = covar.read(view_ok=True, order="A").val
-        covar_val1 = np.c_[covar_val0, np.ones((test_snps.iid_count, 1))]  # view_ok because np.c_ will allocation new memory
-        #!!!cmk what is "bias' is already used as column name
-        covar_and_bias = SnpData(iid=covar.iid, sid=list(covar.sid)+["bias"], val=covar_val1, name=f"{covar}&bias")
         #============
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         #=============
-        covar_rotated = eigendata.rotate(covar_and_bias)
+        covar_r = eigendata.rotate(_covar_with_bias(covar))
 
 
         assert pheno.sid_count >= 1, "Expect at least one phenotype"
         assert pheno.sid_count == 1, "currently only have code for one pheno"
-        # view_ok because this code already did a fresh read to look for any
-        # missing values
         #============
         # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
         # O(iid_count x eid_count x pheno_count)
         #=============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-        y_rotated = eigendata.rotate(pheno.read(view_ok=True, order="A"))
+        y_r = eigendata.rotate(pheno.read(view_ok=True, order="A"))
 
         if log_delta is None:
             # cmk As per the paper, we optimized delta with REML=True, but
             # cmk we will later optimize beta and find log likelihood with ML (REML=False)
-            # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
-            logging.info("searching for delta/h2/logdelta")
-            result = _find_h2(eigendata, covar_rotated, y_rotated, REML=fit_log_delta_via_reml, minH2=0.00001)
-            K = Kthing(eigendata, h2=result["h2"])
+            h2 = _find_h2(eigendata, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001)["h2"]
+            K = Kthing(eigendata, h2=h2)
         else:
-            K = Kthing(eigendata, log_delta=log_delta)
             # !!!cmk internal/external doesn't matter if full rank, right???
+            K = Kthing(eigendata, log_delta=log_delta)
 
-        yKy         = AKB(y_rotated,     K, y_rotated)
-        covarKcovar = AKB(covar_rotated, K, covar_rotated)
-        covarKy     = AKB(covar_rotated, K, y_rotated, aK=covarKcovar.aK)
+        yKy         = AKB(y_r,     K, y_r)
+        covarKcovar = AKB(covar_r, K, covar_r)
+        covarKy     = AKB(covar_r, K, y_r, aK=covarKcovar.aK)
 
         assert not test_via_reml # !!!cmk
         ll_null, beta, variance_beta = _loglikelihood_ml(K, yKy, covarKcovar, covarKy)
@@ -163,12 +155,10 @@ def single_snp_eigen(
         beta_list = [] 
         variance_beta_list = []
 
-        cc = covar_and_bias.sid_count # number of covariates including bias
-
+        cc = covar_r.sid_count # number of covariates including bias
         XKX = np.full(shape=(cc+1,cc+1),fill_value=np.NaN)
+        XKy = np.full(shape=(cc+1,y_r.sid_count),fill_value=np.NaN)
         XKX[:cc,:cc] = covarKcovar.aKb
-
-        XKy = np.full(shape=(cc+1,pheno.sid_count),fill_value=np.NaN)
         XKy[:cc,:] = covarKy.aKb
          
         batch_size = 1000 #!!!cmk const
@@ -177,15 +167,15 @@ def single_snp_eigen(
 
             snps_batch = test_snps[:, sid_start:sid_end].read().standardize()
             # !!!cmk should biobank precompute this?
-            alt_batch_rotated = eigendata.rotate(snps_batch)
+            alt_batch_r = eigendata.rotate(snps_batch)
 
-            covarKalt_batch = AKB(covar_rotated,     K, alt_batch_rotated, aK=covarKcovar.aK)
-            alt_batchKy     = AKB(alt_batch_rotated, K, y_rotated)
+            covarKalt_batch = AKB(covar_r,     K, alt_batch_r, aK=covarKcovar.aK)
+            alt_batchKy     = AKB(alt_batch_r, K, y_r)
 
             for i in range(sid_end-sid_start):
 
-                alt_rotated = alt_batch_rotated[i]
-                altKalt = AKB(alt_rotated, K, alt_rotated, aK=alt_batchKy.aK[:,i:i+1])
+                alt_r = alt_batch_r[i]
+                altKalt = AKB(alt_r, K, alt_r, aK=alt_batchKy.aK[:,i:i+1])
 
                 XKX[:cc,cc:] = covarKalt_batch.aKb[:,i:i+1]
                 XKX[cc:,:cc] = XKX[:cc,cc:].T
@@ -224,6 +214,14 @@ def single_snp_eigen(
 
     return dataframe
 
+def _covar_with_bias(covar):
+    covar_val0 = covar.read(view_ok=True, order="A").val
+    covar_val1 = np.c_[covar_val0, np.ones((covar.iid_count, 1))]  # view_ok because np.c_ will allocation new memory
+    #!!!cmk what is "bias' is already used as column name
+    covar_and_bias = SnpData(iid=covar.iid, sid=list(covar.sid)+["bias"], val=covar_val1, name=f"{covar}&bias")
+    return covar_and_bias
+
+
 class Kthing:
     def __init__(self, eigendata, h2=None, log_delta=None):
         assert sum([h2 is not None, log_delta is not None])==1, "Exactly one of h2, etc should have a value"
@@ -259,15 +257,18 @@ class AKB:
             self.aKb += a_rotated.double_rotated.val.T.dot(b_rotated.double_rotated.val)/K.delta
 
 
-def _find_h2(eigendata, X_rotated, y_rotated, REML, minH2=0.00001):
+def _find_h2(eigendata, X_rotated, y_r, REML, minH2=0.00001):
+    # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
+    logging.info("searching for delta/h2/logdelta")
+
     #!!!cmk expect one pass per y column
     lmm = LMM()
     lmm.S = eigendata.values
     lmm.U = eigendata.vectors
     lmm.UX = X_rotated.rotated.val # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
     lmm.UUX = X_rotated.double_rotated.val if X_rotated.double_rotated is not None else None
-    lmm.Uy = y_rotated.rotated.val[:,0]  # !!!cmk precomputed for the same reason
-    lmm.UUy = y_rotated.double_rotated.val[:,0] if y_rotated.double_rotated is not None else None
+    lmm.Uy = y_r.rotated.val[:,0]  # !!!cmk precomputed for the same reason
+    lmm.UUy = y_r.double_rotated.val[:,0] if y_r.double_rotated is not None else None
 
     return lmm.findH2(REML=REML, minH2=0.00001)
 
