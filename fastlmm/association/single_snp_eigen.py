@@ -149,15 +149,16 @@ def single_snp_eigen(
         ll_null, beta, variance_beta = _loglikelihood_ml(K, yKy, covarKcovar, covarKy)
 
 
-        # !!!cmk really do this in batches in different processes
-        result_list = []
         cc = covar_r.sid_count # number of covariates including bias
-        XKX = np.full(shape=(cc+1,cc+1),fill_value=np.NaN)
-        XKy = np.full(shape=(cc+1,y_r.sid_count),fill_value=np.NaN)
-        XKX[:cc,:cc] = covarKcovar.aKb
-        XKy[:cc,:] = covarKy.aKb
+        XKX = AKB.empty((cc+1,cc+1))
+        XKX[:cc,:cc] = covarKcovar # upper left
+
+        XKy = AKB.empty((cc+1,y_r.sid_count))
+        XKy[:cc,:] = covarKy       # upper
          
+        # !!!cmk really do this in batches in different processes
         batch_size = 1000 #!!!cmk const
+        result_list = []
         for sid_start in range(0,test_snps.sid_count,batch_size):
             sid_end = np.min([sid_start+batch_size,test_snps.sid_count])
 
@@ -169,15 +170,13 @@ def single_snp_eigen(
             alt_batchKy     = AKB(alt_batch_r, K, y_r)
 
             for i in range(sid_end-sid_start):
-
                 alt_r = alt_batch_r[i]
-                altKalt = AKB(alt_r, K, alt_r, aK=alt_batchKy.aK[:,i:i+1])
 
-                XKX[:cc,cc:] = covarKalt_batch.aKb[:,i:i+1]
-                XKX[cc:,:cc] = XKX[:cc,cc:].T
-                XKX[cc:,cc:] = altKalt.aKb
+                XKX[:cc,cc:] = covarKalt_batch[:,i:i+1] # upper right
+                XKX[cc:,:cc] = XKX[:cc,cc:].T           # lower left
+                XKX[cc:,cc:] = AKB(alt_r, K, alt_r, aK=alt_batchKy.aK[:,i:i+1]) # lower right
 
-                XKy[cc:,:]   = alt_batchKy.aKb[i:i+1,:]
+                XKy[cc:,:]   = alt_batchKy[i:i+1,:]     # Lower
 
                 # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = _loglikelihood_ml(K, yKy, XKX, XKy)
@@ -249,6 +248,29 @@ class AKB:
         if K.is_low_rank:
             self.aKb += a_r.double.val.T.dot(b_r.double.val)/K.delta
 
+    @staticmethod
+    def empty(shape):
+        result = AKB.__new__(AKB)
+        result.aKb = np.full(shape=shape,fill_value=np.NaN)
+        result.aK = None
+        return result
+
+    def __setitem__(self, key, value):
+        self.aKb[key] = value.aKb
+
+    def __getitem__(self, index):
+        result = AKB.__new__(AKB)
+        result.aKb = self.aKb[index]
+        result.aK = None
+        return result
+
+    @property
+    def T(self):
+        result = AKB.__new__(AKB)
+        result.aKb = self.aKb.T
+        result.aK = None
+        return result
+
 
 def _find_h2(eigendata, X_r, y_r, REML, minH2=0.00001):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
@@ -267,15 +289,10 @@ def _find_h2(eigendata, X_r, y_r, REML, minH2=0.00001):
 
 #!!!cmk add __loglikelihood_ml
 def _loglikelihood_ml(K, yKy, XKX, XKy):
-    if isinstance(yKy,AKB):
-        yKy = yKy.aKb
-    if isinstance(XKX,AKB):
-        XKX = XKX.aKb
-    if isinstance(XKy,AKB):
-        XKy = XKy.aKb
+    yKy = float(yKy.aKb) # !!!cmk assuming one pheno
+    XKX = XKX.aKb
+    XKy = XKy.aKb.reshape(-1) # cmk should be 2-D to support multiple phenos
 
-    yKy = float(yKy) # !!!cmk assuming one pheno
-    XKy = XKy.reshape(-1) # cmk should be 2-D to support multiple phenos
     # Must do one test at a time
     SxKx,UxKx= np.linalg.eigh(XKX)
     # Remove tiny eigenvectors
