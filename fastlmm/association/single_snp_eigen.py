@@ -146,14 +146,14 @@ def single_snp_eigen(
         covarKy     = AKB(covar_r, K, y_r, aK=covarKcovar.aK)
 
         assert not test_via_reml # !!!cmk
-        ll_null, beta, variance_beta = _loglikelihood_ml(K, yKy, covarKcovar, covarKy)
+        ll_null, beta, variance_beta = _loglikelihood_ml(yKy, covarKcovar, covarKy)
 
 
         cc = covar_r.sid_count # number of covariates including bias
-        XKX = AKB.empty((cc+1,cc+1))
+        XKX = AKB.empty((cc+1,cc+1),K=K)
         XKX[:cc,:cc] = covarKcovar # upper left
 
-        XKy = AKB.empty((cc+1,y_r.sid_count))
+        XKy = AKB.empty((cc+1,y_r.sid_count),K=K)
         XKy[:cc,:] = covarKy       # upper
          
         # !!!cmk really do this in batches in different processes
@@ -176,10 +176,10 @@ def single_snp_eigen(
                 XKX[cc:,:cc] = XKX[:cc,cc:].T           # lower left
                 XKX[cc:,cc:] = AKB(alt_r, K, alt_r, aK=alt_batchKy.aK[:,i:i+1]) # lower right
 
-                XKy[cc:,:]   = alt_batchKy[i:i+1,:]     # Lower
+                XKy[cc:,:]   = alt_batchKy[i:i+1,:]     # lower
 
                 # O(sid_count * (covar+1)^6)
-                ll_alt, beta, variance_beta = _loglikelihood_ml(K, yKy, XKX, XKy)
+                ll_alt, beta, variance_beta = _loglikelihood_ml(yKy, XKX, XKy)
                 test_statistic = ll_alt - ll_null
                 result_list.append({
                     "PValue":stats.chi2.sf(2.0 * test_statistic, df=1),
@@ -239,6 +239,7 @@ class Kthing:
 
 class AKB:
     def __init__(self, a_r, K, b_r, aK=None):
+        self.K = K
         if aK is None:
             self.aK = a_r.rotated.val / K.Sd
         else:
@@ -249,19 +250,22 @@ class AKB:
             self.aKb += a_r.double.val.T.dot(b_r.double.val)/K.delta
 
     @staticmethod
-    def empty(shape):
+    def empty(shape, K):
         result = AKB.__new__(AKB)
+        result.K = K
         result.aKb = np.full(shape=shape,fill_value=np.NaN)
         result.aK = None
         return result
 
     def __setitem__(self, key, value):
+        #!!cmk may want to check that the K's are equal
         self.aKb[key] = value.aKb
 
     def __getitem__(self, index):
         result = AKB.__new__(AKB)
         result.aKb = self.aKb[index]
         result.aK = None
+        result.K = self.K
         return result
 
     @property
@@ -269,6 +273,7 @@ class AKB:
         result = AKB.__new__(AKB)
         result.aKb = self.aKb.T
         result.aK = None
+        result.K = self.K
         return result
 
 
@@ -288,7 +293,8 @@ def _find_h2(eigendata, X_r, y_r, REML, minH2=0.00001):
     return lmm.findH2(REML=REML, minH2=0.00001)
 
 #!!!cmk add __loglikelihood_ml
-def _loglikelihood_ml(K, yKy, XKX, XKy):
+def _loglikelihood_ml(yKy, XKX, XKy):
+    K = yKy.K #!!!cmk may want to check that all three K's are equal
     yKy = float(yKy.aKb) # !!!cmk assuming one pheno
     XKX = XKX.aKb
     XKy = XKy.aKb.reshape(-1) # cmk should be 2-D to support multiple phenos
