@@ -150,11 +150,7 @@ def single_snp_eigen(
 
 
         # !!!cmk really do this in batches in different processes
-        dataframe = _create_dataframe(test_snps.sid_count)
-        pvalue_list = []
-        beta_list = [] 
-        variance_beta_list = []
-
+        result_list = []
         cc = covar_r.sid_count # number of covariates including bias
         XKX = np.full(shape=(cc+1,cc+1),fill_value=np.NaN)
         XKy = np.full(shape=(cc+1,y_r.sid_count),fill_value=np.NaN)
@@ -186,20 +182,17 @@ def single_snp_eigen(
                 # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = _loglikelihood_ml(K, yKy, XKX, XKy)
                 test_statistic = ll_alt - ll_null
-                pvalue = stats.chi2.sf(2.0 * test_statistic, df=1)
+                result_list.append({
+                    "PValue":stats.chi2.sf(2.0 * test_statistic, df=1),
+                    "SnpWeight":beta,
+                    "SnpWeightSE":np.sqrt(variance_beta)})
 
-                pvalue_list.append(pvalue)
-                beta_list.append(beta)
-                variance_beta_list.append(variance_beta)
-
+        dataframe = _create_dataframe().append(result_list,ignore_index=True)
         dataframe["sid_index"] = range(test_snps.sid_count)
         dataframe['SNP'] = test_snps.sid
         dataframe['Chr'] = test_snps.pos[:,0]
         dataframe['GenDist'] = test_snps.pos[:,1]
         dataframe['ChrPos'] = test_snps.pos[:,2]
-        dataframe["PValue"] = pvalue_list
-        dataframe['SnpWeight'] = beta_list
-        dataframe['SnpWeightSE'] = np.sqrt(np.array(variance_beta_list))
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
         # dataframe['Mixing'] = np.zeros((len(sid))) + 0
         dataframe['Nullh2'] = np.zeros(test_snps.sid_count) + K.h2
@@ -237,27 +230,27 @@ class Kthing:
             assert False, "real assert"
 
         self.iid_count = eigendata.iid_count
+        self.is_low_rank = eigendata.is_low_rank
+        # "reshape" lets it broadcast
         self.Sd = (eigendata.values+self.delta).reshape(-1,1)
         self.logdet = np.log(self.Sd).sum()
-        self.is_low_rank = eigendata.is_low_rank
         if eigendata.is_low_rank: # !!!cmk test this
             self.logdet += (eigendata.iid_count - eigendata.eid_count) * self.log_delta
 
 
 class AKB:
-    def __init__(self, a_rotated, K, b_rotated, aK=None):
+    def __init__(self, a_r, K, b_r, aK=None):
         if aK is None:
-            # "reshape" lets it broadcast
-            self.aK = a_rotated.rotated.val / K.Sd
+            self.aK = a_r.rotated.val / K.Sd
         else:
             self.aK = aK
 
-        self.aKb = self.aK.T.dot(b_rotated.rotated.val)
+        self.aKb = self.aK.T.dot(b_r.rotated.val)
         if K.is_low_rank:
-            self.aKb += a_rotated.double_rotated.val.T.dot(b_rotated.double_rotated.val)/K.delta
+            self.aKb += a_r.double.val.T.dot(b_r.double.val)/K.delta
 
 
-def _find_h2(eigendata, X_rotated, y_r, REML, minH2=0.00001):
+def _find_h2(eigendata, X_r, y_r, REML, minH2=0.00001):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
@@ -265,10 +258,10 @@ def _find_h2(eigendata, X_rotated, y_r, REML, minH2=0.00001):
     lmm = LMM()
     lmm.S = eigendata.values
     lmm.U = eigendata.vectors
-    lmm.UX = X_rotated.rotated.val # !!!cmk This is precomputed because we'll be dividing it by (eigenvalues+delta) over and over again
-    lmm.UUX = X_rotated.double_rotated.val if X_rotated.double_rotated is not None else None
-    lmm.Uy = y_r.rotated.val[:,0]  # !!!cmk precomputed for the same reason
-    lmm.UUy = y_r.double_rotated.val[:,0] if y_r.double_rotated is not None else None
+    lmm.UX = X_r.rotated.val
+    lmm.UUX = X_r.double.val if X_r.double is not None else None
+    lmm.Uy = y_r.rotated.val[:,0] #!!!cmk not multipheno
+    lmm.UUy = y_r.double.val[:,0] if y_r.double is not None else None
 
     return lmm.findH2(REML=REML, minH2=0.00001)
 
@@ -302,33 +295,23 @@ def _loglikelihood_ml(K, yKy, XKX, XKy):
 
 
 # !!!cmk similar to single_snp.py and single_snp_scale
-def _create_dataframe(row_count):
+def _create_dataframe():
+    # https://stackoverflow.com/questions/21197774/assign-pandas-dataframe-column-dtypes
     dataframe = pd.DataFrame(
-        index=np.arange(row_count),
-        columns=(
-            "sid_index",
-            "SNP",
-            "Chr",
-            "GenDist",
-            "ChrPos",
-            "PValue",
-            "SnpWeight",
-            "SnpWeightSE",
-            "SnpFractVarExpl",
-            "Mixing",
-            "Nullh2",
-        ),
-    )
-    #!!Is this the only way to set types in a dataframe?
-    dataframe["sid_index"] = dataframe["sid_index"].astype(np.float)
-    dataframe["Chr"] = dataframe["Chr"].astype(np.float)
-    dataframe["GenDist"] = dataframe["GenDist"].astype(np.float)
-    dataframe["ChrPos"] = dataframe["ChrPos"].astype(np.float)
-    dataframe["PValue"] = dataframe["PValue"].astype(np.float)
-    dataframe["SnpWeight"] = dataframe["SnpWeight"].astype(np.float)
-    dataframe["SnpWeightSE"] = dataframe["SnpWeightSE"].astype(np.float)
-    dataframe["SnpFractVarExpl"] = dataframe["SnpFractVarExpl"].astype(np.float)
-    dataframe["Mixing"] = dataframe["Mixing"].astype(np.float)
-    dataframe["Nullh2"] = dataframe["Nullh2"].astype(np.float)
-
+        np.empty(
+        (0,),
+        dtype=[
+            ("sid_index",np.float),
+            ("SNP","S"),
+            ("Chr",np.float),
+            ("GenDist",np.float),
+            ("ChrPos",np.float),
+            ("PValue",np.float),
+            ("SnpWeight",np.float),
+            ("SnpWeightSE",np.float),
+            ("SnpFractVarExpl",np.float),
+            ("Mixing",np.float),
+            ("Nullh2",np.float),
+            ]
+            ))
     return dataframe
