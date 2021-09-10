@@ -15,7 +15,7 @@ from fastlmm.inference.fastlmm_predictor import (
     _kernel_fixup,
 )
 from fastlmm.inference import LMM
-
+from fastlmm.util.mingrid import minimize1D
 
 # !!!cmk move to pysnptools
 def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
@@ -322,30 +322,38 @@ class AKB:
         return result
 
 
-def _find_h2(eigendata, X, X_r, y_r, REML, minH2=0.00001):
+def _find_h2(eigendata, X, X_r, y_r, REML, nGridH2=10, minH2 = 0.0, maxH2 = 0.99999):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
-    # !!!cmk expect one pass per y column
-    lmm = LMM()
-    lmm.S = eigendata.values
-    lmm.U = eigendata.vectors
-    lmm.UX = X_r.rotated.val
-    lmm.UUX = X_r.double.val if X_r.double is not None else None
-    lmm.Uy = y_r.rotated.val[:, 0]  # !!!cmk not multipheno
-    lmm.UUy = y_r.double.val[:, 0] if y_r.double is not None else None
+    if True: # !!!cmk
+        # !!!cmk expect one pass per y column
+        lmm = LMM()
+        lmm.S = eigendata.values
+        lmm.U = eigendata.vectors
+        lmm.UX = X_r.rotated.val
+        lmm.UUX = X_r.double.val if X_r.double is not None else None
+        lmm.Uy = y_r.rotated.val[:, 0]  # !!!cmk not multipheno
+        lmm.UUy = y_r.double.val[:, 0] if y_r.double is not None else None
 
-    if REML:
-        lmm.X = X
+        if REML:
+            lmm.X = X
 
-    return lmm.findH2(REML=REML, minH2=0.00001)
-
-    if False:
+        return lmm.findH2(REML=REML, minH2=0.00001)
+    else:
         resmin=[None]
         def f(x,resmin=resmin,**kwargs):
-            nLL, beta, variance_beta = _loglikelihood_reml(yKy, XKX, XKy)
-            if (resmin[0] is None) or (ll<resmin[0]):
-                resmin[0]={"nLL":nLL, "beta":beta, "variance_beta":variance_beta}
+            K = Kthing(eigendata, h2=x)
+            yKy = AKB(y_r, K, y_r)
+            XKX = AKB(X_r, K, X_r)
+            XKy = AKB(X_r, K, y_r, aK=XKX.aK)
+
+            if REML: # !!!cmk
+                nLL, _ = _loglikelihood_reml(X, yKy, XKX, XKy)
+            else:
+                nLL, _, _ = _loglikelihood_ml(yKy, XKX, XKy)
+            if (resmin[0] is None) or (nLL<resmin[0]["nLL"]):
+                resmin[0]={"nLL":nLL,"h2":x}
             logging.debug(f"search\t{x}\t{nLL}")
             return nLL
         min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2 )
