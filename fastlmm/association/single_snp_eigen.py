@@ -134,7 +134,8 @@ def single_snp_eigen(
         # iid_count x eid_count  *  iid_count x covar => eid_count * covar
         # O(iid_count x eid_count x covar)
         # =============
-        covar_r = eigendata.rotate(_covar_with_bias(covar))
+        covar = _covar_with_bias(covar)
+        covar_r = eigendata.rotate(covar)
 
         assert pheno.sid_count >= 1, "Expect at least one phenotype"
         assert pheno.sid_count == 1, "currently only have code for one pheno"
@@ -149,7 +150,7 @@ def single_snp_eigen(
             # cmk As per the paper, we optimized delta with REML=True, but
             # cmk we will later optimize beta and find log likelihood with ML (REML=False)
             h2 = _find_h2(
-                eigendata, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001
+                eigendata, covar.val, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001
             )["h2"]
             K = Kthing(eigendata, h2=h2)
         else:
@@ -160,10 +161,15 @@ def single_snp_eigen(
         covarKcovar = AKB(covar_r, K, covar_r)
         covarKy = AKB(covar_r, K, y_r, aK=covarKcovar.aK)
 
-        assert not test_via_reml  # !!!cmk
-        ll_null, beta, variance_beta = _loglikelihood_ml(yKy, covarKcovar, covarKy)
+        if test_via_reml: # !!!cmk
+            ll_null, beta = _loglikelihood_reml(covar.val, yKy, covarKcovar, covarKy)
+        else:
+            ll_null, beta, variance_beta = _loglikelihood_ml(yKy, covarKcovar, covarKy)
 
         cc = covar_r.sid_count  # number of covariates including bias
+        if test_via_reml: # !!!cmk
+            X = np.full((covar.iid_count,cc+1),fill_value=np.nan) 
+            X[:,:cc] = covar.val # left
         XKX = AKB.empty((cc + 1, cc + 1), K=K)
         XKX[:cc, :cc] = covarKcovar  # upper left
 
@@ -186,6 +192,7 @@ def single_snp_eigen(
             for i in range(sid_end - sid_start):
                 alt_r = alt_batch_r[i]
 
+
                 XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
                 XKX[cc:, :cc] = XKX[:cc, cc:].T  # lower left
                 XKX[cc:, cc:] = AKB(
@@ -195,7 +202,13 @@ def single_snp_eigen(
                 XKy[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
 
                 # O(sid_count * (covar+1)^6)
-                ll_alt, beta, variance_beta = _loglikelihood_ml(yKy, XKX, XKy)
+                if test_via_reml: # !!!cmk
+                    X[:,cc:] = snps_batch.val[:,i:i+1] # right
+                    ll_alt, beta = _loglikelihood_reml(X, yKy, XKX, XKy)
+                    variance_beta = np.nan
+                else:
+                    ll_alt, beta, variance_beta = _loglikelihood_ml(yKy, XKX, XKy)
+
                 test_statistic = ll_alt - ll_null
                 result_list.append(
                     {
@@ -309,7 +322,7 @@ class AKB:
         return result
 
 
-def _find_h2(eigendata, X_r, y_r, REML, minH2=0.00001):
+def _find_h2(eigendata, X, X_r, y_r, REML, minH2=0.00001):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
@@ -322,10 +335,53 @@ def _find_h2(eigendata, X_r, y_r, REML, minH2=0.00001):
     lmm.Uy = y_r.rotated.val[:, 0]  # !!!cmk not multipheno
     lmm.UUy = y_r.double.val[:, 0] if y_r.double is not None else None
 
+    if REML:
+        lmm.X = X
+
     return lmm.findH2(REML=REML, minH2=0.00001)
 
+    if False:
+        resmin=[None]
+        def f(x,resmin=resmin,**kwargs):
+            nLL, beta, variance_beta = _loglikelihood_reml(yKy, XKX, XKy)
+            if (resmin[0] is None) or (ll<resmin[0]):
+                resmin[0]={"nLL":nLL, "beta":beta, "variance_beta":variance_beta}
+            logging.debug(f"search\t{x}\t{nLL}")
+            return nLL
+        min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2 )
+        return resmin[0]
 
-# !!!cmk add __loglikelihood_ml
+def _loglikelihood_reml(X, yKy, XKX, XKy):
+    K = yKy.K  # !!!cmk may want to check that all three K's are equal
+    # !!!cmk similar code in _loglikelihood_ml
+    # !!!cmk may want to check that all three K's are equal
+    yKy = float(yKy.aKb)  # !!!cmk assuming one pheno
+    XKX = XKX.aKb
+    XKy = XKy.aKb.reshape(-1)  # cmk should be 2-D to support multiple phenos
+
+    # Must do one test at a time
+    SxKx, UxKx = np.linalg.eigh(XKX)
+    # Remove tiny eigenvectors
+    i_pos = SxKx > 1e-10
+    UxKx = UxKx[:, i_pos]
+    SxKx = SxKx[i_pos]
+
+    beta = UxKx.dot(UxKx.T.dot(XKy) / SxKx)
+    r2 = yKy - XKy.dot(beta)
+
+    XX = X.T.dot(X)
+    [Sxx,Uxx]= np.linalg.eigh(XX)
+    logdetXX  = np.log(Sxx).sum()
+    logdetXKX = np.log(SxKx).sum()
+    sigma2 = r2 / (X.shape[0]-X.shape[1])
+    nLL =  0.5 * ( K.logdet + logdetXKX - logdetXX + (X.shape[0]-X.shape[1]) * ( np.log(2.0*np.pi*sigma2) + 1 ) )
+    assert np.all(
+        np.isreal(nLL)
+    ), "nLL has an imaginary component, possibly due to constant covariates"
+    # !!!cmk which is negative loglikelihood and which is LL?
+    return -nLL, beta
+
+
 def _loglikelihood_ml(yKy, XKX, XKy):
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
     yKy = float(yKy.aKb)  # !!!cmk assuming one pheno
@@ -347,6 +403,7 @@ def _loglikelihood_ml(yKy, XKX, XKy):
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
     variance_beta = K.h2 * sigma2 * (UxKx / SxKx * UxKx).sum(-1)
+    # !!!cmk which is negative loglikelihood and which is LL?
     return -nLL, beta, variance_beta
 
 
