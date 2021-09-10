@@ -326,7 +326,7 @@ def _find_h2(eigendata, X, X_r, y_r, REML, nGridH2=10, minH2 = 0.0, maxH2 = 0.99
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
-    if True: # !!!cmk
+    if False: # !!!cmk
         # !!!cmk expect one pass per y column
         lmm = LMM()
         lmm.S = eigendata.values
@@ -339,8 +339,8 @@ def _find_h2(eigendata, X, X_r, y_r, REML, nGridH2=10, minH2 = 0.0, maxH2 = 0.99
         if REML:
             lmm.X = X
 
-        return lmm.findH2(REML=REML, minH2=0.00001)
-    else:
+        result_0 = lmm.findH2(REML=REML, minH2=0.00001)
+    if True:
         resmin=[None]
         def f(x,resmin=resmin,**kwargs):
             K = Kthing(eigendata, h2=x)
@@ -352,12 +352,15 @@ def _find_h2(eigendata, X, X_r, y_r, REML, nGridH2=10, minH2 = 0.0, maxH2 = 0.99
                 nLL, _ = _loglikelihood_reml(X, yKy, XKX, XKy)
             else:
                 nLL, _, _ = _loglikelihood_ml(yKy, XKX, XKy)
+            nLL = -nLL # !!!cmk
             if (resmin[0] is None) or (nLL<resmin[0]["nLL"]):
                 resmin[0]={"nLL":nLL,"h2":x}
             logging.debug(f"search\t{x}\t{nLL}")
             return nLL
-        min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2 )
-        return resmin[0]
+        min = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2 )
+        result_1 = resmin[0]
+        # !!! cmk logging.debug(f"{result_1},{result_0}")
+        return result_1
 
 def _loglikelihood_reml(X, yKy, XKX, XKy):
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
