@@ -326,43 +326,28 @@ def _find_h2(eigendata, X, X_r, y_r, REML, nGridH2=10, minH2 = 0.0, maxH2 = 0.99
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
-    if False: # !!!cmk
-        # !!!cmk expect one pass per y column
-        lmm = LMM()
-        lmm.S = eigendata.values
-        lmm.U = eigendata.vectors
-        lmm.UX = X_r.rotated.val
-        lmm.UUX = X_r.double.val if X_r.double is not None else None
-        lmm.Uy = y_r.rotated.val[:, 0]  # !!!cmk not multipheno
-        lmm.UUy = y_r.double.val[:, 0] if y_r.double is not None else None
+    resmin=[None]
+    def f(x,resmin=resmin,**kwargs):
+        K = Kthing(eigendata, h2=x)
+        yKy = AKB(y_r, K, y_r)
+        XKX = AKB(X_r, K, X_r)
+        XKy = AKB(X_r, K, y_r, aK=XKX.aK)
 
-        if REML:
-            lmm.X = X
+        if REML: # !!!cmk
+            nLL, _ = _loglikelihood_reml(X, yKy, XKX, XKy)
+        else:
+            nLL, _, _ = _loglikelihood_ml(yKy, XKX, XKy)
+        nLL = -nLL # !!!cmk
+        if (resmin[0] is None) or (nLL<resmin[0]["nLL"]):
+            resmin[0]={"nLL":nLL,"h2":x}
+        logging.debug(f"search\t{x}\t{nLL}")
+        return nLL
+    min = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2 )
+    result_1 = resmin[0]
+    # !!! cmk logging.debug(f"{result_1},{result_0}")
+    return result_1
 
-        result_0 = lmm.findH2(REML=REML, minH2=0.00001)
-    if True:
-        resmin=[None]
-        def f(x,resmin=resmin,**kwargs):
-            K = Kthing(eigendata, h2=x)
-            yKy = AKB(y_r, K, y_r)
-            XKX = AKB(X_r, K, X_r)
-            XKy = AKB(X_r, K, y_r, aK=XKX.aK)
-
-            if REML: # !!!cmk
-                nLL, _ = _loglikelihood_reml(X, yKy, XKX, XKy)
-            else:
-                nLL, _, _ = _loglikelihood_ml(yKy, XKX, XKy)
-            nLL = -nLL # !!!cmk
-            if (resmin[0] is None) or (nLL<resmin[0]["nLL"]):
-                resmin[0]={"nLL":nLL,"h2":x}
-            logging.debug(f"search\t{x}\t{nLL}")
-            return nLL
-        min = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2 )
-        result_1 = resmin[0]
-        # !!! cmk logging.debug(f"{result_1},{result_0}")
-        return result_1
-
-def _loglikelihood_reml(X, yKy, XKX, XKy):
+def _common_code(yKy, XKX, XKy): # !!! cmk rename
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
     # !!!cmk similar code in _loglikelihood_ml
     # !!!cmk may want to check that all three K's are equal
@@ -371,7 +356,7 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
     XKy = XKy.aKb.reshape(-1)  # cmk should be 2-D to support multiple phenos
 
     # Must do one test at a time
-    SxKx, UxKx = np.linalg.eigh(XKX)
+    SxKx, UxKx = np.linalg.eigh(XKX) #!!!cmk use eigendata
     # Remove tiny eigenvectors
     i_pos = SxKx > 1e-10
     UxKx = UxKx[:, i_pos]
@@ -380,6 +365,12 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
     beta = UxKx.dot(UxKx.T.dot(XKy) / SxKx)
     r2 = yKy - XKy.dot(beta)
 
+    return r2, beta, UxKx, SxKx
+
+
+def _loglikelihood_reml(X, yKy, XKX, XKy):
+    r2, beta, UxKx, SxKx = _common_code(yKy, XKX, XKy)
+    K = yKy.K  # !!!cmk may want to check that all three K's are equal
     XX = X.T.dot(X)
     [Sxx,Uxx]= np.linalg.eigh(XX)
     logdetXX  = np.log(Sxx).sum()
@@ -394,20 +385,8 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
 
 
 def _loglikelihood_ml(yKy, XKX, XKy):
+    r2, beta, UxKx, SxKx = _common_code(yKy, XKX, XKy)
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
-    yKy = float(yKy.aKb)  # !!!cmk assuming one pheno
-    XKX = XKX.aKb
-    XKy = XKy.aKb.reshape(-1)  # cmk should be 2-D to support multiple phenos
-
-    # Must do one test at a time
-    SxKx, UxKx = np.linalg.eigh(XKX)
-    # Remove tiny eigenvectors
-    i_pos = SxKx > 1e-10
-    UxKx = UxKx[:, i_pos]
-    SxKx = SxKx[i_pos]
-
-    beta = UxKx.dot(UxKx.T.dot(XKy) / SxKx)
-    r2 = yKy - XKy.dot(beta)
     sigma2 = r2 / K.iid_count
     nLL = 0.5 * (K.logdet + K.iid_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.all(
