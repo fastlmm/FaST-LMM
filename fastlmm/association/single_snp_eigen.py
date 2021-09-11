@@ -8,6 +8,7 @@ import pysnptools.util as pstutil
 from unittest.mock import patch
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpData
+from pysnptools.pstreader import PstData
 from pysnptools.eigenreader import EigenData
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
@@ -39,7 +40,7 @@ def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
         )
         if np.any(sqrt_values < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
-        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, iid=K.iid)
+        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K.iid)
     else:
         # !!!cmk understand _read_kernel, _read_with_standardizing
 
@@ -111,13 +112,13 @@ def single_snp_eigen(
         # !!!cmk assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False,
         #  'covar_by_chrom' must be None"
         # !!!cmk fix up w and v
-        iid_count_before = eigenreader.iid_count
+        iid_count_before = eigenreader.row_count
         test_snps, pheno, eigenreader, covar = pstutil.intersect_apply(
             [test_snps, pheno, eigenreader, covar]
         )
         logging.debug("# of iids now {0}".format(test_snps.iid_count))
         assert (
-            eigenreader.iid_count == iid_count_before
+            eigenreader.row_count == iid_count_before
         ), "Expect all of eigenreader's individuals to be in test_snps, pheno, and covar."  # cmk ok to lose some?
         # !!!cmk K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal,
         #  force_full_rank, force_low_rank)
@@ -170,10 +171,11 @@ def single_snp_eigen(
         if test_via_reml: # !!!cmk
             X = np.full((covar.iid_count,cc+1),fill_value=np.nan) 
             X[:,:cc] = covar.val # left
-        XKX = AKB.empty((cc + 1, cc + 1), K=K)
+        xkx_sid = np.append(covar_r.rotated.col,"alt") # !!!cmk what if alt is not unique?
+        XKX = AKB.empty(row=xkx_sid, col=xkx_sid, K=K)
         XKX[:cc, :cc] = covarKcovar  # upper left
 
-        XKy = AKB.empty((cc + 1, y_r.sid_count), K=K)
+        XKy = AKB.empty(xkx_sid, y_r.rotated.col, K=K)
         XKy[:cc, :] = covarKy  # upper
 
         # !!!cmk really do this in batches in different processes
@@ -271,13 +273,14 @@ class Kthing:
         else:
             assert False, "real assert"
 
-        self.iid_count = eigendata.iid_count
+        self.row_count = eigendata.row_count
+        self.row = eigendata.row
         self.is_low_rank = eigendata.is_low_rank
         # "reshape" lets it broadcast
         self.Sd = (eigendata.values + self.delta).reshape(-1, 1)
         self.logdet = np.log(self.Sd).sum()
         if eigendata.is_low_rank:  # !!!cmk test this
-            self.logdet += (eigendata.iid_count - eigendata.eid_count) * self.log_delta
+            self.logdet += (eigendata.row_count - eigendata.eid_count) * self.log_delta
 
 
 # !!!cmk move to PySnpTools
@@ -290,25 +293,25 @@ class AKB:
         else:
             self.aK = aK
 
-        self.aKb = self.aK.T.dot(b_r.rotated.val)
+        self.aKb = PstData(val=self.aK.T.dot(b_r.rotated.val), row=a_r.rotated.col, col=b_r.rotated.col)
         if K.is_low_rank:
-            self.aKb += a_r.double.val.T.dot(b_r.double.val) / K.delta
+            self.aKb.val += a_r.double.val.T.dot(b_r.double.val) / K.delta
 
     @staticmethod
-    def empty(shape, K):
+    def empty(row, col, K):
         result = AKB.__new__(AKB)
         result.K = K
-        result.aKb = np.full(shape=shape, fill_value=np.NaN)
+        result.aKb = PstData(val=np.full(shape=(len(row),len(col)), fill_value=np.NaN), row=row, col=col)
         result.aK = None
         return result
 
     def __setitem__(self, key, value):
         # !!!cmk may want to check that the K's are equal
-        self.aKb[key] = value.aKb
+        self.aKb.val[key] = value.aKb.val
 
     def __getitem__(self, index):
         result = AKB.__new__(AKB)
-        result.aKb = self.aKb[index]
+        result.aKb = self.aKb[index].read(view_ok=True) # !!!cmk fast enough?
         result.aK = None
         result.K = self.K
         return result
@@ -316,7 +319,7 @@ class AKB:
     @property
     def T(self):
         result = AKB.__new__(AKB)
-        result.aKb = self.aKb.T
+        result.aKb = PstData(val=self.aKb.val.T,row=self.aKb.col,col=self.aKb.row)
         result.aK = None
         result.K = self.K
         return result
@@ -347,34 +350,60 @@ def _find_h2(eigendata, X, X_r, y_r, REML, nGridH2=10, minH2 = 0.0, maxH2 = 0.99
     # !!! cmk logging.debug(f"{result_1},{result_0}")
     return result_1
 
+def _eigen_from_akb(akb):
+    # !!!cmk check that square aKa not just aKb???
+    w, v = np.linalg.eigh(akb.aKb.val)  # !!! cmk do SVD sometimes?
+    eigen = EigenData(values=w, vectors=v, row=akb.aKb.row)
+    return eigen
+
+
 def _common_code(yKy, XKX, XKy): # !!! cmk rename
+    #_cmk_common_code(yKy, XKX, XKy)
+
+    K = yKy.K  # !!!cmk may want to check that all three K's are equal
+    # !!!cmk may want to check that all three K's are equal
+
+    # Must do one test at a time
+
+    # Find eigenvectors, remove ones w/ small values
+    # !!!cmk should K be capitalized?
+    eigen_xkx = _eigen_from_akb(XKX) #!!!cmk use eigendata
+    eigen_xkx = eigen_xkx[:,eigen_xkx.values>1e-10].read(view_ok=True)
+    beta = eigen_xkx.vectors.dot(eigen_xkx.rotate(XKy.aKb).rotated.val.reshape(-1) / eigen_xkx.values)
+    r2 = float(yKy.aKb.val - XKy.aKb.val.reshape(-1).dot(beta))
+
+    return r2, beta, eigen_xkx
+
+
+def _cmk_common_code(yKy, XKX, XKy): # !!! cmk rename
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
     # !!!cmk similar code in _loglikelihood_ml
     # !!!cmk may want to check that all three K's are equal
-    yKy = float(yKy.aKb)  # !!!cmk assuming one pheno
-    XKX = XKX.aKb
-    XKy = XKy.aKb.reshape(-1)  # cmk should be 2-D to support multiple phenos
+    yKy = float(yKy.aKb.val)  # !!!cmk assuming one pheno
+    XKX = XKX.aKb.val
+    XKy = XKy.aKb.val.reshape(-1)  # cmk should be 2-D to support multiple phenos
 
     # Must do one test at a time
     SxKx, UxKx = np.linalg.eigh(XKX) #!!!cmk use eigendata
     # Remove tiny eigenvectors
     i_pos = SxKx > 1e-10
-    UxKx = UxKx[:, i_pos]
-    SxKx = SxKx[i_pos]
+    UxKx = UxKx[:, i_pos] #(2,2)
+    SxKx = SxKx[i_pos] # (2,)
 
-    beta = UxKx.dot(UxKx.T.dot(XKy) / SxKx)
-    r2 = yKy - XKy.dot(beta)
-
-    return r2, beta, UxKx, SxKx
+    a = UxKx.T.dot(XKy) #(2,)
+    b = a / SxKx        #(2,)
+    beta = UxKx.dot(b)  #(2,)
+    c = XKy.dot(beta)   #scalar
+    r2 = yKy - c        #scalar
 
 
 def _loglikelihood_reml(X, yKy, XKX, XKy):
-    r2, beta, UxKx, SxKx = _common_code(yKy, XKX, XKy)
+    r2, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
     XX = X.T.dot(X)
     [Sxx,Uxx]= np.linalg.eigh(XX)
     logdetXX  = np.log(Sxx).sum()
-    logdetXKX = np.log(SxKx).sum()
+    logdetXKX = np.log(eigen_xkx.values).sum()
     sigma2 = r2 / (X.shape[0]-X.shape[1])
     nLL =  0.5 * ( K.logdet + logdetXKX - logdetXX + (X.shape[0]-X.shape[1]) * ( np.log(2.0*np.pi*sigma2) + 1 ) )
     assert np.all(
@@ -385,14 +414,14 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
 
 
 def _loglikelihood_ml(yKy, XKX, XKy):
-    r2, beta, UxKx, SxKx = _common_code(yKy, XKX, XKy)
+    r2, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
-    sigma2 = r2 / K.iid_count
-    nLL = 0.5 * (K.logdet + K.iid_count * (np.log(2.0 * np.pi * sigma2) + 1))
+    sigma2 = r2 / K.row_count
+    nLL = 0.5 * (K.logdet + K.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.all(
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
-    variance_beta = K.h2 * sigma2 * (UxKx / SxKx * UxKx).sum(-1)
+    variance_beta = K.h2 * sigma2 * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
     # !!!cmk which is negative loglikelihood and which is LL?
     return -nLL, beta, variance_beta
 
