@@ -151,7 +151,7 @@ def single_snp_eigen(
             # cmk As per the paper, we optimized delta with REML=True, but
             # cmk we will later optimize beta and find log likelihood with ML (REML=False)
             h2 = _find_h2(
-                eigendata, covar.val, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001
+                eigendata, covar, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001
             )["h2"]
             K = Kthing(eigendata, h2=h2)
         else:
@@ -163,15 +163,15 @@ def single_snp_eigen(
         covarKy = AKB(covar_r, K, y_r, aK=covarKcovar.aK)
 
         if test_via_reml: # !!!cmk
-            ll_null, beta = _loglikelihood_reml(covar.val, yKy, covarKcovar, covarKy)
+            ll_null, beta = _loglikelihood_reml(covar, yKy, covarKcovar, covarKy)
         else:
             ll_null, beta, variance_beta = _loglikelihood_ml(yKy, covarKcovar, covarKy)
 
         cc = covar_r.sid_count  # number of covariates including bias
-        if test_via_reml: # !!!cmk
-            X = np.full((covar.iid_count,cc+1),fill_value=np.nan) 
-            X[:,:cc] = covar.val # left
         xkx_sid = np.append(covar_r.rotated.col,"alt") # !!!cmk what if alt is not unique?
+        if test_via_reml: # !!!cmk
+            X = SnpData(val=np.full((covar.iid_count,len(xkx_sid)),fill_value=np.nan),iid=covar.iid,sid=xkx_sid)
+            X.val[:,:cc] = covar.val # left
         XKX = AKB.empty(row=xkx_sid, col=xkx_sid, K=K)
         XKX[:cc, :cc] = covarKcovar  # upper left
 
@@ -205,7 +205,7 @@ def single_snp_eigen(
 
                 # O(sid_count * (covar+1)^6)
                 if test_via_reml: # !!!cmk
-                    X[:,cc:] = snps_batch.val[:,i:i+1] # right
+                    X.val[:,cc:] = snps_batch.val[:,i:i+1] # right
                     ll_alt, beta = _loglikelihood_reml(X, yKy, XKX, XKy)
                     variance_beta = np.nan
                 else:
@@ -356,6 +356,11 @@ def _eigen_from_akb(akb):
     eigen = EigenData(values=w, vectors=v, row=akb.aKb.row)
     return eigen
 
+def _eigen_from_xx(xx):
+    # !!!cmk check that square aKa not just aKb???
+    w, v = np.linalg.eigh(xx.val)  # !!! cmk do SVD sometimes?
+    eigen = EigenData(values=w, vectors=v, row=xx.row)
+    return eigen
 
 def _common_code(yKy, XKX, XKy): # !!! cmk rename
     #_cmk_common_code(yKy, XKX, XKy)
@@ -375,37 +380,15 @@ def _common_code(yKy, XKX, XKy): # !!! cmk rename
     return r2, beta, eigen_xkx
 
 
-def _cmk_common_code(yKy, XKX, XKy): # !!! cmk rename
-    K = yKy.K  # !!!cmk may want to check that all three K's are equal
-    # !!!cmk similar code in _loglikelihood_ml
-    # !!!cmk may want to check that all three K's are equal
-    yKy = float(yKy.aKb.val)  # !!!cmk assuming one pheno
-    XKX = XKX.aKb.val
-    XKy = XKy.aKb.val.reshape(-1)  # cmk should be 2-D to support multiple phenos
-
-    # Must do one test at a time
-    SxKx, UxKx = np.linalg.eigh(XKX) #!!!cmk use eigendata
-    # Remove tiny eigenvectors
-    i_pos = SxKx > 1e-10
-    UxKx = UxKx[:, i_pos] #(2,2)
-    SxKx = SxKx[i_pos] # (2,)
-
-    a = UxKx.T.dot(XKy) #(2,)
-    b = a / SxKx        #(2,)
-    beta = UxKx.dot(b)  #(2,)
-    c = XKy.dot(beta)   #scalar
-    r2 = yKy - c        #scalar
-
-
 def _loglikelihood_reml(X, yKy, XKX, XKy):
     r2, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
-    XX = X.T.dot(X)
-    [Sxx,Uxx]= np.linalg.eigh(XX)
-    logdetXX  = np.log(Sxx).sum()
+    XX = PstData(val=X.val.T.dot(X.val),row=X.sid,col=X.sid) # !!!cmk isn't this a kernel?
+    eigen_xx = _eigen_from_xx(XX)
+    logdetXX  = np.log(eigen_xx.values).sum() # !!!cmk make logdet a property of eigens?
     logdetXKX = np.log(eigen_xkx.values).sum()
     sigma2 = r2 / (X.shape[0]-X.shape[1])
-    nLL =  0.5 * ( K.logdet + logdetXKX - logdetXX + (X.shape[0]-X.shape[1]) * ( np.log(2.0*np.pi*sigma2) + 1 ) )
+    nLL =  0.5 * ( K.logdet + logdetXKX - logdetXX + (X.shape[0]-X.shape[1]) * (np.log(2.0*np.pi*sigma2) + 1 ) )
     assert np.all(
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
