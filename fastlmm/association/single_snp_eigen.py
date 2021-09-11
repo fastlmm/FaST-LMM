@@ -271,7 +271,7 @@ class Kthing:
 
 
 # !!!cmk move to PySnpTools
-class AKB:
+class AKB(PstData):
     # !!!cmk document only an unmodified AKV(ar, K, br) will have an aK
     def __init__(self, a_r, K, b_r, aK=None):
         self.K = K
@@ -280,33 +280,34 @@ class AKB:
         else:
             self.aK = aK
 
-        self.aKb = PstData(val=self.aK.T.dot(b_r.rotated.val), row=a_r.rotated.col, col=b_r.rotated.col)
+        super().__init__(val=self.aK.T.dot(b_r.rotated.val), row=a_r.rotated.col, col=b_r.rotated.col)
         if K.is_low_rank:
-            self.aKb.val += a_r.double.val.T.dot(b_r.double.val) / K.delta
+            self.val += a_r.double.val.T.dot(b_r.double.val) / K.delta
 
     @staticmethod
     def empty(row, col, K):
         result = AKB.__new__(AKB)
         result.K = K
-        result.aKb = PstData(val=np.full(shape=(len(row),len(col)), fill_value=np.NaN), row=row, col=col)
+        super(AKB,result).__init__(val=np.full(shape=(len(row),len(col)), fill_value=np.NaN), row=row, col=col)
         result.aK = None
         return result
 
     def __setitem__(self, key, value):
         # !!!cmk may want to check that the K's are equal
-        self.aKb.val[key] = value.aKb.val
+        self.val[key] = value.val
 
     def __getitem__(self, index):
+        result0 = super(AKB,self).__getitem__(index).read(view_ok=True) # !!!cmk fast enough?
         result = AKB.__new__(AKB)
-        result.aKb = self.aKb[index].read(view_ok=True) # !!!cmk fast enough?
+        super(AKB,result).__init__(val=result0.val, row=result0.row, col=result0.col)
         result.aK = None
         result.K = self.K
-        return result
+        return result # !!! cmk right type?
 
     @property
     def T(self):
         result = AKB.__new__(AKB)
-        result.aKb = PstData(val=self.aKb.val.T,row=self.aKb.col,col=self.aKb.row)
+        super(AKB,result).__init__(val=self.val.T,row=self.col,col=self.row)
         result.aK = None
         result.K = self.K
         return result
@@ -339,8 +340,8 @@ def _find_h2(eigendata, X, X_r, y_r, REML, nGridH2=10, minH2 = 0.0, maxH2 = 0.99
 
 def _eigen_from_akb(akb):
     # !!!cmk check that square aKa not just aKb???
-    w, v = np.linalg.eigh(akb.aKb.val)  # !!! cmk do SVD sometimes?
-    eigen = EigenData(values=w, vectors=v, row=akb.aKb.row)
+    w, v = np.linalg.eigh(akb.val)  # !!! cmk do SVD sometimes?
+    eigen = EigenData(values=w, vectors=v, row=akb.row)
     return eigen
 
 def _eigen_from_xx(xx):
@@ -361,8 +362,8 @@ def _common_code(yKy, XKX, XKy): # !!! cmk rename
     # !!!cmk should K be capitalized?
     eigen_xkx = _eigen_from_akb(XKX) #!!!cmk use eigendata
     eigen_xkx = eigen_xkx[:,eigen_xkx.values>1e-10].read(view_ok=True)
-    beta = eigen_xkx.vectors.dot(eigen_xkx.rotate(XKy.aKb).rotated.val.reshape(-1) / eigen_xkx.values)
-    r2 = float(yKy.aKb.val - XKy.aKb.val.reshape(-1).dot(beta))
+    beta = eigen_xkx.vectors.dot(eigen_xkx.rotate(XKy).rotated.val.reshape(-1) / eigen_xkx.values)
+    r2 = float(yKy.val - XKy.val.reshape(-1).dot(beta))
 
     return r2, beta, eigen_xkx
 
@@ -399,12 +400,12 @@ def _find_best_K_as_needed(eigendata, covar, covar_r, y_r, REML, log_delta=None)
         # cmk As per the paper, we optimized delta with REML=True, but
         # cmk we will later optimize beta and find log likelihood with ML (REML=False)
         h2 = _find_h2(
-            eigendata, covar, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001
+            eigendata, covar, covar_r, y_r, REML=REML, minH2=0.00001
         )["h2"]
-        K = Kthing(eigendata, h2=h2)
+        return Kthing(eigendata, h2=h2)
     else:
         # !!!cmk internal/external doesn't matter if full rank, right???
-        K = Kthing(eigendata, log_delta=log_delta)
+        return Kthing(eigendata, log_delta=log_delta)
 
 
 # !!!cmk similar to single_snp.py and single_snp_scale
