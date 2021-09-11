@@ -41,7 +41,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
     #!!!cmk0 make faster of possible by swapping UX and X
     #!!!cmk0 search for best delta
-    #!!!cmk0 understand REML vs not
+    #!!!cmk0 understand use_reml vs not
 
     def test_same_as_old_code(self): #!!!cmk too slow???
         test_count = 750
@@ -52,7 +52,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
 
-        for REML in [True, False]:
+        for use_reml in [True, False]:
             for train_count in [50, 750]:
                 for cov in [cov_reader, None]:
                     for delta in [0.20000600000000002, None, delta_default]:
@@ -65,8 +65,8 @@ class TestSingleSnpEigen(unittest.TestCase):
                                 covar=cov,
                                 output_file_name=None,
                                 log_delta = np.log(delta) if delta is not None else None,
-                                fit_log_delta_via_reml = REML,
-                                test_via_reml = REML,
+                                find_delta_via_reml = use_reml,
+                                test_via_reml = use_reml,
                                 count_A1=False,
                             )
                             frame.PValue
@@ -78,7 +78,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                         else:
                             cov_val =  None
                         G_chr1, G_chr2 = G[:,:train_count], G[:,train_count:train_count+test_count]
-                        gwas = GwasPrototype(G_chr1, G_chr2, y, internal_delta=delta, cov=cov_val, REML=REML)
+                        gwas = GwasPrototype(G_chr1, G_chr2, y, internal_delta=delta, cov=cov_val, REML=use_reml)
                         gwas.run_gwas()
 
                         # check p-values in log-space!
@@ -99,7 +99,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             eigenvectors=eigenvectors,
             covar=covar,
             output_file_name=output_file,
-            fit_log_delta_via_reml = False,
+            find_delta_via_reml = False,
             test_via_reml = False,
             count_A1=False,
         )
