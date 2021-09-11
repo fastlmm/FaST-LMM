@@ -140,26 +140,13 @@ def single_snp_eigen(
 
         assert pheno.sid_count >= 1, "Expect at least one phenotype"
         assert pheno.sid_count == 1, "currently only have code for one pheno"
-        # ============
-        # iid_count x eid_count  *  iid_count x pheno_count => eid_count * pheno_count
-        # O(iid_count x eid_count x pheno_count)
-        # =============
         # !!! cmk with multipheno is it going to be O(covar*covar*y)???
         y_r = eigendata.rotate(pheno.read(view_ok=True, order="A"))
 
-        if log_delta is None:
-            # cmk As per the paper, we optimized delta with REML=True, but
-            # cmk we will later optimize beta and find log likelihood with ML (REML=False)
-            h2 = _find_h2(
-                eigendata, covar, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001
-            )["h2"]
-            K = Kthing(eigendata, h2=h2)
-        else:
-            # !!!cmk internal/external doesn't matter if full rank, right???
-            K = Kthing(eigendata, log_delta=log_delta)
+        K = _find_best_K_as_needed(eigendata, covar, covar_r, y_r, REML=fit_log_delta_via_reml, log_delta=log_delta)
 
-        yKy = AKB(y_r, K, y_r)
         covarKcovar = AKB(covar_r, K, covar_r)
+        yKy = AKB(y_r, K, y_r)
         covarKy = AKB(covar_r, K, y_r, aK=covarKcovar.aK)
 
         if test_via_reml: # !!!cmk
@@ -395,7 +382,6 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
     # !!!cmk which is negative loglikelihood and which is LL?
     return -nLL, beta
 
-
 def _loglikelihood_ml(yKy, XKX, XKy):
     r2, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
     K = yKy.K  # !!!cmk may want to check that all three K's are equal
@@ -407,6 +393,18 @@ def _loglikelihood_ml(yKy, XKX, XKy):
     variance_beta = K.h2 * sigma2 * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
     # !!!cmk which is negative loglikelihood and which is LL?
     return -nLL, beta, variance_beta
+
+def _find_best_K_as_needed(eigendata, covar, covar_r, y_r, REML, log_delta=None):
+    if log_delta is None:
+        # cmk As per the paper, we optimized delta with REML=True, but
+        # cmk we will later optimize beta and find log likelihood with ML (REML=False)
+        h2 = _find_h2(
+            eigendata, covar, covar_r, y_r, REML=fit_log_delta_via_reml, minH2=0.00001
+        )["h2"]
+        K = Kthing(eigendata, h2=h2)
+    else:
+        # !!!cmk internal/external doesn't matter if full rank, right???
+        K = Kthing(eigendata, log_delta=log_delta)
 
 
 # !!!cmk similar to single_snp.py and single_snp_scale
