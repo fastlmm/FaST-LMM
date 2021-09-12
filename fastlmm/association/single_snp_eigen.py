@@ -5,7 +5,6 @@ from pathlib import Path
 import numpy as np
 import scipy.stats as stats
 import pysnptools.util as pstutil
-from unittest.mock import patch
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
@@ -15,55 +14,7 @@ from fastlmm.inference.fastlmm_predictor import (
     _snps_fixup,
     _kernel_fixup,
 )
-from fastlmm.inference import LMM
 from fastlmm.util.mingrid import minimize1D
-
-# !!!cmk move to pysnptools
-def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
-    """!!!cmk documentation"""
-    # !!!cmk could offer a low-memory path that uses memmapped files
-    from pysnptools.kernelreader import SnpKernel
-    from pysnptools.kernelstandardizer import Identity as KS_Identity
-
-    assert K is not None
-    K = _kernel_fixup(K, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
-    assert K.iid0 is K.iid1, "Expect K to be square"
-
-    if isinstance(
-        K, SnpKernel
-    ):  # !!!make eigen creation a method on all kernel readers
-        assert isinstance(
-            kernel_standardizer, KS_Identity
-        ), "cmk need code for other kernel standardizers"
-        vectors, sqrt_values, _ = np.linalg.svd(
-            K.snpreader.read().standardize(K.standardizer).val, full_matrices=False
-        )
-        if np.any(sqrt_values < -0.1):
-            logging.warning("kernel contains a negative Eigenvalue")
-        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K.iid)
-    else:
-        # !!!cmk understand _read_kernel, _read_with_standardizing
-
-        K = K._read_with_standardizing(
-            kernel_standardizer=kernel_standardizer,
-            to_kerneldata=True,
-            return_trained=False,
-        )
-        # !!! cmk ??? pass in a new argument, the kernel_standardizer(???)
-        logging.debug("About to eigh")
-        w, v = np.linalg.eigh(K.val)  # !!! cmk do SVD sometimes?
-        logging.debug("Done with to eigh")
-        if np.any(w < -0.1):
-            logging.warning(
-                "kernel contains a negative Eigenvalue"
-            )  # !!!cmk this shouldn't happen with a RRM, right?
-        # !!!cmk remove very small eigenvalues
-        # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
-        eigen = EigenData(values=w, vectors=v, iid=K.iid)
-        # eigen.vectors[:,eigen.values<.0001]=0.0
-        # eigen.values[eigen.values<.0001]=0.0
-        # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
-    return eigen
 
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
@@ -71,7 +22,7 @@ def eigen_from_kernel(K, kernel_standardizer, count_A1=None):
 def single_snp_eigen(
     test_snps,
     pheno,
-    eigenreader,
+    K0_eigen,
     covar=None,  # !!!cmk covar_by_chrom=None, leave_out_one_chrom=True,
     output_file_name=None,
     log_delta=None,
@@ -89,36 +40,23 @@ def single_snp_eigen(
 ):
     """cmk documentation"""
     # !!!LATER raise error if covar has NaN
-    # cmk t0 = time.time()
-
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent, exist_ok=True)
 
-    xp = pstutil.array_module("numpy")
-
-    assert test_snps is not None, "test_snps must be given as input"
     test_snps = _snps_fixup(test_snps, count_A1=count_A1)
-    pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
-    good_values_per_iid = (pheno.val == pheno.val).sum(axis=1)
-    assert not np.any(
-        (good_values_per_iid > 0) * (good_values_per_iid < pheno.sid_count)
-    ), "With multiple phenotypes, an individual's values must either be all missing or have no missing."
-    # !!!cmk multipheno
-    # drop individuals with no good pheno values.
-    pheno = pheno[good_values_per_iid > 0, :]
+    pheno = _pheno_fixup_and_check_missing(pheno, count_A1)
     covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
+
+    iid_count_before = K0_eigen.row_count
+    test_snps, pheno, K0_eigen, covar = pstutil.intersect_apply(
+        [test_snps, pheno, K0_eigen, covar]
+    )
+    assert (
+        K0_eigen.row_count == iid_count_before
+    ), "Must have test_snps, pheno, and covar data for each K0_eigen individual"
 
     # !!!cmk assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False,
     #  'covar_by_chrom' must be None"
-    # !!!cmk fix up w and v
-    iid_count_before = eigenreader.row_count
-    test_snps, pheno, eigenreader, covar = pstutil.intersect_apply(
-        [test_snps, pheno, eigenreader, covar]
-    )
-    logging.debug("# of iids now {0}".format(test_snps.iid_count))
-    assert (
-        eigenreader.row_count == iid_count_before
-    ), "Expect all of eigenreader's individuals to be in test_snps, pheno, and covar."  # cmk ok to lose some?
     # !!!cmk K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal,
     #  force_full_rank, force_low_rank)
 
@@ -126,39 +64,37 @@ def single_snp_eigen(
     # if h2 is not None and not isinstance(h2, np.ndarray):
     #     h2 = np.repeat(h2, pheno.shape[1])
 
-    # view_ok because this code already did a fresh read to look for any
-    #  missing values
-    eigendata = eigenreader.read(view_ok=True, order="A")
+    K0_eigen = K0_eigen.read(view_ok=True, order="A")
+    covar = _covar_read_with_bias(covar)
+    pheno = pheno.read(view_ok=True, order="A")
 
-    # ============
-    # iid_count x eid_count  *  iid_count x covar => eid_count * covar
-    # O(iid_count x eid_count x covar)
-    # =============
-    covar = _covar_with_bias(covar)
-    covar_r = eigendata.rotate(covar)
+    covar_r = K0_eigen.rotate(covar)
+    pheno_r = K0_eigen.rotate(pheno)
 
-    assert pheno.sid_count >= 1, "Expect at least one phenotype"
-    assert pheno.sid_count == 1, "currently only have code for one pheno"
-    # !!! cmk with multipheno is it going to be O(covar*covar*y)???
-    y_r = eigendata.rotate(pheno.read(view_ok=True, order="A"))
-
-    K = _find_best_K_as_needed(
-        eigendata,
+    K0_kdi = _find_best_kdi_as_needed(
+        K0_eigen,
         covar,
         covar_r,
-        y_r,
+        pheno_r,
         use_reml=find_delta_via_reml,
         log_delta=log_delta,
     )
 
-    covarKcovar = AKB(covar_r, K, covar_r)
-    yKy = AKB(y_r, K, y_r)
-    covarKy = AKB(covar_r, K, y_r, aK=covarKcovar.aK)
+    covarKcovar = AKB(covar_r, K0_kdi, covar_r)
+    phenoKpheno = AKB(pheno_r, K0_kdi, pheno_r)
+    covarKpheno = AKB(covar_r, K0_kdi, pheno_r, aK=covarKcovar.aK)
 
     ll_null, beta, variance_beta = _loglikelihood(
-        covar, yKy, covarKcovar, covarKy, use_reml=test_via_reml
+        covar, phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml
     )
 
+    # ==================================
+    # X is the covariates (with bias)
+    # and a test SNP.
+    # Create an X, XKX, and XKpheno where
+    # the last X value can be swapped in.
+    # It is the SNP to test.
+    # ==================================
     cc = covar.sid_count  # number of covariates including bias
     # !!!cmk what if alt is not unique?
     xkx_sid = np.append(covar.sid, "alt")
@@ -172,11 +108,11 @@ def single_snp_eigen(
     else:
         X = None
 
-    XKX = AKB.empty(row=xkx_sid, col=xkx_sid, K=K)
+    XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
     XKX[:cc, :cc] = covarKcovar  # upper left
 
-    XKy = AKB.empty(xkx_sid, y_r.rotated.col, K=K)
-    XKy[:cc, :] = covarKy  # upper
+    XKpheno = AKB.empty(xkx_sid, pheno_r.rotated.col, kdi=K0_kdi)
+    XKpheno[:cc, :] = covarKpheno  # upper
 
     # !!!cmk really do this in batches in different processes
     batch_size = 1000  # !!!cmk const
@@ -184,12 +120,10 @@ def single_snp_eigen(
     for sid_start in range(0, test_snps.sid_count, batch_size):
         sid_end = np.min([sid_start + batch_size, test_snps.sid_count])
 
-        snps_batch = test_snps[:, sid_start:sid_end].read().standardize()
-        # !!!cmk should biobank precompute this?
-        alt_batch_r = eigendata.rotate(snps_batch)
-
-        covarKalt_batch = AKB(covar_r, K, alt_batch_r, aK=covarKcovar.aK)
-        alt_batchKy = AKB(alt_batch_r, K, y_r)
+        alt_batch = test_snps[:, sid_start:sid_end].read().standardize()
+        alt_batch_r = K0_eigen.rotate(alt_batch)
+        covarKalt_batch = AKB(covar_r, K0_kdi, alt_batch_r, aK=covarKcovar.aK)
+        alt_batchKy = AKB(alt_batch_r, K0_kdi, pheno_r)
 
         for i in range(sid_end - sid_start):
             alt_r = alt_batch_r[i]
@@ -197,18 +131,17 @@ def single_snp_eigen(
             XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
             XKX[cc:, :cc] = XKX[:cc, cc:].T  # lower left
             XKX[cc:, cc:] = AKB(
-                alt_r, K, alt_r, aK=alt_batchKy.aK[:, i : i + 1]
+                alt_r, K0_kdi, alt_r, aK=alt_batchKy.aK[:, i : i + 1]
             )  # lower right
 
-            XKy[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
+            XKpheno[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
 
             # O(sid_count * (covar+1)^6)
             if test_via_reml:  # !!!cmk
-                X.val[:, cc:] = snps_batch.val[:, i : i + 1]  # right
+                X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
             ll_alt, beta, variance_beta = _loglikelihood(
-                X, yKy, XKX, XKy, use_reml=test_via_reml
+                X, phenoKpheno, XKX, XKpheno, use_reml=test_via_reml
             )
-
             test_statistic = ll_alt - ll_null
             result_list.append(
                 {
@@ -224,7 +157,7 @@ def single_snp_eigen(
         dataframe["Chr"] = test_snps.pos[:, 0]
         dataframe["GenDist"] = test_snps.pos[:, 1]
         dataframe["ChrPos"] = test_snps.pos[:, 2]
-        dataframe["Nullh2"] = np.zeros(test_snps.sid_count) + K.h2
+        dataframe["Nullh2"] = np.zeros(test_snps.sid_count) + K0_kdi.h2
         # !!!cmk in lmmcov, but not lmm
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
         # !!!cmk Feature not supported. could add "0"
@@ -239,7 +172,23 @@ def single_snp_eigen(
     return dataframe
 
 
-def _covar_with_bias(covar):
+def _pheno_fixup_and_check_missing(pheno, count_A1):
+    pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
+    good_values_per_iid = (pheno.val == pheno.val).sum(axis=1)
+    assert not np.any(
+        (good_values_per_iid > 0) * (good_values_per_iid < pheno.sid_count)
+    ), "With multiple phenotypes, an individual's values must either be all missing or have no missing."
+    # !!!cmk multipheno
+    # drop individuals with no good pheno values.
+    pheno = pheno[good_values_per_iid > 0, :]
+
+    assert pheno.sid_count >= 1, "Expect at least one phenotype"
+    assert pheno.sid_count == 1, "currently only have code for one pheno"
+
+    return pheno
+
+
+def _covar_read_with_bias(covar):
     covar_val0 = covar.read(view_ok=True, order="A").val
     covar_val1 = np.c_[
         covar_val0, np.ones((covar.iid_count, 1))
@@ -255,7 +204,7 @@ def _covar_with_bias(covar):
 
 
 # !!!cmk needs better name
-class Kthing:
+class KdI:
     def __init__(self, eigendata, h2=None, log_delta=None):
         assert (
             sum([h2 is not None, log_delta is not None]) == 1
@@ -283,24 +232,24 @@ class Kthing:
 
 # !!!cmk move to PySnpTools
 class AKB(PstData):
-    # !!!cmk document only an unmodified AKV(ar, K, br) will have an aK
-    def __init__(self, a_r, K, b_r, aK=None):
-        self.K = K
+    # !!!cmk document only an unmodified AKV(ar, kdi, br) will have an aK
+    def __init__(self, a_r, kdi, b_r, aK=None):
+        self.kdi = kdi
         if aK is None:
-            self.aK = a_r.rotated.val / K.Sd
+            self.aK = a_r.rotated.val / kdi.Sd
         else:
             self.aK = aK
 
         super().__init__(
             val=self.aK.T.dot(b_r.rotated.val), row=a_r.rotated.col, col=b_r.rotated.col
         )
-        if K.is_low_rank:
-            self.val += a_r.double.val.T.dot(b_r.double.val) / K.delta
+        if kdi.is_low_rank:
+            self.val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
 
     @staticmethod
-    def empty(row, col, K):
+    def empty(row, col, kdi):
         result = AKB.__new__(AKB)
-        result.K = K
+        result.kdi = kdi
         super(AKB, result).__init__(
             val=np.full(shape=(len(row), len(col)), fill_value=np.NaN), row=row, col=col
         )
@@ -308,7 +257,7 @@ class AKB(PstData):
         return result
 
     def __setitem__(self, key, value):
-        # !!!cmk may want to check that the K's are equal
+        # !!!cmk may want to check that the kdi's are equal
         self.val[key] = value.val
 
     def __getitem__(self, index):
@@ -318,7 +267,7 @@ class AKB(PstData):
         result = AKB.__new__(AKB)
         super(AKB, result).__init__(val=result0.val, row=result0.row, col=result0.col)
         result.aK = None
-        result.K = self.K
+        result.kdi = self.kdi
         return result  # !!! cmk right type?
 
     @property
@@ -326,31 +275,35 @@ class AKB(PstData):
         result = AKB.__new__(AKB)
         super(AKB, result).__init__(val=self.val.T, row=self.col, col=self.row)
         result.aK = None
-        result.K = self.K
+        result.kdi = self.kdi
         return result
 
 
 # !!!cmk change use_reml etc to 'use_reml'
-def _find_h2(eigendata, X, X_r, y_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999):
-    # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
+def _find_h2(
+    eigendata, X, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999
+):
+    # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its kdi's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
     resmin = [None]
 
     def f(x, resmin=resmin, **kwargs):
-        K = Kthing(eigendata, h2=x)
-        yKy = AKB(y_r, K, y_r)
-        XKX = AKB(X_r, K, X_r)
-        XKy = AKB(X_r, K, y_r, aK=XKX.aK)
+        # This kdi is Kg+delta I
+        kdi = KdI(eigendata, h2=x)
+        # aKb is  a.T * kdi^-1 * b
+        phenoKpheno = AKB(pheno_r, kdi, pheno_r)
+        XKX = AKB(X_r, kdi, X_r)
+        XKpheno = AKB(X_r, kdi, pheno_r, aK=XKX.aK)
 
-        nLL, _, _ = _loglikelihood(X, yKy, XKX, XKy, use_reml=use_reml)
+        nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
             resmin[0] = {"nLL": nLL, "h2": x}
         logging.debug(f"search\t{x}\t{nLL}")
         return nLL
 
-    min = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2)
+    _ = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2)
     return resmin[0]
 
 
@@ -369,11 +322,11 @@ def _eigen_from_xx(xx):
     return eigen
 
 
-def _common_code(yKy, XKX, XKy):  # !!! cmk rename
-    # _cmk_common_code(yKy, XKX, XKy)
+def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
+    # _cmk_common_code(phenoKpheno, XKX, XKpheno)
 
-    K = yKy.K  # !!!cmk may want to check that all three K's are equal
-    # !!!cmk may want to check that all three K's are equal
+    # !!!cmk may want to check that all three kdi's are equal
+    # !!!cmk may want to check that all three kdi's are equal
 
     # Must do one test at a time
 
@@ -381,25 +334,28 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     # !!!cmk should K be capitalized?
     eigen_xkx = _eigen_from_akb(XKX)
     beta = eigen_xkx.vectors.dot(
-        eigen_xkx.rotate(XKy).rotated.val.reshape(-1) / eigen_xkx.values
+        eigen_xkx.rotate(XKpheno).rotated.val.reshape(-1) / eigen_xkx.values
     )
+    # !!!cmk continue work
+    # k2 =KdI(eigen_xkx, log_delta=1)
+    # AKB(eigen_xkx.rotate(XKpheno),k2,)
 
-    r2 = float(yKy.val - XKy.val.reshape(-1).dot(beta))
+    r2 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta))
 
     return r2, beta, eigen_xkx
 
 
-def _loglikelihood(X, yKy, XKX, XKy, use_reml):
+def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
     if use_reml:
-        nLL, beta = _loglikelihood_reml(X, yKy, XKX, XKy)
+        nLL, beta = _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno)
         return nLL, beta, np.nan
     else:
-        return _loglikelihood_ml(yKy, XKX, XKy)
+        return _loglikelihood_ml(phenoKpheno, XKX, XKpheno)
 
 
-def _loglikelihood_reml(X, yKy, XKX, XKy):
-    r2, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
-    K = yKy.K  # !!!cmk may want to check that all three K's are equal
+def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
+    r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
+    kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
     XX = PstData(
         val=X.val.T.dot(X.val), row=X.sid, col=X.sid
     )  # !!!cmk isn't this a kernel?
@@ -408,7 +364,7 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
     logdetXKX = np.log(eigen_xkx.values).sum()
     sigma2 = r2 / (X.shape[0] - X.shape[1])
     nLL = 0.5 * (
-        K.logdet
+        kdi.logdet
         + logdetXKX
         - logdetXX
         + (X.shape[0] - X.shape[1]) * (np.log(2.0 * np.pi * sigma2) + 1)
@@ -420,16 +376,16 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
     return -nLL, beta
 
 
-def _loglikelihood_ml(yKy, XKX, XKy):
-    r2, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
-    K = yKy.K  # !!!cmk may want to check that all three K's are equal
-    sigma2 = r2 / K.row_count
-    nLL = 0.5 * (K.logdet + K.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
+def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
+    r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
+    kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
+    sigma2 = r2 / kdi.row_count
+    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.all(
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
     variance_beta = (
-        K.h2
+        kdi.h2
         * sigma2
         * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
     )
@@ -437,15 +393,20 @@ def _loglikelihood_ml(yKy, XKX, XKy):
     return -nLL, beta, variance_beta
 
 
-def _find_best_K_as_needed(eigendata, covar, covar_r, y_r, use_reml, log_delta=None):
+# Returns a kdi that is the original Kg + delta I
+def _find_best_kdi_as_needed(
+    eigendata, covar, covar_r, pheno_r, use_reml, log_delta=None
+):
     if log_delta is None:
         # cmk As per the paper, we optimized delta with use_reml=True, but
         # cmk we will later optimize beta and find log likelihood with ML (use_reml=False)
-        h2 = _find_h2(eigendata, covar, covar_r, y_r, use_reml=use_reml, minH2=0.00001)["h2"]
-        return Kthing(eigendata, h2=h2)
+        h2 = _find_h2(
+            eigendata, covar, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
+        )["h2"]
+        return KdI(eigendata, h2=h2)
     else:
         # !!!cmk internal/external doesn't matter if full rank, right???
-        return Kthing(eigendata, log_delta=log_delta)
+        return KdI(eigendata, log_delta=log_delta)
 
 
 # !!!cmk similar to single_snp.py and single_snp_scale
@@ -470,3 +431,51 @@ def _create_dataframe():
         )
     )
     return dataframe
+
+
+# !!!cmk move to pysnptools
+def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
+    """!!!cmk documentation"""
+    # !!!cmk could offer a low-memory path that uses memmapped files
+    from pysnptools.kernelreader import SnpKernel
+    from pysnptools.kernelstandardizer import Identity as KS_Identity
+
+    assert K0 is not None
+    K0 = _kernel_fixup(K0, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
+    assert K0.iid0 is K0.iid1, "Expect K0 to be square"
+
+    if isinstance(
+        K0, SnpKernel
+    ):  # !!!make eigen creation a method on all kernel readers
+        assert isinstance(
+            kernel_standardizer, KS_Identity
+        ), "cmk need code for other kernel standardizers"
+        vectors, sqrt_values, _ = np.linalg.svd(
+            K0.snpreader.read().standardize(K0.standardizer).val, full_matrices=False
+        )
+        if np.any(sqrt_values < -0.1):
+            logging.warning("kernel contains a negative Eigenvalue")
+        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K0.iid)
+    else:
+        # !!!cmk understand _read_kernel, _read_with_standardizing
+
+        K0 = K0._read_with_standardizing(
+            kernel_standardizer=kernel_standardizer,
+            to_kerneldata=True,
+            return_trained=False,
+        )
+        # !!! cmk ??? pass in a new argument, the kernel_standardizer(???)
+        logging.debug("About to eigh")
+        w, v = np.linalg.eigh(K0.val)  # !!! cmk do SVD sometimes?
+        logging.debug("Done with to eigh")
+        if np.any(w < -0.1):
+            logging.warning(
+                "kernel contains a negative Eigenvalue"
+            )  # !!!cmk this shouldn't happen with a RRM, right?
+        # !!!cmk remove very small eigenvalues
+        # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
+        eigen = EigenData(values=w, vectors=v, iid=K0.iid)
+        # eigen.vectors[:,eigen.values<.0001]=0.0
+        # eigen.values[eigen.values<.0001]=0.0
+        # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
+    return eigen
