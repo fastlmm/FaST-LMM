@@ -80,9 +80,9 @@ def single_snp_eigen(
         log_delta=log_delta,
     )
 
-    covarKcovar = AKB(covar_r, K0_kdi, covar_r)
-    phenoKpheno = AKB(pheno_r, K0_kdi, pheno_r)
-    covarKpheno = AKB(covar_r, K0_kdi, pheno_r, aK=covarKcovar.aK)
+    covarKcovar, covarK = AKB.from_rotated(covar_r, K0_kdi, covar_r)
+    phenoKpheno, _ = AKB.from_rotated(pheno_r, K0_kdi, pheno_r)
+    covarKpheno, _ = AKB.from_rotated(covar_r, K0_kdi, pheno_r, aK=covarK)
 
     ll_null, beta, variance_beta = _loglikelihood(
         covar, phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml
@@ -122,17 +122,19 @@ def single_snp_eigen(
 
         alt_batch = test_snps[:, sid_start:sid_end].read().standardize()
         alt_batch_r = K0_eigen.rotate(alt_batch)
-        covarKalt_batch = AKB(covar_r, K0_kdi, alt_batch_r, aK=covarKcovar.aK)
-        alt_batchKy = AKB(alt_batch_r, K0_kdi, pheno_r)
+        covarKalt_batch, _ = AKB.from_rotated(covar_r, K0_kdi, alt_batch_r, aK=covarK)
+        alt_batchKy, alt_batchK = AKB.from_rotated(alt_batch_r, K0_kdi, pheno_r)
 
         for i in range(sid_end - sid_start):
             alt_r = alt_batch_r[i]
 
             XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
             XKX[cc:, :cc] = XKX[:cc, cc:].T  # lower left
-            XKX[cc:, cc:] = AKB(
-                alt_r, K0_kdi, alt_r, aK=alt_batchKy.aK[:, i : i + 1]
-            )  # lower right
+            XKX[cc:, cc:] = AKB.from_rotated(
+                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+            )[
+                0
+            ]  # lower right
 
             XKpheno[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
 
@@ -232,51 +234,45 @@ class KdI:
 
 # !!!cmk move to PySnpTools
 class AKB(PstData):
-    # !!!cmk document only an unmodified AKV(ar, kdi, br) will have an aK
-    def __init__(self, a_r, kdi, b_r, aK=None):
+    def __init__(self, val, row, col, kdi):
+        super().__init__(val=val, row=row, col=col)
         self.kdi = kdi
-        if aK is None:
-            self.aK = a_r.rotated.val / kdi.Sd
-        else:
-            self.aK = aK
 
-        super().__init__(
-            val=self.aK.T.dot(b_r.rotated.val), row=a_r.rotated.col, col=b_r.rotated.col
-        )
+    @staticmethod
+    def from_rotated(a_r, kdi, b_r, aK=None):
+        if aK is None:
+            aK = a_r.rotated.val / kdi.Sd
+        else:
+            aK = aK
+
+        val = aK.T.dot(b_r.rotated.val)
         if kdi.is_low_rank:
-            self.val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
+            val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
+        result = AKB(val=val, row=a_r.rotated.col, col=b_r.rotated.col, kdi=kdi)
+        return result, aK
 
     @staticmethod
     def empty(row, col, kdi):
-        result = AKB.__new__(AKB)
-        result.kdi = kdi
-        super(AKB, result).__init__(
-            val=np.full(shape=(len(row), len(col)), fill_value=np.NaN), row=row, col=col
+        return AKB(
+            val=np.full(shape=(len(row), len(col)), fill_value=np.NaN),
+            row=row,
+            col=col,
+            kdi=kdi,
         )
-        result.aK = None
-        return result
 
     def __setitem__(self, key, value):
         # !!!cmk may want to check that the kdi's are equal
         self.val[key] = value.val
 
     def __getitem__(self, index):
-        result0 = (
-            super(AKB, self).__getitem__(index).read(view_ok=True)
-        )  # !!!cmk fast enough?
-        result = AKB.__new__(AKB)
-        super(AKB, result).__init__(val=result0.val, row=result0.row, col=result0.col)
-        result.aK = None
-        result.kdi = self.kdi
+        # !!!cmk fast enough?
+        result0 = super(AKB, self).__getitem__(index).read(view_ok=True)
+        result = AKB(val=result0.val, row=result0.row, col=result0.col, kdi=self.kdi)
         return result  # !!! cmk right type?
 
     @property
     def T(self):
-        result = AKB.__new__(AKB)
-        super(AKB, result).__init__(val=self.val.T, row=self.col, col=self.row)
-        result.aK = None
-        result.kdi = self.kdi
-        return result
+        return AKB(val=self.val.T, row=self.col, col=self.row, kdi=self.kdi)
 
 
 # !!!cmk change use_reml etc to 'use_reml'
@@ -292,9 +288,9 @@ def _find_h2(
         # This kdi is Kg+delta I
         kdi = KdI(eigendata, h2=x)
         # aKb is  a.T * kdi^-1 * b
-        phenoKpheno = AKB(pheno_r, kdi, pheno_r)
-        XKX = AKB(X_r, kdi, X_r)
-        XKpheno = AKB(X_r, kdi, pheno_r, aK=XKX.aK)
+        phenoKpheno, _ = AKB.from_rotated(pheno_r, kdi, pheno_r)
+        XKX, XK = AKB.from_rotated(X_r, kdi, X_r)
+        XKpheno, _ = AKB.from_rotated(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -nLL  # !!!cmk
