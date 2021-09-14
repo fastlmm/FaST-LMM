@@ -175,7 +175,7 @@ def single_snp_eigen(
             # with the alt value.
             # ==================================
             altKalt, _ = AKB.from_rotated(
-                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1].read(view_ok=True)
             )
 
             if test_via_reml:  # Only need "X" for REML
@@ -257,9 +257,9 @@ def _covar_read_with_bias(covar):
 
 # !!!cmk needs better name
 class KdI:
-    def __init__(self, eigendata, h2=None, log_delta=None):
+    def __init__(self, eigendata, h2=None, log_delta=None, delta=None):
         assert (
-            sum([h2 is not None, log_delta is not None]) == 1
+            sum([h2 is not None, log_delta is not None, delta is not None]) == 1
         ), "Exactly one of h2, etc should have a value"
         if h2 is not None:
             self.h2 = h2
@@ -268,6 +268,10 @@ class KdI:
         elif log_delta is not None:
             self.log_delta = log_delta
             self.delta = np.exp(log_delta)
+            self.h2 = 1.0 / (self.delta + 1)
+        elif delta is not None:
+            self.delta = delta
+            self.log_delta = np.log(delta)
             self.h2 = 1.0 / (self.delta + 1)
         else:
             assert False, "real assert"
@@ -279,6 +283,14 @@ class KdI:
 
 
 # !!!cmk move to PySnpTools
+def AK(a_r, kdi, aK=None):
+    if aK is None:
+        return PstData(val=a_r.rotated.val / kdi.Sd, row=a_r.rotated.row, col=a_r.rotated.col)
+    else:
+        return aK
+
+
+# !!!cmk move to PySnpTools
 class AKB(PstData):
     def __init__(self, val, row, col, kdi):
         super().__init__(val=val, row=row, col=col)
@@ -286,12 +298,9 @@ class AKB(PstData):
 
     @staticmethod
     def from_rotated(a_r, kdi, b_r, aK=None):
-        if aK is None:
-            aK = a_r.rotated.val / kdi.Sd
-        else:
-            aK = aK
+        aK = AK(a_r, kdi, aK)
 
-        val = aK.T.dot(b_r.rotated.val)
+        val = aK.val.T.dot(b_r.rotated.val)
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
         result = AKB(val=val, row=a_r.rotated.col, col=b_r.rotated.col, kdi=kdi)
@@ -372,13 +381,13 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     # !!!cmk may want to check that all three kdi's are equal
 
     eigen_xkx = _eigen_from_akb(XKX, keep_above=1e-10)
-
+    kd0 = KdI(eigen_xkx, delta=0)
+    XKpheno_r = eigen_xkx.rotate(XKpheno)
+    XKphenoK = AK(XKpheno_r, kd0)
+    beta = eigen_xkx.rotate(XKphenoK)
     beta = eigen_xkx.vectors.dot(
         eigen_xkx.rotate(XKpheno).rotated.val.reshape(-1) / eigen_xkx.values
     )
-    # !!!cmk continue work
-    # k2 =KdI(eigen_xkx, log_delta=1)
-    # AKB(eigen_xkx.rotate(XKpheno),k2,)
 
     r2 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta))
 
