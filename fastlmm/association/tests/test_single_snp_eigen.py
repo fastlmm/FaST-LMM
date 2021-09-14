@@ -54,6 +54,9 @@ class TestSingleSnpEigen(unittest.TestCase):
         cov_reader = Pheno(
             example_file("fastlmm/feature_selection/examples/toydata.cov")
         )
+        cov_reader = cov_reader.read()
+        cov_reader.col[0] = "cov0" # Rename pheno0 to cov0
+       
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
 

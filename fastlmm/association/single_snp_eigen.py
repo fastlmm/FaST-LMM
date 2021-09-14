@@ -140,7 +140,7 @@ def single_snp_eigen(
 
     XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
     XKX[:cc, :cc] = covarKcovar  # upper left
-    XKpheno = AKB.empty(xkx_sid, pheno_r.rotated.col, kdi=K0_kdi)
+    XKpheno = AKB.empty(xkx_sid, pheno_r.col, kdi=K0_kdi)
     XKpheno[:cc, :] = covarKpheno  # upper
 
     # ==================================
@@ -198,7 +198,7 @@ def single_snp_eigen(
             result_list.append(
                 {
                     "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-                    "SnpWeight": beta,
+                    "SnpWeight": beta, #!!!cmk .val.reshape(-1),
                     "SnpWeightSE": np.sqrt(variance_beta),
                 }
             )
@@ -271,7 +271,7 @@ class KdI:
             self.h2 = 1.0 / (self.delta + 1)
         elif delta is not None:
             self.delta = delta
-            self.log_delta = np.log(delta)
+            self.log_delta = np.log(delta) if delta != 0 else None
             self.h2 = 1.0 / (self.delta + 1)
         else:
             assert False, "real assert"
@@ -285,7 +285,7 @@ class KdI:
 # !!!cmk move to PySnpTools
 def AK(a_r, kdi, aK=None):
     if aK is None:
-        return PstData(val=a_r.rotated.val / kdi.Sd, row=a_r.rotated.row, col=a_r.rotated.col)
+        return PstData(val=a_r.val / kdi.Sd, row=a_r.row, col=a_r.col)
     else:
         return aK
 
@@ -300,10 +300,10 @@ class AKB(PstData):
     def from_rotated(a_r, kdi, b_r, aK=None):
         aK = AK(a_r, kdi, aK)
 
-        val = aK.val.T.dot(b_r.rotated.val)
+        val = aK.val.T.dot(b_r.val)
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
-        result = AKB(val=val, row=a_r.rotated.col, col=b_r.rotated.col, kdi=kdi)
+        result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         return result, aK
 
     @staticmethod
@@ -384,13 +384,16 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     kd0 = KdI(eigen_xkx, delta=0)
     XKpheno_r = eigen_xkx.rotate(XKpheno)
     XKphenoK = AK(XKpheno_r, kd0)
-    beta = eigen_xkx.rotate(XKphenoK)
-    beta = eigen_xkx.vectors.dot(
-        eigen_xkx.rotate(XKpheno).rotated.val.reshape(-1) / eigen_xkx.values
-    )
+    if False: # !!!cmk
+        beta = eigen_xkx.rotate(XKphenoK)
+        beta = PstData(val=beta.val,row=XKX.row,col=beta.col)
+        r2 = (phenoKpheno.val - XKpheno.val).T.dot(beta.val)
+    else:
+        beta = eigen_xkx.vectors.dot(
+                eigen_xkx.rotate(XKpheno).rotated.val.reshape(-1) / eigen_xkx.values
+            )
 
     r2 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta))
-
     return r2, beta, eigen_xkx
 
 
@@ -403,8 +406,9 @@ def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
 
 
 def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
-    r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
     kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
+
+    r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
 
     # !!!cmk isn't this a kernel?
     XX = PstData(val=X.val.T.dot(X.val), row=X.sid, col=X.sid)
@@ -412,12 +416,13 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
     logdetXX, _ = eigen_xx.logdet()
 
     logdetXKX, _ = eigen_xkx.logdet()
-    sigma2 = r2 / (X.shape[0] - X.shape[1])
+    X_row_less_col = (X.row_count - X.col_count)
+    sigma2 = float(r2) / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
         + logdetXKX
         - logdetXX
-        + (X.shape[0] - X.shape[1]) * (np.log(2.0 * np.pi * sigma2) + 1)
+        + X_row_less_col * (np.log(2.0 * np.pi * sigma2) + 1)
     )
     assert np.all(
         np.isreal(nLL)
@@ -429,7 +434,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
 def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
     r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
     kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
-    sigma2 = r2 / kdi.row_count
+    sigma2 = float(r2) / kdi.row_count
     nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.all(
         np.isreal(nLL)
