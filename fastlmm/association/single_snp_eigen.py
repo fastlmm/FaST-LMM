@@ -381,20 +381,25 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     # !!!cmk may want to check that all three kdi's are equal
 
     eigen_xkx = _eigen_from_akb(XKX, keep_above=1e-10)
+
     kd0 = KdI(eigen_xkx, delta=0)
     XKpheno_r = eigen_xkx.rotate(XKpheno)
     XKphenoK = AK(XKpheno_r, kd0)
-    if False: # !!!cmk
-        beta = eigen_xkx.rotate(XKphenoK)
-        beta = PstData(val=beta.val,row=XKX.row,col=beta.col)
-        r2 = (phenoKpheno.val - XKpheno.val).T.dot(beta.val)
-    else:
-        beta = eigen_xkx.vectors.dot(
-                eigen_xkx.rotate(XKpheno).rotated.val.reshape(-1) / eigen_xkx.values
-            )
+    beta = eigen_xkx.t_rotate(XKphenoK)
+    r2 = PstData(val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),row=phenoKpheno.row,col=phenoKpheno.col)
 
-    r2 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta))
     return r2, beta, eigen_xkx
+    ###!!!cmk
+    #beta0 = eigen_xkx.vectors.dot(
+    #        eigen_xkx.rotate(XKpheno).val.reshape(-1) / eigen_xkx.values
+    #    )
+
+    #r0 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta0))
+    #r2 = float(r2.val)
+    #beta = beta.val.reshape(-1)
+    #assert np.all(np.equal(beta,beta0))
+    #assert r0==r2
+    #return r0, beta0, eigen_xkx #!!!cmk float(r2.val), beta.val.reshape(-1), eigen_xkx
 
 
 def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
@@ -417,7 +422,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
 
     logdetXKX, _ = eigen_xkx.logdet()
     X_row_less_col = (X.row_count - X.col_count)
-    sigma2 = float(r2) / X_row_less_col
+    sigma2 = float(r2.val) / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
         + logdetXKX
