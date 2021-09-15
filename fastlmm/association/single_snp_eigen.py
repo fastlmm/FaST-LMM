@@ -255,7 +255,7 @@ def _covar_read_with_bias(covar):
     return covar_and_bias
 
 
-# !!!cmk needs better name
+# !!!cmk needs better name -- maybe Sd because it has less info that Kg+dI
 class KdI:
     def __init__(self, eigendata, h2=None, log_delta=None, delta=None):
         assert (
@@ -285,7 +285,7 @@ class KdI:
 # !!!cmk move to PySnpTools
 def AK(a_r, kdi, aK=None):
     if aK is None:
-        return PstData(val=a_r.val / kdi.Sd, row=a_r.row, col=a_r.col)
+        return a_r.rotated / kdi.Sd
     else:
         return aK
 
@@ -386,20 +386,10 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     XKpheno_r = eigen_xkx.rotate(XKpheno)
     XKphenoK = AK(XKpheno_r, kd0)
     beta = eigen_xkx.t_rotate(XKphenoK)
-    r2 = PstData(val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),row=phenoKpheno.row,col=phenoKpheno.col)
+    # cmk r2 = PstData(val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),row=phenoKpheno.row,col=phenoKpheno.col)
+    r2 = phenoKpheno - XKpheno.T.dot(beta.rotated)
 
     return r2, beta, eigen_xkx
-    ###!!!cmk
-    #beta0 = eigen_xkx.vectors.dot(
-    #        eigen_xkx.rotate(XKpheno).val.reshape(-1) / eigen_xkx.values
-    #    )
-
-    #r0 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta0))
-    #r2 = float(r2.val)
-    #beta = beta.val.reshape(-1)
-    #assert np.all(np.equal(beta,beta0))
-    #assert r0==r2
-    #return r0, beta0, eigen_xkx #!!!cmk float(r2.val), beta.val.reshape(-1), eigen_xkx
 
 
 def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
@@ -416,7 +406,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
     r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
 
     # !!!cmk isn't this a kernel?
-    XX = PstData(val=X.val.T.dot(X.val), row=X.sid, col=X.sid)
+    XX = X.T.dot(X)
     eigen_xx = _eigen_from_xtx(XX)
     logdetXX, _ = eigen_xx.logdet()
 
@@ -439,7 +429,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
 def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
     r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
     kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
-    sigma2 = float(r2) / kdi.row_count
+    sigma2 = float(r2.val) / kdi.row_count
     nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.all(
         np.isreal(nLL)
