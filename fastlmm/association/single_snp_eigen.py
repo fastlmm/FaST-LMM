@@ -92,7 +92,7 @@ def single_snp_eigen(
     # A KdI object includes
     #   * Sd = eigenvalues + delta
     #   * is_low_rank (True/False)
-    #   * logdet (depends on is_low_rank) 
+    #   * logdet (depends on is_low_rank)
     # =========================
     K0_kdi = _find_best_kdi_as_needed(
         K0_eigen,
@@ -100,7 +100,7 @@ def single_snp_eigen(
         covar_r,
         pheno_r,
         use_reml=find_delta_via_reml,
-        log_delta=log_delta, # optional
+        log_delta=log_delta,  # optional
     )
 
     # =========================
@@ -198,7 +198,7 @@ def single_snp_eigen(
             result_list.append(
                 {
                     "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-                    "SnpWeight": beta, #!!!cmk .val.reshape(-1),
+                    "SnpWeight": beta.val.reshape(-1),
                     "SnpWeightSE": np.sqrt(variance_beta),
                 }
             )
@@ -386,7 +386,6 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     XKpheno_r = eigen_xkx.rotate(XKpheno)
     XKphenoK = AK(XKpheno_r, kd0)
     beta = eigen_xkx.t_rotate(XKphenoK)
-    # cmk r2 = PstData(val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),row=phenoKpheno.row,col=phenoKpheno.col)
     r2 = phenoKpheno - XKpheno.T.dot(beta.rotated)
 
     return r2, beta, eigen_xkx
@@ -411,13 +410,13 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
     logdetXX, _ = eigen_xx.logdet()
 
     logdetXKX, _ = eigen_xkx.logdet()
-    X_row_less_col = (X.row_count - X.col_count)
-    sigma2 = float(r2.val) / X_row_less_col
+    X_row_less_col = X.row_count - X.col_count
+    sigma2 = r2 / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
         + logdetXKX
         - logdetXX
-        + X_row_less_col * (np.log(2.0 * np.pi * sigma2) + 1)
+        + X_row_less_col * (np.log(2.0 * np.pi * float(sigma2.val)) + 1)
     )
     assert np.all(
         np.isreal(nLL)
@@ -429,14 +428,15 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
 def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
     r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
     kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
-    sigma2 = float(r2.val) / kdi.row_count
-    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
+    sigma2 = r2 / kdi.row_count
+    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * float(sigma2.val)) + 1))
     assert np.all(
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
+    # !!!cmk test this
     variance_beta = (
         kdi.h2
-        * sigma2
+        * float(sigma2.val)
         * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
     )
     # !!!cmk which is negative loglikelihood and which is LL?

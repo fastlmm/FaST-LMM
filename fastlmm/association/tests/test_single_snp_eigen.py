@@ -60,7 +60,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
 
-        for use_reml in [False, True]:
+        for use_reml in [True, False]:
             for train_count in [50, 750]:
                 for cov in [cov_reader, None]:
                     for delta in [0.20000600000000002, None, delta_default]:
