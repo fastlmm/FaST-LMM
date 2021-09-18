@@ -1,4 +1,5 @@
 import logging
+import numbers
 import pandas as pd
 import os
 from pathlib import Path
@@ -175,7 +176,7 @@ def single_snp_eigen(
             # with the alt value.
             # ==================================
             altKalt, _ = AKB.from_rotated(
-                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1].read(view_ok=True)
+                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
             )
 
             if test_via_reml:  # Only need "X" for REML
@@ -194,7 +195,7 @@ def single_snp_eigen(
             ll_alt, beta, variance_beta = _loglikelihood(
                 X, phenoKpheno, XKX, XKpheno, use_reml=test_via_reml
             )
-            test_statistic = ll_alt - ll_null
+            test_statistic = float(ll_alt - ll_null)
             result_list.append(
                 {
                     "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
@@ -209,7 +210,7 @@ def single_snp_eigen(
         dataframe["Chr"] = test_snps.pos[:, 0]
         dataframe["GenDist"] = test_snps.pos[:, 1]
         dataframe["ChrPos"] = test_snps.pos[:, 2]
-        dataframe["Nullh2"] = np.zeros(test_snps.sid_count) + K0_kdi.h2
+        dataframe["Nullh2"] = np.zeros(test_snps.sid_count) + float(K0_kdi.h2)
         # !!!cmk in lmmcov, but not lmm
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
         # !!!cmk Feature not supported. could add "0"
@@ -223,7 +224,6 @@ def single_snp_eigen(
 
     return dataframe
 
-
 def _pheno_fixup_and_check_missing(pheno, count_A1):
     pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
     good_values_per_iid = (pheno.val == pheno.val).sum(axis=1)
@@ -235,8 +235,6 @@ def _pheno_fixup_and_check_missing(pheno, count_A1):
     pheno = pheno[good_values_per_iid > 0, :]
 
     assert pheno.sid_count >= 1, "Expect at least one phenotype"
-    assert pheno.sid_count == 1, "currently only have code for one pheno"
-
     return pheno
 
 
@@ -285,7 +283,8 @@ class KdI:
 # !!!cmk move to PySnpTools
 def AK(a_r, kdi, aK=None):
     if aK is None:
-        return a_r.rotated / kdi.Sd
+        # !!!cmk could make PstData
+        return a_r.rotated.val / kdi.Sd
     else:
         return aK
 
@@ -300,7 +299,7 @@ class AKB(PstData):
     def from_rotated(a_r, kdi, b_r, aK=None):
         aK = AK(a_r, kdi, aK)
 
-        val = aK.val.T.dot(b_r.val)
+        val = aK.T.dot(b_r.val)
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
@@ -384,9 +383,9 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 
     kd0 = KdI(eigen_xkx, delta=0)
     XKpheno_r = eigen_xkx.rotate(XKpheno)
-    XKphenoK = AK(XKpheno_r, kd0)
-    beta = eigen_xkx.t_rotate(XKphenoK)
-    r2 = phenoKpheno - XKpheno.T.dot(beta.rotated)
+    XKphenoK = XKpheno_r.rotated.clone(val=AK(XKpheno_r, kd0))
+    beta = eigen_xkx.rotate(XKphenoK)
+    r2 = phenoKpheno.val - XKpheno.T.dot(beta.rotated).val
 
     return r2, beta, eigen_xkx
 
@@ -416,7 +415,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
         kdi.logdet
         + logdetXKX
         - logdetXX
-        + X_row_less_col * (np.log(2.0 * np.pi * float(sigma2.val)) + 1)
+        + X_row_less_col * (np.log(2.0 * np.pi * float(sigma2)) + 1)
     )
     assert np.all(
         np.isreal(nLL)
@@ -429,14 +428,14 @@ def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
     r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
     kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
     sigma2 = r2 / kdi.row_count
-    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * float(sigma2.val)) + 1))
+    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * float(sigma2)) + 1))
     assert np.all(
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
     # !!!cmk test this
     variance_beta = (
         kdi.h2
-        * float(sigma2.val)
+        * float(sigma2)
         * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
     )
     # !!!cmk which is negative loglikelihood and which is LL?

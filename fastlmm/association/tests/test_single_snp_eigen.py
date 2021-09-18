@@ -5,7 +5,7 @@ import unittest
 import os.path
 import numpy as np
 
-from pysnptools.snpreader import Bed, Pheno
+from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelstandardizer import Identity as KernelIdentity
 
 from fastlmm.util import example_file  # Download and return local file name
@@ -51,6 +51,9 @@ class TestSingleSnpEigen(unittest.TestCase):
             "fastlmm/feature_selection/examples/toydata.5chrom.*", "*.bed"
         )
         pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
+        pheno0 = Pheno(pheno_fn).read()
+        pheno000 = SnpData(val=np.repeat(pheno0.val,3,axis=1),iid=pheno0.row,sid=["pheno0a","pheno0b","pheno0c"])
+
         cov_reader = Pheno(
             example_file("fastlmm/feature_selection/examples/toydata.cov")
         )
@@ -60,56 +63,60 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
 
-        for use_reml in [True, False]:
-            for train_count in [50, 750]:
+        for use_reml in [False, True]:
+            for train_count in [750, 50]:
                 for cov in [cov_reader, None]:
-                    for delta in [0.20000600000000002, None, delta_default]:
-                        if True:
-                            K0_eigen = eigen_from_kernel(
-                                snp_reader[:, :train_count],
-                                kernel_standardizer=KernelIdentity(),
-                            )  # !!!cmk why not diag standardize?
-                            frame = single_snp_eigen(
-                                test_snps=Bed(bed_fn, count_A1=False)[
-                                    :, train_count : train_count + test_count
-                                ],
-                                pheno=pheno_fn,
-                                K0_eigen=K0_eigen,
-                                covar=cov,
-                                output_file_name=None,
-                                log_delta=np.log(delta) if delta is not None else None,
-                                find_delta_via_reml=use_reml,
-                                test_via_reml=use_reml,
-                                count_A1=False,
+                    for delta in [None, 0.20000600000000002, delta_default]:
+                        for pheno in [pheno_fn]: # pheno000, pheno_fn]: #!!!cmk, pheno012]:
+                            if True:
+                                K0_eigen = eigen_from_kernel(
+                                    snp_reader[:, :train_count],
+                                    kernel_standardizer=KernelIdentity(),
+                                )  # !!!cmk why not diag standardize?
+                                frame = single_snp_eigen(
+                                    test_snps=Bed(bed_fn, count_A1=False)[
+                                        :, train_count : train_count + test_count
+                                    ],
+                                    pheno=pheno,
+                                    K0_eigen=K0_eigen,
+                                    covar=cov,
+                                    output_file_name=None,
+                                    log_delta=np.log(delta) if delta is not None else None,
+                                    find_delta_via_reml=use_reml,
+                                    test_via_reml=use_reml,
+                                    count_A1=False,
+                                )
+                                frame.PValue
+
+                            G = snp_reader.read().standardize().val
+                            if cov is not None:
+                                cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
+                            else:
+                                cov_val = None
+                            G_chr1, G_chr2 = (
+                                G[:, :train_count],
+                                G[:, train_count : train_count + test_count],
                             )
-                            frame.PValue
 
-                        G = snp_reader.read().standardize().val
-                        y = Pheno(pheno_fn).read().val[:, 0]
-                        if cov is not None:
-                            cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
-                        else:
-                            cov_val = None
-                        G_chr1, G_chr2 = (
-                            G[:, :train_count],
-                            G[:, train_count : train_count + test_count],
-                        )
-                        gwas = GwasPrototype(
-                            G_chr1,
-                            G_chr2,
-                            y,
-                            internal_delta=delta,
-                            cov=cov_val,
-                            REML=use_reml,
-                        )
-                        gwas.run_gwas()
+                            phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
+                            for pheno_index in range(phenox.sid_count):
+                                y = Pheno(pheno_fn).read().val[:, pheno_index]
+                                gwas = GwasPrototype(
+                                    G_chr1,
+                                    G_chr2,
+                                    y,
+                                    internal_delta=delta,
+                                    cov=cov_val,
+                                    REML=use_reml,
+                                )
+                                gwas.run_gwas()
 
-                        # check p-values in log-space!
-                        np.testing.assert_array_almost_equal(
-                            np.log(sorted(gwas.p_values)),
-                            np.log(frame.PValue),
-                            decimal=7,
-                        )
+                                # check p-values in log-space!
+                                np.testing.assert_array_almost_equal(
+                                    np.log(sorted(gwas.p_values)),
+                                    np.log(frame.PValue),
+                                    decimal=7,
+                            )
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")
