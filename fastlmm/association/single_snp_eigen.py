@@ -1,5 +1,4 @@
 import logging
-import numbers
 import pandas as pd
 import os
 from pathlib import Path
@@ -93,7 +92,7 @@ def single_snp_eigen(
     # A KdI object includes
     #   * Sd = eigenvalues + delta
     #   * is_low_rank (True/False)
-    #   * logdet (depends on is_low_rank)
+    #   * logdet (depends on is_low_rank) 
     # =========================
     K0_kdi = _find_best_kdi_as_needed(
         K0_eigen,
@@ -101,7 +100,7 @@ def single_snp_eigen(
         covar_r,
         pheno_r,
         use_reml=find_delta_via_reml,
-        log_delta=log_delta,  # optional
+        log_delta=log_delta, # optional
     )
 
     # =========================
@@ -176,7 +175,7 @@ def single_snp_eigen(
             # with the alt value.
             # ==================================
             altKalt, _ = AKB.from_rotated(
-                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1].read(view_ok=True)
             )
 
             if test_via_reml:  # Only need "X" for REML
@@ -199,7 +198,7 @@ def single_snp_eigen(
             result_list.append(
                 {
                     "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-                    "SnpWeight": beta.val.reshape(-1),
+                    "SnpWeight": beta, #!!!cmk .val.reshape(-1),
                     "SnpWeightSE": np.sqrt(variance_beta),
                 }
             )
@@ -224,6 +223,7 @@ def single_snp_eigen(
 
     return dataframe
 
+
 def _pheno_fixup_and_check_missing(pheno, count_A1):
     pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
     good_values_per_iid = (pheno.val == pheno.val).sum(axis=1)
@@ -235,6 +235,8 @@ def _pheno_fixup_and_check_missing(pheno, count_A1):
     pheno = pheno[good_values_per_iid > 0, :]
 
     assert pheno.sid_count >= 1, "Expect at least one phenotype"
+    assert pheno.sid_count == 1, "currently only have code for one pheno"
+
     return pheno
 
 
@@ -253,7 +255,7 @@ def _covar_read_with_bias(covar):
     return covar_and_bias
 
 
-# !!!cmk needs better name -- maybe Sd because it has less info that Kg+dI
+# !!!cmk needs better name
 class KdI:
     def __init__(self, eigendata, h2=None, log_delta=None, delta=None):
         assert (
@@ -283,8 +285,7 @@ class KdI:
 # !!!cmk move to PySnpTools
 def AK(a_r, kdi, aK=None):
     if aK is None:
-        # !!!cmk could make PstData
-        return a_r.rotated.val / kdi.Sd
+        return PstData(val=a_r.val / kdi.Sd, row=a_r.row, col=a_r.col)
     else:
         return aK
 
@@ -299,7 +300,7 @@ class AKB(PstData):
     def from_rotated(a_r, kdi, b_r, aK=None):
         aK = AK(a_r, kdi, aK)
 
-        val = aK.T.dot(b_r.val)
+        val = aK.val.T.dot(b_r.val)
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
@@ -383,11 +384,22 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 
     kd0 = KdI(eigen_xkx, delta=0)
     XKpheno_r = eigen_xkx.rotate(XKpheno)
-    XKphenoK = XKpheno_r.rotated.clone(val=AK(XKpheno_r, kd0))
-    beta = eigen_xkx.rotate(XKphenoK)
-    r2 = phenoKpheno.val - XKpheno.T.dot(beta.rotated).val
+    XKphenoK = AK(XKpheno_r, kd0)
+    beta = eigen_xkx.t_rotate(XKphenoK)
+    r2 = PstData(val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),row=phenoKpheno.row,col=phenoKpheno.col)
 
     return r2, beta, eigen_xkx
+    ####!!!cmk
+    #beta0 = eigen_xkx.vectors.dot(
+    #        eigen_xkx.rotate(XKpheno).val.reshape(-1) / eigen_xkx.values
+    #    )
+
+    #r0 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta0))
+    #r2 = float(r2.val)
+    #beta = beta.val.reshape(-1)
+    #assert np.all(np.equal(beta,beta0))
+    #assert r0==r2
+    #return r0, beta0, eigen_xkx #!!!cmk float(r2.val), beta.val.reshape(-1), eigen_xkx
 
 
 def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
@@ -404,18 +416,18 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
     r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
 
     # !!!cmk isn't this a kernel?
-    XX = X.T.dot(X)
+    XX = PstData(val=X.val.T.dot(X.val), row=X.sid, col=X.sid)
     eigen_xx = _eigen_from_xtx(XX)
     logdetXX, _ = eigen_xx.logdet()
 
     logdetXKX, _ = eigen_xkx.logdet()
-    X_row_less_col = X.row_count - X.col_count
-    sigma2 = r2 / X_row_less_col
+    X_row_less_col = (X.row_count - X.col_count)
+    sigma2 = float(r2) / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
         + logdetXKX
         - logdetXX
-        + X_row_less_col * (np.log(2.0 * np.pi * float(sigma2)) + 1)
+        + X_row_less_col * (np.log(2.0 * np.pi * sigma2) + 1)
     )
     assert np.all(
         np.isreal(nLL)
@@ -427,15 +439,14 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
 def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
     r2, beta, eigen_xkx = _common_code(phenoKpheno, XKX, XKpheno)
     kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
-    sigma2 = r2 / kdi.row_count
-    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * float(sigma2)) + 1))
+    sigma2 = float(r2.val) / kdi.row_count
+    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.all(
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
-    # !!!cmk test this
     variance_beta = (
         kdi.h2
-        * float(sigma2)
+        * sigma2
         * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
     )
     # !!!cmk which is negative loglikelihood and which is LL?
