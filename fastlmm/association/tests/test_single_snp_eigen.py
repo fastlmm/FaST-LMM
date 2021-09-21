@@ -7,6 +7,7 @@ import numpy as np
 
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelstandardizer import Identity as KernelIdentity
+from pysnptools.util.mapreduce1.runner import Local,LocalMultiProc, LocalInParts
 
 from fastlmm.util import example_file  # Download and return local file name
 from fastlmm.association import single_snp_eigen, eigen_from_kernel
@@ -62,8 +63,9 @@ class TestSingleSnpEigen(unittest.TestCase):
        
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
+        runner = LocalMultiProc(6)
 
-        for use_reml in [False, True]:
+        for use_reml in [True, False]:
             for train_count in [750, 50]:
                 for cov in [cov_reader, None]:
                     for delta in [None, 0.20000600000000002, delta_default]:
@@ -85,6 +87,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                                     find_delta_via_reml=use_reml,
                                     test_via_reml=use_reml,
                                     count_A1=False,
+                                    runner = runner,
                                 )
                                 frame.PValue
 

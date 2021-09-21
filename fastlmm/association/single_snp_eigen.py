@@ -9,6 +9,7 @@ from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
 from pysnptools.eigenreader import EigenData
+from pysnptools.util.mapreduce1 import map_reduce
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
     _snps_fixup,
@@ -37,6 +38,7 @@ def single_snp_eigen(
     find_delta_via_reml=True,
     test_via_reml=False,
     count_A1=None,
+    runner = None,
 ):
     """cmk documentation"""
     # !!!LATER raise error if covar has NaN
@@ -147,9 +149,10 @@ def single_snp_eigen(
     # Test SNPs in batches
     # ==================================
     # !!!cmk really do this in batches in different processes
-    batch_size = 1000  # !!!cmk const
-    result_list = []
-    for sid_start in range(0, test_snps.sid_count, batch_size):
+    batch_size = 100  # !!!cmk const
+
+    def mapper(sid_start):
+        result_list = []
 
         # ==================================
         # Read and standardize a batch of test SNPs. Then rotate.
@@ -204,16 +207,25 @@ def single_snp_eigen(
             )
 
         dataframe = _create_dataframe().append(result_list, ignore_index=True)
-        dataframe["sid_index"] = range(test_snps.sid_count)
-        dataframe["SNP"] = test_snps.sid
-        dataframe["Chr"] = test_snps.pos[:, 0]
-        dataframe["GenDist"] = test_snps.pos[:, 1]
-        dataframe["ChrPos"] = test_snps.pos[:, 2]
-        dataframe["Nullh2"] = np.zeros(test_snps.sid_count) + float(K0_kdi.h2)
+
+        dataframe["sid_index"] = range(sid_start,sid_start+alt_batch.sid_count)
+        dataframe["SNP"] = alt_batch.sid
+        dataframe["Chr"] = alt_batch.pos[:, 0]
+        dataframe["GenDist"] = alt_batch.pos[:, 1]
+        dataframe["ChrPos"] = alt_batch.pos[:, 2]
+        dataframe["Nullh2"] = np.zeros(alt_batch.sid_count) + float(K0_kdi.h2)
         # !!!cmk in lmmcov, but not lmm
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
         # !!!cmk Feature not supported. could add "0"
         # dataframe['Mixing'] = np.zeros((len(sid))) + 0
+
+
+        return dataframe
+    
+    dataframe_list = map_reduce(list(range(0, test_snps.sid_count, batch_size)),
+                       mapper=mapper,
+                       runner=runner)
+    dataframe = pd.concat(dataframe_list)
 
     dataframe.sort_values(by="PValue", inplace=True)
     dataframe.index = np.arange(len(dataframe))
@@ -422,7 +434,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
 
     logdetXKX, _ = eigen_xkx.logdet()
     X_row_less_col = (X.row_count - X.col_count)
-    sigma2 = float(r2) / X_row_less_col
+    sigma2 = float(r2.val) / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
         + logdetXKX
