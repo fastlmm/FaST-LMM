@@ -69,7 +69,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             for train_count in [750, 50]:
                 for cov in [cov_reader, None]:
                     for delta in [None, 0.20000600000000002, delta_default]:
-                        for pheno in [pheno_fn]: # pheno000, pheno_fn]: #!!!cmk, pheno012]:
+                        for pheno in [pheno000, pheno_fn]: # pheno000, pheno_fn]: #!!!cmk, pheno012]:
                             if True:
                                 K0_eigen = eigen_from_kernel(
                                     snp_reader[:, :train_count],
@@ -89,7 +89,6 @@ class TestSingleSnpEigen(unittest.TestCase):
                                     count_A1=False,
                                     runner = runner,
                                 )
-                                frame.PValue
 
                             G = snp_reader.read().standardize().val
                             if cov is not None:
@@ -103,7 +102,8 @@ class TestSingleSnpEigen(unittest.TestCase):
 
                             phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
                             for pheno_index in range(phenox.sid_count):
-                                y = Pheno(pheno_fn).read().val[:, pheno_index]
+                                y = phenox.read().val[:, pheno_index]
+                                frame_i = frame[frame["Pheno"]==phenox.sid[pheno_index]]
                                 gwas = GwasPrototype(
                                     G_chr1,
                                     G_chr2,
@@ -117,9 +117,9 @@ class TestSingleSnpEigen(unittest.TestCase):
                                 # check p-values in log-space!
                                 np.testing.assert_array_almost_equal(
                                     np.log(sorted(gwas.p_values)),
-                                    np.log(frame.PValue),
+                                    np.log(frame_i.PValue), #!!!cmk
                                     decimal=7,
-                            )
+                                )
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")
