@@ -7,7 +7,8 @@ import numpy as np
 
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelstandardizer import Identity as KernelIdentity
-from pysnptools.util.mapreduce1.runner import Local,LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1 import map_reduce
 
 from fastlmm.util import example_file  # Download and return local file name
 from fastlmm.association import single_snp_eigen, eigen_from_kernel
@@ -53,23 +54,30 @@ class TestSingleSnpEigen(unittest.TestCase):
         )
         pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
         pheno0 = Pheno(pheno_fn).read()
-        pheno000 = SnpData(val=np.repeat(pheno0.val,3,axis=1),iid=pheno0.row,sid=["pheno0a","pheno0b","pheno0c"])
+        pheno000 = SnpData(
+            val=np.repeat(pheno0.val, 3, axis=1),
+            iid=pheno0.row,
+            sid=["pheno0a", "pheno0b", "pheno0c"],
+        )
 
         cov_reader = Pheno(
             example_file("fastlmm/feature_selection/examples/toydata.cov")
         )
         cov_reader = cov_reader.read()
-        cov_reader.col[0] = "cov0" # Rename pheno0 to cov0
-       
+        cov_reader.col[0] = "cov0"  # Rename pheno0 to cov0
+
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
-        runner = LocalMultiProc(6)
+        runner = LocalMultiProc(6,just_one_process=False)
 
         for use_reml in [True, False]:
             for train_count in [750, 50]:
                 for cov in [cov_reader, None]:
                     for delta in [None, 0.20000600000000002, delta_default]:
-                        for pheno in [pheno000, pheno_fn]: # pheno000, pheno_fn]: #!!!cmk, pheno012]:
+                        for pheno in [
+                            pheno000,
+                            pheno_fn,
+                        ]:  # pheno000, pheno_fn]: #!!!cmk, pheno012]:
                             if True:
                                 K0_eigen = eigen_from_kernel(
                                     snp_reader[:, :train_count],
@@ -83,16 +91,20 @@ class TestSingleSnpEigen(unittest.TestCase):
                                     K0_eigen=K0_eigen,
                                     covar=cov,
                                     output_file_name=None,
-                                    log_delta=np.log(delta) if delta is not None else None,
+                                    log_delta=np.log(delta)
+                                    if delta is not None
+                                    else None,
                                     find_delta_via_reml=use_reml,
                                     test_via_reml=use_reml,
                                     count_A1=False,
-                                    runner = runner,
+                                    runner=runner,
                                 )
 
                             G = snp_reader.read().standardize().val
                             if cov is not None:
-                                cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
+                                cov_val = np.c_[
+                                    cov.read().val, np.ones((cov.iid_count, 1))
+                                ]
                             else:
                                 cov_val = None
                             G_chr1, G_chr2 = (
@@ -101,9 +113,11 @@ class TestSingleSnpEigen(unittest.TestCase):
                             )
 
                             phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
-                            for pheno_index in range(phenox.sid_count):
+
+                            def mapper(pheno_index):
+                                from fastlmm.association.tests.test_gwas import GwasPrototype
+
                                 y = phenox.read().val[:, pheno_index]
-                                frame_i = frame[frame["Pheno"]==phenox.sid[pheno_index]]
                                 gwas = GwasPrototype(
                                     G_chr1,
                                     G_chr2,
@@ -113,11 +127,20 @@ class TestSingleSnpEigen(unittest.TestCase):
                                     REML=use_reml,
                                 )
                                 gwas.run_gwas()
+                                return sorted(gwas.p_values)
 
+                            gwas_pvalues_list = map_reduce(
+                                range(phenox.sid_count), mapper=mapper, runner=runner
+                            )
+
+                            for pheno_index in range(phenox.sid_count):
+                                frame_i = frame[
+                                    frame["Pheno"] == phenox.sid[pheno_index]
+                                ]
                                 # check p-values in log-space!
                                 np.testing.assert_array_almost_equal(
-                                    np.log(sorted(gwas.p_values)),
-                                    np.log(frame_i.PValue), #!!!cmk
+                                    np.log(gwas_pvalues_list[pheno_index]),
+                                    np.log(frame_i.PValue),  #!!!cmk
                                     decimal=7,
                                 )
 

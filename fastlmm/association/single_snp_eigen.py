@@ -38,7 +38,7 @@ def single_snp_eigen(
     find_delta_via_reml=True,
     test_via_reml=False,
     count_A1=None,
-    runner = None,
+    runner=None,
 ):
     """cmk documentation"""
     # !!!LATER raise error if covar has NaN
@@ -103,7 +103,7 @@ def single_snp_eigen(
         # A KdI object includes
         #   * Sd = eigenvalues + delta
         #   * is_low_rank (True/False)
-        #   * logdet (depends on is_low_rank) 
+        #   * logdet (depends on is_low_rank)
         # =========================
         K0_kdi_i = _find_best_kdi_as_needed(
             K0_eigen,
@@ -111,7 +111,7 @@ def single_snp_eigen(
             covar_r,
             pheno_r_i,
             use_reml=find_delta_via_reml,
-            log_delta=log_delta, # optional
+            log_delta=log_delta,  # optional
         )
         K0_kdi_list.append(K0_kdi_i)
 
@@ -126,7 +126,6 @@ def single_snp_eigen(
         covarKcovar_i, covarK_i = AKB.from_rotated(covar_r, K0_kdi_i, covar_r)
         phenoKpheno_i, _ = AKB.from_rotated(pheno_r_i, K0_kdi_i, pheno_r_i)
         covarKpheno_i, _ = AKB.from_rotated(covar_r, K0_kdi_i, pheno_r_i, aK=covarK_i)
-
 
         ll_null_i, beta_i, variance_beta_i = _loglikelihood(
             covar, phenoKpheno_i, covarKcovar_i, covarKpheno_i, use_reml=test_via_reml
@@ -171,7 +170,7 @@ def single_snp_eigen(
         K0_kdi_i = K0_kdi_list[pheno_index]
         covarKcovar_i = covarKcovar_list[pheno_index]
         covarKpheno_i = covarKpheno_list[pheno_index]
-        pheno_col = pheno_r.col[pheno_index:pheno_index+1]
+        pheno_col = pheno_r.col[pheno_index : pheno_index + 1]
 
         XKX_i = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi_i)
         XKX_i[:cc, :cc] = covarKcovar_i  # upper left
@@ -212,8 +211,12 @@ def single_snp_eigen(
             covarK_i = covarK_list[pheno_index]
             pheno_r_i = pheno_r[pheno_index]
 
-            covarKalt_batch_i, _ = AKB.from_rotated(covar_r, K0_kdi_i, alt_batch_r, aK=covarK_i)
-            alt_batchKy_i, alt_batchK_i = AKB.from_rotated(alt_batch_r, K0_kdi_i, pheno_r_i)
+            covarKalt_batch_i, _ = AKB.from_rotated(
+                covar_r, K0_kdi_i, alt_batch_r, aK=covarK_i
+            )
+            alt_batchKy_i, alt_batchK_i = AKB.from_rotated(
+                alt_batch_r, K0_kdi_i, pheno_r_i
+            )
 
             alt_batchK_list.append(alt_batchK_i)
             covarKalt_batch_list.append(covarKalt_batch_i)
@@ -252,9 +255,11 @@ def single_snp_eigen(
                 # with the alt value.
                 # ==================================
                 altKalt_i, _ = AKB.from_rotated(
-                    alt_r, K0_kdi_i, alt_r, aK=alt_batchK_i[:, i : i + 1].read(view_ok=True)
+                    alt_r,
+                    K0_kdi_i,
+                    alt_r,
+                    aK=alt_batchK_i[:, i : i + 1].read(view_ok=True),
                 )
-
 
                 XKX_i[:cc, cc:] = covarKalt_batch_i[:, i : i + 1]  # upper right
                 XKX_i[cc:, :cc] = XKX_i[:cc, cc:].T  # lower left
@@ -274,10 +279,10 @@ def single_snp_eigen(
                 result_list.append(
                     {
                         "PValue": stats.chi2.sf(2.0 * test_statistic_i, df=1),
-                        "SnpWeight": beta_i, #!!!cmk .val.reshape(-1),
+                        "SnpWeight": beta_i,  #!!!cmk .val.reshape(-1),
                         "SnpWeightSE": np.sqrt(variance_beta_i),
                         # !!!cmk right name and place?
-                        "Pheno": pheno_r.col[pheno_index], 
+                        "Pheno": pheno_r.col[pheno_index],
                     }
                 )
 
@@ -292,23 +297,26 @@ def single_snp_eigen(
                 del altKalt_i
 
         dataframe = _create_dataframe().append(result_list, ignore_index=True)
-        dataframe["sid_index"] = np.repeat(np.arange(sid_start,sid_start+alt_batch.sid_count), pheno_r.col_count)
+        dataframe["sid_index"] = np.repeat(
+            np.arange(sid_start, sid_start + alt_batch.sid_count), pheno_r.col_count
+        )
         dataframe["SNP"] = np.repeat(alt_batch.sid, pheno_r.col_count)
         dataframe["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_r.col_count)
         dataframe["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_r.col_count)
         dataframe["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_r.col_count)
-        dataframe["Nullh2"] = np.tile(np.array([float(kdi.h2) for kdi in K0_kdi_list]), alt_batch.sid_count)
+        dataframe["Nullh2"] = np.tile(
+            np.array([float(kdi.h2) for kdi in K0_kdi_list]), alt_batch.sid_count
+        )
         # !!!cmk in lmmcov, but not lmm
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
         # !!!cmk Feature not supported. could add "0"
         # dataframe['Mixing'] = np.zeros((len(sid))) + 0
 
-
         return dataframe
-    
-    dataframe_list = map_reduce(list(range(0, test_snps.sid_count, batch_size)),
-                       mapper=mapper,
-                       runner=runner)
+
+    dataframe_list = map_reduce(
+        list(range(0, test_snps.sid_count, batch_size)), mapper=mapper, runner=runner
+    )
     dataframe = pd.concat(dataframe_list)
 
     dataframe.sort_values(by="PValue", inplace=True)
@@ -482,20 +490,24 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     XKpheno_r = eigen_xkx.rotate(XKpheno)
     XKphenoK = AK(XKpheno_r, kd0)
     beta = eigen_xkx.t_rotate(XKphenoK)
-    r2 = PstData(val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),row=phenoKpheno.row,col=phenoKpheno.col)
+    r2 = PstData(
+        val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),
+        row=phenoKpheno.row,
+        col=phenoKpheno.col,
+    )
 
     return r2, beta, eigen_xkx
     ####!!!cmk
-    #beta0 = eigen_xkx.vectors.dot(
+    # beta0 = eigen_xkx.vectors.dot(
     #        eigen_xkx.rotate(XKpheno).val.reshape(-1) / eigen_xkx.values
     #    )
 
-    #r0 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta0))
-    #r2 = float(r2.val)
-    #beta = beta.val.reshape(-1)
-    #assert np.all(np.equal(beta,beta0))
-    #assert r0==r2
-    #return r0, beta0, eigen_xkx #!!!cmk float(r2.val), beta.val.reshape(-1), eigen_xkx
+    # r0 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta0))
+    # r2 = float(r2.val)
+    # beta = beta.val.reshape(-1)
+    # assert np.all(np.equal(beta,beta0))
+    # assert r0==r2
+    # return r0, beta0, eigen_xkx #!!!cmk float(r2.val), beta.val.reshape(-1), eigen_xkx
 
 
 def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
@@ -517,7 +529,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
     logdetXX, _ = eigen_xx.logdet()
 
     logdetXKX, _ = eigen_xkx.logdet()
-    X_row_less_col = (X.row_count - X.col_count)
+    X_row_less_col = X.row_count - X.col_count
     sigma2 = float(r2.val) / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
