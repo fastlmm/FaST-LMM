@@ -89,13 +89,7 @@ def single_snp_eigen(
     covar_r = K0_eigen.rotate(covar)
     pheno_r = K0_eigen.rotate(pheno)
 
-    K0_kdi_list = []
-    covarKcovar_list = []
-    covarKpheno_list = []
-    covarK_list = []
-    phenoKpheno_list = []
-    ll_null_list = []
-    for pheno_index in range(pheno_r.col_count):
+    def mapper_search(pheno_index):
         pheno_r_i = pheno_r[pheno_index]
 
         # =========================
@@ -113,7 +107,6 @@ def single_snp_eigen(
             use_reml=find_delta_via_reml,
             log_delta=log_delta,  # optional
         )
-        K0_kdi_list.append(K0_kdi_i)
 
         # =========================
         # Find A^T * K^-1 * B for covar and pheno.
@@ -131,19 +124,18 @@ def single_snp_eigen(
             covar, phenoKpheno_i, covarKcovar_i, covarKpheno_i, use_reml=test_via_reml
         )
 
-        covarKcovar_list.append(covarKcovar_i)
-        covarK_list.append(covarK_i)
-        covarKpheno_list.append(covarKpheno_i)
-        phenoKpheno_list.append(phenoKpheno_i)
-        ll_null_list.append(ll_null_i)
+        return {
+            "K0_kdi": K0_kdi_i,
+            "covarKcovar": covarKcovar_i,
+            "covarK": covarK_i,
+            "covarKpheno": covarKpheno_i,
+            "phenoKpheno": phenoKpheno_i,
+            "ll_null": ll_null_i,
+        }
 
-        del pheno_r_i
-        del phenoKpheno_i
-        del covarKpheno_i
-        del ll_null_i
-        del beta_i
-        del variance_beta_i
-        del K0_kdi_i
+    search_result_list = map_reduce(
+        range(pheno_r.col_count), mapper=mapper_search, runner=runner
+    )
 
     # ==================================
     # X is the covariates (with bias) and one test SNP.
@@ -167,9 +159,11 @@ def single_snp_eigen(
     XKX_list = []
     XKpheno_list = []
     for pheno_index in range(pheno_r.col_count):
-        K0_kdi_i = K0_kdi_list[pheno_index]
-        covarKcovar_i = covarKcovar_list[pheno_index]
-        covarKpheno_i = covarKpheno_list[pheno_index]
+        search_result = search_result_list[pheno_index]
+        K0_kdi_i = search_result["K0_kdi"]
+        covarKcovar_i = search_result["covarKcovar"]
+        covarKpheno_i = search_result["covarKpheno"]
+
         pheno_col = pheno_r.col[pheno_index : pheno_index + 1]
 
         XKX_i = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi_i)
@@ -180,6 +174,7 @@ def single_snp_eigen(
         XKX_list.append(XKX_i)
         XKpheno_list.append(XKpheno_i)
 
+        del search_result
         del K0_kdi_i
         del covarKcovar_i
         del covarKpheno_i
@@ -207,8 +202,9 @@ def single_snp_eigen(
         covarKalt_batch_list = []
         alt_batchKy_list = []
         for pheno_index in range(pheno_r.col_count):
-            K0_kdi_i = K0_kdi_list[pheno_index]
-            covarK_i = covarK_list[pheno_index]
+            search_result = search_result_list[pheno_index]
+            K0_kdi_i = search_result["K0_kdi"]
+            covarK_i = search_result["covarK"]
             pheno_r_i = pheno_r[pheno_index]
 
             covarKalt_batch_i, _ = AKB.from_rotated(
@@ -222,6 +218,7 @@ def single_snp_eigen(
             covarKalt_batch_list.append(covarKalt_batch_i)
             alt_batchKy_list.append(alt_batchKy_i)
 
+            del search_result
             del K0_kdi_i
             del covarK_i
             del covarKalt_batch_i
@@ -240,14 +237,15 @@ def single_snp_eigen(
                 X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
 
             for pheno_index in range(pheno_r.col_count):
-                K0_kdi_i = K0_kdi_list[pheno_index]
+                search_result = search_result_list[pheno_index]
+                K0_kdi_i = search_result["K0_kdi"]
                 alt_batchK_i = alt_batchK_list[pheno_index]
                 XKX_i = XKX_list[pheno_index]
                 covarKalt_batch_i = covarKalt_batch_list[pheno_index]
                 alt_batchKy_i = alt_batchKy_list[pheno_index]
                 XKpheno_i = XKpheno_list[pheno_index]
-                phenoKpheno_i = phenoKpheno_list[pheno_index]
-                ll_null_i = ll_null_list[pheno_index]
+                phenoKpheno_i = search_result["phenoKpheno"]
+                ll_null_i = search_result["ll_null"]
 
                 # ==================================
                 # Find alt^T * K^-1 * alt for the test SNP.
@@ -286,6 +284,7 @@ def single_snp_eigen(
                     }
                 )
 
+                del search_result
                 del K0_kdi_i
                 del alt_batchK_i
                 del XKX_i
@@ -305,7 +304,13 @@ def single_snp_eigen(
         dataframe["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_r.col_count)
         dataframe["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_r.col_count)
         dataframe["Nullh2"] = np.tile(
-            np.array([float(kdi.h2) for kdi in K0_kdi_list]), alt_batch.sid_count
+            np.array(
+                [
+                    float(search_result["K0_kdi"].h2)
+                    for search_result in search_result_list
+                ]
+            ),
+            alt_batch.sid_count,
         )
         # !!!cmk in lmmcov, but not lmm
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
