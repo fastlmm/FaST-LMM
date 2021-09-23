@@ -107,6 +107,15 @@ def single_snp_eigen(
             use_reml=find_delta_via_reml,
             log_delta=log_delta,  # optional
         )
+        return K0_kdi_i
+    K0_kdi_list = map_reduce(
+        range(pheno_r.col_count), mapper=mapper_search, runner=runner
+        )
+
+    search_result_list = []
+    for pheno_index in range(pheno_r.col_count):
+        K0_kdi_i = K0_kdi_list[pheno_index]
+        pheno_r_i = pheno_r[pheno_index]
 
         # =========================
         # Find A^T * K^-1 * B for covar and pheno.
@@ -124,18 +133,19 @@ def single_snp_eigen(
             covar, phenoKpheno_i, covarKcovar_i, covarKpheno_i, use_reml=test_via_reml
         )
 
-        return {
-            "K0_kdi": K0_kdi_i,
+        search_result_list.append(
+           {
             "covarKcovar": covarKcovar_i,
             "covarK": covarK_i,
             "covarKpheno": covarKpheno_i,
             "phenoKpheno": phenoKpheno_i,
             "ll_null": ll_null_i,
         }
+            )
 
-    search_result_list = map_reduce(
-        range(pheno_r.col_count), mapper=mapper_search, runner=runner
-    )
+    #search_result_list = map_reduce(
+    #    range(pheno_r.col_count), mapper=mapper_search, runner=runner
+    #)
 
     # ==================================
     # X is the covariates (with bias) and one test SNP.
@@ -160,7 +170,7 @@ def single_snp_eigen(
     XKpheno_list = []
     for pheno_index in range(pheno_r.col_count):
         search_result = search_result_list[pheno_index]
-        K0_kdi_i = search_result["K0_kdi"]
+        K0_kdi_i = K0_kdi_list[pheno_index]
         covarKcovar_i = search_result["covarKcovar"]
         covarKpheno_i = search_result["covarKpheno"]
 
@@ -203,7 +213,7 @@ def single_snp_eigen(
         alt_batchKy_list = []
         for pheno_index in range(pheno_r.col_count):
             search_result = search_result_list[pheno_index]
-            K0_kdi_i = search_result["K0_kdi"]
+            K0_kdi_i = K0_kdi_list[pheno_index]
             covarK_i = search_result["covarK"]
             pheno_r_i = pheno_r[pheno_index]
 
@@ -238,7 +248,7 @@ def single_snp_eigen(
 
             for pheno_index in range(pheno_r.col_count):
                 search_result = search_result_list[pheno_index]
-                K0_kdi_i = search_result["K0_kdi"]
+                K0_kdi_i = K0_kdi_list[pheno_index]
                 alt_batchK_i = alt_batchK_list[pheno_index]
                 XKX_i = XKX_list[pheno_index]
                 covarKalt_batch_i = covarKalt_batch_list[pheno_index]
@@ -306,8 +316,8 @@ def single_snp_eigen(
         dataframe["Nullh2"] = np.tile(
             np.array(
                 [
-                    float(search_result["K0_kdi"].h2)
-                    for search_result in search_result_list
+                    float(K0_kdi_i.h2)
+                    for K0_kdi_i in K0_kdi_list
                 ]
             ),
             alt_batch.sid_count,

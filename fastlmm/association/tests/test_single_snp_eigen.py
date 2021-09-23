@@ -68,7 +68,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
-        runner = LocalMultiProc(6,just_one_process=False)
+        runner = None # LocalMultiProc(6,just_one_process=False)
 
         for use_reml in [True, False]:
             for train_count in [750, 50]:
