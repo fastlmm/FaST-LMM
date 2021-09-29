@@ -108,13 +108,16 @@ def single_snp_eigen(
             log_delta=log_delta,  # optional
         )
         return K0_kdi_i
+
     K0_kdi_list = map_reduce(
         range(pheno_r.col_count), mapper=mapper_search, runner=runner
-        )
+    )
+    K0_kdi = KdI.from_list(K0_kdi_list)
+    del K0_kdi_list
 
     search_result_list = []
     for pheno_index in range(pheno_r.col_count):
-        K0_kdi_i = K0_kdi_list[pheno_index]
+        K0_kdi_i = K0_kdi[pheno_index]
         pheno_r_i = pheno_r[pheno_index]
 
         # =========================
@@ -125,27 +128,27 @@ def single_snp_eigen(
         #   * The AKB value
         #   * The KdI objected use to create it.
         # =========================
-        covarKcovar_i, covarK_i = AKB.from_rotated(covar_r, K0_kdi_i, covar_r)
-        phenoKpheno_i, _ = AKB.from_rotated(pheno_r_i, K0_kdi_i, pheno_r_i)
-        covarKpheno_i, _ = AKB.from_rotated(covar_r, K0_kdi_i, pheno_r_i, aK=covarK_i)
+        covarKcovar_i, covarK_i = AKB.from_rotated_cmka(covar_r, K0_kdi_i, covar_r)
+        phenoKpheno_i, _ = AKB.from_rotated_cmka(pheno_r_i, K0_kdi_i, pheno_r_i)
+        covarKpheno_i, _ = AKB.from_rotated_cmka(covar_r, K0_kdi_i, pheno_r_i, aK=covarK_i)
 
         ll_null_i, beta_i, variance_beta_i = _loglikelihood(
             covar, phenoKpheno_i, covarKcovar_i, covarKpheno_i, use_reml=test_via_reml
         )
 
         search_result_list.append(
-           {
-            "covarKcovar": covarKcovar_i,
-            "covarK": covarK_i,
-            "covarKpheno": covarKpheno_i,
-            "phenoKpheno": phenoKpheno_i,
-            "ll_null": ll_null_i,
-        }
-            )
+            {
+                "covarKcovar": covarKcovar_i,
+                "covarK": covarK_i,
+                "covarKpheno": covarKpheno_i,
+                "phenoKpheno": phenoKpheno_i,
+                "ll_null": ll_null_i,
+            }
+        )
 
-    #search_result_list = map_reduce(
+    # search_result_list = map_reduce(
     #    range(pheno_r.col_count), mapper=mapper_search, runner=runner
-    #)
+    # )
 
     # ==================================
     # X is the covariates (with bias) and one test SNP.
@@ -170,7 +173,7 @@ def single_snp_eigen(
     XKpheno_list = []
     for pheno_index in range(pheno_r.col_count):
         search_result = search_result_list[pheno_index]
-        K0_kdi_i = K0_kdi_list[pheno_index]
+        K0_kdi_i = K0_kdi[pheno_index]
         covarKcovar_i = search_result["covarKcovar"]
         covarKpheno_i = search_result["covarKpheno"]
 
@@ -213,14 +216,14 @@ def single_snp_eigen(
         alt_batchKy_list = []
         for pheno_index in range(pheno_r.col_count):
             search_result = search_result_list[pheno_index]
-            K0_kdi_i = K0_kdi_list[pheno_index]
+            K0_kdi_i = K0_kdi[pheno_index]
             covarK_i = search_result["covarK"]
             pheno_r_i = pheno_r[pheno_index]
 
-            covarKalt_batch_i, _ = AKB.from_rotated(
+            covarKalt_batch_i, _ = AKB.from_rotated_cmka(
                 covar_r, K0_kdi_i, alt_batch_r, aK=covarK_i
             )
-            alt_batchKy_i, alt_batchK_i = AKB.from_rotated(
+            alt_batchKy_i, alt_batchK_i = AKB.from_rotated_cmka(
                 alt_batch_r, K0_kdi_i, pheno_r_i
             )
 
@@ -248,7 +251,7 @@ def single_snp_eigen(
 
             for pheno_index in range(pheno_r.col_count):
                 search_result = search_result_list[pheno_index]
-                K0_kdi_i = K0_kdi_list[pheno_index]
+                K0_kdi_i = K0_kdi[pheno_index]
                 alt_batchK_i = alt_batchK_list[pheno_index]
                 XKX_i = XKX_list[pheno_index]
                 covarKalt_batch_i = covarKalt_batch_list[pheno_index]
@@ -262,7 +265,7 @@ def single_snp_eigen(
                 # Fill in last value of X, XKX and XKpheno
                 # with the alt value.
                 # ==================================
-                altKalt_i, _ = AKB.from_rotated(
+                altKalt_i, _ = AKB.from_rotated_cmka(
                     alt_r,
                     K0_kdi_i,
                     alt_r,
@@ -314,12 +317,7 @@ def single_snp_eigen(
         dataframe["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_r.col_count)
         dataframe["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_r.col_count)
         dataframe["Nullh2"] = np.tile(
-            np.array(
-                [
-                    float(K0_kdi_i.h2)
-                    for K0_kdi_i in K0_kdi_list
-                ]
-            ),
+            K0_kdi.h2.reshape(-1),
             alt_batch.sid_count,
         )
         # !!!cmk in lmmcov, but not lmm
@@ -376,35 +374,115 @@ def _covar_read_with_bias(covar):
 
 # !!!cmk needs better name
 class KdI:
-    def __init__(self, eigendata, h2=None, log_delta=None, delta=None):
+    def __init__(self, hld, row, pheno, is_low_rank, logdet, Sd):
+        self.h2, self.log_delta, self.delta = hld
+        self.row = row
+        self.pheno = pheno
+        self.is_low_rank = is_low_rank
+        self.logdet = logdet
+        self.Sd = Sd
+
+    @staticmethod
+    def from_eigendata(eigendata, pheno,  h2=None, log_delta=None, delta=None):
+        hld = KdI._hld(h2, log_delta, delta)
+        _, _, delta = hld
+        logdet, Sd = eigendata.logdet(float(delta))
+
+        return KdI(
+            hld,
+            row=eigendata.row,
+            pheno=pheno,
+            is_low_rank=eigendata.is_low_rank,
+            logdet=logdet.reshape(logdet.shape[0],logdet.shape[1],1),
+            Sd=Sd.reshape(Sd.shape[0],Sd.shape[1],1)
+        )
+
+    @staticmethod
+    def _hld(h2=None, log_delta=None, delta=None):
         assert (
             sum([h2 is not None, log_delta is not None, delta is not None]) == 1
         ), "Exactly one of h2, etc should have a value"
         if h2 is not None:
-            self.h2 = h2
-            self.delta = 1.0 / h2 - 1.0
-            self.log_delta = np.log(self.delta)
+            delta = 1.0 / h2 - 1.0
+            log_delta = np.log(delta)
         elif log_delta is not None:
-            self.log_delta = log_delta
-            self.delta = np.exp(log_delta)
-            self.h2 = 1.0 / (self.delta + 1)
+            log_delta = log_delta
+            delta = np.exp(log_delta)
+            h2 = 1.0 / (delta + 1)
         elif delta is not None:
-            self.delta = delta
-            self.log_delta = np.log(delta) if delta != 0 else None
-            self.h2 = 1.0 / (self.delta + 1)
+            delta = delta
+            log_delta = np.log(delta) if delta != 0 else None
+            h2 = 1.0 / (delta + 1)
         else:
             assert False, "real assert"
+        return np.array([h2]), np.array([log_delta]), np.array([delta])
 
-        self.row_count = eigendata.row_count
-        self.row = eigendata.row
-        self.is_low_rank = eigendata.is_low_rank
-        self.logdet, self.Sd = eigendata.logdet(self.delta)
+    @staticmethod
+    def from_list(kdi_list):
+        assert len(kdi_list) > 0, "list must contain at least one item"
+        h2 = np.r_[[kdi.h2 for kdi in kdi_list]]
+        log_delta = np.r_[[kdi.log_delta for kdi in kdi_list]]
+        delta = np.r_[[kdi.delta for kdi in kdi_list]]
+        logdet = _stack([kdi.logdet for kdi in kdi_list])
+        Sd = _stack([kdi.Sd for kdi in kdi_list])
+        pheno = _stack([kdi.pheno for kdi in kdi_list])
+        return KdI(
+            (h2, log_delta, delta),
+            row=kdi_list[0].row,
+            pheno=pheno,
+            is_low_rank=kdi_list[0].is_low_rank,
+            logdet=logdet,
+            Sd=Sd,
+        )
+
+    def __getitem__(self, pheno_index):
+        h2 = self.h2[pheno_index:pheno_index+1]
+        log_delta = self.log_delta[pheno_index:pheno_index+1]
+        delta = self.delta[pheno_index:pheno_index+1]
+        logdet = self.logdet[...,pheno_index:pheno_index+1]
+        Sd = self.Sd[...,pheno_index:pheno_index+1]
+        pheno = self.pheno[pheno_index:pheno_index+1]
+        return KdI(
+            (h2, log_delta, delta),
+            row=self.row,
+            pheno=pheno,
+            is_low_rank=self.is_low_rank,
+            logdet=logdet,
+            Sd=Sd,
+        )
+
+
+    @property
+    def row_count(self):
+        return len(self.row)
+
+    @property
+    def pheno_count(self):
+        return len(self.pheno)
+
+# better way to stack the last dimension?
+def _stack(array_list):
+    pheno_count = len(array_list)
+    assert pheno_count>0, "cmk"
+    shape = list(array_list[0].shape)
+    assert shape[-1]==1, "cmk"
+    shape[-1] = pheno_count
+    result = np.empty(shape=shape,dtype=array_list[0].dtype)
+    if len(shape)>1:
+        result[...] = np.nan
+        for pheno_index in range(pheno_count):
+            result[...,pheno_index]=array_list[pheno_index][...,0]
+    else:
+        for pheno_index in range(pheno_count):
+            result[pheno_index]=array_list[pheno_index][0]
+    return result
 
 
 # !!!cmk move to PySnpTools
-def AK(a_r, kdi, aK=None):
+def AK_cmka(a_r, kdi, aK=None):
     if aK is None:
-        return PstData(val=a_r.val / kdi.Sd, row=a_r.row, col=a_r.col)
+        assert kdi.pheno_count == 1, "cmk"
+        return PstData(val=a_r.val / kdi.Sd[:,:,0], row=a_r.row, col=a_r.col)
     else:
         return aK
 
@@ -416,8 +494,8 @@ class AKB(PstData):
         self.kdi = kdi
 
     @staticmethod
-    def from_rotated(a_r, kdi, b_r, aK=None):
-        aK = AK(a_r, kdi, aK)
+    def from_rotated_cmka(a_r, kdi, b_r, aK=None):
+        aK = AK_cmka(a_r, kdi, aK)
 
         val = aK.val.T.dot(b_r.val)
         if kdi.is_low_rank:
@@ -460,14 +538,14 @@ def _find_h2(
 
     def f(x, resmin=resmin, **kwargs):
         # This kdi is Kg+delta I
-        kdi = KdI(eigendata, h2=x)
+        kdi = KdI.from_eigendata(eigendata, pheno=pheno_r.col, h2=x)
         # aKb is  a.T * kdi^-1 * b
-        phenoKpheno, _ = AKB.from_rotated(pheno_r, kdi, pheno_r)
-        XKX, XK = AKB.from_rotated(X_r, kdi, X_r)
-        XKpheno, _ = AKB.from_rotated(X_r, kdi, pheno_r, aK=XK)
+        phenoKpheno, _ = AKB.from_rotated_cmka(pheno_r, kdi, pheno_r)
+        XKX, XK = AKB.from_rotated_cmka(X_r, kdi, X_r)
+        XKpheno, _ = AKB.from_rotated_cmka(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
-        nLL = -nLL  # !!!cmk
+        nLL = -float(nLL)  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
             resmin[0] = {"nLL": nLL, "h2": x}
         logging.debug(f"search\t{x}\t{nLL}")
@@ -501,9 +579,9 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 
     eigen_xkx = _eigen_from_akb(XKX, keep_above=1e-10)
 
-    kd0 = KdI(eigen_xkx, delta=0)
+    kd0 = KdI.from_eigendata(eigen_xkx, pheno=XKpheno.col, delta=0)
     XKpheno_r = eigen_xkx.rotate(XKpheno)
-    XKphenoK = AK(XKpheno_r, kd0)
+    XKphenoK = AK_cmka(XKpheno_r, kd0)
     beta = eigen_xkx.t_rotate(XKphenoK)
     r2 = PstData(
         val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),
@@ -552,6 +630,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
         - logdetXX
         + X_row_less_col * (np.log(2.0 * np.pi * sigma2) + 1)
     )
+
     assert np.all(
         np.isreal(nLL)
     ), "nLL has an imaginary component, possibly due to constant covariates"
@@ -586,10 +665,10 @@ def _find_best_kdi_as_needed(
         h2 = _find_h2(
             eigendata, covar, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
         )["h2"]
-        return KdI(eigendata, h2=h2)
+        return KdI.from_eigendata(eigendata, pheno=pheno_r.col, h2=h2)
     else:
         # !!!cmk internal/external doesn't matter if full rank, right???
-        return KdI(eigendata, log_delta=log_delta)
+        return KdI.from_eigendata(eigendata, pheno=pheno_r.col, log_delta=log_delta)
 
 
 # !!!cmk similar to single_snp.py and single_snp_scale

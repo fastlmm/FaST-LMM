@@ -68,7 +68,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
-        runner = None # LocalMultiProc(6,just_one_process=False)
+        runner = LocalMultiProc(6,just_one_process=False)
 
         for use_reml in [True, False]:
             for train_count in [750, 50]:
@@ -115,7 +115,9 @@ class TestSingleSnpEigen(unittest.TestCase):
                             phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
 
                             def mapper(pheno_index):
-                                from fastlmm.association.tests.test_gwas import GwasPrototype
+                                from fastlmm.association.tests.test_gwas import (
+                                    GwasPrototype,
+                                )
 
                                 y = phenox.read().val[:, pheno_index]
                                 gwas = GwasPrototype(
