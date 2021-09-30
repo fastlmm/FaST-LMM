@@ -81,7 +81,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                             pheno_fn,
                         ],
             }
-        for option in matrix_combo(option_matrix,seed=10234,extra_fraction=.1):
+        for option in matrix_combo(option_matrix,seed=10234,extra_fraction=0):
             use_reml = option['use_reml']
             cov = option['cov']
             train_count = option['train_count']
@@ -960,13 +960,22 @@ class TestSingleSnpEigen(unittest.TestCase):
 def matrix_combo(option_matrix,seed,extra_fraction=1.0):
     # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
     import itertools
+    rng = np.random.RandomState(seed=seed)
     keys, values = zip(*option_matrix.items())
+    values = [rng.permutation(value) for value in values ]
+    max_values = max([len(value) for value in values])
+    for i in range(max_values):
+        output = {}
+        for key_index, key in enumerate(keys):
+            value = values[key_index]
+            output[key] = value[i % len(value)]
+        yield output
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
 
-    rng = np.random.RandomState(seed=seed)
     rng.shuffle(permutations_dicts)
     count = int(np.ceil(len(permutations_dicts)*extra_fraction))
-    return permutations_dicts[:count]
+    for i in range(count):
+        yield permutations_dicts[i]
 
 def getTestSuite():
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpEigen)
