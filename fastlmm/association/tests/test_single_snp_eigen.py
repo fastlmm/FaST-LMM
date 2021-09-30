@@ -970,6 +970,8 @@ def matrix_combo(option_matrix,seed,extra_fraction=1.0):
             value = values[key_index]
             output[key] = value[i % len(value)]
         yield output
+
+    # !!!cmk don't yield same ones again (but does it really matter?)
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
 
     rng.shuffle(permutations_dicts)
