@@ -115,6 +115,9 @@ def single_snp_eigen(
     K0_kdi = KdI.from_list(K0_kdi_list)
     del K0_kdi_list
 
+    # !!!cmk refactor: pulling this out of loop
+    covarKcovar, covarK = AKB.from_rotated_3D(covar_r, K0_kdi, covar_r)
+
     search_result_list = []
     for pheno_index in range(pheno_r.col_count):
         K0_kdi_i = K0_kdi[pheno_index]
@@ -128,20 +131,17 @@ def single_snp_eigen(
         #   * The AKB value
         #   * The KdI objected use to create it.
         # =========================
-        covarKcovar_i, covarK_i = AKB.from_rotated_cmka(covar_r, K0_kdi_i, covar_r)
         phenoKpheno_i, _ = AKB.from_rotated_cmka(pheno_r_i, K0_kdi_i, pheno_r_i)
-        covarKpheno_i, _ = AKB.from_rotated_cmka(
-            covar_r, K0_kdi_i, pheno_r_i, aK=covarK_i
-        )
+        covarKpheno_i, _ = AKB.from_rotated_3D(
+            covar_r, K0_kdi_i, pheno_r_i, aK=covarK[:,:,pheno_index:pheno_index+1]
+             )
 
         ll_null_i, beta_i, variance_beta_i = _loglikelihood(
-            covar, phenoKpheno_i, covarKcovar_i, covarKpheno_i, use_reml=test_via_reml
+            covar, phenoKpheno_i, covarKcovar[:,:,pheno_index:pheno_index+1], covarKpheno_i, use_reml=test_via_reml
         )
 
         search_result_list.append(
             {
-                "covarKcovar": covarKcovar_i,
-                "covarK": covarK_i,
                 "covarKpheno": covarKpheno_i,
                 "phenoKpheno": phenoKpheno_i,
                 "ll_null": ll_null_i,
@@ -176,7 +176,7 @@ def single_snp_eigen(
     for pheno_index in range(pheno_r.col_count):
         search_result = search_result_list[pheno_index]
         K0_kdi_i = K0_kdi[pheno_index]
-        covarKcovar_i = search_result["covarKcovar"]
+        covarKcovar_i = covarKcovar[:,:,pheno_index:pheno_index+1]
         covarKpheno_i = search_result["covarKpheno"]
 
         pheno_col = pheno_r.col[pheno_index : pheno_index + 1]
@@ -219,7 +219,7 @@ def single_snp_eigen(
         for pheno_index in range(pheno_r.col_count):
             search_result = search_result_list[pheno_index]
             K0_kdi_i = K0_kdi[pheno_index]
-            covarK_i = search_result["covarK"]
+            covarK_i = covarK[:,:,pheno_index]
             pheno_r_i = pheno_r[pheno_index]
 
             covarKalt_batch_i, _ = AKB.from_rotated_cmka(
@@ -271,10 +271,10 @@ def single_snp_eigen(
                     alt_r,
                     K0_kdi_i,
                     alt_r,
-                    aK=alt_batchK_i[:, i : i + 1].read(view_ok=True),
+                    aK=alt_batchK_i[:, i : i + 1,:]
                 )
 
-                XKX_i[:cc, cc:] = covarKalt_batch_i[:, i : i + 1]  # upper right
+                XKX_i[:cc, cc:] = covarKalt_batch_i[:, i : i + 1,:]  # upper right
                 XKX_i[cc:, :cc] = XKX_i[:cc, cc:].T  # lower left
                 XKX_i[cc:, cc:] = altKalt_i  # lower right
 
@@ -438,6 +438,10 @@ class KdI:
         )
 
     def __getitem__(self, pheno_index):
+        if isinstance(pheno_index,slice):
+            assert pheno_index.step is None
+            assert pheno_index.start+1 == pheno_index.stop
+            pheno_index = pheno_index.start
         h2 = self.h2[pheno_index : pheno_index + 1]
         log_delta = self.log_delta[pheno_index : pheno_index + 1]
         delta = self.delta[pheno_index : pheno_index + 1]
@@ -479,31 +483,69 @@ def _stack(array_list):
             result[pheno_index] = array_list[pheno_index][0]
     return result
 
-
 # !!!cmk move to PySnpTools
-def AK_cmka(a_r, kdi, aK=None):
-    if aK is None:
-        assert kdi.pheno_count == 1, "cmk"
-        return PstData(val=a_r.val / kdi.Sd[:, :, 0], row=a_r.row, col=a_r.col)
-    else:
-        return aK
+class AK(PstData):
+    def __init__(self, val, row, col, pheno):
+        super().__init__(val=val, row=row, col=col)
+        self.pheno = pheno
+
+    #@staticmethod
+    #def from_cmka(a_r, kdi, aK=None):
+    #    if aK is None:
+    #        assert kdi.pheno_count == 1, "cmk"
+    #        val =a_r.val / kdi.Sd[:, :, 0]
+    #        return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
+    #    else:
+    #        return aK
+
+    @staticmethod
+    def from_3D(a_r, kdi, aK=None):
+        if aK is None:
+            val = a_r.val[:,:,np.newaxis] / kdi.Sd
+            return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
+        else:
+            return aK
+
+    def __getitem__(self, index):
+        val = self.val[index]
+        return AK(val=val,
+                  row=self.row[index[0]],
+                  col=self.col[index[1]],
+                  pheno=self.pheno[index[2]]
+                  )
 
 
 # !!!cmk move to PySnpTools
 class AKB(PstData):
     def __init__(self, val, row, col, kdi):
         super().__init__(val=val, row=row, col=col)
+        self.pheno = kdi.pheno
         self.kdi = kdi
 
     @staticmethod
     def from_rotated_cmka(a_r, kdi, b_r, aK=None):
-        aK = AK_cmka(a_r, kdi, aK)
+        aK = AK.from_3D(a_r, kdi, aK)
 
         val = aK.val.T.dot(b_r.val)
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
+
+        if len(val.shape)==3:
+            val = np.moveaxis(val,0,-1)
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         return result, aK
+
+    @staticmethod
+    def from_rotated_3D(a_r, kdi, b_r, aK=None):
+        aK = AK.from_3D(a_r, kdi, aK)
+
+        val = np.moveaxis(aK.val.T.dot(b_r.val),0,-1)
+        if kdi.is_low_rank:
+            val += a_r.double.val.T.dot(b_r.double.val)[:,:,np.newaxis] / kdi.delta.reshape(-1)
+
+        result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
+        return result, aK
+
 
     @staticmethod
     def empty(row, col, kdi):
@@ -516,13 +558,28 @@ class AKB(PstData):
 
     def __setitem__(self, key, value):
         # !!!cmk may want to check that the kdi's are equal
-        self.val[key] = value.val
+
+        val = value.val
+        if len(val.shape)==3: #!!!cmk ugly
+            val = np.squeeze(val,-1)
+
+        self.val[key] = val
 
     def __getitem__(self, index):
-        # !!!cmk fast enough?
-        result0 = super(AKB, self).__getitem__(index).read(view_ok=True)
-        result = AKB(val=result0.val, row=result0.row, col=result0.col, kdi=self.kdi)
-        return result  # !!! cmk right type?
+        if len(self.val.shape)==2 and len(index)==3 and index[2] == slice(None,None,None):
+            index01 = index[0:2] #!!!cmk ugly
+        else:
+            index01 = index
+        if len(index)==2 or (len(self.kdi.pheno)==1 and index[2] == slice(None,None,None)):
+            index2 = 0
+        else:
+            index2 = index[2]
+        val = self.val[index01]
+        return AKB(val=val, 
+                   row=self.row[index[0]],
+                   col=self.col[index[1]],
+                   kdi=self.kdi[index2]
+                   )
 
     @property
     def T(self):
@@ -559,7 +616,11 @@ def _find_h2(
 
 def _eigen_from_akb(akb, keep_above=np.NINF):
     # !!!cmk check that square aKa not just aKb???
-    w, v = np.linalg.eigh(akb.val)  # !!! cmk do SVD sometimes?
+    val = akb.val
+    if len(val.shape)==3: #!!!cmk ugly
+        val = np.squeeze(val,-1)
+
+    w, v = np.linalg.eigh(val)  # !!! cmk do SVD sometimes?
     eigen = EigenData(values=w, vectors=v, row=akb.row)
     if keep_above > np.NINF:
         eigen = eigen[:, eigen.values > keep_above].read(view_ok=True)
@@ -583,7 +644,9 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 
     kd0 = KdI.from_eigendata(eigen_xkx, pheno=XKpheno.col, delta=0)
     XKpheno_r = eigen_xkx.rotate(XKpheno)
-    XKphenoK = AK_cmka(XKpheno_r, kd0)
+    XKphenoK = AK.from_3D(XKpheno_r, kd0)
+    XKphenoK.val = XKphenoK.val.squeeze(-1) #!!!cmk ugly
+    XKphenoK.pheno = None
     beta = eigen_xkx.t_rotate(XKphenoK)
     r2 = PstData(
         val=phenoKpheno.val - XKpheno.val.T.dot(beta.val),

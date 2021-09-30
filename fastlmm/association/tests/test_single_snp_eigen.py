@@ -71,6 +71,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         runner = None  # LocalMultiProc(6, just_one_process=False)
         runner2 = LocalMultiProc(6, just_one_process=False)
         extra_fraction = .1
+        first_list = [] #[('pheno',0)]
 
         def mapper2(option):
             import numpy as np
@@ -161,6 +162,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                     },
                     seed=10234,
                     extra_fraction=extra_fraction,
+                    first_list = first_list
                 )
             ),
             mapper=mapper2,
@@ -967,14 +969,26 @@ class TestSingleSnpEigen(unittest.TestCase):
 #            raise Exception("snps differ too much from file '{0}' at these snps {1}".format(name,bad))
 
 # !!!cmk find similar code. Move to utils, perhaps pysnptools
-def matrix_combo(option_matrix, seed, extra_fraction=1.0):
+def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
     # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
     import itertools
 
     rng = np.random.RandomState(seed=seed)
-    keys, values = zip(*option_matrix.items())
-    values = [rng.permutation(value) for value in values]
+    keys, old_values = zip(*option_matrix.items())
+    values = [rng.permutation(value) for value in old_values]
     max_values = max([len(value) for value in values])
+
+    for key_of_interest, value_index_of_interest in first_list:
+        output = {}
+        for key_index, key in enumerate(keys):
+            value = values[key_index]
+            if key == key_of_interest:
+                output[key] = old_values[key_index][value_index_of_interest]
+            else:
+                output[key] = value[0]
+        yield output
+
+
     for i in range(max_values):
         output = {}
         for key_index, key in enumerate(keys):
