@@ -70,81 +70,92 @@ class TestSingleSnpEigen(unittest.TestCase):
         delta_default = 1.0
         runner = LocalMultiProc(6,just_one_process=False)
 
-        for use_reml in [True, False]:
-            for train_count in [750, 50]:
-                for cov in [cov_reader, None]:
-                    for delta in [None, 0.20000600000000002, delta_default]:
-                        for pheno in [
+        option_matrix = {
+            'use_reml' : [True, False],
+            'train_count' : [750, 50],
+            'cov' : [cov_reader, None],
+            'delta' : [None, 0.20000600000000002, delta_default],
+              # pheno000, pheno_fn]: #!!!cmk, pheno012]:
+            'pheno' :[
                             pheno000,
                             pheno_fn,
-                        ]:  # pheno000, pheno_fn]: #!!!cmk, pheno012]:
-                            if True:
-                                K0_eigen = eigen_from_kernel(
-                                    snp_reader[:, :train_count],
-                                    kernel_standardizer=KernelIdentity(),
-                                )  # !!!cmk why not diag standardize?
-                                frame = single_snp_eigen(
-                                    test_snps=Bed(bed_fn, count_A1=False)[
-                                        :, train_count : train_count + test_count
-                                    ],
-                                    pheno=pheno,
-                                    K0_eigen=K0_eigen,
-                                    covar=cov,
-                                    output_file_name=None,
-                                    log_delta=np.log(delta)
-                                    if delta is not None
-                                    else None,
-                                    find_delta_via_reml=use_reml,
-                                    test_via_reml=use_reml,
-                                    count_A1=False,
-                                    runner=runner,
-                                )
+                        ],
+            }
+        for option in matrix_combo(option_matrix,seed=10234,extra_fraction=.1):
+            use_reml = option['use_reml']
+            cov = option['cov']
+            train_count = option['train_count']
+            delta = option['delta']
+            pheno = option['pheno']
+            
+            if True:
+                K0_eigen = eigen_from_kernel(
+                    snp_reader[:, :train_count],
+                    kernel_standardizer=KernelIdentity(),
+                )  # !!!cmk why not diag standardize?
+                frame = single_snp_eigen(
+                    test_snps=Bed(bed_fn, count_A1=False)[
+                        :, train_count : train_count + test_count
+                    ],
+                    pheno=pheno,
+                    K0_eigen=K0_eigen,
+                    covar=cov,
+                    output_file_name=None,
+                    log_delta=np.log(delta)
+                    if delta is not None
+                    else None,
+                    find_delta_via_reml=use_reml,
+                    test_via_reml=use_reml,
+                    count_A1=False,
+                    runner=runner,
+                )
 
-                            G = snp_reader.read().standardize().val
-                            if cov is not None:
-                                cov_val = np.c_[
-                                    cov.read().val, np.ones((cov.iid_count, 1))
-                                ]
-                            else:
-                                cov_val = None
-                            G_chr1, G_chr2 = (
-                                G[:, :train_count],
-                                G[:, train_count : train_count + test_count],
-                            )
+            G = snp_reader.read().standardize().val
+            if cov is not None:
+                cov_val = np.c_[
+                    cov.read().val, np.ones((cov.iid_count, 1))
+                ]
+            else:
+                cov_val = None
+            G_chr1, G_chr2 = (
+                G[:, :train_count],
+                G[:, train_count : train_count + test_count],
+            )
 
-                            phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
+            phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
 
-                            def mapper(pheno_index):
-                                from fastlmm.association.tests.test_gwas import (
-                                    GwasPrototype,
-                                )
+            def mapper(pheno_index):
+                from fastlmm.association.tests.test_gwas import (
+                    GwasPrototype,
+                )
 
-                                y = phenox.read().val[:, pheno_index]
-                                gwas = GwasPrototype(
-                                    G_chr1,
-                                    G_chr2,
-                                    y,
-                                    internal_delta=delta,
-                                    cov=cov_val,
-                                    REML=use_reml,
-                                )
-                                gwas.run_gwas()
-                                return sorted(gwas.p_values)
+                y = phenox.read().val[:, pheno_index]
+                gwas = GwasPrototype(
+                    G_chr1,
+                    G_chr2,
+                    y,
+                    internal_delta=delta,
+                    cov=cov_val,
+                    REML=use_reml,
+                )
+                gwas.run_gwas()
+                return sorted(gwas.p_values)
 
-                            gwas_pvalues_list = map_reduce(
-                                range(phenox.sid_count), mapper=mapper, runner=runner
-                            )
+            gwas_pvalues_list = map_reduce(
+                range(phenox.sid_count), mapper=mapper, runner=runner
+            )
 
-                            for pheno_index in range(phenox.sid_count):
-                                frame_i = frame[
-                                    frame["Pheno"] == phenox.sid[pheno_index]
-                                ]
-                                # check p-values in log-space!
-                                np.testing.assert_array_almost_equal(
-                                    np.log(gwas_pvalues_list[pheno_index]),
-                                    np.log(frame_i.PValue),  #!!!cmk
-                                    decimal=7,
-                                )
+            for pheno_index in range(phenox.sid_count):
+                frame_i = frame[
+                    frame["Pheno"] == phenox.sid[pheno_index]
+                ]
+                # check p-values in log-space!
+                np.testing.assert_array_almost_equal(
+                    np.log(gwas_pvalues_list[pheno_index]),
+                    np.log(frame_i.PValue),  #!!!cmk
+                    decimal=7,
+                )
+
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")
@@ -945,6 +956,17 @@ class TestSingleSnpEigen(unittest.TestCase):
 #        if len(bad) > 0:
 #            raise Exception("snps differ too much from file '{0}' at these snps {1}".format(name,bad))
 
+# !!!cmk find similar code. Move to utils, perhaps pysnptools
+def matrix_combo(option_matrix,seed,extra_fraction=1.0):
+    # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
+    import itertools
+    keys, values = zip(*option_matrix.items())
+    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+
+    rng = np.random.RandomState(seed=seed)
+    rng.shuffle(permutations_dicts)
+    count = int(np.ceil(len(permutations_dicts)*extra_fraction))
+    return permutations_dicts[:count]
 
 def getTestSuite():
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpEigen)
