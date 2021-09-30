@@ -130,7 +130,9 @@ def single_snp_eigen(
         # =========================
         covarKcovar_i, covarK_i = AKB.from_rotated_cmka(covar_r, K0_kdi_i, covar_r)
         phenoKpheno_i, _ = AKB.from_rotated_cmka(pheno_r_i, K0_kdi_i, pheno_r_i)
-        covarKpheno_i, _ = AKB.from_rotated_cmka(covar_r, K0_kdi_i, pheno_r_i, aK=covarK_i)
+        covarKpheno_i, _ = AKB.from_rotated_cmka(
+            covar_r, K0_kdi_i, pheno_r_i, aK=covarK_i
+        )
 
         ll_null_i, beta_i, variance_beta_i = _loglikelihood(
             covar, phenoKpheno_i, covarKcovar_i, covarKpheno_i, use_reml=test_via_reml
@@ -383,7 +385,7 @@ class KdI:
         self.Sd = Sd
 
     @staticmethod
-    def from_eigendata(eigendata, pheno,  h2=None, log_delta=None, delta=None):
+    def from_eigendata(eigendata, pheno, h2=None, log_delta=None, delta=None):
         hld = KdI._hld(h2, log_delta, delta)
         _, _, delta = hld
         logdet, Sd = eigendata.logdet(float(delta))
@@ -393,8 +395,8 @@ class KdI:
             row=eigendata.row,
             pheno=pheno,
             is_low_rank=eigendata.is_low_rank,
-            logdet=logdet.reshape(logdet.shape[0],logdet.shape[1],1),
-            Sd=Sd.reshape(Sd.shape[0],Sd.shape[1],1)
+            logdet=logdet.reshape(logdet.shape[0], logdet.shape[1], 1),
+            Sd=Sd.reshape(Sd.shape[0], Sd.shape[1], 1),
         )
 
     @staticmethod
@@ -436,12 +438,12 @@ class KdI:
         )
 
     def __getitem__(self, pheno_index):
-        h2 = self.h2[pheno_index:pheno_index+1]
-        log_delta = self.log_delta[pheno_index:pheno_index+1]
-        delta = self.delta[pheno_index:pheno_index+1]
-        logdet = self.logdet[...,pheno_index:pheno_index+1]
-        Sd = self.Sd[...,pheno_index:pheno_index+1]
-        pheno = self.pheno[pheno_index:pheno_index+1]
+        h2 = self.h2[pheno_index : pheno_index + 1]
+        log_delta = self.log_delta[pheno_index : pheno_index + 1]
+        delta = self.delta[pheno_index : pheno_index + 1]
+        logdet = self.logdet[..., pheno_index : pheno_index + 1]
+        Sd = self.Sd[..., pheno_index : pheno_index + 1]
+        pheno = self.pheno[pheno_index : pheno_index + 1]
         return KdI(
             (h2, log_delta, delta),
             row=self.row,
@@ -451,7 +453,6 @@ class KdI:
             Sd=Sd,
         )
 
-
     @property
     def row_count(self):
         return len(self.row)
@@ -460,21 +461,22 @@ class KdI:
     def pheno_count(self):
         return len(self.pheno)
 
+
 # better way to stack the last dimension?
 def _stack(array_list):
     pheno_count = len(array_list)
-    assert pheno_count>0, "cmk"
+    assert pheno_count > 0, "cmk"
     shape = list(array_list[0].shape)
-    assert shape[-1]==1, "cmk"
+    assert shape[-1] == 1, "cmk"
     shape[-1] = pheno_count
-    result = np.empty(shape=shape,dtype=array_list[0].dtype)
-    if len(shape)>1:
+    result = np.empty(shape=shape, dtype=array_list[0].dtype)
+    if len(shape) > 1:
         result[...] = np.nan
         for pheno_index in range(pheno_count):
-            result[...,pheno_index]=array_list[pheno_index][...,0]
+            result[..., pheno_index] = array_list[pheno_index][..., 0]
     else:
         for pheno_index in range(pheno_count):
-            result[pheno_index]=array_list[pheno_index][0]
+            result[pheno_index] = array_list[pheno_index][0]
     return result
 
 
@@ -482,7 +484,7 @@ def _stack(array_list):
 def AK_cmka(a_r, kdi, aK=None):
     if aK is None:
         assert kdi.pheno_count == 1, "cmk"
-        return PstData(val=a_r.val / kdi.Sd[:,:,0], row=a_r.row, col=a_r.col)
+        return PstData(val=a_r.val / kdi.Sd[:, :, 0], row=a_r.row, col=a_r.col)
     else:
         return aK
 

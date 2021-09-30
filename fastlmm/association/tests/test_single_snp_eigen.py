@@ -68,26 +68,23 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
-        runner = LocalMultiProc(6,just_one_process=False)
+        runner = None  # LocalMultiProc(6, just_one_process=False)
+        runner2 = LocalMultiProc(6, just_one_process=False)
+        extra_fraction = .1
 
-        option_matrix = {
-            'use_reml' : [True, False],
-            'train_count' : [750, 50],
-            'cov' : [cov_reader, None],
-            'delta' : [None, 0.20000600000000002, delta_default],
-              # pheno000, pheno_fn]: #!!!cmk, pheno012]:
-            'pheno' :[
-                            pheno000,
-                            pheno_fn,
-                        ],
-            }
-        for option in matrix_combo(option_matrix,seed=10234,extra_fraction=0):
-            use_reml = option['use_reml']
-            cov = option['cov']
-            train_count = option['train_count']
-            delta = option['delta']
-            pheno = option['pheno']
-            
+        def mapper2(option):
+            import numpy as np
+            from pysnptools.snpreader import Bed, Pheno, SnpData
+            from pysnptools.kernelstandardizer import Identity as KernelIdentity
+            from pysnptools.util.mapreduce1 import map_reduce
+            from fastlmm.association import single_snp_eigen, eigen_from_kernel
+
+            use_reml = option["use_reml"]
+            cov = option["cov"]
+            train_count = option["train_count"]
+            delta = option["delta"]
+            pheno = option["pheno"]
+
             if True:
                 K0_eigen = eigen_from_kernel(
                     snp_reader[:, :train_count],
@@ -101,9 +98,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                     K0_eigen=K0_eigen,
                     covar=cov,
                     output_file_name=None,
-                    log_delta=np.log(delta)
-                    if delta is not None
-                    else None,
+                    log_delta=np.log(delta) if delta is not None else None,
                     find_delta_via_reml=use_reml,
                     test_via_reml=use_reml,
                     count_A1=False,
@@ -112,9 +107,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
             G = snp_reader.read().standardize().val
             if cov is not None:
-                cov_val = np.c_[
-                    cov.read().val, np.ones((cov.iid_count, 1))
-                ]
+                cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
             else:
                 cov_val = None
             G_chr1, G_chr2 = (
@@ -146,16 +139,33 @@ class TestSingleSnpEigen(unittest.TestCase):
             )
 
             for pheno_index in range(phenox.sid_count):
-                frame_i = frame[
-                    frame["Pheno"] == phenox.sid[pheno_index]
-                ]
+                frame_i = frame[frame["Pheno"] == phenox.sid[pheno_index]]
                 # check p-values in log-space!
                 np.testing.assert_array_almost_equal(
                     np.log(gwas_pvalues_list[pheno_index]),
                     np.log(frame_i.PValue),  #!!!cmk
                     decimal=7,
                 )
+            return None
 
+        map_reduce(
+            list(
+                matrix_combo(
+                    {
+                        "use_reml": [True, False],
+                        "train_count": [750, 50],
+                        "cov": [cov_reader, None],
+                        "delta": [None, 0.20000600000000002, delta_default],
+                        # pheno000, pheno_fn]: #!!!cmk, pheno012]:
+                        "pheno": [pheno000, pheno_fn],
+                    },
+                    seed=10234,
+                    extra_fraction=extra_fraction,
+                )
+            ),
+            mapper=mapper2,
+            runner=runner2,
+        )
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")
@@ -957,12 +967,13 @@ class TestSingleSnpEigen(unittest.TestCase):
 #            raise Exception("snps differ too much from file '{0}' at these snps {1}".format(name,bad))
 
 # !!!cmk find similar code. Move to utils, perhaps pysnptools
-def matrix_combo(option_matrix,seed,extra_fraction=1.0):
+def matrix_combo(option_matrix, seed, extra_fraction=1.0):
     # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
     import itertools
+
     rng = np.random.RandomState(seed=seed)
     keys, values = zip(*option_matrix.items())
-    values = [rng.permutation(value) for value in values ]
+    values = [rng.permutation(value) for value in values]
     max_values = max([len(value) for value in values])
     for i in range(max_values):
         output = {}
@@ -975,9 +986,10 @@ def matrix_combo(option_matrix,seed,extra_fraction=1.0):
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
 
     rng.shuffle(permutations_dicts)
-    count = int(np.ceil(len(permutations_dicts)*extra_fraction))
+    count = int(np.ceil(len(permutations_dicts) * extra_fraction))
     for i in range(count):
         yield permutations_dicts[i]
+
 
 def getTestSuite():
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpEigen)
