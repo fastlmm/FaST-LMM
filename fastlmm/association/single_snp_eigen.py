@@ -150,28 +150,11 @@ def single_snp_eigen(
     else:
         X = None
 
-    # cmk refactor
     XKX = AKB.empty3D(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
     XKX[:cc, :cc] = covarKcovar  # upper left
-
-    XKpheno_list = []
-    for pheno_index in range(pheno_r.col_count):
-        K0_kdi_i = K0_kdi[pheno_index]
-        covarKcovar_i = covarKcovar[:, :, pheno_index : pheno_index + 1]
-        covarKpheno_i = covarKpheno[:, :, pheno_index : pheno_index + 1]
-
-        pheno_col = pheno_r.col[pheno_index : pheno_index + 1]
-
-        XKpheno_i = AKB.empty(xkx_sid, pheno_col, kdi=K0_kdi_i)
-        XKpheno_i[:cc, :] = covarKpheno_i  # upper
-
-        XKpheno_list.append(XKpheno_i)
-
-        del K0_kdi_i
-        del covarKcovar_i
-        del covarKpheno_i
-        del XKpheno_i
-        del pheno_col
+    diagonal_name = np.array(["diagonal"]) #!!!cmk similar code
+    XKpheno = AKB.empty3D(xkx_sid, diagonal_name, kdi=K0_kdi)
+    XKpheno[:cc, :] = covarKpheno  # upper
 
     # ==================================
     # Test SNPs in batches
@@ -220,7 +203,7 @@ def single_snp_eigen(
                 XKX_i = XKX[:,:,pheno_index]
                 covarKalt_batch_i = covarKalt_batch[:, :, pheno_index : pheno_index + 1]
                 alt_batchKy_i = alt_batchKy[:,:,pheno_index:pheno_index+1]
-                XKpheno_i = XKpheno_list[pheno_index]
+                XKpheno_i = XKpheno[:,:,pheno_index]
                 phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
                 ll_null_i = ll_null[:, :, pheno_index : pheno_index + 1]
 
