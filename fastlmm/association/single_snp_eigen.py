@@ -150,7 +150,10 @@ def single_snp_eigen(
     else:
         X = None
 
-    XKX_list = []
+    # cmk refactor
+    XKX = AKB.empty3D(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
+    XKX[:cc, :cc] = covarKcovar  # upper left
+
     XKpheno_list = []
     for pheno_index in range(pheno_r.col_count):
         K0_kdi_i = K0_kdi[pheno_index]
@@ -159,18 +162,14 @@ def single_snp_eigen(
 
         pheno_col = pheno_r.col[pheno_index : pheno_index + 1]
 
-        XKX_i = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi_i)
-        XKX_i[:cc, :cc] = covarKcovar_i  # upper left
         XKpheno_i = AKB.empty(xkx_sid, pheno_col, kdi=K0_kdi_i)
         XKpheno_i[:cc, :] = covarKpheno_i  # upper
 
-        XKX_list.append(XKX_i)
         XKpheno_list.append(XKpheno_i)
 
         del K0_kdi_i
         del covarKcovar_i
         del covarKpheno_i
-        del XKX_i
         del XKpheno_i
         del pheno_col
 
@@ -218,9 +217,7 @@ def single_snp_eigen(
 
 
             for pheno_index in range(pheno_r.col_count):
-                K0_kdi_i = K0_kdi[pheno_index]
-                alt_batchK_i = alt_batchK[:,:,pheno_index:pheno_index+1]
-                XKX_i = XKX_list[pheno_index]
+                XKX_i = XKX[:,:,pheno_index]
                 covarKalt_batch_i = covarKalt_batch[:, :, pheno_index : pheno_index + 1]
                 alt_batchKy_i = alt_batchKy[:,:,pheno_index:pheno_index+1]
                 XKpheno_i = XKpheno_list[pheno_index]
@@ -233,8 +230,7 @@ def single_snp_eigen(
                 XKX_i[cc:, cc:] = altKalt[:,:,pheno_index:pheno_index+1]  # lower right
 
                 # !!!cmk rename alt_batchKy so no "y"?
-                cmktemp = alt_batchKy_i[i : i + 1, :]
-                XKpheno_i[cc:, :] = cmktemp  # lower
+                XKpheno_i[cc:, :] = alt_batchKy_i[i : i + 1, :]  # lower
 
                 # ==================================
                 # Find likelihood with test SNP and score.
@@ -254,8 +250,6 @@ def single_snp_eigen(
                     }
                 )
 
-                del K0_kdi_i
-                del alt_batchK_i
                 del XKX_i
                 del XKpheno_i
                 del test_statistic_i
@@ -536,11 +530,20 @@ class AKB(PstData):
             kdi=kdi,
         )
 
+    @staticmethod
+    def empty3D(row, col, kdi):
+        return AKB(
+            val=np.full(shape=(len(row), len(col), len(kdi.pheno)), fill_value=np.NaN),
+            row=row,
+            col=col,
+            kdi=kdi,
+        )
+
     def __setitem__(self, key, value):
         # !!!cmk may want to check that the kdi's are equal
 
         val = value.val
-        if len(val.shape) == 3:  #!!!cmk ugly
+        if len(self.val[key].shape)==2 and len(val.shape) == 3:  #!!!cmk ugly
             val = np.squeeze(val, -1)
 
         self.val[key] = val
