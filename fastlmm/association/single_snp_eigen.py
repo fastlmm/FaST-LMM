@@ -126,11 +126,10 @@ def single_snp_eigen(
 
     covarKcovar, covarK = AKB.from_rotated_3D(covar_r, K0_kdi, covar_r)
     phenoKpheno, _ = AKB.from_rotated_pp(pheno_r, K0_kdi)
-    # !!!cmk refactor pulling covarKpheno out of loop
     covarKpheno, _ = AKB.from_rotated_ap(covar_r, K0_kdi, pheno_r, aK=covarK)
-
-    ll_null, _beta, _variance_beta = _loglikelihood(covar, phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml)
-
+    ll_null, _beta, _variance_beta = _loglikelihood(
+        covar, phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml
+    )
 
     # ==================================
     # X is the covariates (with bias) and one test SNP.
@@ -155,8 +154,8 @@ def single_snp_eigen(
     XKpheno_list = []
     for pheno_index in range(pheno_r.col_count):
         K0_kdi_i = K0_kdi[pheno_index]
-        covarKcovar_i = covarKcovar[:,:,pheno_index:pheno_index+1]
-        covarKpheno_i = covarKpheno[:,:,pheno_index:pheno_index+1]
+        covarKcovar_i = covarKcovar[:, :, pheno_index : pheno_index + 1]
+        covarKpheno_i = covarKpheno[:, :, pheno_index : pheno_index + 1]
 
         pheno_col = pheno_r.col[pheno_index : pheno_index + 1]
 
@@ -191,28 +190,27 @@ def single_snp_eigen(
         )
         alt_batch_r = K0_eigen.rotate(alt_batch)
 
+        #!!!cmk refactor
+        covarKalt_batch, _ = AKB.from_rotated_3D(
+            covar_r, K0_kdi, alt_batch_r, aK=covarK
+        )
+
         alt_batchK_list = []
-        covarKalt_batch_list = []
         alt_batchKy_list = []
         for pheno_index in range(pheno_r.col_count):
             K0_kdi_i = K0_kdi[pheno_index]
-            covarK_i = covarK[:,:,pheno_index]
+            covarK_i = covarK[:, :, pheno_index]
             pheno_r_i = pheno_r[pheno_index]
 
-            covarKalt_batch_i, _ = AKB.from_rotated_cmka(
-                covar_r, K0_kdi_i, alt_batch_r, aK=covarK_i
-            )
             alt_batchKy_i, alt_batchK_i = AKB.from_rotated_cmka(
                 alt_batch_r, K0_kdi_i, pheno_r_i
             )
 
             alt_batchK_list.append(alt_batchK_i)
-            covarKalt_batch_list.append(covarKalt_batch_i)
             alt_batchKy_list.append(alt_batchKy_i)
 
             del K0_kdi_i
             del covarK_i
-            del covarKalt_batch_i
             del alt_batchKy_i
             del alt_batchK_i
             del pheno_r_i
@@ -231,11 +229,11 @@ def single_snp_eigen(
                 K0_kdi_i = K0_kdi[pheno_index]
                 alt_batchK_i = alt_batchK_list[pheno_index]
                 XKX_i = XKX_list[pheno_index]
-                covarKalt_batch_i = covarKalt_batch_list[pheno_index]
+                covarKalt_batch_i = covarKalt_batch[:, :, pheno_index : pheno_index + 1]
                 alt_batchKy_i = alt_batchKy_list[pheno_index]
                 XKpheno_i = XKpheno_list[pheno_index]
-                phenoKpheno_i = phenoKpheno[:,:,pheno_index:pheno_index+1]
-                ll_null_i = ll_null[:,:,pheno_index:pheno_index+1]
+                phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
+                ll_null_i = ll_null[:, :, pheno_index : pheno_index + 1]
 
                 # ==================================
                 # Find alt^T * K^-1 * alt for the test SNP.
@@ -243,13 +241,10 @@ def single_snp_eigen(
                 # with the alt value.
                 # ==================================
                 altKalt_i, _ = AKB.from_rotated_cmka(
-                    alt_r,
-                    K0_kdi_i,
-                    alt_r,
-                    aK=alt_batchK_i[:, i : i + 1,:]
+                    alt_r, K0_kdi_i, alt_r, aK=alt_batchK_i[:, i : i + 1, :]
                 )
 
-                XKX_i[:cc, cc:] = covarKalt_batch_i[:, i : i + 1,:]  # upper right
+                XKX_i[:cc, cc:] = covarKalt_batch_i[:, i : i + 1, :]  # upper right
                 XKX_i[cc:, :cc] = XKX_i[:cc, cc:].T  # lower left
                 XKX_i[cc:, cc:] = altKalt_i  # lower right
 
@@ -412,9 +407,9 @@ class KdI:
         )
 
     def __getitem__(self, pheno_index):
-        if isinstance(pheno_index,slice):
+        if isinstance(pheno_index, slice):
             assert pheno_index.step is None
-            assert pheno_index.start+1 == pheno_index.stop
+            assert pheno_index.start + 1 == pheno_index.stop
             pheno_index = pheno_index.start
         h2 = self.h2[pheno_index : pheno_index + 1]
         log_delta = self.log_delta[pheno_index : pheno_index + 1]
@@ -457,6 +452,7 @@ def _stack(array_list):
             result[pheno_index] = array_list[pheno_index][0]
     return result
 
+
 # !!!cmk move to PySnpTools
 class AK(PstData):
     def __init__(self, val, row, col, pheno):
@@ -466,23 +462,23 @@ class AK(PstData):
     @staticmethod
     def from_3D(a_r, kdi, aK=None):
         if aK is None:
-            val = a_r.val[:,:,np.newaxis] / kdi.Sd
+            val = a_r.val[:, :, np.newaxis] / kdi.Sd
             return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
         else:
             return aK
 
     def from_pp(pheno_r, kdi):
-        val = pheno_r.val[:,np.newaxis,:]/kdi.Sd
+        val = pheno_r.val[:, np.newaxis, :] / kdi.Sd
         return AK(val=val, row=pheno_r.row, col=np.array(["diagonal"]), pheno=kdi.pheno)
-
 
     def __getitem__(self, index):
         val = self.val[index]
-        return AK(val=val,
-                  row=self.row[index[0]],
-                  col=self.col[index[1]],
-                  pheno=self.pheno[index[2]]
-                  )
+        return AK(
+            val=val,
+            row=self.row[index[0]],
+            col=self.col[index[1]],
+            pheno=self.pheno[index[2]],
+        )
 
 
 # !!!cmk move to PySnpTools
@@ -500,8 +496,8 @@ class AKB(PstData):
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
 
-        if len(val.shape)==3:
-            val = np.moveaxis(val,0,-1)
+        if len(val.shape) == 3:
+            val = np.moveaxis(val, 0, -1)
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         return result, aK
 
@@ -509,9 +505,11 @@ class AKB(PstData):
     def from_rotated_3D(a_r, kdi, b_r, aK=None):
         aK = AK.from_3D(a_r, kdi, aK)
 
-        val = np.moveaxis(aK.val.T.dot(b_r.val),0,-1) #!!!cmk switch to einsum
+        val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
         if kdi.is_low_rank:
-            val += a_r.double.val.T.dot(b_r.double.val)[:,:,np.newaxis] / kdi.delta.reshape(-1)
+            val += a_r.double.val.T.dot(b_r.double.val)[
+                :, :, np.newaxis
+            ] / kdi.delta.reshape(-1)
 
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         return result, aK
@@ -520,10 +518,12 @@ class AKB(PstData):
     def from_rotated_pp(pheno_r, kdi):
         aK = AK.from_pp(pheno_r, kdi)
 
-        val = np.einsum("ijk,ik->k",aK.val,pheno_r.val)[np.newaxis,np.newaxis,:]
+        val = np.einsum("ijk,ik->k", aK.val, pheno_r.val)[np.newaxis, np.newaxis, :]
         if kdi.is_low_rank:
             # !!!cmk can we dot this without repeading pheno_r input?
-            val += np.einsum("ik,ik->k",pheno_r.double.val,pheno_r.double.val)[np.newaxis,np.newaxis,:] / kdi.delta.reshape(-1)
+            val += np.einsum("ik,ik->k", pheno_r.double.val, pheno_r.double.val)[
+                np.newaxis, np.newaxis, :
+            ] / kdi.delta.reshape(-1)
 
         diagonal_name = np.array(["diagonal"])
         result = AKB(val=val, row=diagonal_name, col=diagonal_name, kdi=kdi)
@@ -533,9 +533,11 @@ class AKB(PstData):
     def from_rotated_ap(a_r, kdi, pheno_r, aK):
         aK = AK.from_3D(a_r, kdi, aK)
 
-        val = np.einsum("icp,ip->cp",aK.val,pheno_r.val)[:,np.newaxis,:]
+        val = np.einsum("icp,ip->cp", aK.val, pheno_r.val)[:, np.newaxis, :]
         if kdi.is_low_rank:
-            val += np.einsum("ic,ip->cp",a_r.double.val,pheno_r.double.val)[:,np.newaxis,:] / kdi.delta.reshape(-1)
+            val += np.einsum("ic,ip->cp", a_r.double.val, pheno_r.double.val)[
+                :, np.newaxis, :
+            ] / kdi.delta.reshape(-1)
 
         diagonal_name = np.array(["diagonal"])
         result = AKB(val=val, row=a_r.col, col=diagonal_name, kdi=kdi)
@@ -554,26 +556,33 @@ class AKB(PstData):
         # !!!cmk may want to check that the kdi's are equal
 
         val = value.val
-        if len(val.shape)==3: #!!!cmk ugly
-            val = np.squeeze(val,-1)
+        if len(val.shape) == 3:  #!!!cmk ugly
+            val = np.squeeze(val, -1)
 
         self.val[key] = val
 
     def __getitem__(self, index):
-        if len(self.val.shape)==2 and len(index)==3 and index[2] == slice(None,None,None):
-            index01 = index[0:2] #!!!cmk ugly
+        if (
+            len(self.val.shape) == 2
+            and len(index) == 3
+            and index[2] == slice(None, None, None)
+        ):
+            index01 = index[0:2]  #!!!cmk ugly
         else:
             index01 = index
-        if len(index)==2 or (len(self.kdi.pheno)==1 and index[2] == slice(None,None,None)):
+        if len(index) == 2 or (
+            len(self.kdi.pheno) == 1 and index[2] == slice(None, None, None)
+        ):
             index2 = 0
         else:
             index2 = index[2]
         val = self.val[index01]
-        return AKB(val=val, 
-                   row=self.row[index[0]],
-                   col=self.col[index[1]],
-                   kdi=self.kdi[index2]
-                   )
+        return AKB(
+            val=val,
+            row=self.row[index[0]],
+            col=self.col[index[1]],
+            kdi=self.kdi[index2],
+        )
 
     @property
     def T(self):
@@ -611,8 +620,8 @@ def _find_h2(
 def _eigen_from_akb(akb, keep_above=np.NINF):
     # !!!cmk check that square aKa not just aKb???
     val = akb.val
-    if len(val.shape)==3: #!!!cmk ugly
-        val = np.squeeze(val,-1)
+    if len(val.shape) == 3:  #!!!cmk ugly
+        val = np.squeeze(val, -1)
 
     w, v = np.linalg.eigh(val)  # !!! cmk do SVD sometimes?
     eigen = EigenData(values=w, vectors=v, row=akb.row)
@@ -637,20 +646,20 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     beta_list = []
     eigen_xkx_list = []
     for pheno_index in range(len(phenoKpheno.pheno)):
-        phenoKpheno_i = phenoKpheno[:,:,pheno_index:pheno_index+1]
-        if len(XKX.val.shape)==2:
-            XKX_i = XKX #!!!cmk
+        phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
+        if len(XKX.val.shape) == 2:
+            XKX_i = XKX  #!!!cmk
             XKpheno_i = XKpheno
         else:
-            XKX_i = XKX[:,:,pheno_index:pheno_index+1]
-            XKpheno_i = XKpheno[:,:,pheno_index:pheno_index+1]
+            XKX_i = XKX[:, :, pheno_index : pheno_index + 1]
+            XKpheno_i = XKpheno[:, :, pheno_index : pheno_index + 1]
 
         eigen_xkx_i = _eigen_from_akb(XKX_i, keep_above=1e-10)
 
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
         XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
         XKphenoK = AK.from_3D(XKpheno_r, kd0)
-        XKphenoK.val = XKphenoK.val.squeeze(-1) #!!!cmk ugly
+        XKphenoK.val = XKphenoK.val.squeeze(-1)  #!!!cmk ugly
         XKphenoK.pheno = None
         beta_i = eigen_xkx_i.t_rotate(XKphenoK)
         r2_i = PstData(
@@ -662,18 +671,20 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         beta_list.append(beta_i)
         eigen_xkx_list.append(eigen_xkx_i)
 
-    if len(phenoKpheno.pheno)==1:
-        return r2_list[0], beta_list[0],eigen_xkx_list
+    if len(phenoKpheno.pheno) == 1:
+        return r2_list[0], beta_list[0], eigen_xkx_list
     else:
-        r2 = PstData(val=np.array([pstdata.val[0,0] for pstdata in r2_list]).reshape(1,1,-1),
-                    row=phenoKpheno.row,
-                    col=phenoKpheno.col
-                    )
+        r2 = PstData(
+            val=np.array([pstdata.val[0, 0] for pstdata in r2_list]).reshape(1, 1, -1),
+            row=phenoKpheno.row,
+            col=phenoKpheno.col,
+        )
         assert beta_list[0].double is None, "cmk"
-        beta = PstData(val=np.moveaxis(np.c_[[beta_i.val for beta_i in beta_list]],0,-1),
-                    row=XKpheno.row,
-                    col=XKpheno.col
-                    )
+        beta = PstData(
+            val=np.moveaxis(np.c_[[beta_i.val for beta_i in beta_list]], 0, -1),
+            row=XKpheno.row,
+            col=XKpheno.col,
+        )
 
         return r2, beta, eigen_xkx_list
     ####!!!cmk
@@ -712,7 +723,7 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
 
         logdetXKX, _ = eigen_xkx_list[pheno_index].logdet()
         X_row_less_col = X.row_count - X.col_count
-        sigma2 = float(r2.val[:,:,pheno_index]) / X_row_less_col
+        sigma2 = float(r2.val[:, :, pheno_index]) / X_row_less_col
         nLL_i = 0.5 * (
             kdi_i.logdet
             + logdetXKX
@@ -725,10 +736,10 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
         ), "nLL has an imaginary component, possibly due to constant covariates"
         # !!!cmk which is negative loglikelihood and which is LL?
         nLL_list.append(nLL_i)
-    if len(nLL_list)==1:
-        return -nLL_list[0], beta #!!!cmk remove
+    if len(nLL_list) == 1:
+        return -nLL_list[0], beta  #!!!cmk remove
     else:
-        nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(1,1,-1)
+        nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(1, 1, -1)
         return nnLL, beta
 
 
@@ -738,11 +749,13 @@ def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
 
     nLL_list = []
     variance_beta_list = []
-    for pheno_index,_ in enumerate(phenoKpheno.pheno):
+    for pheno_index, _ in enumerate(phenoKpheno.pheno):
         eigen_xkx_i = eigen_xkx_list[pheno_index]
         kdi_i = kdi[pheno_index]
-        sigma2 = float(r2.val[:,:,pheno_index]) / kdi_i.row_count
-        nLL_i = 0.5 * (kdi_i.logdet + kdi_i.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
+        sigma2 = float(r2.val[:, :, pheno_index]) / kdi_i.row_count
+        nLL_i = 0.5 * (
+            kdi_i.logdet + kdi_i.row_count * (np.log(2.0 * np.pi * sigma2) + 1)
+        )
         assert np.all(
             np.isreal(nLL_i)
         ), "nLL has an imaginary component, possibly due to constant covariates"
@@ -754,11 +767,11 @@ def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
         )
         variance_beta_list.append(variance_beta_i)
         # !!!cmk which is negative loglikelihood and which is LL?
-    if len(phenoKpheno.pheno)==1:
-        return -nLL_i, beta, variance_beta_i #!!!cmk remove this case
+    if len(phenoKpheno.pheno) == 1:
+        return -nLL_i, beta, variance_beta_i  #!!!cmk remove this case
     else:
-        nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(1,1,-1)
-        variance_beta = np.moveaxis(np.c_[variance_beta_list],0,-1)
+        nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(1, 1, -1)
+        variance_beta = np.moveaxis(np.c_[variance_beta_list], 0, -1)
         return nnLL, beta, variance_beta
 
 

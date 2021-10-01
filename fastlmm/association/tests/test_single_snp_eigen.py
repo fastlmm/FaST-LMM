@@ -69,9 +69,9 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        runner2 = LocalMultiProc(6, just_one_process=False)
-        extra_fraction = 1
-        first_list = [{'pheno':0,'use_reml':0}]
+        runner2 = None  # LocalMultiProc(6, just_one_process=False)
+        extra_fraction = 0.1
+        first_list = [{"pheno": 0}]  # [{'pheno':0,'use_reml':0}]
 
         def mapper2(option):
             import numpy as np
@@ -162,7 +162,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                     },
                     seed=10234,
                     extra_fraction=extra_fraction,
-                    first_list = first_list
+                    first_list=first_list,
                 )
             ),
             mapper=mapper2,
@@ -988,7 +988,6 @@ def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
             else:
                 output[key] = value[0]
         yield output
-
 
     for i in range(max_values):
         output = {}
