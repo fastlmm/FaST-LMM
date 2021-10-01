@@ -190,30 +190,14 @@ def single_snp_eigen(
         )
         alt_batch_r = K0_eigen.rotate(alt_batch)
 
-        #!!!cmk refactor
         covarKalt_batch, _ = AKB.from_rotated_3D(
             covar_r, K0_kdi, alt_batch_r, aK=covarK
         )
 
-        alt_batchK_list = []
-        alt_batchKy_list = []
-        for pheno_index in range(pheno_r.col_count):
-            K0_kdi_i = K0_kdi[pheno_index]
-            covarK_i = covarK[:, :, pheno_index]
-            pheno_r_i = pheno_r[pheno_index]
-
-            alt_batchKy_i, alt_batchK_i = AKB.from_rotated_cmka(
-                alt_batch_r, K0_kdi_i, pheno_r_i
-            )
-
-            alt_batchK_list.append(alt_batchK_i)
-            alt_batchKy_list.append(alt_batchKy_i)
-
-            del K0_kdi_i
-            del covarK_i
-            del alt_batchKy_i
-            del alt_batchK_i
-            del pheno_r_i
+        #!!!cmk refactor
+        alt_batchKy, alt_batchK = AKB.from_rotated_ap(
+            alt_batch_r, K0_kdi, pheno_r
+        )
 
         # ==================================
         # For each test SNP in the batch
@@ -227,10 +211,10 @@ def single_snp_eigen(
 
             for pheno_index in range(pheno_r.col_count):
                 K0_kdi_i = K0_kdi[pheno_index]
-                alt_batchK_i = alt_batchK_list[pheno_index]
+                alt_batchK_i = alt_batchK[:,:,pheno_index:pheno_index+1]
                 XKX_i = XKX_list[pheno_index]
                 covarKalt_batch_i = covarKalt_batch[:, :, pheno_index : pheno_index + 1]
-                alt_batchKy_i = alt_batchKy_list[pheno_index]
+                alt_batchKy_i = alt_batchKy[:,:,pheno_index:pheno_index+1]
                 XKpheno_i = XKpheno_list[pheno_index]
                 phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
                 ll_null_i = ll_null[:, :, pheno_index : pheno_index + 1]
@@ -249,7 +233,8 @@ def single_snp_eigen(
                 XKX_i[cc:, cc:] = altKalt_i  # lower right
 
                 # !!!cmk rename alt_batchKy so no "y"?
-                XKpheno_i[cc:, :] = alt_batchKy_i[i : i + 1, :]  # lower
+                cmktemp = alt_batchKy_i[i : i + 1, :]
+                XKpheno_i[cc:, :] = cmktemp  # lower
 
                 # ==================================
                 # Find likelihood with test SNP and score.
@@ -530,7 +515,7 @@ class AKB(PstData):
         return result, aK
 
     @staticmethod
-    def from_rotated_ap(a_r, kdi, pheno_r, aK):
+    def from_rotated_ap(a_r, kdi, pheno_r, aK=None):
         aK = AK.from_3D(a_r, kdi, aK)
 
         val = np.einsum("icp,ip->cp", aK.val, pheno_r.val)[:, np.newaxis, :]
