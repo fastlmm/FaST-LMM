@@ -195,25 +195,23 @@ def single_snp_eigen(
             # Fill in last value of X, XKX and XKpheno
             # with the alt value.
             # ==================================
-            #!!!cmk refactor
             altKalt, _ = AKB.from_rotated_3D(alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :])
 
+            XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
+            XKX[cc:, :cc] = XKX[:cc, cc:].T  # lower left
+            XKX[cc:, cc:] = altKalt[:,:]  # lower right
+            #!!!cmk refactor
+            # !!!cmk rename alt_batchKy so no "y"?
+            XKpheno[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
 
             for pheno_index in range(pheno_r.col_count):
-                XKX_i = XKX[:,:,pheno_index]
-                covarKalt_batch_i = covarKalt_batch[:, :, pheno_index : pheno_index + 1]
                 alt_batchKy_i = alt_batchKy[:,:,pheno_index:pheno_index+1]
-                XKpheno_i = XKpheno[:,:,pheno_index]
                 phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
                 ll_null_i = ll_null[:, :, pheno_index : pheno_index + 1]
 
+                XKX_i = XKX[:,:,pheno_index]
+                XKpheno_i = XKpheno[:,:,pheno_index]
 
-                XKX_i[:cc, cc:] = covarKalt_batch_i[:, i : i + 1, :]  # upper right
-                XKX_i[cc:, :cc] = XKX_i[:cc, cc:].T  # lower left
-                XKX_i[cc:, cc:] = altKalt[:,:,pheno_index:pheno_index+1]  # lower right
-
-                # !!!cmk rename alt_batchKy so no "y"?
-                XKpheno_i[cc:, :] = alt_batchKy_i[i : i + 1, :]  # lower
 
                 # ==================================
                 # Find likelihood with test SNP and score.
@@ -556,7 +554,7 @@ class AKB(PstData):
 
     @property
     def T(self):
-        return AKB(val=self.val.T, row=self.col, col=self.row, kdi=self.kdi)
+        return AKB(val=np.moveaxis(self.val,0,1), row=self.col, col=self.row, kdi=self.kdi)
 
 
 # !!!cmk change use_reml etc to 'use_reml'
