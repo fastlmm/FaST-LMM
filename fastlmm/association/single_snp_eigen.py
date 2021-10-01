@@ -115,8 +115,9 @@ def single_snp_eigen(
     K0_kdi = KdI.from_list(K0_kdi_list)
     del K0_kdi_list
 
-    # !!!cmk refactor: pulling this out of loop
     covarKcovar, covarK = AKB.from_rotated_3D(covar_r, K0_kdi, covar_r)
+    # !!!cmk refactor pulling phenoKpheno out of loop
+    phenoKpheno, _ = AKB.from_rotated_pp(pheno_r, K0_kdi)
 
     search_result_list = []
     for pheno_index in range(pheno_r.col_count):
@@ -131,19 +132,17 @@ def single_snp_eigen(
         #   * The AKB value
         #   * The KdI objected use to create it.
         # =========================
-        phenoKpheno_i, _ = AKB.from_rotated_cmka(pheno_r_i, K0_kdi_i, pheno_r_i)
         covarKpheno_i, _ = AKB.from_rotated_3D(
             covar_r, K0_kdi_i, pheno_r_i, aK=covarK[:,:,pheno_index:pheno_index+1]
              )
 
         ll_null_i, beta_i, variance_beta_i = _loglikelihood(
-            covar, phenoKpheno_i, covarKcovar[:,:,pheno_index:pheno_index+1], covarKpheno_i, use_reml=test_via_reml
+            covar, phenoKpheno[:,:,pheno_index:pheno_index+1], covarKcovar[:,:,pheno_index:pheno_index+1], covarKpheno_i, use_reml=test_via_reml
         )
 
         search_result_list.append(
             {
                 "covarKpheno": covarKpheno_i,
-                "phenoKpheno": phenoKpheno_i,
                 "ll_null": ll_null_i,
             }
         )
@@ -259,7 +258,7 @@ def single_snp_eigen(
                 covarKalt_batch_i = covarKalt_batch_list[pheno_index]
                 alt_batchKy_i = alt_batchKy_list[pheno_index]
                 XKpheno_i = XKpheno_list[pheno_index]
-                phenoKpheno_i = search_result["phenoKpheno"]
+                phenoKpheno_i = phenoKpheno[:,:,pheno_index:pheno_index+1]
                 ll_null_i = search_result["ll_null"]
 
                 # ==================================
@@ -489,15 +488,6 @@ class AK(PstData):
         super().__init__(val=val, row=row, col=col)
         self.pheno = pheno
 
-    #@staticmethod
-    #def from_cmka(a_r, kdi, aK=None):
-    #    if aK is None:
-    #        assert kdi.pheno_count == 1, "cmk"
-    #        val =a_r.val / kdi.Sd[:, :, 0]
-    #        return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
-    #    else:
-    #        return aK
-
     @staticmethod
     def from_3D(a_r, kdi, aK=None):
         if aK is None:
@@ -505,6 +495,11 @@ class AK(PstData):
             return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
         else:
             return aK
+
+    def from_pp(pheno_r, kdi):
+        val = pheno_r.val[:,np.newaxis,:]/kdi.Sd
+        return AK(val=val, row=pheno_r.row, col=np.array(["diagonal"]), pheno=kdi.pheno)
+
 
     def __getitem__(self, index):
         val = self.val[index]
@@ -546,6 +541,18 @@ class AKB(PstData):
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         return result, aK
 
+    @staticmethod
+    def from_rotated_pp(pheno_r, kdi):
+        aK = AK.from_pp(pheno_r, kdi)
+
+        val = np.einsum("ijk,ik->k",aK.val,pheno_r.val)[np.newaxis,np.newaxis,:]
+        if kdi.is_low_rank:
+            # !!!cmk can we dot this without repeading pheno_r input?
+            val += np.einsum("ik,ik->k",pheno_r.double.val,pheno_r.double.val)[np.newaxis,np.newaxis,:] / kdi.delta.reshape(-1)
+
+        diagonal_name = np.array(["diagonal"])
+        result = AKB(val=val, row=diagonal_name, col=diagonal_name, kdi=kdi)
+        return result, aK
 
     @staticmethod
     def empty(row, col, kdi):
