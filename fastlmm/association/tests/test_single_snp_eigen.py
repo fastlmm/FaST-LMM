@@ -69,7 +69,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        runner2 = None # LocalMultiProc(6, just_one_process=False)
+        runner2 = LocalMultiProc(6, just_one_process=False)
         extra_fraction = 1
         first_list = [('pheno',0)]
 

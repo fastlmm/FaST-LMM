@@ -116,13 +116,12 @@ def single_snp_eigen(
     del K0_kdi_list
 
     covarKcovar, covarK = AKB.from_rotated_3D(covar_r, K0_kdi, covar_r)
-    # !!!cmk refactor pulling phenoKpheno out of loop
     phenoKpheno, _ = AKB.from_rotated_pp(pheno_r, K0_kdi)
+    # !!!cmk refactor pulling covarKpheno out of loop
+    covarKpheno, _ = AKB.from_rotated_ap(covar_r, K0_kdi, pheno_r, aK=covarK)
 
     search_result_list = []
     for pheno_index in range(pheno_r.col_count):
-        K0_kdi_i = K0_kdi[pheno_index]
-        pheno_r_i = pheno_r[pheno_index]
 
         # =========================
         # Find A^T * K^-1 * B for covar and pheno.
@@ -132,17 +131,13 @@ def single_snp_eigen(
         #   * The AKB value
         #   * The KdI objected use to create it.
         # =========================
-        covarKpheno_i, _ = AKB.from_rotated_3D(
-            covar_r, K0_kdi_i, pheno_r_i, aK=covarK[:,:,pheno_index:pheno_index+1]
-             )
 
         ll_null_i, beta_i, variance_beta_i = _loglikelihood(
-            covar, phenoKpheno[:,:,pheno_index:pheno_index+1], covarKcovar[:,:,pheno_index:pheno_index+1], covarKpheno_i, use_reml=test_via_reml
+            covar, phenoKpheno[:,:,pheno_index:pheno_index+1], covarKcovar[:,:,pheno_index:pheno_index+1], covarKpheno[:,:,pheno_index:pheno_index+1], use_reml=test_via_reml
         )
 
         search_result_list.append(
             {
-                "covarKpheno": covarKpheno_i,
                 "ll_null": ll_null_i,
             }
         )
@@ -176,7 +171,7 @@ def single_snp_eigen(
         search_result = search_result_list[pheno_index]
         K0_kdi_i = K0_kdi[pheno_index]
         covarKcovar_i = covarKcovar[:,:,pheno_index:pheno_index+1]
-        covarKpheno_i = search_result["covarKpheno"]
+        covarKpheno_i = covarKpheno[:,:,pheno_index:pheno_index+1]
 
         pheno_col = pheno_r.col[pheno_index : pheno_index + 1]
 
@@ -534,7 +529,7 @@ class AKB(PstData):
     def from_rotated_3D(a_r, kdi, b_r, aK=None):
         aK = AK.from_3D(a_r, kdi, aK)
 
-        val = np.moveaxis(aK.val.T.dot(b_r.val),0,-1)
+        val = np.moveaxis(aK.val.T.dot(b_r.val),0,-1) #!!!cmk switch to einsum
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val)[:,:,np.newaxis] / kdi.delta.reshape(-1)
 
@@ -552,6 +547,18 @@ class AKB(PstData):
 
         diagonal_name = np.array(["diagonal"])
         result = AKB(val=val, row=diagonal_name, col=diagonal_name, kdi=kdi)
+        return result, aK
+
+    @staticmethod
+    def from_rotated_ap(a_r, kdi, pheno_r, aK):
+        aK = AK.from_3D(a_r, kdi, aK)
+
+        val = np.einsum("icp,ip->cp",aK.val,pheno_r.val)[:,np.newaxis,:]
+        if kdi.is_low_rank:
+            val += np.einsum("ic,ip->cp",a_r.double.val,pheno_r.double.val)[:,np.newaxis,:] / kdi.delta.reshape(-1)
+
+        diagonal_name = np.array(["diagonal"])
+        result = AKB(val=val, row=a_r.col, col=diagonal_name, kdi=kdi)
         return result, aK
 
     @staticmethod
