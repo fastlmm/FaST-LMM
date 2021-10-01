@@ -71,7 +71,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         runner = None  # LocalMultiProc(6, just_one_process=False)
         runner2 = LocalMultiProc(6, just_one_process=False)
         extra_fraction = 1
-        first_list = [('pheno',0)]
+        first_list = [{'pheno':0,'use_reml':0}]
 
         def mapper2(option):
             import numpy as np
@@ -978,11 +978,12 @@ def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
     values = [rng.permutation(value) for value in old_values]
     max_values = max([len(value) for value in values])
 
-    for key_of_interest, value_index_of_interest in first_list:
+    for dict_of_interest in first_list:
         output = {}
         for key_index, key in enumerate(keys):
             value = values[key_index]
-            if key == key_of_interest:
+            if key in dict_of_interest:
+                value_index_of_interest = dict_of_interest[key]
                 output[key] = old_values[key_index][value_index_of_interest]
             else:
                 output[key] = value[0]
