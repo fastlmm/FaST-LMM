@@ -194,7 +194,6 @@ def single_snp_eigen(
             covar_r, K0_kdi, alt_batch_r, aK=covarK
         )
 
-        #!!!cmk refactor
         alt_batchKy, alt_batchK = AKB.from_rotated_ap(
             alt_batch_r, K0_kdi, pheno_r
         )
@@ -209,6 +208,15 @@ def single_snp_eigen(
             if test_via_reml:  # Only need "X" for REML
                 X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
 
+            # ==================================
+            # Find alt^T * K^-1 * alt for the test SNP.
+            # Fill in last value of X, XKX and XKpheno
+            # with the alt value.
+            # ==================================
+            #!!!cmk refactor
+            altKalt, _ = AKB.from_rotated_3D(alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :])
+
+
             for pheno_index in range(pheno_r.col_count):
                 K0_kdi_i = K0_kdi[pheno_index]
                 alt_batchK_i = alt_batchK[:,:,pheno_index:pheno_index+1]
@@ -219,18 +227,10 @@ def single_snp_eigen(
                 phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
                 ll_null_i = ll_null[:, :, pheno_index : pheno_index + 1]
 
-                # ==================================
-                # Find alt^T * K^-1 * alt for the test SNP.
-                # Fill in last value of X, XKX and XKpheno
-                # with the alt value.
-                # ==================================
-                altKalt_i, _ = AKB.from_rotated_cmka(
-                    alt_r, K0_kdi_i, alt_r, aK=alt_batchK_i[:, i : i + 1, :]
-                )
 
                 XKX_i[:cc, cc:] = covarKalt_batch_i[:, i : i + 1, :]  # upper right
                 XKX_i[cc:, :cc] = XKX_i[:cc, cc:].T  # lower left
-                XKX_i[cc:, cc:] = altKalt_i  # lower right
+                XKX_i[cc:, cc:] = altKalt[:,:,pheno_index:pheno_index+1]  # lower right
 
                 # !!!cmk rename alt_batchKy so no "y"?
                 cmktemp = alt_batchKy_i[i : i + 1, :]
@@ -262,7 +262,6 @@ def single_snp_eigen(
                 del ll_alt_i
                 del beta_i
                 del variance_beta_i
-                del altKalt_i
 
         dataframe = _create_dataframe().append(result_list, ignore_index=True)
         dataframe["sid_index"] = np.repeat(
