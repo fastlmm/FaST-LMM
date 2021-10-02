@@ -554,13 +554,10 @@ def _find_h2(
     return resmin[0]
 
 
-def _eigen_from_akb(akb, keep_above=np.NINF):
+def _eigen_from_akb1(akb, keep_above=np.NINF):
     # !!!cmk check that square aKa not just aKb???
-    val = akb.val
-    #!!!cmk kludge
-    if len(val.shape) == 3:  #!!!cmk ugly
-        val = np.squeeze(val, -1)
-
+    assert len(akb.val.shape) == 3 and akb.val.shape[2] == 1, "Expect to run on just one phenotype"
+    val = np.squeeze(akb.val, -1)
     w, v = np.linalg.eigh(val)  # !!! cmk do SVD sometimes?
     eigen = EigenData(values=w, vectors=v, row=akb.row)
     if keep_above > np.NINF:
@@ -582,15 +579,10 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     eigen_xkx_list = []
     for pheno_index in range(len(phenoKpheno.pheno)):
         phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
-        #!!!cmk kludge
-        if len(XKX.val.shape) == 2:
-            XKX_i = XKX  #!!!cmk
-            XKpheno_i = XKpheno
-        else:
-            XKX_i = XKX[:, :, pheno_index : pheno_index + 1]
-            XKpheno_i = XKpheno[:, :, pheno_index : pheno_index + 1]
+        XKX_i = XKX[:, :, pheno_index : pheno_index + 1]
+        XKpheno_i = XKpheno[:, :, pheno_index : pheno_index + 1]
 
-        eigen_xkx_i = _eigen_from_akb(XKX_i, keep_above=1e-10)
+        eigen_xkx_i = _eigen_from_akb1(XKX_i, keep_above=1e-10)
 
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
         XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
