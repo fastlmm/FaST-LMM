@@ -70,6 +70,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
         runner2 = LocalMultiProc(6, just_one_process=False)
+        exception_to_catch = Exception # TimeoutError
         extra_fraction = .1
         matrix = {
             "use_reml": [True, False],
@@ -155,7 +156,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                         np.log(frame_i.PValue),  #!!!cmk
                         decimal=7,
                     )
-            except Exception as e:
+            except exception_to_catch as e:
                 print(str(e))
                 return option
             return None

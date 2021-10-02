@@ -202,11 +202,11 @@ def single_snp_eigen(
                 alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :]
             )
 
-            XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
-            XKX[cc:, :cc] = XKX[:cc, cc:].T  # lower left
-            XKX[cc:, cc:] = altKalt[:, :]  # lower right
+            XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1, :]  # upper right
+            XKX[cc:, :cc] = XKX[:cc, cc:, :].T  # lower left
+            XKX[cc:, cc:] = altKalt[:, :, :]  # lower right
             # !!!cmk rename alt_batchKpheno so no "y"?
-            XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
+            XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :, :]  # lower
 
             if test_via_reml:  # Only need "X" for REML
                 X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
@@ -364,6 +364,8 @@ class KdI:
         )
 
     def __getitem__(self, pheno_index):
+        if pheno_index == slice(None,None,None):
+            return self
         if isinstance(pheno_index, slice):
             assert pheno_index.step is None
             assert pheno_index.start + 1 == pheno_index.stop
@@ -508,9 +510,9 @@ class AKB(PstData):
 
     def __getitem__(self, index):
         #!!!cmk kludge
-        if len(index) == 2 or (
-            len(self.kdi.pheno) == 1 and index[2] == slice(None, None, None)
-        ):
+        if len(index) == 2:
+            index2 = 0
+        elif len(self.kdi.pheno) == 1 and index[2] == slice(None, None, None):
             index2 = 0
         else:
             index2 = index[2]
