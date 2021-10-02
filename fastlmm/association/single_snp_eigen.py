@@ -304,6 +304,7 @@ def _covar_read_with_bias(covar):
 class KdI:
     def __init__(self, hld, row, pheno, is_low_rank, logdet, Sd):
         self.h2, self.log_delta, self.delta = hld
+        assert len(self.h2.shape)==1, "!!!cmk"
         self.row = row
         self.pheno = pheno
         self.is_low_rank = is_low_rank
@@ -347,10 +348,11 @@ class KdI:
 
     @staticmethod
     def from_list(kdi_list):
+        #!!!cmk if h2 is shape (3), why is logdet (1,1,3)?
         assert len(kdi_list) > 0, "list must contain at least one item"
-        h2 = np.r_[[kdi.h2 for kdi in kdi_list]]
-        log_delta = np.r_[[kdi.log_delta for kdi in kdi_list]]
-        delta = np.r_[[kdi.delta for kdi in kdi_list]]
+        h2 = np.r_[[float(kdi.h2) for kdi in kdi_list]]
+        log_delta = np.r_[[float(kdi.log_delta) for kdi in kdi_list]]
+        delta = np.r_[[float(kdi.delta) for kdi in kdi_list]]
         logdet = _stack([kdi.logdet for kdi in kdi_list])
         Sd = _stack([kdi.Sd for kdi in kdi_list])
         pheno = _stack([kdi.pheno for kdi in kdi_list])
@@ -509,19 +511,12 @@ class AKB(PstData):
         self.val[key] = value.val
 
     def __getitem__(self, index):
-        #!!!cmk kludge
-        if len(index) == 2:
-            index2 = 0
-        elif len(self.kdi.pheno) == 1 and index[2] == slice(None, None, None):
-            index2 = 0
-        else:
-            index2 = index[2]
         val = self.val[index]
         return AKB(
             val=val,
             row=self.row[index[0]],
             col=self.col[index[1]],
-            kdi=self.kdi[index2],
+            kdi=self.kdi[index[2]],
         )
 
     @property
@@ -706,10 +701,16 @@ def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
             * sigma2
             * (eigen_xkx_i.vectors / eigen_xkx_i.values * eigen_xkx_i.vectors).sum(-1)
         )
+        assert len(variance_beta_i.shape)==1, "!!!cmk"
         variance_beta_list.append(variance_beta_i)
         # !!!cmk which is negative loglikelihood and which is LL?
     nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(-1)
-    variance_beta = np.moveaxis(np.c_[variance_beta_list], 0, -1)
+
+    variance_beta = np.c_[variance_beta_list]
+    assert len(variance_beta.shape)==2, "!!!cmk"
+    variance_beta = variance_beta.T
+    # !!!cmk variance_beta = np.squeeze(variance_beta,0).T
+    assert variance_beta.shape == (XKX.row_count, len(phenoKpheno.pheno)), "!!!cmk"
     return nnLL, beta, variance_beta
 
 

@@ -69,9 +69,14 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        runner2 = LocalMultiProc(6, just_one_process=False)
-        exception_to_catch = Exception # TimeoutError
-        extra_fraction = .1
+        if False:
+            runner2 = None # LocalMultiProc(6, just_one_process=False)
+            exception_to_catch = TimeoutError #Exception # 
+            extra_fraction = .2
+        else:
+            runner2 = LocalMultiProc(6, just_one_process=False)
+            exception_to_catch = Exception
+            extra_fraction = 1
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],
@@ -80,7 +85,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn],
         }
-        first_list = []  # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
+        first_list = [{"use_reml": 1, "cov": 1, "pheno": 0}]  # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
 
         def mapper2(option):
             try:
@@ -162,11 +167,12 @@ class TestSingleSnpEigen(unittest.TestCase):
             return None
 
         def reducer2(bad_option_list):
+            result = True
             for bad_option in bad_option_list:
                 if bad_option is not None:
                     print(bad_option)
-                    return False
-            return True
+                    result = False
+            return result
 
         is_ok = map_reduce(
             list(
