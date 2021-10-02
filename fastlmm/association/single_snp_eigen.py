@@ -634,7 +634,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         eigen_xkx_list.append(eigen_xkx_i)
 
     #!!!cmk kludge
-    if len(phenoKpheno.pheno) == 1:
+    if False: # cmklen(phenoKpheno.pheno) == 1:
         return r2_list[0], beta_list[0], eigen_xkx_list
     else:
         r2 = PstData(
