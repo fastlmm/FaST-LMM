@@ -76,7 +76,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         else:
             runner2 = LocalMultiProc(6, just_one_process=False)
             exception_to_catch = Exception
-            extra_fraction = 1
+            extra_fraction = .2
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],

@@ -607,32 +607,17 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         beta_list.append(beta_i)
         eigen_xkx_list.append(eigen_xkx_i)
 
-    #!!!cmk kludge
-    if False: # cmklen(phenoKpheno.pheno) == 1:
-        return r2_list[0], beta_list[0], eigen_xkx_list
-    else:
-        r2 = PstData(
-            val=np.array([pstdata.val[0, 0] for pstdata in r2_list]).reshape(1, 1, -1),
-            row=phenoKpheno.row,
-            col=phenoKpheno.col,
-        )
-        assert beta_list[0].double is None, "cmk"
-        val = np.c_[[beta_i.val for beta_i in beta_list]]
-        val = np.squeeze(val,-1).T
-        beta = PstData(val=val,row=XKpheno.row,col=phenoKpheno.pheno)
+    r2 = PstData(
+        val=np.array([pstdata.val[0, 0] for pstdata in r2_list]).reshape(1, 1, -1),
+        row=phenoKpheno.row,
+        col=phenoKpheno.col,
+    )
+    assert beta_list[0].double is None, "cmk"
+    val = np.c_[[beta_i.val for beta_i in beta_list]]
+    val = np.squeeze(val,-1).T
+    beta = PstData(val=val,row=XKpheno.row,col=phenoKpheno.pheno)
 
-        return r2, beta, eigen_xkx_list
-    ####!!!cmk
-    # beta0 = eigen_xkx.vectors.dot(
-    #        eigen_xkx.rotate(XKpheno).val.reshape(-1) / eigen_xkx.values
-    #    )
-
-    # r0 = float(phenoKpheno.val - XKpheno.val.reshape(-1).dot(beta0))
-    # r2 = float(r2.val)
-    # beta = beta.val.reshape(-1)
-    # assert np.all(np.equal(beta,beta0))
-    # assert r0==r2
-    # return r0, beta0, eigen_xkx #!!!cmk float(r2.val), beta.val.reshape(-1), eigen_xkx
+    return r2, beta, eigen_xkx_list
 
 
 def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
