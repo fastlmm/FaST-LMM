@@ -69,8 +69,8 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        runner2 = None  # LocalMultiProc(6, just_one_process=False)
-        extra_fraction = 0.1
+        runner2 = None # LocalMultiProc(6, just_one_process=False)
+        extra_fraction = 1
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],
@@ -79,7 +79,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn],
         }
-        first_list = [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
+        first_list = [] # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
 
         def mapper2(option):
             import numpy as np
@@ -94,25 +94,24 @@ class TestSingleSnpEigen(unittest.TestCase):
             delta = option["delta"]
             pheno = option["pheno"]
 
-            if True:
-                K0_eigen = eigen_from_kernel(
-                    snp_reader[:, :train_count],
-                    kernel_standardizer=KernelIdentity(),
-                )  # !!!cmk why not diag standardize?
-                frame = single_snp_eigen(
-                    test_snps=Bed(bed_fn, count_A1=False)[
-                        :, train_count : train_count + test_count
-                    ],
-                    pheno=pheno,
-                    K0_eigen=K0_eigen,
-                    covar=cov,
-                    output_file_name=None,
-                    log_delta=np.log(delta) if delta is not None else None,
-                    find_delta_via_reml=use_reml,
-                    test_via_reml=use_reml,
-                    count_A1=False,
-                    runner=runner,
-                )
+            K0_eigen = eigen_from_kernel(
+                snp_reader[:, :train_count],
+                kernel_standardizer=KernelIdentity(),
+            )  # !!!cmk why not diag standardize?
+            frame = single_snp_eigen(
+                test_snps=Bed(bed_fn, count_A1=False)[
+                    :, train_count : train_count + test_count
+                ],
+                pheno=pheno,
+                K0_eigen=K0_eigen,
+                covar=cov,
+                output_file_name=None,
+                log_delta=np.log(delta) if delta is not None else None,
+                find_delta_via_reml=use_reml,
+                test_via_reml=use_reml,
+                count_A1=False,
+                runner=runner,
+            )
 
             G = snp_reader.read().standardize().val
             if cov is not None:

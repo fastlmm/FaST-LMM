@@ -118,6 +118,7 @@ def single_snp_eigen(
     )
 
     # =========================
+    # For each pheno (as the last dimension of the matrix) ...
     # Find A^T * K^-1 * B for covar and pheno.
     # Then find null likelihood for testing.
     # "AKB.from_rotated" works for both full and low-rank.
@@ -135,14 +136,15 @@ def single_snp_eigen(
 
     # ==================================
     # X is the covariates (with bias) and one test SNP.
-    # Create an X, XKX, and XKpheno where
+    # For each pheno (as the last dimension of the matrix) ...
+    # Create an XKX, and XKpheno where
     # the last part can be swapped for each test SNP.
     # ==================================
     cc = covar.sid_count  # number of covariates including bias
     # !!!cmk what if alt is not unique?
     xkx_sid = np.append(covar.sid, "alt")
     if test_via_reml:
-        # Only need "X" for REML
+        # Only need explicit "X" for REML
         X = SnpData(
             val=np.full((covar.iid_count, len(xkx_sid)), fill_value=np.nan),
             iid=covar.iid,
@@ -152,10 +154,10 @@ def single_snp_eigen(
     else:
         X = None
 
-    XKX = AKB.empty3D(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
+    XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
     XKX[:cc, :cc] = covarKcovar  # upper left
     diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
-    XKpheno = AKB.empty3D(xkx_sid, diagonal_name, kdi=K0_kdi)
+    XKpheno = AKB.empty(xkx_sid, diagonal_name, kdi=K0_kdi)
     XKpheno[:cc, :] = covarKpheno  # upper
 
     # ==================================
@@ -167,6 +169,7 @@ def single_snp_eigen(
     def mapper(sid_start):
         # ==================================
         # Read and standardize a batch of test SNPs. Then rotate.
+        # For each pheno (as the last dimension in the matrix) ...
         # Find A^T * K^-1 * B for covar & pheno vs. the batch
         # ==================================
         alt_batch = (
@@ -178,7 +181,7 @@ def single_snp_eigen(
             covar_r, K0_kdi, alt_batch_r, aK=covarK
         )
 
-        alt_batchKy, alt_batchK = AKB.from_rotated_ap(alt_batch_r, K0_kdi, pheno_r)
+        alt_batchKpheno, alt_batchK = AKB.from_rotated_ap(alt_batch_r, K0_kdi, pheno_r)
 
         # ==================================
         # For each test SNP in the batch
@@ -187,10 +190,8 @@ def single_snp_eigen(
         for i in range(alt_batch.sid_count):
             alt_r = alt_batch_r[i]
 
-            if test_via_reml:  # Only need "X" for REML
-                X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
-
             # ==================================
+            # For each pheno (as the last dimension in the matrix) ...
             # Find alt^T * K^-1 * alt for the test SNP.
             # Fill in last value of X, XKX and XKpheno
             # with the alt value.
@@ -202,9 +203,11 @@ def single_snp_eigen(
             XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
             XKX[cc:, :cc] = XKX[:cc, cc:].T  # lower left
             XKX[cc:, cc:] = altKalt[:, :]  # lower right
-            #!!!cmk refactor
-            # !!!cmk rename alt_batchKy so no "y"?
-            XKpheno[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
+            # !!!cmk rename alt_batchKpheno so no "y"?
+            XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
+
+            if test_via_reml:  # Only need "X" for REML
+                X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
 
             # ==================================
             # Find likelihood with test SNP and score.
@@ -215,14 +218,14 @@ def single_snp_eigen(
             )
             if len(beta.val.shape) == 3:  #!!!cmk remove this kludge
                 beta_val = np.squeeze(beta.val, 1)
+                if variance_beta is not None:
+                    variance_beta = np.squeeze(variance_beta,0)
             else:
                 beta_val = beta.val
 
-            #!!!cmk make ll_alt be dim (3) not (1,1,3)
             test_statistic = ll_alt - ll_null
 
             for pheno_index in range(pheno_r.col_count):
-
                 result_list.append(
                     {
                         "PValue": stats.chi2.sf(
@@ -503,15 +506,6 @@ class AKB(PstData):
 
     @staticmethod
     def empty(row, col, kdi):
-        return AKB(
-            val=np.full(shape=(len(row), len(col)), fill_value=np.NaN),
-            row=row,
-            col=col,
-            kdi=kdi,
-        )
-
-    @staticmethod
-    def empty3D(row, col, kdi):
         return AKB(
             val=np.full(shape=(len(row), len(col), len(kdi.pheno)), fill_value=np.NaN),
             row=row,
