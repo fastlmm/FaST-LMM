@@ -219,14 +219,6 @@ def single_snp_eigen(
                 X, phenoKpheno, XKX, XKpheno, use_reml=test_via_reml
             )
 
-            #!!!cmk kludge
-            if len(beta.val.shape) == 3:  #!!!cmk remove this kludge
-                beta_val = np.squeeze(beta.val, 1)
-                if variance_beta is not None:
-                    variance_beta = np.squeeze(variance_beta, 0)
-            else:
-                beta_val = beta.val
-
             test_statistic = ll_alt - ll_null
 
             for pheno_index in range(pheno_r.col_count):
@@ -235,7 +227,7 @@ def single_snp_eigen(
                         "PValue": stats.chi2.sf(
                             2.0 * test_statistic[pheno_index], df=1
                         ),
-                        "SnpWeight": beta_val[:, pheno_index],  #!!!cmk
+                        "SnpWeight": beta.val[:, pheno_index],  #!!!cmk
                         "SnpWeightSE": np.sqrt(variance_beta[:, pheno_index])
                         if variance_beta is not None
                         else None,
@@ -643,11 +635,9 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
             col=phenoKpheno.col,
         )
         assert beta_list[0].double is None, "cmk"
-        beta = PstData(
-            val=np.moveaxis(np.c_[[beta_i.val for beta_i in beta_list]], 0, -1),
-            row=XKpheno.row,
-            col=XKpheno.col,
-        )
+        val = np.c_[[beta_i.val for beta_i in beta_list]]
+        val = np.squeeze(val,-1).T
+        beta = PstData(val=val,row=XKpheno.row,col=phenoKpheno.pheno)
 
         return r2, beta, eigen_xkx_list
     ####!!!cmk

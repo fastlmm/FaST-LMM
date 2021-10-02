@@ -69,7 +69,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        runner2 = None  # LocalMultiProc(6, just_one_process=False)
+        runner2 = None # LocalMultiProc(6, just_one_process=False)
         extra_fraction = .1
         matrix = {
             "use_reml": [True, False],
@@ -82,81 +82,92 @@ class TestSingleSnpEigen(unittest.TestCase):
         first_list = []  # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
 
         def mapper2(option):
-            import numpy as np
-            from pysnptools.snpreader import Bed, Pheno, SnpData
-            from pysnptools.kernelstandardizer import Identity as KernelIdentity
-            from pysnptools.util.mapreduce1 import map_reduce
-            from fastlmm.association import single_snp_eigen, eigen_from_kernel
+            try:
+                import numpy as np
+                from pysnptools.snpreader import Bed, Pheno, SnpData
+                from pysnptools.kernelstandardizer import Identity as KernelIdentity
+                from pysnptools.util.mapreduce1 import map_reduce
+                from fastlmm.association import single_snp_eigen, eigen_from_kernel
 
-            use_reml = option["use_reml"]
-            cov = option["cov"]
-            train_count = option["train_count"]
-            delta = option["delta"]
-            pheno = option["pheno"]
+                use_reml = option["use_reml"]
+                cov = option["cov"]
+                train_count = option["train_count"]
+                delta = option["delta"]
+                pheno = option["pheno"]
 
-            K0_eigen = eigen_from_kernel(
-                snp_reader[:, :train_count],
-                kernel_standardizer=KernelIdentity(),
-            )  # !!!cmk why not diag standardize?
-            frame = single_snp_eigen(
-                test_snps=Bed(bed_fn, count_A1=False)[
-                    :, train_count : train_count + test_count
-                ],
-                pheno=pheno,
-                K0_eigen=K0_eigen,
-                covar=cov,
-                output_file_name=None,
-                log_delta=np.log(delta) if delta is not None else None,
-                find_delta_via_reml=use_reml,
-                test_via_reml=use_reml,
-                count_A1=False,
-                runner=runner,
-            )
-
-            G = snp_reader.read().standardize().val
-            if cov is not None:
-                cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
-            else:
-                cov_val = None
-            G_chr1, G_chr2 = (
-                G[:, :train_count],
-                G[:, train_count : train_count + test_count],
-            )
-
-            phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
-
-            def mapper(pheno_index):
-                from fastlmm.association.tests.test_gwas import (
-                    GwasPrototype,
+                K0_eigen = eigen_from_kernel(
+                    snp_reader[:, :train_count],
+                    kernel_standardizer=KernelIdentity(),
+                )  # !!!cmk why not diag standardize?
+                frame = single_snp_eigen(
+                    test_snps=Bed(bed_fn, count_A1=False)[
+                        :, train_count : train_count + test_count
+                    ],
+                    pheno=pheno,
+                    K0_eigen=K0_eigen,
+                    covar=cov,
+                    output_file_name=None,
+                    log_delta=np.log(delta) if delta is not None else None,
+                    find_delta_via_reml=use_reml,
+                    test_via_reml=use_reml,
+                    count_A1=False,
+                    runner=runner,
                 )
 
-                y = phenox.read().val[:, pheno_index]
-                gwas = GwasPrototype(
-                    G_chr1,
-                    G_chr2,
-                    y,
-                    internal_delta=delta,
-                    cov=cov_val,
-                    REML=use_reml,
+                G = snp_reader.read().standardize().val
+                if cov is not None:
+                    cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
+                else:
+                    cov_val = None
+                G_chr1, G_chr2 = (
+                    G[:, :train_count],
+                    G[:, train_count : train_count + test_count],
                 )
-                gwas.run_gwas()
-                return sorted(gwas.p_values)
 
-            gwas_pvalues_list = map_reduce(
-                range(phenox.sid_count), mapper=mapper, runner=runner
-            )
+                phenox = pheno if pheno is not pheno_fn else Pheno(pheno_fn)
 
-            for pheno_index in range(phenox.sid_count):
-                frame_i = frame[frame["Pheno"] == phenox.sid[pheno_index]]
-                # check p-values in log-space!
-                np.testing.assert_array_almost_equal(
-                    np.log(gwas_pvalues_list[pheno_index]),
-                    np.log(frame_i.PValue),  #!!!cmk
-                    decimal=7,
+                def mapper(pheno_index):
+                    from fastlmm.association.tests.test_gwas import (
+                        GwasPrototype,
+                    )
+
+                    y = phenox.read().val[:, pheno_index]
+                    gwas = GwasPrototype(
+                        G_chr1,
+                        G_chr2,
+                        y,
+                        internal_delta=delta,
+                        cov=cov_val,
+                        REML=use_reml,
+                    )
+                    gwas.run_gwas()
+                    return sorted(gwas.p_values)
+
+                gwas_pvalues_list = map_reduce(
+                    range(phenox.sid_count), mapper=mapper, runner=runner
                 )
+
+                for pheno_index in range(phenox.sid_count):
+                    frame_i = frame[frame["Pheno"] == phenox.sid[pheno_index]]
+                    # check p-values in log-space!
+                    np.testing.assert_array_almost_equal(
+                        np.log(gwas_pvalues_list[pheno_index]),
+                        np.log(frame_i.PValue),  #!!!cmk
+                        decimal=7,
+                    )
+            except Exception as e:
+                print(str(e))
+                return option
             return None
 
-        map_reduce(
+        def reducer2(bad_option_list):
+            for bad_option in bad_option_list:
+                if bad_option is not None:
+                    print(bad_option)
+                    return False
+            return True
+
+        is_ok = map_reduce(
             list(
                 matrix_combo(
                     matrix,
@@ -166,8 +177,10 @@ class TestSingleSnpEigen(unittest.TestCase):
                 )
             ),
             mapper=mapper2,
+            reducer=reducer2,
             runner=runner2,
         )
+        assert is_ok
 
     def cmktest_one(self):
         logging.info("TestSingleSnpEigen test_one")
