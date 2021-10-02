@@ -504,13 +504,7 @@ class AKB(PstData):
 
     def __setitem__(self, key, value):
         # !!!cmk may want to check that the kdi's are equal
-
-        val = value.val
-        #!!!cmk kludge
-        if len(self.val[key].shape) == 2 and len(val.shape) == 3:  #!!!cmk ugly
-            val = np.squeeze(val, -1)
-
-        self.val[key] = val
+        self.val[key] = value.val
 
     def __getitem__(self, index):
         #!!!cmk kludge
