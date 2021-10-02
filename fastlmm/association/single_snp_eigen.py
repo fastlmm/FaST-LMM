@@ -89,31 +89,33 @@ def single_snp_eigen(
     covar_r = K0_eigen.rotate(covar)
     pheno_r = K0_eigen.rotate(pheno)
 
+    # =========================
+    # For each phenotype, in parallel, ...
+    # Find the K0+delta I with the best likelihood.
+    # A KdI object includes
+    #   * Sd = eigenvalues + delta
+    #   * is_low_rank (True/False)
+    #   * logdet (depends on is_low_rank)
+    # =========================
     def mapper_search(pheno_index):
-        pheno_r_i = pheno_r[pheno_index]
-
-        # =========================
-        # Find the K0+delta I with the best likelihood.
-        # A KdI object includes
-        #   * Sd = eigenvalues + delta
-        #   * is_low_rank (True/False)
-        #   * logdet (depends on is_low_rank)
-        # =========================
-        K0_kdi_i = _find_best_kdi_as_needed(
+        return _find_best_kdi_as_needed(
             K0_eigen,
             covar,
             covar_r,
-            pheno_r_i,
+            pheno_r[pheno_index],
             use_reml=find_delta_via_reml,
             log_delta=log_delta,  # optional
         )
-        return K0_kdi_i
 
-    K0_kdi_list = map_reduce(
-        range(pheno_r.col_count), mapper=mapper_search, runner=runner
+    def reducer_search(K0_kdi_sequence):
+        return KdI.from_list(list(K0_kdi_sequence))
+
+    K0_kdi = map_reduce(
+        range(pheno_r.col_count),
+        mapper=mapper_search,
+        reducer=reducer_search,
+        runner=runner,
     )
-    K0_kdi = KdI.from_list(K0_kdi_list)
-    del K0_kdi_list
 
     # =========================
     # Find A^T * K^-1 * B for covar and pheno.
@@ -152,7 +154,7 @@ def single_snp_eigen(
 
     XKX = AKB.empty3D(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
     XKX[:cc, :cc] = covarKcovar  # upper left
-    diagonal_name = np.array(["diagonal"]) #!!!cmk similar code
+    diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
     XKpheno = AKB.empty3D(xkx_sid, diagonal_name, kdi=K0_kdi)
     XKpheno[:cc, :] = covarKpheno  # upper
 
@@ -176,9 +178,7 @@ def single_snp_eigen(
             covar_r, K0_kdi, alt_batch_r, aK=covarK
         )
 
-        alt_batchKy, alt_batchK = AKB.from_rotated_ap(
-            alt_batch_r, K0_kdi, pheno_r
-        )
+        alt_batchKy, alt_batchK = AKB.from_rotated_ap(alt_batch_r, K0_kdi, pheno_r)
 
         # ==================================
         # For each test SNP in the batch
@@ -195,11 +195,13 @@ def single_snp_eigen(
             # Fill in last value of X, XKX and XKpheno
             # with the alt value.
             # ==================================
-            altKalt, _ = AKB.from_rotated_3D(alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :])
+            altKalt, _ = AKB.from_rotated_3D(
+                alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :]
+            )
 
             XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
             XKX[cc:, :cc] = XKX[:cc, cc:].T  # lower left
-            XKX[cc:, cc:] = altKalt[:,:]  # lower right
+            XKX[cc:, cc:] = altKalt[:, :]  # lower right
             #!!!cmk refactor
             # !!!cmk rename alt_batchKy so no "y"?
             XKpheno[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
@@ -211,8 +213,8 @@ def single_snp_eigen(
             ll_alt, beta, variance_beta = _loglikelihood(
                 X, phenoKpheno, XKX, XKpheno, use_reml=test_via_reml
             )
-            if len(beta.val.shape)==3: #!!!cmk remove this kludge
-                beta_val = np.squeeze(beta.val,1)
+            if len(beta.val.shape) == 3:  #!!!cmk remove this kludge
+                beta_val = np.squeeze(beta.val, 1)
             else:
                 beta_val = beta.val
 
@@ -223,14 +225,17 @@ def single_snp_eigen(
 
                 result_list.append(
                     {
-                        "PValue": stats.chi2.sf(2.0 * test_statistic[pheno_index], df=1),
-                        "SnpWeight": beta_val[:,pheno_index],  #!!!cmk
-                        "SnpWeightSE": np.sqrt(variance_beta[:,pheno_index]) if variance_beta is not None else None,
+                        "PValue": stats.chi2.sf(
+                            2.0 * test_statistic[pheno_index], df=1
+                        ),
+                        "SnpWeight": beta_val[:, pheno_index],  #!!!cmk
+                        "SnpWeightSE": np.sqrt(variance_beta[:, pheno_index])
+                        if variance_beta is not None
+                        else None,
                         # !!!cmk right name and place?
                         "Pheno": pheno_r.col[pheno_index],
                     }
                 )
-
 
         dataframe = _create_dataframe().append(result_list, ignore_index=True)
         dataframe["sid_index"] = np.repeat(
@@ -518,7 +523,7 @@ class AKB(PstData):
         # !!!cmk may want to check that the kdi's are equal
 
         val = value.val
-        if len(self.val[key].shape)==2 and len(val.shape) == 3:  #!!!cmk ugly
+        if len(self.val[key].shape) == 2 and len(val.shape) == 3:  #!!!cmk ugly
             val = np.squeeze(val, -1)
 
         self.val[key] = val
@@ -548,7 +553,9 @@ class AKB(PstData):
 
     @property
     def T(self):
-        return AKB(val=np.moveaxis(self.val,0,1), row=self.col, col=self.row, kdi=self.kdi)
+        return AKB(
+            val=np.moveaxis(self.val, 0, 1), row=self.col, col=self.row, kdi=self.kdi
+        )
 
 
 # !!!cmk change use_reml etc to 'use_reml'
@@ -665,7 +672,11 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
     if use_reml:
         nLL, beta = _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno)
-        return nLL, beta,None #!!!cmk np.full((XKpheno.row_count,XKpheno.col_count),np.nan)
+        return (
+            nLL,
+            beta,
+            None,
+        )  #!!!cmk np.full((XKpheno.row_count,XKpheno.col_count),np.nan)
     else:
         return _loglikelihood_ml(phenoKpheno, XKX, XKpheno)
 
