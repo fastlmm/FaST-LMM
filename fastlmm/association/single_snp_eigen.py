@@ -97,12 +97,15 @@ def single_snp_eigen(
     #   * is_low_rank (True/False)
     #   * logdet (depends on is_low_rank)
     # =========================
+    diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
     def mapper_search(pheno_index):
+        pheno_r_i = pheno_r[pheno_index]
+        pheno_r_i._col = diagonal_name
         return _find_best_kdi_as_needed(
             K0_eigen,
             covar,
             covar_r,
-            pheno_r[pheno_index],
+            pheno_r_i,
             use_reml=find_delta_via_reml,
             log_delta=log_delta,  # optional
         )
@@ -156,7 +159,6 @@ def single_snp_eigen(
 
     XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
     XKX[:cc, :cc] = covarKcovar  # upper left
-    diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
     XKpheno = AKB.empty(xkx_sid, diagonal_name, kdi=K0_kdi)
     XKpheno[:cc, :] = covarKpheno  # upper
 
@@ -216,10 +218,12 @@ def single_snp_eigen(
             ll_alt, beta, variance_beta = _loglikelihood(
                 X, phenoKpheno, XKX, XKpheno, use_reml=test_via_reml
             )
+
+            #!!!cmk kludge
             if len(beta.val.shape) == 3:  #!!!cmk remove this kludge
                 beta_val = np.squeeze(beta.val, 1)
                 if variance_beta is not None:
-                    variance_beta = np.squeeze(variance_beta,0)
+                    variance_beta = np.squeeze(variance_beta, 0)
             else:
                 beta_val = beta.val
 
@@ -404,6 +408,7 @@ def _stack(array_list):
     assert shape[-1] == 1, "cmk"
     shape[-1] = pheno_count
     result = np.empty(shape=shape, dtype=array_list[0].dtype)
+    #!!!cmk kludge
     if len(shape) > 1:
         result[...] = np.nan
         for pheno_index in range(pheno_count):
@@ -420,6 +425,7 @@ class AK(PstData):
         super().__init__(val=val, row=row, col=col)
         self.pheno = pheno
 
+    #!!!cmk kludge -- just need better names
     @staticmethod
     def from_3D(a_r, kdi, aK=None):
         if aK is None:
@@ -449,22 +455,11 @@ class AKB(PstData):
         self.pheno = kdi.pheno
         self.kdi = kdi
 
-    @staticmethod
-    def from_rotated_cmka(a_r, kdi, b_r, aK=None):
-        aK = AK.from_3D(a_r, kdi, aK)
-
-        val = aK.val.T.dot(b_r.val)
-        if kdi.is_low_rank:
-            val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
-
-        if len(val.shape) == 3:
-            val = np.moveaxis(val, 0, -1)
-        result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
-        return result, aK
-
+    #!!!cmk kludge -- just need better names
     @staticmethod
     def from_rotated_3D(a_r, kdi, b_r, aK=None):
         aK = AK.from_3D(a_r, kdi, aK)
+        cmk_check_from_rotated(aK, b_r)
 
         val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
         if kdi.is_low_rank:
@@ -478,6 +473,7 @@ class AKB(PstData):
     @staticmethod
     def from_rotated_pp(pheno_r, kdi):
         aK = AK.from_pp(pheno_r, kdi)
+        cmk_check_from_rotated(aK, pheno_r)
 
         val = np.einsum("ijk,ik->k", aK.val, pheno_r.val)[np.newaxis, np.newaxis, :]
         if kdi.is_low_rank:
@@ -493,6 +489,7 @@ class AKB(PstData):
     @staticmethod
     def from_rotated_ap(a_r, kdi, pheno_r, aK=None):
         aK = AK.from_3D(a_r, kdi, aK)
+        cmk_check_from_rotated(aK, pheno_r)
 
         val = np.einsum("icp,ip->cp", aK.val, pheno_r.val)[:, np.newaxis, :]
         if kdi.is_low_rank:
@@ -517,12 +514,14 @@ class AKB(PstData):
         # !!!cmk may want to check that the kdi's are equal
 
         val = value.val
+        #!!!cmk kludge
         if len(self.val[key].shape) == 2 and len(val.shape) == 3:  #!!!cmk ugly
             val = np.squeeze(val, -1)
 
         self.val[key] = val
 
     def __getitem__(self, index):
+        #!!!cmk kludge
         if (
             len(self.val.shape) == 2
             and len(index) == 3
@@ -531,6 +530,7 @@ class AKB(PstData):
             index01 = index[0:2]  #!!!cmk ugly
         else:
             index01 = index
+        #!!!cmk kludge
         if len(index) == 2 or (
             len(self.kdi.pheno) == 1 and index[2] == slice(None, None, None)
         ):
@@ -565,9 +565,9 @@ def _find_h2(
         # This kdi is Kg+delta I
         kdi = KdI.from_eigendata(eigendata, pheno=pheno_r.col, h2=x)
         # aKb is  a.T * kdi^-1 * b
-        phenoKpheno, _ = AKB.from_rotated_cmka(pheno_r, kdi, pheno_r)
-        XKX, XK = AKB.from_rotated_cmka(X_r, kdi, X_r)
-        XKpheno, _ = AKB.from_rotated_cmka(X_r, kdi, pheno_r, aK=XK)
+        phenoKpheno, _ = AKB.from_rotated_pp(pheno_r, kdi)
+        XKX, XK = AKB.from_rotated_3D(X_r, kdi, X_r)
+        XKpheno, _ = AKB.from_rotated_ap(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -float(nLL)  # !!!cmk
@@ -583,6 +583,7 @@ def _find_h2(
 def _eigen_from_akb(akb, keep_above=np.NINF):
     # !!!cmk check that square aKa not just aKb???
     val = akb.val
+    #!!!cmk kludge
     if len(val.shape) == 3:  #!!!cmk ugly
         val = np.squeeze(val, -1)
 
@@ -601,15 +602,13 @@ def _eigen_from_xtx(xtx):
 
 
 def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
-    # _cmk_common_code(phenoKpheno, XKX, XKpheno)
-
-    # !!!cmk may want to check that all three kdi's are equal
     # !!!cmk may want to check that all three kdi's are equal
     r2_list = []
     beta_list = []
     eigen_xkx_list = []
     for pheno_index in range(len(phenoKpheno.pheno)):
         phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
+        #!!!cmk kludge
         if len(XKX.val.shape) == 2:
             XKX_i = XKX  #!!!cmk
             XKpheno_i = XKpheno
@@ -634,6 +633,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         beta_list.append(beta_i)
         eigen_xkx_list.append(eigen_xkx_i)
 
+    #!!!cmk kludge
     if len(phenoKpheno.pheno) == 1:
         return r2_list[0], beta_list[0], eigen_xkx_list
     else:
@@ -822,3 +822,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen.values[eigen.values<.0001]=0.0
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
+def cmk_check_from_rotated(aK, b_r):
+    assert len(aK.val.shape)==3
+    assert len(b_r.val.shape)==2
+    assert "pheno" not in aK.col[0]

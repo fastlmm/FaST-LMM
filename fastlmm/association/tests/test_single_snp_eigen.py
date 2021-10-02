@@ -69,8 +69,8 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        runner2 = None # LocalMultiProc(6, just_one_process=False)
-        extra_fraction = 1
+        runner2 = None  # LocalMultiProc(6, just_one_process=False)
+        extra_fraction = .1
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],
@@ -79,7 +79,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn],
         }
-        first_list = [] # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
+        first_list = []  # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
 
         def mapper2(option):
             import numpy as np
