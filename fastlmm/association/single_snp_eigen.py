@@ -204,39 +204,33 @@ def single_snp_eigen(
             # !!!cmk rename alt_batchKy so no "y"?
             XKpheno[cc:, :] = alt_batchKy[i : i + 1, :]  # lower
 
+            # ==================================
+            # Find likelihood with test SNP and score.
+            # ==================================
+            # O(sid_count * (covar+1)^6)
+            ll_alt, beta, variance_beta = _loglikelihood(
+                X, phenoKpheno, XKX, XKpheno, use_reml=test_via_reml
+            )
+            if len(beta.val.shape)==3: #!!!cmk remove this kludge
+                beta_val = np.squeeze(beta.val,1)
+            else:
+                beta_val = beta.val
+
+            #!!!cmk make ll_alt be dim (3) not (1,1,3)
+            test_statistic = ll_alt - ll_null
+
             for pheno_index in range(pheno_r.col_count):
-                alt_batchKy_i = alt_batchKy[:,:,pheno_index:pheno_index+1]
-                phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
-                ll_null_i = ll_null[:, :, pheno_index : pheno_index + 1]
 
-                XKX_i = XKX[:,:,pheno_index]
-                XKpheno_i = XKpheno[:,:,pheno_index]
-
-
-                # ==================================
-                # Find likelihood with test SNP and score.
-                # ==================================
-                # O(sid_count * (covar+1)^6)
-                ll_alt_i, beta_i, variance_beta_i = _loglikelihood(
-                    X, phenoKpheno_i, XKX_i, XKpheno_i, use_reml=test_via_reml
-                )
-                test_statistic_i = float(ll_alt_i - ll_null_i)
                 result_list.append(
                     {
-                        "PValue": stats.chi2.sf(2.0 * test_statistic_i, df=1),
-                        "SnpWeight": beta_i,  #!!!cmk .val.reshape(-1),
-                        "SnpWeightSE": np.sqrt(variance_beta_i),
+                        "PValue": stats.chi2.sf(2.0 * test_statistic[pheno_index], df=1),
+                        "SnpWeight": beta_val[:,pheno_index],  #!!!cmk
+                        "SnpWeightSE": np.sqrt(variance_beta[:,pheno_index]) if variance_beta is not None else None,
                         # !!!cmk right name and place?
                         "Pheno": pheno_r.col[pheno_index],
                     }
                 )
 
-                del XKX_i
-                del XKpheno_i
-                del test_statistic_i
-                del ll_alt_i
-                del beta_i
-                del variance_beta_i
 
         dataframe = _create_dataframe().append(result_list, ignore_index=True)
         dataframe["sid_index"] = np.repeat(
@@ -671,7 +665,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
     if use_reml:
         nLL, beta = _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno)
-        return nLL, beta, np.nan
+        return nLL, beta,None #!!!cmk np.full((XKpheno.row_count,XKpheno.col_count),np.nan)
     else:
         return _loglikelihood_ml(phenoKpheno, XKX, XKpheno)
 
@@ -704,11 +698,8 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
         ), "nLL has an imaginary component, possibly due to constant covariates"
         # !!!cmk which is negative loglikelihood and which is LL?
         nLL_list.append(nLL_i)
-    if len(nLL_list) == 1:
-        return -nLL_list[0], beta  #!!!cmk remove
-    else:
-        nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(1, 1, -1)
-        return nnLL, beta
+    nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(-1)
+    return nnLL, beta
 
 
 def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
@@ -735,12 +726,9 @@ def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
         )
         variance_beta_list.append(variance_beta_i)
         # !!!cmk which is negative loglikelihood and which is LL?
-    if len(phenoKpheno.pheno) == 1:
-        return -nLL_i, beta, variance_beta_i  #!!!cmk remove this case
-    else:
-        nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(1, 1, -1)
-        variance_beta = np.moveaxis(np.c_[variance_beta_list], 0, -1)
-        return nnLL, beta, variance_beta
+    nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(-1)
+    variance_beta = np.moveaxis(np.c_[variance_beta_list], 0, -1)
+    return nnLL, beta, variance_beta
 
 
 # Returns a kdi that is the original Kg + delta I

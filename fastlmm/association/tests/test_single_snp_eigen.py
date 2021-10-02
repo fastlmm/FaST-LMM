@@ -69,9 +69,17 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        runner2 = LocalMultiProc(6, just_one_process=False)
-        extra_fraction = 1
-        first_list = [{"pheno": 0}]  # [{'pheno':0,'use_reml':0}]
+        runner2 = None  # LocalMultiProc(6, just_one_process=False)
+        extra_fraction = 0.1
+        matrix =  {
+                        "use_reml": [True, False],
+                        "train_count": [750, 50],
+                        "cov": [cov_reader, None],
+                        "delta": [None, 0.20000600000000002, delta_default],
+                        # pheno000, pheno_fn]: #!!!cmk, pheno012]:
+                        "pheno": [pheno000, pheno_fn],
+                    }
+        first_list = [{'pheno':1,'use_reml':0}] #[{"pheno": 0}]  # 
 
         def mapper2(option):
             import numpy as np
@@ -151,15 +159,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         map_reduce(
             list(
-                matrix_combo(
-                    {
-                        "use_reml": [True, False],
-                        "train_count": [750, 50],
-                        "cov": [cov_reader, None],
-                        "delta": [None, 0.20000600000000002, delta_default],
-                        # pheno000, pheno_fn]: #!!!cmk, pheno012]:
-                        "pheno": [pheno000, pheno_fn],
-                    },
+                matrix_combo(matrix,
                     seed=10234,
                     extra_fraction=extra_fraction,
                     first_list=first_list,
