@@ -508,22 +508,13 @@ class AKB(PstData):
 
     def __getitem__(self, index):
         #!!!cmk kludge
-        if (
-            len(self.val.shape) == 2
-            and len(index) == 3
-            and index[2] == slice(None, None, None)
-        ):
-            index01 = index[0:2]  #!!!cmk ugly
-        else:
-            index01 = index
-        #!!!cmk kludge
         if len(index) == 2 or (
             len(self.kdi.pheno) == 1 and index[2] == slice(None, None, None)
         ):
             index2 = 0
         else:
             index2 = index[2]
-        val = self.val[index01]
+        val = self.val[index]
         return AKB(
             val=val,
             row=self.row[index[0]],
