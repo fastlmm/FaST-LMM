@@ -97,11 +97,10 @@ def single_snp_eigen(
     #   * is_low_rank (True/False)
     #   * logdet (depends on is_low_rank)
     # =========================
-    diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
+    diagonal_name = np.array(["diagonal"])  #!!!cmk similar code #!!!cmk kludge
 
     def mapper_search(pheno_index):
         pheno_r_i = pheno_r[pheno_index]
-        pheno_r_i._col = diagonal_name
         return _find_best_kdi_as_needed(
             K0_eigen,
             covar,
@@ -428,9 +427,11 @@ class AK(PstData):
         else:
             return aK
 
+    # !!!cmk kludge
     def from_pheno_r(pheno_r, kdi):
         val = pheno_r.val[:, np.newaxis, :] / kdi.Sd
-        return AK(val=val, row=pheno_r.row, col=np.array(["diagonal"]), pheno=kdi.pheno)
+        diagonal_name = np.array(["diagonal"]) # !!!cmk kludge
+        return AK(val=val, row=pheno_r.row, col=diagonal_name, pheno=kdi.pheno)
 
     def __getitem__(self, index):
         val = self.val[index]
@@ -492,7 +493,8 @@ class AKB(PstData):
                 np.newaxis, np.newaxis, :
             ] / kdi.delta.reshape(-1)
 
-        diagonal_name = np.array(["diagonal"])
+        #!!!cmk kludge
+        diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
         result = AKB(val=val, row=diagonal_name, col=diagonal_name, kdi=kdi)
         return result, aK
 
@@ -509,7 +511,8 @@ class AKB(PstData):
                 :, np.newaxis, :
             ] / kdi.delta.reshape(-1)
 
-        diagonal_name = np.array(["diagonal"])
+
+        diagonal_name = np.array(["diagonal"])  #!!!cmk similar code #!!!cmk kludge
         result = AKB(val=val, row=a_r.col, col=diagonal_name, kdi=kdi)
         return result, aK
 
