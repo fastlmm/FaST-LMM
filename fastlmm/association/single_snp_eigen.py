@@ -447,21 +447,18 @@ class AKB(PstData):
     #!!!cmk kludge -- just need better names
     @staticmethod
     def from_akb(a_r, kdi, b_r, aK=None):
-        if not a_r.is_diagonal and not b_r.is_diagonal:
-            aK = AK.from_a_k(a_r, kdi, aK)
-            cmk_check_from_rotated(aK, b_r)
+        aK = AK.from_a_k(a_r, kdi, aK)
+        cmk_check_from_rotated(aK, b_r)
 
+        if not a_r.is_diagonal and not b_r.is_diagonal:
             val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
             if kdi.is_low_rank:
                 val += a_r.double.val.T.dot(b_r.double.val)[
                     :, :, np.newaxis
                 ] / kdi.delta.reshape(-1)
 
-            result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         elif a_r.is_diagonal and b_r.is_diagonal:
             assert a_r is b_r, "kludgecmk"
-            aK = AK.from_a_k(a_r, kdi)
-            cmk_check_from_rotated(aK, b_r)
 
             val = np.einsum("ijk,ik->k", aK.val, a_r.val)[np.newaxis, np.newaxis, :]
             if kdi.is_low_rank:
@@ -470,14 +467,9 @@ class AKB(PstData):
                     np.newaxis, np.newaxis, :
                 ] / kdi.delta.reshape(-1)
 
-            result = AKB(
-                val=val, row=Rotation.diagonal_name, col=Rotation.diagonal_name, kdi=kdi
-            )
         else:
             assert not a_r.is_diagonal, "kludgecmk"
             assert b_r.is_diagonal, "kludgecmk"
-            aK = AK.from_a_k(a_r, kdi, aK)
-            cmk_check_from_rotated(aK, b_r)
 
             val = np.einsum("icp,ip->cp", aK.val, b_r.val)[:, np.newaxis, :]
             if kdi.is_low_rank:
@@ -485,8 +477,8 @@ class AKB(PstData):
                     :, np.newaxis, :
                 ] / kdi.delta.reshape(-1)
 
-            result = AKB(val=val, row=a_r.col, col=Rotation.diagonal_name, kdi=kdi)
 
+        result = AKB(val=val, row=a_r.diagonal_or_col, col=b_r.diagonal_or_col, kdi=kdi)
         return result, aK
 
     @staticmethod
