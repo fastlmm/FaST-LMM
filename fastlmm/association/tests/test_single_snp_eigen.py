@@ -58,7 +58,17 @@ class TestSingleSnpEigen(unittest.TestCase):
             val=np.repeat(pheno0.val, 3, axis=1),
             iid=pheno0.row,
             sid=["pheno0a", "pheno0b", "pheno0c"],
+            name="pheno000"
         )
+        val01=np.repeat(pheno0.val, 2, axis=1),
+        val01[:,1]*=2
+        pheno01 = SnpData(
+            val=val01,
+            iid=pheno0.row,
+            sid=["pheno0", "pheno1"],
+            name="pheno01"
+        )
+
 
         cov_reader = Pheno(
             example_file("fastlmm/feature_selection/examples/toydata.cov")
@@ -86,7 +96,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "pheno": [pheno000, pheno_fn],
         }
         first_list = [
-            {"use_reml": 1, "cov": 1, "pheno": 0}
+            {"cov": 0, "pheno": 0}
         ]  # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
 
         def mapper2(option):
