@@ -421,25 +421,11 @@ class AK(PstData):
     @staticmethod
     def from_a_k(a_r, kdi, aK=None):
         if not a_r.is_diagonal:
-            return AK._from_a_r(a_r, kdi, aK)
-        else:
-            assert aK is None, "expect aK to be None" #!!!cmk add code?
-            return AK._from_pheno_r(a_r, kdi)
-
-    #!!!cmk kludge
-    @staticmethod
-    def _from_a_r(a_r, kdi, aK=None):
-        if aK is None:
             val = a_r.val[:, :, np.newaxis] / kdi.Sd
             return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
         else:
-            return aK
-
-    # !!!cmk kludge
-    @staticmethod
-    def _from_pheno_r(pheno_r, kdi):
-        val = pheno_r.val[:, np.newaxis, :] / kdi.Sd
-        return AK(val=val, row=pheno_r.row, col=Rotation.diagonal_name, pheno=kdi.pheno)
+            val = a_r.val[:, np.newaxis, :] / kdi.Sd
+            return AK(val=val, row=a_r.row, col=Rotation.diagonal_name, pheno=kdi.pheno)
 
     def __getitem__(self, index):
         val = self.val[index]
@@ -462,63 +448,45 @@ class AKB(PstData):
     @staticmethod
     def from_akb(a_r, kdi, b_r, aK=None):
         if not a_r.is_diagonal and not b_r.is_diagonal:
-            return AKB._from_a_r_b_r(a_r, kdi, b_r, aK)
+            aK = AK.from_a_k(a_r, kdi, aK)
+            cmk_check_from_rotated(aK, b_r)
+
+            val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
+            if kdi.is_low_rank:
+                val += a_r.double.val.T.dot(b_r.double.val)[
+                    :, :, np.newaxis
+                ] / kdi.delta.reshape(-1)
+
+            result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         elif a_r.is_diagonal and b_r.is_diagonal:
-            assert a_r is b_r, "Expect to be the same"
-            assert aK is None, "Expect aK to be none"
-            return AKB._from_pheno_r_pheno_r(a_r, kdi)
+            assert a_r is b_r, "kludgecmk"
+            aK = AK.from_a_k(a_r, kdi)
+            cmk_check_from_rotated(aK, b_r)
+
+            val = np.einsum("ijk,ik->k", aK.val, a_r.val)[np.newaxis, np.newaxis, :]
+            if kdi.is_low_rank:
+                # !!!cmk can we dot this without repeading pheno_r input?
+                val += np.einsum("ik,ik->k", a_r.double.val, a_r.double.val)[
+                    np.newaxis, np.newaxis, :
+                ] / kdi.delta.reshape(-1)
+
+            result = AKB(
+                val=val, row=Rotation.diagonal_name, col=Rotation.diagonal_name, kdi=kdi
+            )
         else:
-            return AKB._from_a_r_pheno_r(a_r, kdi, b_r, aK)
+            assert not a_r.is_diagonal, "kludgecmk"
+            assert b_r.is_diagonal, "kludgecmk"
+            aK = AK.from_a_k(a_r, kdi, aK)
+            cmk_check_from_rotated(aK, b_r)
 
-    #!!!cmk kludge
-    @staticmethod
-    def _from_a_r_b_r(a_r, kdi, b_r, aK=None):
-        assert not a_r.is_diagonal, "kludgecmk"
-        assert not b_r.is_diagonal, "kludgecmk"
+            val = np.einsum("icp,ip->cp", aK.val, b_r.val)[:, np.newaxis, :]
+            if kdi.is_low_rank:
+                val += np.einsum("ic,ip->cp", a_r.double.val, b_r.double.val)[
+                    :, np.newaxis, :
+                ] / kdi.delta.reshape(-1)
 
-        aK = AK.from_a_k(a_r, kdi, aK)
-        cmk_check_from_rotated(aK, b_r)
+            result = AKB(val=val, row=a_r.col, col=Rotation.diagonal_name, kdi=kdi)
 
-        val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
-        if kdi.is_low_rank:
-            val += a_r.double.val.T.dot(b_r.double.val)[
-                :, :, np.newaxis
-            ] / kdi.delta.reshape(-1)
-
-        result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
-        return result, aK
-
-    @staticmethod
-    def _from_pheno_r_pheno_r(pheno_r, kdi):
-        assert pheno_r.is_diagonal, "kludgecmk"
-        aK = AK.from_a_k(pheno_r, kdi)
-        cmk_check_from_rotated(aK, pheno_r)
-
-        val = np.einsum("ijk,ik->k", aK.val, pheno_r.val)[np.newaxis, np.newaxis, :]
-        if kdi.is_low_rank:
-            # !!!cmk can we dot this without repeading pheno_r input?
-            val += np.einsum("ik,ik->k", pheno_r.double.val, pheno_r.double.val)[
-                np.newaxis, np.newaxis, :
-            ] / kdi.delta.reshape(-1)
-
-        result = AKB(val=val, row=Rotation.diagonal_name, col=Rotation.diagonal_name, kdi=kdi)
-        return result, aK
-
-    @staticmethod
-    def _from_a_r_pheno_r(a_r, kdi, pheno_r, aK=None):
-        assert not a_r.is_diagonal, "kludgecmk"
-        assert pheno_r.is_diagonal, "kludgecmk"
-        aK = AK.from_a_k(a_r, kdi, aK)
-        cmk_check_from_rotated(aK, pheno_r)
-
-        val = np.einsum("icp,ip->cp", aK.val, pheno_r.val)[:, np.newaxis, :]
-        if kdi.is_low_rank:
-            val += np.einsum("ic,ip->cp", a_r.double.val, pheno_r.double.val)[
-                :, np.newaxis, :
-            ] / kdi.delta.reshape(-1)
-
-
-        result = AKB(val=val, row=a_r.col, col=Rotation.diagonal_name, kdi=kdi)
         return result, aK
 
     @staticmethod
