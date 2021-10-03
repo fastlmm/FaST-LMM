@@ -86,7 +86,7 @@ def single_snp_eigen(
     covar = _covar_read_with_bias(covar)
     pheno = pheno.read(view_ok=True, order="A")
 
-    covar_r = K0_eigen.rotate(covar, is_diagonal=False)
+    covar_r = K0_eigen.rotate(covar, is_diagonal=False) #!!!cmk kludge make this the default
     pheno_r = K0_eigen.rotate(pheno, is_diagonal=True)
 
     # =========================
@@ -131,9 +131,9 @@ def single_snp_eigen(
     #   * The KdI objected use to create it.
     # =========================
 
-    covarKcovar, covarK = AKB.from_a_r_b_r(covar_r, K0_kdi, covar_r)
-    phenoKpheno, _ = AKB.from_pheno_r_pheno_r(pheno_r, K0_kdi)
-    covarKpheno, _ = AKB.from_a_r_pheno_r(covar_r, K0_kdi, pheno_r, aK=covarK)
+    covarKcovar, covarK = AKB.from_akb(covar_r, K0_kdi, covar_r)
+    phenoKpheno, _ = AKB.from_akb(pheno_r, K0_kdi, pheno_r)
+    covarKpheno, _ = AKB.from_akb(covar_r, K0_kdi, pheno_r, aK=covarK)
     ll_null, _beta, _variance_beta = _loglikelihood(
         covar, phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml
     )
@@ -180,13 +180,9 @@ def single_snp_eigen(
         )
         alt_batch_r = K0_eigen.rotate(alt_batch, is_diagonal=False)
 
-        covarKalt_batch, _ = AKB.from_a_r_b_r(
-            covar_r, K0_kdi, alt_batch_r, aK=covarK
-        )
+        covarKalt_batch, _ = AKB.from_akb(covar_r, K0_kdi, alt_batch_r, aK=covarK)
 
-        alt_batchKpheno, alt_batchK = AKB.from_a_r_pheno_r(
-            alt_batch_r, K0_kdi, pheno_r
-        )
+        alt_batchKpheno, alt_batchK = AKB.from_akb(alt_batch_r, K0_kdi, pheno_r)
 
         # ==================================
         # For each test SNP in the batch
@@ -201,7 +197,7 @@ def single_snp_eigen(
             # Fill in last value of X, XKX and XKpheno
             # with the alt value.
             # ==================================
-            altKalt, _ = AKB.from_a_r_b_r(
+            altKalt, _ = AKB.from_akb(
                 alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :]
             )
 
@@ -455,7 +451,19 @@ class AKB(PstData):
 
     #!!!cmk kludge -- just need better names
     @staticmethod
-    def from_a_r_b_r(a_r, kdi, b_r, aK=None):
+    def from_akb(a_r, kdi, b_r, aK=None):
+        if not a_r.is_diagonal and not b_r.is_diagonal:
+            return AKB._from_a_r_b_r(a_r, kdi, b_r, aK)
+        elif a_r.is_diagonal and b_r.is_diagonal:
+            assert a_r is b_r, "Expect to be the same"
+            assert aK is None, "Expect aK to be none"
+            return AKB._from_pheno_r_pheno_r(a_r, kdi)
+        else:
+            return AKB._from_a_r_pheno_r(a_r, kdi, b_r, aK)
+
+    #!!!cmk kludge
+    @staticmethod
+    def _from_a_r_b_r(a_r, kdi, b_r, aK=None):
         assert not a_r.is_diagonal, "kludgecmk"
         assert not b_r.is_diagonal, "kludgecmk"
 
@@ -472,7 +480,7 @@ class AKB(PstData):
         return result, aK
 
     @staticmethod
-    def from_pheno_r_pheno_r(pheno_r, kdi):
+    def _from_pheno_r_pheno_r(pheno_r, kdi):
         assert pheno_r.is_diagonal, "kludgecmk"
         aK = AK.from_pheno_r(pheno_r, kdi)
         cmk_check_from_rotated(aK, pheno_r)
@@ -489,7 +497,8 @@ class AKB(PstData):
         return result, aK
 
     @staticmethod
-    def from_a_r_pheno_r(a_r, kdi, pheno_r, aK=None):
+    def _from_a_r_pheno_r(a_r, kdi, pheno_r, aK=None):
+        assert not a_r.is_diagonal, "kludgecmk"
         assert pheno_r.is_diagonal, "kludgecmk"
         aK = AK.from_a_r(a_r, kdi, aK)
         cmk_check_from_rotated(aK, pheno_r)
@@ -546,9 +555,9 @@ def _find_h2(
         # This kdi is Kg+delta I
         kdi = KdI.from_eigendata(eigendata, pheno=pheno_r.col, h2=x)
         # aKb is  a.T * kdi^-1 * b
-        phenoKpheno, _ = AKB.from_pheno_r_pheno_r(pheno_r, kdi)
-        XKX, XK = AKB.from_a_r_b_r(X_r, kdi, X_r)
-        XKpheno, _ = AKB.from_a_r_pheno_r(X_r, kdi, pheno_r, aK=XK)
+        phenoKpheno, _ = AKB.from_akb(pheno_r, kdi, pheno_r)
+        XKX, XK = AKB.from_akb(X_r, kdi, X_r)
+        XKpheno, _ = AKB.from_akb(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -float(nLL)  # !!!cmk
