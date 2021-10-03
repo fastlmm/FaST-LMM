@@ -452,14 +452,15 @@ class AKB(PstData):
 
         ein_a = a_r.ein("a")
         ein_b = b_r.ein("b")
-        ein_ab = Rotation.ein_cat(ein_a,ein_b)
-        ein_abd =  Rotation.ein_cat(ein_a,ein_b,"d")
+        ein_ab = Rotation.ein_cat(ein_a, ein_b)
+        ein_abd = Rotation.ein_cat(ein_a, ein_b, "d")
 
         ein_str0 = f"iad,i{ein_b}->{ein_abd}"
         new_axis0 = (
             np.newaxis if a_r.is_diagonal else slice(None, None, None),
             np.newaxis if b_r.is_diagonal else slice(None, None, None),
-            slice(None, None, None))
+            slice(None, None, None),
+        )
         val = np.einsum(ein_str0, aK.val, b_r.val)[new_axis0]
 
         if kdi.is_low_rank:
@@ -467,11 +468,13 @@ class AKB(PstData):
             new_axis1 = (
                 np.newaxis if a_r.is_diagonal else slice(None, None, None),
                 np.newaxis if b_r.is_diagonal else slice(None, None, None),
-                np.newaxis if not a_r.is_diagonal and not b_r.is_diagonal else slice(None, None, None)
-                )
-            val += np.einsum(ein_str1, a_r.double.val, b_r.double.val)[new_axis1] / kdi.delta.reshape(-1)
-
-
+                np.newaxis
+                if not a_r.is_diagonal and not b_r.is_diagonal
+                else slice(None, None, None),
+            )
+            val += np.einsum(ein_str1, a_r.double.val, b_r.double.val)[
+                new_axis1
+            ] / kdi.delta.reshape(-1)
 
         result = AKB(val=val, row=a_r.diagonal_or_col, col=b_r.diagonal_or_col, kdi=kdi)
         return result, aK

@@ -58,17 +58,13 @@ class TestSingleSnpEigen(unittest.TestCase):
             val=np.repeat(pheno0.val, 3, axis=1),
             iid=pheno0.row,
             sid=["pheno0a", "pheno0b", "pheno0c"],
-            name="pheno000"
+            name="pheno000",
         )
-        val01=np.repeat(pheno0.val, 2, axis=1)
-        val01[::2,1]*=10
+        val01 = np.repeat(pheno0.val, 2, axis=1)
+        val01[::2, 1] *= 10
         pheno01 = SnpData(
-            val=val01,
-            iid=pheno0.row,
-            sid=["pheno0", "pheno1"],
-            name="pheno01"
+            val=val01, iid=pheno0.row, sid=["pheno0", "pheno1"], name="pheno01"
         )
-
 
         cov_reader = Pheno(
             example_file("fastlmm/feature_selection/examples/toydata.cov")
