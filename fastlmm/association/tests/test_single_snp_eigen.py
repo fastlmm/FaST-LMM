@@ -60,8 +60,8 @@ class TestSingleSnpEigen(unittest.TestCase):
             sid=["pheno0a", "pheno0b", "pheno0c"],
             name="pheno000"
         )
-        val01=np.repeat(pheno0.val, 2, axis=1),
-        val01[:,1]*=2
+        val01=np.repeat(pheno0.val, 2, axis=1)
+        val01[::2,1]*=10
         pheno01 = SnpData(
             val=val01,
             iid=pheno0.row,
@@ -79,7 +79,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        if True:
+        if False:
             runner2 = None  # LocalMultiProc(6, just_one_process=False)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0.1
@@ -93,10 +93,10 @@ class TestSingleSnpEigen(unittest.TestCase):
             "cov": [cov_reader, None],
             "delta": [None, 0.20000600000000002, delta_default],
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
-            "pheno": [pheno000, pheno_fn],
+            "pheno": [pheno000, pheno_fn, pheno01],
         }
         first_list = [
-            {"cov": 0, "pheno": 0}
+            {"cov": 0, "pheno": 2}
         ]  # [{"pheno": 1, "use_reml": 0}]  # [{"pheno": 0}]  #
 
         def mapper2(option):
