@@ -9,6 +9,7 @@ from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
 from pysnptools.eigenreader import EigenData
+from pysnptools.eigenreader.eigendata import Rotation
 from pysnptools.util.mapreduce1 import map_reduce
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
@@ -97,8 +98,6 @@ def single_snp_eigen(
     #   * is_low_rank (True/False)
     #   * logdet (depends on is_low_rank)
     # =========================
-    diagonal_name = np.array(["diagonal"])  #!!!cmk similar code #!!!cmk kludge
-
     def mapper_search(pheno_index):
         pheno_r_i = pheno_r[pheno_index]
         return _find_best_kdi_as_needed(
@@ -159,7 +158,7 @@ def single_snp_eigen(
 
     XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=K0_kdi)
     XKX[:cc, :cc] = covarKcovar  # upper left
-    XKpheno = AKB.empty(xkx_sid, diagonal_name, kdi=K0_kdi)
+    XKpheno = AKB.empty(xkx_sid, Rotation.diagonal_name, kdi=K0_kdi)
     XKpheno[:cc, :] = covarKpheno  # upper
 
     # ==================================
@@ -430,8 +429,7 @@ class AK(PstData):
     # !!!cmk kludge
     def from_pheno_r(pheno_r, kdi):
         val = pheno_r.val[:, np.newaxis, :] / kdi.Sd
-        diagonal_name = np.array(["diagonal"]) # !!!cmk kludge
-        return AK(val=val, row=pheno_r.row, col=diagonal_name, pheno=kdi.pheno)
+        return AK(val=val, row=pheno_r.row, col=Rotation.diagonal_name, pheno=kdi.pheno)
 
     def __getitem__(self, index):
         val = self.val[index]
@@ -493,9 +491,7 @@ class AKB(PstData):
                 np.newaxis, np.newaxis, :
             ] / kdi.delta.reshape(-1)
 
-        #!!!cmk kludge
-        diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
-        result = AKB(val=val, row=diagonal_name, col=diagonal_name, kdi=kdi)
+        result = AKB(val=val, row=Rotation.diagonal_name, col=Rotation.diagonal_name, kdi=kdi)
         return result, aK
 
     @staticmethod
@@ -512,8 +508,7 @@ class AKB(PstData):
             ] / kdi.delta.reshape(-1)
 
 
-        diagonal_name = np.array(["diagonal"])  #!!!cmk similar code #!!!cmk kludge
-        result = AKB(val=val, row=a_r.col, col=diagonal_name, kdi=kdi)
+        result = AKB(val=val, row=a_r.col, col=Rotation.diagonal_name, kdi=kdi)
         return result, aK
 
     @staticmethod
