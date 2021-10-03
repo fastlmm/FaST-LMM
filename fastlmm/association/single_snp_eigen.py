@@ -450,7 +450,12 @@ class AKB(PstData):
         aK = AK.from_a_k(a_r, kdi, aK)
         cmk_check_from_rotated(aK, b_r)
 
-        ein_str0 = f"icp,i{'p' if b_r.is_diagonal else 'x'}->{'' if a_r.is_diagonal else 'c'}{'' if b_r.is_diagonal else 'x'}p"
+        ein_a = a_r.ein("a")
+        ein_b = b_r.ein("b")
+        ein_ab = Rotation.ein_cat(ein_a,ein_b)
+        ein_abd =  Rotation.ein_cat(ein_a,ein_b,"d")
+
+        ein_str0 = f"iad,i{ein_b}->{ein_abd}"
         new_axis0 = (
             np.newaxis if a_r.is_diagonal else slice(None, None, None),
             np.newaxis if b_r.is_diagonal else slice(None, None, None),
@@ -458,9 +463,7 @@ class AKB(PstData):
         val = np.einsum(ein_str0, aK.val, b_r.val)[new_axis0]
 
         if kdi.is_low_rank:
-            ein_str1 = f"i{'p' if a_r.is_diagonal else 'c'},i{'p' if b_r.is_diagonal else 'x'}->{'p' if a_r.is_diagonal else 'c'}{'p' if b_r.is_diagonal else 'x'}"
-            if ein_str1.endswith("pp"):
-                ein_str1 = ein_str1[:-1]
+            ein_str1 = f"i{ein_a},i{ein_b}->{ein_ab}"
             new_axis1 = (
                 np.newaxis if a_r.is_diagonal else slice(None, None, None),
                 np.newaxis if b_r.is_diagonal else slice(None, None, None),
@@ -468,28 +471,6 @@ class AKB(PstData):
                 )
             val += np.einsum(ein_str1, a_r.double.val, b_r.double.val)[new_axis1] / kdi.delta.reshape(-1)
 
-        #if not a_r.is_diagonal and not b_r.is_diagonal:
-        #    #val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
-        #    if kdi.is_low_rank:
-        #        new_axis1 = (slice(None, None, None), slice(None, None, None), np.newaxis)
-        #        val += np.einsum("ic,ix->cx", a_r.double.val, b_r.double.val)[new_axis1] / kdi.delta.reshape(-1)
-        #        #val += a_r.double.val.T.dot(b_r.double.val)[:, :, np.newaxis] / kdi.delta.reshape(-1)
-
-        #elif a_r.is_diagonal and b_r.is_diagonal:
-        #    assert a_r is b_r, "kludgecmk"
-
-        #    new_axis = (np.newaxis, np.newaxis, slice(None, None, None))
-        #    if kdi.is_low_rank:
-        #        # !!!cmk can we dot this without repeading pheno_r input?
-        #        val += np.einsum("ip,ip->p", a_r.double.val, b_r.double.val)[new_axis] / kdi.delta.reshape(-1)
-
-        #else:
-        #    assert not a_r.is_diagonal, "kludgecmk"
-        #    assert b_r.is_diagonal, "kludgecmk"
-
-        #    new_axis = (slice(None, None, None), np.newaxis, slice(None, None, None))
-        #    if kdi.is_low_rank:
-        #        val += np.einsum("ic,ip->cp", a_r.double.val, b_r.double.val)[new_axis] / kdi.delta.reshape(-1)
 
 
         result = AKB(val=val, row=a_r.diagonal_or_col, col=b_r.diagonal_or_col, kdi=kdi)
