@@ -86,8 +86,8 @@ def single_snp_eigen(
     covar = _covar_read_with_bias(covar)
     pheno = pheno.read(view_ok=True, order="A")
 
-    covar_r = K0_eigen.rotate(covar)
-    pheno_r = K0_eigen.rotate(pheno)
+    covar_r = K0_eigen.rotate(covar, is_diagonal=False)
+    pheno_r = K0_eigen.rotate(pheno, is_diagonal=True)
 
     # =========================
     # For each phenotype, in parallel, ...
@@ -98,6 +98,7 @@ def single_snp_eigen(
     #   * logdet (depends on is_low_rank)
     # =========================
     diagonal_name = np.array(["diagonal"])  #!!!cmk similar code
+
     def mapper_search(pheno_index):
         pheno_r_i = pheno_r[pheno_index]
         pheno_r_i._col = diagonal_name
@@ -130,9 +131,9 @@ def single_snp_eigen(
     #   * The KdI objected use to create it.
     # =========================
 
-    covarKcovar, covarK = AKB.from_rotated_3D(covar_r, K0_kdi, covar_r)
-    phenoKpheno, _ = AKB.from_rotated_pp(pheno_r, K0_kdi)
-    covarKpheno, _ = AKB.from_rotated_ap(covar_r, K0_kdi, pheno_r, aK=covarK)
+    covarKcovar, covarK = AKB.from_a_r_b_r(covar_r, K0_kdi, covar_r)
+    phenoKpheno, _ = AKB.from_pheno_r_pheno_r(pheno_r, K0_kdi)
+    covarKpheno, _ = AKB.from_a_r_pheno_r(covar_r, K0_kdi, pheno_r, aK=covarK)
     ll_null, _beta, _variance_beta = _loglikelihood(
         covar, phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml
     )
@@ -177,13 +178,15 @@ def single_snp_eigen(
         alt_batch = (
             test_snps[:, sid_start : sid_start + batch_size].read().standardize()
         )
-        alt_batch_r = K0_eigen.rotate(alt_batch)
+        alt_batch_r = K0_eigen.rotate(alt_batch, is_diagonal=False)
 
-        covarKalt_batch, _ = AKB.from_rotated_3D(
+        covarKalt_batch, _ = AKB.from_a_r_b_r(
             covar_r, K0_kdi, alt_batch_r, aK=covarK
         )
 
-        alt_batchKpheno, alt_batchK = AKB.from_rotated_ap(alt_batch_r, K0_kdi, pheno_r)
+        alt_batchKpheno, alt_batchK = AKB.from_a_r_pheno_r(
+            alt_batch_r, K0_kdi, pheno_r
+        )
 
         # ==================================
         # For each test SNP in the batch
@@ -198,7 +201,7 @@ def single_snp_eigen(
             # Fill in last value of X, XKX and XKpheno
             # with the alt value.
             # ==================================
-            altKalt, _ = AKB.from_rotated_3D(
+            altKalt, _ = AKB.from_a_r_b_r(
                 alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :]
             )
 
@@ -304,7 +307,7 @@ def _covar_read_with_bias(covar):
 class KdI:
     def __init__(self, hld, row, pheno, is_low_rank, logdet, Sd):
         self.h2, self.log_delta, self.delta = hld
-        assert len(self.h2.shape)==1, "!!!cmk"
+        assert len(self.h2.shape) == 1, "!!!cmk"
         self.row = row
         self.pheno = pheno
         self.is_low_rank = is_low_rank
@@ -366,7 +369,7 @@ class KdI:
         )
 
     def __getitem__(self, pheno_index):
-        if pheno_index == slice(None,None,None):
+        if pheno_index == slice(None, None, None):
             return self
         if isinstance(pheno_index, slice):
             assert pheno_index.step is None
@@ -421,16 +424,15 @@ class AK(PstData):
         super().__init__(val=val, row=row, col=col)
         self.pheno = pheno
 
-    #!!!cmk kludge -- just need better names
     @staticmethod
-    def from_3D(a_r, kdi, aK=None):
+    def from_a_r(a_r, kdi, aK=None):
         if aK is None:
             val = a_r.val[:, :, np.newaxis] / kdi.Sd
             return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
         else:
             return aK
 
-    def from_pp(pheno_r, kdi):
+    def from_pheno_r(pheno_r, kdi):
         val = pheno_r.val[:, np.newaxis, :] / kdi.Sd
         return AK(val=val, row=pheno_r.row, col=np.array(["diagonal"]), pheno=kdi.pheno)
 
@@ -453,8 +455,11 @@ class AKB(PstData):
 
     #!!!cmk kludge -- just need better names
     @staticmethod
-    def from_rotated_3D(a_r, kdi, b_r, aK=None):
-        aK = AK.from_3D(a_r, kdi, aK)
+    def from_a_r_b_r(a_r, kdi, b_r, aK=None):
+        assert not a_r.is_diagonal, "kludgecmk"
+        assert not b_r.is_diagonal, "kludgecmk"
+
+        aK = AK.from_a_r(a_r, kdi, aK)
         cmk_check_from_rotated(aK, b_r)
 
         val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
@@ -467,8 +472,9 @@ class AKB(PstData):
         return result, aK
 
     @staticmethod
-    def from_rotated_pp(pheno_r, kdi):
-        aK = AK.from_pp(pheno_r, kdi)
+    def from_pheno_r_pheno_r(pheno_r, kdi):
+        assert pheno_r.is_diagonal, "kludgecmk"
+        aK = AK.from_pheno_r(pheno_r, kdi)
         cmk_check_from_rotated(aK, pheno_r)
 
         val = np.einsum("ijk,ik->k", aK.val, pheno_r.val)[np.newaxis, np.newaxis, :]
@@ -483,8 +489,9 @@ class AKB(PstData):
         return result, aK
 
     @staticmethod
-    def from_rotated_ap(a_r, kdi, pheno_r, aK=None):
-        aK = AK.from_3D(a_r, kdi, aK)
+    def from_a_r_pheno_r(a_r, kdi, pheno_r, aK=None):
+        assert pheno_r.is_diagonal, "kludgecmk"
+        aK = AK.from_a_r(a_r, kdi, aK)
         cmk_check_from_rotated(aK, pheno_r)
 
         val = np.einsum("icp,ip->cp", aK.val, pheno_r.val)[:, np.newaxis, :]
@@ -539,9 +546,9 @@ def _find_h2(
         # This kdi is Kg+delta I
         kdi = KdI.from_eigendata(eigendata, pheno=pheno_r.col, h2=x)
         # aKb is  a.T * kdi^-1 * b
-        phenoKpheno, _ = AKB.from_rotated_pp(pheno_r, kdi)
-        XKX, XK = AKB.from_rotated_3D(X_r, kdi, X_r)
-        XKpheno, _ = AKB.from_rotated_ap(X_r, kdi, pheno_r, aK=XK)
+        phenoKpheno, _ = AKB.from_pheno_r_pheno_r(pheno_r, kdi)
+        XKX, XK = AKB.from_a_r_b_r(X_r, kdi, X_r)
+        XKpheno, _ = AKB.from_a_r_pheno_r(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -float(nLL)  # !!!cmk
@@ -556,7 +563,9 @@ def _find_h2(
 
 def _eigen_from_akb1(akb, keep_above=np.NINF):
     # !!!cmk check that square aKa not just aKb???
-    assert len(akb.val.shape) == 3 and akb.val.shape[2] == 1, "Expect to run on just one phenotype"
+    assert (
+        len(akb.val.shape) == 3 and akb.val.shape[2] == 1
+    ), "Expect to run on just one phenotype"
     val = np.squeeze(akb.val, -1)
     w, v = np.linalg.eigh(val)  # !!! cmk do SVD sometimes?
     eigen = EigenData(values=w, vectors=v, row=akb.row)
@@ -585,11 +594,11 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         eigen_xkx_i = _eigen_from_akb1(XKX_i, keep_above=1e-10)
 
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
-        XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
-        XKphenoK = AK.from_3D(XKpheno_r, kd0)
-        XKphenoK.val = XKphenoK.val.squeeze(-1)  #!!!cmk ugly
+        XKpheno_r = eigen_xkx_i.rotate(XKpheno_i, is_diagonal=False)
+        XKphenoK = AK.from_a_r(XKpheno_r, kd0)
+        XKphenoK.val = XKphenoK.val.squeeze(-1)  #!!!cmk ugly kludge
         XKphenoK.pheno = None
-        beta_i = eigen_xkx_i.t_rotate(XKphenoK)
+        beta_i = eigen_xkx_i.t_rotate(XKphenoK, is_diagonal=False)
         r2_i = PstData(
             val=phenoKpheno_i.val - XKpheno_i.val.T.dot(beta_i.val),
             row=phenoKpheno_i.row,
@@ -606,8 +615,8 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
     )
     assert beta_list[0].double is None, "cmk"
     val = np.c_[[beta_i.val for beta_i in beta_list]]
-    val = np.squeeze(val,-1).T
-    beta = PstData(val=val,row=XKpheno.row,col=phenoKpheno.pheno)
+    val = np.squeeze(val, -1).T
+    beta = PstData(val=val, row=XKpheno.row, col=phenoKpheno.pheno)
 
     return r2, beta, eigen_xkx_list
 
@@ -678,13 +687,13 @@ def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
             * sigma2
             * (eigen_xkx_i.vectors / eigen_xkx_i.values * eigen_xkx_i.vectors).sum(-1)
         )
-        assert len(variance_beta_i.shape)==1, "!!!cmk"
+        assert len(variance_beta_i.shape) == 1, "!!!cmk"
         variance_beta_list.append(variance_beta_i)
         # !!!cmk which is negative loglikelihood and which is LL?
     nnLL = np.array([-float(nLL) for nLL in nLL_list]).reshape(-1)
 
     variance_beta = np.c_[variance_beta_list]
-    assert len(variance_beta.shape)==2, "!!!cmk"
+    assert len(variance_beta.shape) == 2, "!!!cmk"
     variance_beta = variance_beta.T
     # !!!cmk variance_beta = np.squeeze(variance_beta,0).T
     assert variance_beta.shape == (XKX.row_count, len(phenoKpheno.pheno)), "!!!cmk"
@@ -777,7 +786,9 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen.values[eigen.values<.0001]=0.0
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
+
+
 def cmk_check_from_rotated(aK, b_r):
-    assert len(aK.val.shape)==3
-    assert len(b_r.val.shape)==2
+    assert len(aK.val.shape) == 3
+    assert len(b_r.val.shape) == 2
     assert "pheno" not in aK.col[0]
