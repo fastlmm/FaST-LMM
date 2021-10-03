@@ -69,7 +69,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        if True:
+        if False:
             runner2 = None  # LocalMultiProc(6, just_one_process=False)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0.1

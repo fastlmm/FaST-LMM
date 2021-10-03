@@ -419,7 +419,16 @@ class AK(PstData):
         self.pheno = pheno
 
     @staticmethod
-    def from_a_r(a_r, kdi, aK=None):
+    def from_a_k(a_r, kdi, aK=None):
+        if not a_r.is_diagonal:
+            return AK._from_a_r(a_r, kdi, aK)
+        else:
+            assert aK is None, "expect aK to be None" #!!!cmk add code?
+            return AK._from_pheno_r(a_r, kdi)
+
+    #!!!cmk kludge
+    @staticmethod
+    def _from_a_r(a_r, kdi, aK=None):
         if aK is None:
             val = a_r.val[:, :, np.newaxis] / kdi.Sd
             return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
@@ -427,7 +436,8 @@ class AK(PstData):
             return aK
 
     # !!!cmk kludge
-    def from_pheno_r(pheno_r, kdi):
+    @staticmethod
+    def _from_pheno_r(pheno_r, kdi):
         val = pheno_r.val[:, np.newaxis, :] / kdi.Sd
         return AK(val=val, row=pheno_r.row, col=Rotation.diagonal_name, pheno=kdi.pheno)
 
@@ -466,7 +476,7 @@ class AKB(PstData):
         assert not a_r.is_diagonal, "kludgecmk"
         assert not b_r.is_diagonal, "kludgecmk"
 
-        aK = AK.from_a_r(a_r, kdi, aK)
+        aK = AK.from_a_k(a_r, kdi, aK)
         cmk_check_from_rotated(aK, b_r)
 
         val = np.moveaxis(aK.val.T.dot(b_r.val), 0, -1)  #!!!cmk switch to einsum
@@ -481,7 +491,7 @@ class AKB(PstData):
     @staticmethod
     def _from_pheno_r_pheno_r(pheno_r, kdi):
         assert pheno_r.is_diagonal, "kludgecmk"
-        aK = AK.from_pheno_r(pheno_r, kdi)
+        aK = AK.from_a_k(pheno_r, kdi)
         cmk_check_from_rotated(aK, pheno_r)
 
         val = np.einsum("ijk,ik->k", aK.val, pheno_r.val)[np.newaxis, np.newaxis, :]
@@ -498,7 +508,7 @@ class AKB(PstData):
     def _from_a_r_pheno_r(a_r, kdi, pheno_r, aK=None):
         assert not a_r.is_diagonal, "kludgecmk"
         assert pheno_r.is_diagonal, "kludgecmk"
-        aK = AK.from_a_r(a_r, kdi, aK)
+        aK = AK.from_a_k(a_r, kdi, aK)
         cmk_check_from_rotated(aK, pheno_r)
 
         val = np.einsum("icp,ip->cp", aK.val, pheno_r.val)[:, np.newaxis, :]
@@ -602,7 +612,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
         XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
-        XKphenoK = AK.from_a_r(XKpheno_r, kd0)
+        XKphenoK = AK.from_a_k(XKpheno_r, kd0)
         XKphenoK.val = XKphenoK.val.squeeze(-1)  #!!!cmk ugly kludge
         XKphenoK.pheno = None
         beta_i = eigen_xkx_i.t_rotate(XKphenoK)
