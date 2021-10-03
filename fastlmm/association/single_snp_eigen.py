@@ -86,7 +86,7 @@ def single_snp_eigen(
     covar = _covar_read_with_bias(covar)
     pheno = pheno.read(view_ok=True, order="A")
 
-    covar_r = K0_eigen.rotate(covar, is_diagonal=False) #!!!cmk kludge make this the default
+    covar_r = K0_eigen.rotate(covar)
     pheno_r = K0_eigen.rotate(pheno, is_diagonal=True)
 
     # =========================
@@ -178,7 +178,7 @@ def single_snp_eigen(
         alt_batch = (
             test_snps[:, sid_start : sid_start + batch_size].read().standardize()
         )
-        alt_batch_r = K0_eigen.rotate(alt_batch, is_diagonal=False)
+        alt_batch_r = K0_eigen.rotate(alt_batch)
 
         covarKalt_batch, _ = AKB.from_akb(covar_r, K0_kdi, alt_batch_r, aK=covarK)
 
@@ -603,11 +603,11 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         eigen_xkx_i = _eigen_from_akb1(XKX_i, keep_above=1e-10)
 
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
-        XKpheno_r = eigen_xkx_i.rotate(XKpheno_i, is_diagonal=False)
+        XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
         XKphenoK = AK.from_a_r(XKpheno_r, kd0)
         XKphenoK.val = XKphenoK.val.squeeze(-1)  #!!!cmk ugly kludge
         XKphenoK.pheno = None
-        beta_i = eigen_xkx_i.t_rotate(XKphenoK, is_diagonal=False)
+        beta_i = eigen_xkx_i.t_rotate(XKphenoK)
         r2_i = PstData(
             val=phenoKpheno_i.val - XKpheno_i.val.T.dot(beta_i.val),
             row=phenoKpheno_i.row,
