@@ -348,12 +348,21 @@ class KdI:
     def from_list(kdi_list):
         #!!!cmk if h2 is shape (3), why is logdet (1,1,3)?
         assert len(kdi_list) > 0, "list must contain at least one item"
-        h2 = np.r_[[float(kdi.h2) for kdi in kdi_list]]
-        log_delta = np.r_[[float(kdi.log_delta) for kdi in kdi_list]]
-        delta = np.r_[[float(kdi.delta) for kdi in kdi_list]]
-        logdet = _stack([kdi.logdet for kdi in kdi_list])
-        Sd = _stack([kdi.Sd for kdi in kdi_list])
-        pheno = _stack([kdi.pheno for kdi in kdi_list])
+        if False:
+            h2 = rearrange([kdi.h2 for kdi in kdi_list],"pheno 1 -> pheno")
+            log_delta = rearrange([kdi.log_delta for kdi in kdi_list],"pheno 1 -> pheno")
+            delta = rearrange([kdi.delta for kdi in kdi_list],"pheno 1 -> pheno")
+            logdet = rearrange([kdi.logdet for kdi in kdi_list],"pheno 1 1 1 -> pheno")
+            Sd = rearrange([kdi.Sd for kdi in kdi_list],"pheno eigenvalue 1 1 -> eigenvalue pheno")
+            pheno = rearrange([kdi.pheno for kdi in kdi_list],"pheno 1-> pheno")
+        else:
+            h2 = np.r_[[float(kdi.h2) for kdi in kdi_list]]
+            log_delta = np.r_[[float(kdi.log_delta) for kdi in kdi_list]]
+            delta = np.r_[[float(kdi.delta) for kdi in kdi_list]]
+            logdet = _cmkstack([kdi.logdet for kdi in kdi_list])
+            Sd = _cmkstack([kdi.Sd for kdi in kdi_list])
+            pheno = _cmkstack([kdi.pheno for kdi in kdi_list])
+
         return KdI(
             (h2, log_delta, delta),
             row=kdi_list[0].row,
@@ -395,7 +404,7 @@ class KdI:
 
 
 # better way to stack the last dimension?
-def _stack(array_list):
+def _cmkstack(array_list):
     pheno_count = len(array_list)
     assert pheno_count > 0, "cmk"
     shape = list(array_list[0].shape)
@@ -560,7 +569,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
         XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
         XKphenoK = AK.from_rotation(XKpheno_r, kd0)
-        beta_i = eigen_xkx_i.rotate_back(XKphenoK) #(2,1)
+        beta_i = eigen_xkx_i.rotate_back(Rotation(XKphenoK,double=None))
         r2_i = PstData(
             val=phenoKpheno_i.val - XKpheno_i.val.T.dot(beta_i.val),
             row=phenoKpheno_i.row,
@@ -575,7 +584,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         row=phenoKpheno.row,
         col=phenoKpheno.col,
     )
-    val = rearrange([pstdata.val for pstdata in beta_list], 'p c 1 -> c p')
+    val = rearrange([pstdata.val for pstdata in beta_list], "p c 1 -> c p")
     beta = PstData(val=val, row=XKpheno.row, col=phenoKpheno.pheno)
 
     return r2, beta, eigen_xkx_list
