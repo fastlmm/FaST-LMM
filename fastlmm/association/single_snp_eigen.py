@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import numpy as np
 import scipy.stats as stats
+from einops import rearrange
 import pysnptools.util as pstutil
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpData
@@ -559,9 +560,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
         XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
         XKphenoK = AK.from_rotation(XKpheno_r, kd0)
-        XKphenoK.val = XKphenoK.val.squeeze(-1)  #!!!cmk ugly kludge
-        XKphenoK.pheno = None
-        beta_i = eigen_xkx_i.t_rotate(XKphenoK)
+        beta_i = eigen_xkx_i.rotate_back(XKphenoK) #(2,1)
         r2_i = PstData(
             val=phenoKpheno_i.val - XKpheno_i.val.T.dot(beta_i.val),
             row=phenoKpheno_i.row,
@@ -576,9 +575,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         row=phenoKpheno.row,
         col=phenoKpheno.col,
     )
-    assert beta_list[0].double is None, "cmk"
-    val = np.c_[[beta_i.val for beta_i in beta_list]]
-    val = np.squeeze(val, -1).T
+    val = rearrange([pstdata.val for pstdata in beta_list], 'p c 1 -> c p')
     beta = PstData(val=val, row=XKpheno.row, col=phenoKpheno.pheno)
 
     return r2, beta, eigen_xkx_list
