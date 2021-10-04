@@ -450,30 +450,20 @@ class AKB(PstData):
         aK = AK.from_a_k(a_r, kdi, aK)
         cmk_check_from_rotated(aK, b_r)
 
-        ein_a = a_r.ein("a")
-        ein_b = b_r.ein("b")
-        ein_ab = Rotation.ein_cat(ein_a, ein_b)
+        ein_a, axis_a = a_r.ein("a")
+        ein_b, axis_b = b_r.ein("b")
         ein_abd = Rotation.ein_cat(ein_a, ein_b, "d")
-
+        axis_abd = (axis_a, axis_b, np.s_[:])
         ein_str0 = f"iad,i{ein_b}->{ein_abd}"
-        new_axis0 = (
-            np.newaxis if a_r.is_diagonal else slice(None, None, None),
-            np.newaxis if b_r.is_diagonal else slice(None, None, None),
-            slice(None, None, None),
-        )
-        val = np.einsum(ein_str0, aK.val, b_r.val)[new_axis0]
+        val = np.einsum(ein_str0, aK.val, b_r.val)[axis_abd]
 
         if kdi.is_low_rank:
+            ein_ab = Rotation.ein_cat(ein_a, ein_b)
+            last_axis = np.s_[:] if a_r.is_diagonal or b_r.is_diagonal else np.newaxis
+            axis_ab = (axis_a, axis_b, last_axis)
             ein_str1 = f"i{ein_a},i{ein_b}->{ein_ab}"
-            new_axis1 = (
-                np.newaxis if a_r.is_diagonal else slice(None, None, None),
-                np.newaxis if b_r.is_diagonal else slice(None, None, None),
-                np.newaxis
-                if not a_r.is_diagonal and not b_r.is_diagonal
-                else slice(None, None, None),
-            )
             val += np.einsum(ein_str1, a_r.double.val, b_r.double.val)[
-                new_axis1
+                axis_ab
             ] / kdi.delta.reshape(-1)
 
         result = AKB(val=val, row=a_r.diagonal_or_col, col=b_r.diagonal_or_col, kdi=kdi)
