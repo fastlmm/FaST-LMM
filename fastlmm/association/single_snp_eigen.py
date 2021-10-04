@@ -129,9 +129,9 @@ def single_snp_eigen(
     #   * The KdI objected use to create it.
     # =========================
 
-    covarKcovar, covarK = AKB.from_akb(covar_r, K0_kdi, covar_r)
-    phenoKpheno, _ = AKB.from_akb(pheno_r, K0_kdi, pheno_r)
-    covarKpheno, _ = AKB.from_akb(covar_r, K0_kdi, pheno_r, aK=covarK)
+    covarKcovar, covarK = AKB.from_rotations(covar_r, K0_kdi, covar_r)
+    phenoKpheno, _ = AKB.from_rotations(pheno_r, K0_kdi, pheno_r)
+    covarKpheno, _ = AKB.from_rotations(covar_r, K0_kdi, pheno_r, aK=covarK)
     ll_null, _beta, _variance_beta = _loglikelihood(
         covar, phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml
     )
@@ -178,9 +178,9 @@ def single_snp_eigen(
         )
         alt_batch_r = K0_eigen.rotate(alt_batch)
 
-        covarKalt_batch, _ = AKB.from_akb(covar_r, K0_kdi, alt_batch_r, aK=covarK)
+        covarKalt_batch, _ = AKB.from_rotations(covar_r, K0_kdi, alt_batch_r, aK=covarK)
 
-        alt_batchKpheno, alt_batchK = AKB.from_akb(alt_batch_r, K0_kdi, pheno_r)
+        alt_batchKpheno, alt_batchK = AKB.from_rotations(alt_batch_r, K0_kdi, pheno_r)
 
         # ==================================
         # For each test SNP in the batch
@@ -195,7 +195,7 @@ def single_snp_eigen(
             # Fill in last value of X, XKX and XKpheno
             # with the alt value.
             # ==================================
-            altKalt, _ = AKB.from_akb(
+            altKalt, _ = AKB.from_rotations(
                 alt_r, K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1, :]
             )
 
@@ -419,13 +419,13 @@ class AK(PstData):
         self.pheno = pheno
 
     @staticmethod
-    def from_a_k(a_r, kdi, aK=None):
-        if not a_r.is_diagonal:
-            val = a_r.val[:, :, np.newaxis] / kdi.Sd
-            return AK(val=val, row=a_r.row, col=a_r.col, pheno=kdi.pheno)
-        else:
+    def from_rotation(a_r, kdi, aK=None):
+        if a_r.is_diagonal:
             val = a_r.val[:, np.newaxis, :] / kdi.Sd
-            return AK(val=val, row=a_r.row, col=Rotation.diagonal_name, pheno=kdi.pheno)
+        else:
+            val = a_r.val[:, :, np.newaxis] / kdi.Sd
+
+        return AK(val=val, row=a_r.row, col=a_r.diagonal_or_col, pheno=kdi.pheno)
 
     def __getitem__(self, index):
         val = self.val[index]
@@ -444,11 +444,9 @@ class AKB(PstData):
         self.pheno = kdi.pheno
         self.kdi = kdi
 
-    #!!!cmk kludge -- just need better names
     @staticmethod
-    def from_akb(a_r, kdi, b_r, aK=None):
-        aK = AK.from_a_k(a_r, kdi, aK)
-        cmk_check_from_rotated(aK, b_r)
+    def from_rotations(a_r, kdi, b_r, aK=None):
+        aK = AK.from_rotation(a_r, kdi, aK)
 
         ein_a, axis_a = a_r.ein("a")
         ein_b, axis_b = b_r.ein("b")
@@ -511,9 +509,9 @@ def _find_h2(
         # This kdi is Kg+delta I
         kdi = KdI.from_eigendata(eigendata, pheno=pheno_r.col, h2=x)
         # aKb is  a.T * kdi^-1 * b
-        phenoKpheno, _ = AKB.from_akb(pheno_r, kdi, pheno_r)
-        XKX, XK = AKB.from_akb(X_r, kdi, X_r)
-        XKpheno, _ = AKB.from_akb(X_r, kdi, pheno_r, aK=XK)
+        phenoKpheno, _ = AKB.from_rotations(pheno_r, kdi, pheno_r)
+        XKX, XK = AKB.from_rotations(X_r, kdi, X_r)
+        XKpheno, _ = AKB.from_rotations(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -float(nLL)  # !!!cmk
@@ -526,7 +524,7 @@ def _find_h2(
     return resmin[0]
 
 
-def _eigen_from_akb1(akb, keep_above=np.NINF):
+def _eigen_from_rotations1(akb, keep_above=np.NINF):
     # !!!cmk check that square aKa not just aKb???
     assert (
         len(akb.val.shape) == 3 and akb.val.shape[2] == 1
@@ -556,11 +554,11 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         XKX_i = XKX[:, :, pheno_index : pheno_index + 1]
         XKpheno_i = XKpheno[:, :, pheno_index : pheno_index + 1]
 
-        eigen_xkx_i = _eigen_from_akb1(XKX_i, keep_above=1e-10)
+        eigen_xkx_i = _eigen_from_rotations1(XKX_i, keep_above=1e-10)
 
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
         XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
-        XKphenoK = AK.from_a_k(XKpheno_r, kd0)
+        XKphenoK = AK.from_rotation(XKpheno_r, kd0)
         XKphenoK.val = XKphenoK.val.squeeze(-1)  #!!!cmk ugly kludge
         XKphenoK.pheno = None
         beta_i = eigen_xkx_i.t_rotate(XKphenoK)
@@ -751,9 +749,3 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen.values[eigen.values<.0001]=0.0
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
-
-
-def cmk_check_from_rotated(aK, b_r):
-    assert len(aK.val.shape) == 3
-    assert len(b_r.val.shape) == 2
-    assert "pheno" not in aK.col[0]
