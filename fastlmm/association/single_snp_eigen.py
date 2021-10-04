@@ -307,10 +307,12 @@ class KdI:
         self.pheno = pheno
         self.is_low_rank = is_low_rank
         self.logdet = logdet
+        assert len(logdet.shape)==1, "cmkkludge"
         self.Sd = Sd
 
     @staticmethod
     def from_eigendata(eigendata, pheno, h2=None, log_delta=None, delta=None):
+        #!!!cmk what are the dimensions of delta? kludge
         hld = KdI._hld(h2, log_delta, delta)
         _, _, delta = hld
         logdet, Sd = eigendata.logdet(float(delta))
@@ -320,8 +322,8 @@ class KdI:
             row=eigendata.row,
             pheno=pheno,
             is_low_rank=eigendata.is_low_rank,
-            logdet=logdet.reshape(logdet.shape[0], logdet.shape[1], 1),
-            Sd=Sd.reshape(Sd.shape[0], Sd.shape[1], 1),
+            logdet=np.array([logdet]),
+            Sd=rearrange(Sd,"i->i 1")
         )
 
     @staticmethod
@@ -428,9 +430,9 @@ class AK(PstData):
     @staticmethod
     def from_rotation(a_r, kdi, aK=None):
         if a_r.is_diagonal:
-            val = a_r.val[:, np.newaxis, :] / kdi.Sd
+            val = a_r.val[:, np.newaxis, :] / kdi.Sd[:,None,:]
         else:
-            val = a_r.val[:, :, np.newaxis] / kdi.Sd
+            val = a_r.val[:, :, np.newaxis] / kdi.Sd[:,None,:] #!!!cmk refactor
 
         return AK(val=val, row=a_r.row, col=a_r.diagonal_or_col, pheno=kdi.pheno)
 
