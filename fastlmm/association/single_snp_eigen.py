@@ -348,17 +348,14 @@ class KdI:
     def from_list(kdi_list):
         #!!!cmk if h2 is shape (3), why is logdet (1,1,3)?
         assert len(kdi_list) > 0, "list must contain at least one item"
+        h2 = rearrange([kdi.h2 for kdi in kdi_list],"pheno 1 -> pheno")
+        log_delta = rearrange([kdi.log_delta for kdi in kdi_list],"pheno 1 -> pheno")
+        delta = rearrange([kdi.delta for kdi in kdi_list],"pheno 1 -> pheno")
         if False:
-            h2 = rearrange([kdi.h2 for kdi in kdi_list],"pheno 1 -> pheno")
-            log_delta = rearrange([kdi.log_delta for kdi in kdi_list],"pheno 1 -> pheno")
-            delta = rearrange([kdi.delta for kdi in kdi_list],"pheno 1 -> pheno")
             logdet = rearrange([kdi.logdet for kdi in kdi_list],"pheno 1 1 1 -> pheno")
             Sd = rearrange([kdi.Sd for kdi in kdi_list],"pheno eigenvalue 1 1 -> eigenvalue pheno")
             pheno = rearrange([kdi.pheno for kdi in kdi_list],"pheno 1-> pheno")
         else:
-            h2 = np.r_[[float(kdi.h2) for kdi in kdi_list]]
-            log_delta = np.r_[[float(kdi.log_delta) for kdi in kdi_list]]
-            delta = np.r_[[float(kdi.delta) for kdi in kdi_list]]
             logdet = _cmkstack([kdi.logdet for kdi in kdi_list])
             Sd = _cmkstack([kdi.Sd for kdi in kdi_list])
             pheno = _cmkstack([kdi.pheno for kdi in kdi_list])
