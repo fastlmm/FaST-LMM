@@ -527,26 +527,26 @@ def _eigen_from_xtx(xtx):
     return eigen
 
 
-def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
+def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     # !!!cmk may want to check that all three kdi's are equal
     r2_list = []
     beta_list = []
     eigen_xkx_list = []
-    for pheno_index in range(len(phenoKpheno.pheno)):
-        phenoKpheno_i = phenoKpheno[:, :, pheno_index : pheno_index + 1]
-        XKX_i = XKX[:, :, pheno_index : pheno_index + 1]
-        XKpheno_i = XKpheno[:, :, pheno_index : pheno_index + 1]
+    for y_index in range(len(yKy.pheno)): #!!!cmk kludge
+        yKy_i = yKy[:, :, y_index : y_index + 1]
+        XKX_i = XKX[:, :, y_index : y_index + 1]
+        XKy_i = XKy[:, :, y_index : y_index + 1]
 
         eigen_xkx_i = _eigen_from_rotations1(XKX_i, keep_above=1e-10)
 
-        kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
-        XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
-        XKphenoK = AK.from_rotation(XKpheno_r, kd0)
-        beta_i = eigen_xkx_i.rotate_back(Rotation(XKphenoK, double=None))
+        kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKy_i.col, delta=0)
+        XKy_r = eigen_xkx_i.rotate(XKy_i)
+        XKyK = AK.from_rotation(XKy_r, kd0)
+        beta_i = eigen_xkx_i.rotate_back(Rotation(XKyK, double=None))
         r2_i = PstData(
-            val=phenoKpheno_i.val - XKpheno_i.val.T.dot(beta_i.val),
-            row=phenoKpheno_i.row,
-            col=phenoKpheno_i.col,
+            val=yKy_i.val - XKy_i.val.T.dot(beta_i.val),
+            row=yKy_i.row,
+            col=yKy_i.col,
         )
         r2_list.append(r2_i)
         beta_list.append(beta_i)
@@ -554,43 +554,39 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
 
     r2 = PstData(
         val=np.array([pstdata.val[0, 0] for pstdata in r2_list]).reshape(1, 1, -1),
-        row=phenoKpheno.row,
-        col=phenoKpheno.col,
+        row=yKy.row,
+        col=yKy.col,
     )
     val = rearrange([pstdata.val for pstdata in beta_list], "p c 1 -> c p")
-    beta = PstData(val=val, row=XKpheno.row, col=phenoKpheno.pheno)
+    beta = PstData(val=val, row=XKy.row, col=yKy.pheno) #!!!cmk kludge
 
     return r2, beta, eigen_xkx_list
 
 
-def _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml):
+def _loglikelihood(X, yKy, XKX, XKy, use_reml):
     if use_reml:
-        nLL, beta = _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno)
-        return (
-            nLL,
-            beta,
-            None,
-        )  #!!!cmk np.full((XKpheno.row_count,XKpheno.col_count),np.nan)
+        nLL, beta = _loglikelihood_reml(X, yKy, XKX, XKy)
+        return nLL, beta, None
     else:
-        return _loglikelihood_ml(phenoKpheno, XKX, XKpheno)
+        return _loglikelihood_ml(yKy, XKX, XKy)
 
 
-def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
-    kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
+def _loglikelihood_reml(X, yKy, XKX, XKy):
+    kdi = yKy.kdi  # !!!cmk may want to check that all three kdi's are equal
 
-    r2, beta, eigen_xkx_list = _common_code(phenoKpheno, XKX, XKpheno)
+    r2, beta, eigen_xkx_list = _common_code(yKy, XKX, XKy)
 
     nLL_list = []
-    for pheno_index, _ in enumerate(phenoKpheno.pheno):
-        kdi_i = kdi[pheno_index]
+    for y_index, _ in enumerate(yKy.pheno):
+        kdi_i = kdi[y_index]
         # !!!cmk isn't this a kernel?
         XX = PstData(val=X.val.T.dot(X.val), row=X.sid, col=X.sid)
         eigen_xx = _eigen_from_xtx(XX)
         logdetXX, _ = eigen_xx.logdet()
 
-        logdetXKX, _ = eigen_xkx_list[pheno_index].logdet()
+        logdetXKX, _ = eigen_xkx_list[y_index].logdet()
         X_row_less_col = X.row_count - X.col_count
-        sigma2 = float(r2.val[:, :, pheno_index]) / X_row_less_col
+        sigma2 = float(r2.val[:, :, y_index]) / X_row_less_col
         nLL_i = 0.5 * (
             kdi_i.logdet
             + logdetXKX
@@ -607,16 +603,16 @@ def _loglikelihood_reml(X, phenoKpheno, XKX, XKpheno):
     return nnLL, beta
 
 
-def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
-    r2, beta, eigen_xkx_list = _common_code(phenoKpheno, XKX, XKpheno)
-    kdi = phenoKpheno.kdi  # !!!cmk may want to check that all three kdi's are equal
+def _loglikelihood_ml(yKy, XKX, XKy):
+    r2, beta, eigen_xkx_list = _common_code(yKy, XKX, XKy)
+    kdi = yKy.kdi  # !!!cmk may want to check that all three kdi's are equal
 
     nLL_list = []
     variance_beta_list = []
-    for pheno_index, _ in enumerate(phenoKpheno.pheno):
-        eigen_xkx_i = eigen_xkx_list[pheno_index]
-        kdi_i = kdi[pheno_index]
-        sigma2 = float(r2.val[:, :, pheno_index]) / kdi_i.row_count
+    for y_index, _ in enumerate(yKy.pheno): #!!!cmk kludge
+        eigen_xkx_i = eigen_xkx_list[y_index]
+        kdi_i = kdi[y_index]
+        sigma2 = float(r2.val[:, :, y_index]) / kdi_i.row_count
         nLL_i = 0.5 * (
             kdi_i.logdet + kdi_i.row_count * (np.log(2.0 * np.pi * sigma2) + 1)
         )
@@ -638,7 +634,7 @@ def _loglikelihood_ml(phenoKpheno, XKX, XKpheno):
     assert len(variance_beta.shape) == 2, "!!!cmk"
     variance_beta = variance_beta.T
     # !!!cmk variance_beta = np.squeeze(variance_beta,0).T
-    assert variance_beta.shape == (XKX.row_count, len(phenoKpheno.pheno)), "!!!cmk"
+    assert variance_beta.shape == (XKX.row_count, len(yKy.pheno )), "!!!cmk" #!!!cmk kludge
     return nnLL, beta, variance_beta
 
 
