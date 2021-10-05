@@ -97,26 +97,22 @@ def single_snp_eigen(
     # A KdI object includes
     #   * Sd = eigenvalues + delta
     #   * is_low_rank (True/False)
-    #   * logdet (depends on is_low_rank)
+    #   * logdet
     # =========================
     def mapper_search(pheno_index):
-        pheno_r_i = pheno_r[pheno_index]
         return _find_best_kdi_as_needed(
             K0_eigen,
             covar,
             covar_r,
-            pheno_r_i,
+            pheno_r[pheno_index],
             use_reml=find_delta_via_reml,
             log_delta=log_delta,  # optional
         )
 
-    def reducer_search(K0_kdi_sequence):
-        return KdI.from_list(list(K0_kdi_sequence))
-
     K0_kdi = map_reduce(
         range(pheno_r.col_count),
         mapper=mapper_search,
-        reducer=reducer_search,
+        reducer=KdI.from_sequence,
         runner=runner,
     )
 
@@ -124,7 +120,7 @@ def single_snp_eigen(
     # For each pheno (as the last dimension of the matrix) ...
     # Find A^T * K^-1 * B for covar and pheno.
     # Then find null likelihood for testing.
-    # "AKB.from_rotated" works for both full and low-rank.
+    # "AKB.from_rotations" works for both full and low-rank.
     # A AKB object includes
     #   * The AKB value
     #   * The KdI objected use to create it.
@@ -165,7 +161,6 @@ def single_snp_eigen(
     # ==================================
     # Test SNPs in batches
     # ==================================
-    # !!!cmk really do this in batches in different processes
     batch_size = 100  # !!!cmk const
 
     def mapper(sid_start):
@@ -178,9 +173,7 @@ def single_snp_eigen(
             test_snps[:, sid_start : sid_start + batch_size].read().standardize()
         )
         alt_batch_r = K0_eigen.rotate(alt_batch)
-
         covarKalt_batch, _ = AKB.from_rotations(covar_r, K0_kdi, alt_batch_r, aK=covarK)
-
         alt_batchKpheno, alt_batchK = AKB.from_rotations(alt_batch_r, K0_kdi, pheno_r)
 
         # ==================================
@@ -203,7 +196,7 @@ def single_snp_eigen(
             XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1, :]  # upper right
             XKX[cc:, :cc] = XKX[:cc, cc:, :].T  # lower left
             XKX[cc:, cc:] = altKalt[:, :, :]  # lower right
-            # !!!cmk rename alt_batchKpheno so no "y"?
+
             XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :, :]  # lower
 
             if test_via_reml:  # Only need "X" for REML
@@ -302,19 +295,23 @@ def _covar_read_with_bias(covar):
 class KdI:
     def __init__(self, hld, row, pheno, is_low_rank, logdet, Sd):
         self.h2, self.log_delta, self.delta = hld
-        assert len(self.h2.shape) == 1, "!!!cmk"
+
+        assert len(self.h2.shape) == 1, "Expect h2, etc, to be a 1-D array"
+        assert len(logdet.shape) == 1, "Expect logdet to be a 1-D array"
+        assert len(Sd.shape) == 2, "Expect Sd to be a 2-D array"
+
         self.row = row
         self.pheno = pheno
         self.is_low_rank = is_low_rank
         self.logdet = logdet
-        assert len(logdet.shape)==1, "cmkkludge"
         self.Sd = Sd
 
     @staticmethod
     def from_eigendata(eigendata, pheno, h2=None, log_delta=None, delta=None):
-        #!!!cmk what are the dimensions of delta? kludge
         hld = KdI._hld(h2, log_delta, delta)
         _, _, delta = hld
+        assert len(delta) == 1, "Expect delta, etc, to be a 1-D array of one value"
+
         logdet, Sd = eigendata.logdet(float(delta))
 
         return KdI(
@@ -323,7 +320,7 @@ class KdI:
             pheno=pheno,
             is_low_rank=eigendata.is_low_rank,
             logdet=np.array([logdet]),
-            Sd=rearrange(Sd,"i->i 1")
+            Sd=rearrange(Sd, "i->i 1"),
         )
 
     @staticmethod
@@ -347,20 +344,16 @@ class KdI:
         return np.array([h2]), np.array([log_delta]), np.array([delta])
 
     @staticmethod
-    def from_list(kdi_list):
-        #!!!cmk if h2 is shape (3), why is logdet (1,1,3)?
+    def from_sequence(kdi_sequence):
+        kdi_list = list(kdi_sequence)
         assert len(kdi_list) > 0, "list must contain at least one item"
-        h2 = rearrange([kdi.h2 for kdi in kdi_list],"pheno 1 -> pheno")
-        log_delta = rearrange([kdi.log_delta for kdi in kdi_list],"pheno 1 -> pheno")
-        delta = rearrange([kdi.delta for kdi in kdi_list],"pheno 1 -> pheno")
-        if False:
-            logdet = rearrange([kdi.logdet for kdi in kdi_list],"pheno 1 1 1 -> pheno")
-            Sd = rearrange([kdi.Sd for kdi in kdi_list],"pheno eigenvalue 1 1 -> eigenvalue pheno")
-            pheno = rearrange([kdi.pheno for kdi in kdi_list],"pheno 1-> pheno")
-        else:
-            logdet = _cmkstack([kdi.logdet for kdi in kdi_list])
-            Sd = _cmkstack([kdi.Sd for kdi in kdi_list])
-            pheno = _cmkstack([kdi.pheno for kdi in kdi_list])
+
+        h2 = rearrange([kdi.h2 for kdi in kdi_list], "pheno 1 -> pheno")
+        log_delta = rearrange([kdi.log_delta for kdi in kdi_list], "pheno 1 -> pheno")
+        delta = rearrange([kdi.delta for kdi in kdi_list], "pheno 1 -> pheno")
+        logdet = rearrange([kdi.logdet for kdi in kdi_list], "pheno 1 -> pheno")
+        Sd = rearrange([kdi.Sd for kdi in kdi_list], "pheno i 1 -> i pheno")
+        pheno = rearrange([kdi.pheno for kdi in kdi_list], "pheno 1 -> pheno")
 
         return KdI(
             (h2, log_delta, delta),
@@ -402,25 +395,6 @@ class KdI:
         return len(self.pheno)
 
 
-# better way to stack the last dimension?
-def _cmkstack(array_list):
-    pheno_count = len(array_list)
-    assert pheno_count > 0, "cmk"
-    shape = list(array_list[0].shape)
-    assert shape[-1] == 1, "cmk"
-    shape[-1] = pheno_count
-    result = np.empty(shape=shape, dtype=array_list[0].dtype)
-    #!!!cmk kludge
-    if len(shape) > 1:
-        result[...] = np.nan
-        for pheno_index in range(pheno_count):
-            result[..., pheno_index] = array_list[pheno_index][..., 0]
-    else:
-        for pheno_index in range(pheno_count):
-            result[pheno_index] = array_list[pheno_index][0]
-    return result
-
-
 # !!!cmk move to PySnpTools
 class AK(PstData):
     def __init__(self, val, row, col, pheno):
@@ -430,9 +404,9 @@ class AK(PstData):
     @staticmethod
     def from_rotation(a_r, kdi, aK=None):
         if a_r.is_diagonal:
-            val = a_r.val[:, np.newaxis, :] / kdi.Sd[:,None,:]
+            val = a_r.val[:, np.newaxis, :] / kdi.Sd[:, None, :]
         else:
-            val = a_r.val[:, :, np.newaxis] / kdi.Sd[:,None,:] #!!!cmk refactor
+            val = a_r.val[:, :, np.newaxis] / kdi.Sd[:, None, :]
 
         return AK(val=val, row=a_r.row, col=a_r.diagonal_or_col, pheno=kdi.pheno)
 
@@ -568,7 +542,7 @@ def _common_code(phenoKpheno, XKX, XKpheno):  # !!! cmk rename
         kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKpheno_i.col, delta=0)
         XKpheno_r = eigen_xkx_i.rotate(XKpheno_i)
         XKphenoK = AK.from_rotation(XKpheno_r, kd0)
-        beta_i = eigen_xkx_i.rotate_back(Rotation(XKphenoK,double=None))
+        beta_i = eigen_xkx_i.rotate_back(Rotation(XKphenoK, double=None))
         r2_i = PstData(
             val=phenoKpheno_i.val - XKpheno_i.val.T.dot(beta_i.val),
             row=phenoKpheno_i.row,
