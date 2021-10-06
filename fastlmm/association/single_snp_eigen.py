@@ -506,27 +506,6 @@ def _find_h2(
     _ = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2)
     return resmin[0]
 
-
-def _eigen_from_rotations1(akb, keep_above=np.NINF):
-    # !!!cmk check that square aKa not just aKb???
-    assert (
-        len(akb.val.shape) == 3 and akb.val.shape[2] == 1
-    ), "Expect to run on just one phenotype"
-    val = np.squeeze(akb.val, -1)
-    w, v = np.linalg.eigh(val)  # !!! cmk do SVD sometimes?
-    eigen = EigenData(values=w, vectors=v, row=akb.row)
-    if keep_above > np.NINF:
-        eigen = eigen[:, eigen.values > keep_above].read(view_ok=True)
-    return eigen
-
-
-def _eigen_from_xtx(xtx):
-    # !!!cmk check that square aKa not just aKb???
-    w, v = np.linalg.eigh(xtx.val)  # !!! cmk do SVD sometimes?
-    eigen = EigenData(values=w, vectors=v, row=xtx.row)
-    return eigen
-
-
 def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     # !!!cmk may want to check that all three kdi's are equal
     r2_list = []
@@ -537,9 +516,24 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
         XKX_i = XKX[:, :, y_index : y_index + 1]
         XKy_i = XKy[:, :, y_index : y_index + 1]
 
-        eigen_xkx_i = _eigen_from_rotations1(XKX_i, keep_above=1e-10)
+        # ref: https://math.unm.edu/~james/w15-STAT576b.pdf
+        # You can minimize squared error in linear regression with beta of
+        # XTX = X.T.dot(X)
+        # beta = np.linalg.inv(XTX).dot(X.T.dot(y))
 
-        kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKy_i.col, delta=0)
+        # ref: https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix#Matrix_inverse_via_eigendecomposition
+        # You can find an inverse of XTX using eigen
+        # print(np.linalg.inv(XTX))
+        # values,vectors = np.linalg.eigh(XTX)
+        # print((vectors/values).dot(vectors.T))
+
+        # So, beta = (vectors/values).dot(vectors.T).dot(X.T.dot(y))
+        # or  beta = vectors.dot(vectors.T.dot(X.T.dot(y))/values)
+
+
+        eigen_xkx_i = EigenData.from_aka(XKX_i, keep_above=1e-10)
+
+        kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKy_i.col, delta=0) #!!!cmk XKy_i.col is always ["diagonal"]
         XKy_r = eigen_xkx_i.rotate(XKy_i)
         XKyK = AK.from_rotation(XKy_r, kd0)
         beta_i = eigen_xkx_i.rotate_back(Rotation(XKyK, double=None))
@@ -580,8 +574,9 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
     for y_index, _ in enumerate(yKy.pheno):
         kdi_i = kdi[y_index]
         # !!!cmk isn't this a kernel?
+        #!!!cmk rename XX to xtx
         XX = PstData(val=X.val.T.dot(X.val), row=X.sid, col=X.sid)
-        eigen_xx = _eigen_from_xtx(XX)
+        eigen_xx = EigenData.from_aka(XX)
         logdetXX, _ = eigen_xx.logdet()
 
         logdetXKX, _ = eigen_xkx_list[y_index].logdet()
@@ -676,51 +671,3 @@ def _create_dataframe():
         )
     )
     return dataframe
-
-
-# !!!cmk move to pysnptools
-def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
-    """!!!cmk documentation"""
-    # !!!cmk could offer a low-memory path that uses memmapped files
-    from pysnptools.kernelreader import SnpKernel
-    from pysnptools.kernelstandardizer import Identity as KS_Identity
-
-    assert K0 is not None
-    K0 = _kernel_fixup(K0, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
-    assert K0.iid0 is K0.iid1, "Expect K0 to be square"
-
-    if isinstance(
-        K0, SnpKernel
-    ):  # !!!make eigen creation a method on all kernel readers
-        assert isinstance(
-            kernel_standardizer, KS_Identity
-        ), "cmk need code for other kernel standardizers"
-        vectors, sqrt_values, _ = np.linalg.svd(
-            K0.snpreader.read().standardize(K0.standardizer).val, full_matrices=False
-        )
-        if np.any(sqrt_values < -0.1):
-            logging.warning("kernel contains a negative Eigenvalue")
-        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K0.iid)
-    else:
-        # !!!cmk understand _read_kernel, _read_with_standardizing
-
-        K0 = K0._read_with_standardizing(
-            kernel_standardizer=kernel_standardizer,
-            to_kerneldata=True,
-            return_trained=False,
-        )
-        # !!! cmk ??? pass in a new argument, the kernel_standardizer(???)
-        logging.debug("About to eigh")
-        w, v = np.linalg.eigh(K0.val)  # !!! cmk do SVD sometimes?
-        logging.debug("Done with to eigh")
-        if np.any(w < -0.1):
-            logging.warning(
-                "kernel contains a negative Eigenvalue"
-            )  # !!!cmk this shouldn't happen with a RRM, right?
-        # !!!cmk remove very small eigenvalues
-        # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
-        eigen = EigenData(values=w, vectors=v, iid=K0.iid)
-        # eigen.vectors[:,eigen.values<.0001]=0.0
-        # eigen.values[eigen.values<.0001]=0.0
-        # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
-    return eigen
