@@ -17,6 +17,7 @@ from fastlmm.association import single_snp_eigen
 from fastlmm.association.tests.test_gwas import GwasPrototype
 from fastlmm.inference.fastlmm_predictor import _kernel_fixup
 
+
 class TestSingleSnpEigen(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -1038,6 +1039,7 @@ def getTestSuite():
     # suite2 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpEigenLeaveOutOneChrom)
     return unittest.TestSuite([suite1])  # cmk,suite2])
 
+
 def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
     """!!!cmk documentation"""
     # !!!cmk could offer a low-memory path that uses memmapped files
@@ -1060,9 +1062,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         )
         if np.any(sqrt_values < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
-        eigen = EigenData(
-            values=sqrt_values * sqrt_values, vectors=vectors, row=K0.iid
-        )
+        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K0.iid)
     else:
         # !!!cmk understand _read_kernel, _read_with_standardizing
 
@@ -1086,6 +1086,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen.values[eigen.values<.0001]=0.0
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

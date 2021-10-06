@@ -506,12 +506,13 @@ def _find_h2(
     _ = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2)
     return resmin[0]
 
+
 def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     # !!!cmk may want to check that all three kdi's are equal
     r2_list = []
     beta_list = []
     eigen_xkx_list = []
-    for y_index in range(len(yKy.pheno)): #!!!cmk kludge
+    for y_index in range(len(yKy.pheno)):  #!!!cmk kludge
         yKy_i = yKy[:, :, y_index : y_index + 1]
         XKX_i = XKX[:, :, y_index : y_index + 1]
         XKy_i = XKy[:, :, y_index : y_index + 1]
@@ -530,13 +531,9 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
         # So, beta = (vectors/values).dot(vectors.T).dot(X.T.dot(y))
         # or  beta = vectors.dot(vectors.T.dot(X.T.dot(y))/values)
 
-
         eigen_xkx_i = EigenData.from_aka(XKX_i, keep_above=1e-10)
-
-        kd0 = KdI.from_eigendata(eigen_xkx_i, pheno=XKy_i.col, delta=0) #!!!cmk XKy_i.col is always ["diagonal"]
-        XKy_r = eigen_xkx_i.rotate(XKy_i)
-        XKyK = AK.from_rotation(XKy_r, kd0)
-        beta_i = eigen_xkx_i.rotate_back(Rotation(XKyK, double=None))
+        XKy_r_s = eigen_xkx_i.rotate_and_scale(XKy_i, ignore_low_rank=True)
+        beta_i = eigen_xkx_i.rotate_back(XKy_r_s)
         r2_i = PstData(
             val=yKy_i.val - XKy_i.val.T.dot(beta_i.val),
             row=yKy_i.row,
@@ -552,7 +549,7 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
         col=yKy.col,
     )
     val = rearrange([pstdata.val for pstdata in beta_list], "p c 1 -> c p")
-    beta = PstData(val=val, row=XKy.row, col=yKy.pheno) #!!!cmk kludge
+    beta = PstData(val=val, row=XKy.row, col=yKy.pheno)  #!!!cmk kludge
 
     return r2, beta, eigen_xkx_list
 
@@ -604,7 +601,7 @@ def _loglikelihood_ml(yKy, XKX, XKy):
 
     nLL_list = []
     variance_beta_list = []
-    for y_index, _ in enumerate(yKy.pheno): #!!!cmk kludge
+    for y_index, _ in enumerate(yKy.pheno):  #!!!cmk kludge
         eigen_xkx_i = eigen_xkx_list[y_index]
         kdi_i = kdi[y_index]
         sigma2 = float(r2.val[:, :, y_index]) / kdi_i.row_count
@@ -629,7 +626,10 @@ def _loglikelihood_ml(yKy, XKX, XKy):
     assert len(variance_beta.shape) == 2, "!!!cmk"
     variance_beta = variance_beta.T
     # !!!cmk variance_beta = np.squeeze(variance_beta,0).T
-    assert variance_beta.shape == (XKX.row_count, len(yKy.pheno )), "!!!cmk" #!!!cmk kludge
+    assert variance_beta.shape == (
+        XKX.row_count,
+        len(yKy.pheno),
+    ), "!!!cmk"  #!!!cmk kludge
     return nnLL, beta, variance_beta
 
 
