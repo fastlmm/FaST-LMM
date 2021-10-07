@@ -115,6 +115,7 @@ def single_snp_eigen(
     #
     # Next, find A^T * K^-1 * B for covar and pheno.
     # Then find null likelihood for testing.
+    #
     # "AKB.from_rotations" works for both full and low-rank.
     # A AKB object includes
     #   * The AKB value
@@ -122,8 +123,8 @@ def single_snp_eigen(
     # =========================
 
     def mapper_search(pheno_index):
-        result = namedtuple(
-            "kdi_etc",
+        per_pheno = namedtuple(
+            "per_pheno",
             [
                 "K0_kdi",
                 "pheno_r",
@@ -135,21 +136,31 @@ def single_snp_eigen(
             ],
         )
 
-        result.pheno_r = K0_eigen.rotate(pheno[:, pheno_index].read(view_ok=True))
+        per_pheno.pheno_r = K0_eigen.rotate(pheno[:, pheno_index].read(view_ok=True))
 
-        result.K0_kdi = _find_best_kdi_as_needed(
+        per_pheno.K0_kdi = _find_best_kdi_as_needed(
             K0_eigen,
             covar,
             covar_r,
-            result.pheno_r,
+            per_pheno.pheno_r,
             use_reml=find_delta_via_reml,
             log_delta=log_delta,  # optional
         )
-        covarKcovar, result.covarK = AKB.from_rotations(covar_r, result.K0_kdi, covar_r)
-        result.phenoKpheno, _ = AKB.from_rotations(result.pheno_r, result.K0_kdi, result.pheno_r)
-        covarKpheno, _ = AKB.from_rotations(covar_r, result.K0_kdi, result.pheno_r, aK=result.covarK)
-        result.ll_null, _beta, _variance_beta = _loglikelihood(
-            covar, result.phenoKpheno, covarKcovar, covarKpheno, use_reml=test_via_reml
+        covarKcovar, per_pheno.covarK = AKB.from_rotations(
+            covar_r, per_pheno.K0_kdi, covar_r
+        )
+        per_pheno.phenoKpheno, _ = AKB.from_rotations(
+            per_pheno.pheno_r, per_pheno.K0_kdi, per_pheno.pheno_r
+        )
+        covarKpheno, _ = AKB.from_rotations(
+            covar_r, per_pheno.K0_kdi, per_pheno.pheno_r, aK=per_pheno.covarK
+        )
+        per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
+            covar,
+            per_pheno.phenoKpheno,
+            covarKcovar,
+            covarKpheno,
+            use_reml=test_via_reml,
         )
 
         # ==================================
@@ -158,14 +169,16 @@ def single_snp_eigen(
         # the last part can be swapped for each test SNP.
         # ==================================
         # !!!cmk what if alt is not unique?
-        result.XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=result.K0_kdi)
-        result.XKX[:cc, :cc] = covarKcovar  # upper left
-        result.XKpheno = AKB.empty(xkx_sid, result.pheno_r.col, kdi=result.K0_kdi)
-        result.XKpheno[:cc, :] = covarKpheno  # upper
+        per_pheno.XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=per_pheno.K0_kdi)
+        per_pheno.XKX[:cc, :cc] = covarKcovar  # upper left
+        per_pheno.XKpheno = AKB.empty(
+            xkx_sid, per_pheno.pheno_r.col, kdi=per_pheno.K0_kdi
+        )
+        per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
 
-        return result
+        return per_pheno
 
-    kdi_etc_list = map_reduce(
+    per_pheno_list = map_reduce(
         range(pheno.col_count),
         mapper=mapper_search,
         # reducer=KdI.from_sequence, #!!!cmk remove this refactor kludge
@@ -192,15 +205,13 @@ def single_snp_eigen(
         # For each phenotype
         # ==================================
         result_list = []
-        for pheno_index in range(pheno.col_count):
-            #!!!cmk rename pheno_r_i
-            kdi_etc = kdi_etc_list[pheno_index]
+        for pheno_index, per_pheno in enumerate(per_pheno_list):
 
             covarKalt_batch, _ = AKB.from_rotations(
-                covar_r, kdi_etc.K0_kdi, alt_batch_r, aK=kdi_etc.covarK
+                covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
             )
             alt_batchKpheno, alt_batchK = AKB.from_rotations(
-                alt_batch_r, kdi_etc.K0_kdi, kdi_etc.pheno_r
+                alt_batch_r, per_pheno.K0_kdi, per_pheno.pheno_r
             )
 
             # ==================================
@@ -216,14 +227,14 @@ def single_snp_eigen(
                 # with the alt value.
                 # ==================================
                 altKalt, _ = AKB.from_rotations(
-                    alt_r, kdi_etc.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                    alt_r, per_pheno.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
                 )
 
-                kdi_etc.XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
-                kdi_etc.XKX[cc:, :cc] = kdi_etc.XKX[:cc, cc:].T  # lower left
-                kdi_etc.XKX[cc:, cc:] = altKalt[:, :]  # lower right
+                per_pheno.XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
+                per_pheno.XKX[cc:, :cc] = per_pheno.XKX[:cc, cc:].T  # lower left
+                per_pheno.XKX[cc:, cc:] = altKalt[:, :]  # lower right
 
-                kdi_etc.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
+                per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
 
                 if test_via_reml:  # Only need "X" for REML
                     X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
@@ -233,10 +244,14 @@ def single_snp_eigen(
                 # ==================================
                 # O(sid_count * (covar+1)^6)
                 ll_alt, beta, variance_beta = _loglikelihood(
-                    X, kdi_etc.phenoKpheno, kdi_etc.XKX, kdi_etc.XKpheno, use_reml=test_via_reml
+                    X,
+                    per_pheno.phenoKpheno,
+                    per_pheno.XKX,
+                    per_pheno.XKpheno,
+                    use_reml=test_via_reml,
                 )
 
-                test_statistic = ll_alt - kdi_etc.ll_null
+                test_statistic = ll_alt - per_pheno.ll_null
 
                 result_list.append(
                     {
@@ -246,7 +261,7 @@ def single_snp_eigen(
                         if variance_beta is not None
                         else None,
                         # !!!cmk right name and place?
-                        "Pheno": kdi_etc.pheno_r.col[0],
+                        "Pheno": per_pheno.pheno_r.col[0],
                     }
                 )
 
@@ -259,7 +274,7 @@ def single_snp_eigen(
         dataframe["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno.col_count)
         dataframe["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno.col_count)
         dataframe["Nullh2"] = np.tile(
-            [kdi_etc.K0_kdi.h2 for kdi_etc in kdi_etc_list], alt_batch.sid_count
+            [per_pheno.K0_kdi.h2 for per_pheno in per_pheno_list], alt_batch.sid_count
         )
         # !!!cmk in lmmcov, but not lmm
         # dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
@@ -363,26 +378,6 @@ class KdI:
     def row_count(self):
         return len(self.row)
 
-
-# !!!cmk move to PySnpTools
-class AK(PstData):
-    def __init__(self, val, row, col):
-        super().__init__(val=val, row=row, col=col)
-
-    @staticmethod
-    def from_rotation(a_r, kdi, aK=None):
-        val = a_r.val / kdi.Sd[:, np.newaxis]
-        return AK(val=val, row=a_r.row, col=a_r.col)
-
-    def __getitem__(self, index):
-        val = self.val[index]
-        return AK(
-            val=val,
-            row=self.row[index[0]],
-            col=self.col[index[1]],
-        )
-
-
 # !!!cmk move to PySnpTools
 class AKB(PstData):
     def __init__(self, val, row, col, kdi):
@@ -391,8 +386,10 @@ class AKB(PstData):
 
     @staticmethod
     def from_rotations(a_r, kdi, b_r, aK=None):
-        aK = AK.from_rotation(a_r, kdi, aK)
-        val = aK.val.T.dot(b_r.val)
+        if aK is None:
+            aK = a_r.val / kdi.Sd[:, np.newaxis]
+
+        val = aK.T.dot(b_r.val)
 
         if kdi.is_low_rank:
             val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
