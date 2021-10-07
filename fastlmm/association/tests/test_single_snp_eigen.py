@@ -1,5 +1,5 @@
 import logging
-
+#!!!cmk kludge replace dot with @
 logging.basicConfig(level=logging.DEBUG)  # cmk
 import unittest
 import os.path
@@ -78,12 +78,12 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        if True:
+        if False:
             runner2 = None  # LocalMultiProc(6, just_one_process=False)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0.1
         else:
-            runner2 = LocalMultiProc(6, just_one_process=False)
+            runner2 = LocalMultiProc(6, just_one_process=True)
             exception_to_catch = Exception
             extra_fraction = 1
         matrix = {
@@ -94,7 +94,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn, pheno01],
         }
-        first_list = [{"cov": 0, "pheno": 0, "train_count": 0}]
+        first_list = [{"use_reml":0}]
 
         def mapper2(option):
             try:
