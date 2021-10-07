@@ -95,7 +95,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn, pheno01],
         }
-        first_list = [{"use_reml": 0}]
+        first_list = [{"use_reml": 1, "delta": 1}, {"use_reml": 0, "delta": 1}]
 
         def mapper2(option):
             try:

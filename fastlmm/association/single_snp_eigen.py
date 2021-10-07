@@ -79,11 +79,13 @@ def single_snp_eigen(
 
     # =========================
     # Read K0_eigen, covar, pheno into memory.
-    # Next rotate covar and pheno.
+    # Next rotate covar.
     #
     # An "EigenReader" object includes both the vectors and values.
-    # A Rotation object always includes rotated=eigenvectors.T@a
-    # If low-rank EigenReader, also includes double=a-eigenvectors@rotated.
+    # A Rotation object always includes both the main "rotated" array.
+    # In addition, if eigen was low rank, then also a "double" array
+    # [such that double = input-eigenvectors@rotated] 
+    # that captures information lost by the low rank.
     # =========================
     K0_eigen = K0_eigen.read(view_ok=True, order="A")
     covar = _covar_read_with_bias(covar)
@@ -91,15 +93,18 @@ def single_snp_eigen(
     covar_r = K0_eigen.rotate(covar)
 
     # ==================================
-    # X is the covariates (with bias) and one test SNP.
-    xkx_sid = np.append(covar.sid, "alt")
-    cc = covar.sid_count  # number of covariates including bias
+    # Count the number of covariates (including bias).
+    # X is the covariates plus one test SNP called "alt"
+    # If an explicit X will be needed later, create it.
+    # !!!cmk what if "alt" name is taken?
+    cc = covar.sid_count  # covariate count (including bias)
+    x_sid = np.append(covar.sid, "alt")
     if test_via_reml:
         # Only need explicit "X" for REML
         X = SnpData(
-            val=np.full((covar.iid_count, len(xkx_sid)), fill_value=np.nan),
+            val=np.full((covar.iid_count, len(x_sid)), fill_value=np.nan),
             iid=covar.iid,
-            sid=xkx_sid,
+            sid=x_sid,
         )
         X.val[:, :cc] = covar.val  # left
     else:
@@ -114,12 +119,12 @@ def single_snp_eigen(
     #   * logdet
     #
     # Next, find A^T * K^-1 * B for covar and pheno.
-    # Then find null likelihood for testing.
-    #
     # "AKB.from_rotations" works for both full and low-rank.
     # A AKB object includes
     #   * The AKB value
     #   * The KdI objected use to create it.
+    #
+    # Finally, find null likelihood.
     # =========================
 
     def mapper_search(pheno_index):
@@ -155,6 +160,7 @@ def single_snp_eigen(
         covarKpheno, _ = AKB.from_rotations(
             covar_r, per_pheno.K0_kdi, per_pheno.pheno_r, aK=per_pheno.covarK
         )
+
         per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
             covar,
             per_pheno.phenoKpheno,
@@ -168,11 +174,11 @@ def single_snp_eigen(
         # Create an XKX, and XKpheno where
         # the last part can be swapped for each test SNP.
         # ==================================
-        # !!!cmk what if alt is not unique?
-        per_pheno.XKX = AKB.empty(row=xkx_sid, col=xkx_sid, kdi=per_pheno.K0_kdi)
+        per_pheno.XKX = AKB.empty(row=x_sid, col=x_sid, kdi=per_pheno.K0_kdi)
         per_pheno.XKX[:cc, :cc] = covarKcovar  # upper left
+
         per_pheno.XKpheno = AKB.empty(
-            xkx_sid, per_pheno.pheno_r.col, kdi=per_pheno.K0_kdi
+            x_sid, per_pheno.pheno_r.col, kdi=per_pheno.K0_kdi
         )
         per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
 
@@ -181,7 +187,6 @@ def single_snp_eigen(
     per_pheno_list = map_reduce(
         range(pheno.col_count),
         mapper=mapper_search,
-        # reducer=KdI.from_sequence, #!!!cmk remove this refactor kludge
         runner=runner,
     )
 
@@ -193,8 +198,9 @@ def single_snp_eigen(
     def mapper(sid_start):
         # ==================================
         # Read and standardize a batch of test SNPs. Then rotate.
-        # For each pheno (as the last dimension in the matrix) ...
-        # Find A^T * K^-1 * B for covar & pheno vs. the batch
+        # Then, for each pheno ...
+        #   Find A^T * K^-1 * B for covar & pheno vs. the batch
+        #   Find the likelihood and pvalue for each test SNP.
         # ==================================
         alt_batch = (
             test_snps[:, sid_start : sid_start + batch_size].read().standardize()
@@ -408,7 +414,6 @@ class AKB(PstData):
         )
 
     def __setitem__(self, key, value):
-        # !!!cmk may want to check that the kdi's are equal
         self.val[key] = value.val
 
     def __getitem__(self, index):
@@ -429,7 +434,7 @@ class AKB(PstData):
 
 # !!!cmk change use_reml etc to 'use_reml'
 def _find_h2(
-    eigendata, X, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999
+    K0_eigen, X, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999
 ):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its kdi's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
@@ -437,15 +442,13 @@ def _find_h2(
     resmin = [None]
 
     def f(x, resmin=resmin, **kwargs):
-        # This kdi is Kg+delta I
-        kdi = KdI.from_eigendata(eigendata, h2=x)
-        # aKb is  a.T * kdi^-1 * b
+        kdi = KdI.from_eigendata(K0_eigen, h2=x)
         phenoKpheno, _ = AKB.from_rotations(pheno_r, kdi, pheno_r)
         XKX, XK = AKB.from_rotations(X_r, kdi, X_r)
         XKpheno, _ = AKB.from_rotations(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
-        nLL = -float(nLL)  # !!!cmk
+        nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
             resmin[0] = {"nLL": nLL, "h2": x}
         logging.debug(f"search\t{x}\t{nLL}")
@@ -455,16 +458,15 @@ def _find_h2(
     return resmin[0]
 
 
-def _common_code(yKy, XKX, XKy):  # !!! cmk rename
-    # !!!cmk may want to check that all three kdi's are equal
+def _find_beta(yKy, XKX, XKy):
 
     ###############################################################
     # BETA
     #
     # ref: https://math.unm.edu/~james/w15-STAT576b.pdf
     # You can minimize squared error in linear regression with a beta of
-    # XTX = X.T @ X
     # beta = np.linalg.inv(XTX) @ X.T @ y
+    #  where XTX = X.T @ X
     #
     # ref: https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix#Matrix_inverse_via_eigendecomposition
     # You can find an inverse of XTX using eigen
@@ -480,7 +482,7 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     beta = eigen_xkx.rotate_back(XKy_r_s)
 
     ##################################################################
-    # RSS (aka SSR aka SSE)
+    # residual sum of squares, RSS (aka SSR aka SSE)
     #
     # ref 1: https://en.wikipedia.org/wiki/Residual_sum_of_squares#Matrix_expression_for_the_OLS_residual_sum_of_squares
     # ref 2: http://www.web.stanford.edu/~mrosenfe/soc_meth_proj3/matrix_OLS_NYU_notes.pdf
@@ -495,7 +497,7 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
 
     rss = float(yKy.val - XKy.val.T @ beta.val)
 
-    return rss, beta, eigen_xkx  #!!!cmk kludge beta before rss
+    return eigen_xkx, beta, rss
 
 
 def _loglikelihood(X, yKy, XKX, XKy, use_reml):
@@ -507,23 +509,22 @@ def _loglikelihood(X, yKy, XKX, XKy, use_reml):
 
 
 def _loglikelihood_reml(X, yKy, XKX, XKy):
-    kdi = yKy.kdi  # !!!cmk may want to check that all three kdi's are equal
+    kdi = yKy.kdi
 
-    rss, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
+    eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
+    logdet_xkx, _ = eigen_xkx.logdet()
 
-    # !!!cmk isn't this a kernel?
-    #!!!cmk rename XX to xtx
-    XX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
-    eigen_xx = EigenData.from_aka(XX)
-    logdetXX, _ = eigen_xx.logdet()
+    # Note we have both XKX with XTX
+    XTX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
+    eigen_xtx = EigenData.from_aka(XTX)
+    logdet_xtx, _ = eigen_xtx.logdet()
 
-    logdetXKX, _ = eigen_xkx.logdet()
     X_row_less_col = X.row_count - X.col_count
     sigma2 = rss / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
-        + logdetXKX
-        - logdetXX
+        + logdet_xkx
+        - logdet_xtx
         + X_row_less_col * (np.log(2.0 * np.pi * sigma2) + 1)
     )
 
@@ -535,41 +536,41 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
 
 
 def _loglikelihood_ml(yKy, XKX, XKy):
-    rss, beta, eigen_xkx = _common_code(yKy, XKX, XKy)
     kdi = yKy.kdi
+
+    eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
 
     sigma2 = rss / kdi.row_count
     nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.isreal(
         nLL
     ), "nLL has an imaginary component, possibly due to constant covariates"
+    # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
+    # where h2*sigma2 is sigma2_g
     #!!!cmk kludge need to test these
     variance_beta = (
         kdi.h2
         * sigma2
         * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
     )
-    assert len(variance_beta.shape) == 1, "!!!cmk"
     # !!!cmk which is negative loglikelihood and which is LL?
-    # !!!cmk variance_beta = np.squeeze(variance_beta,0).T
-    assert variance_beta.shape == (XKX.row_count,), "!!!cmk"  #!!!cmk kludge
     return -nLL, beta, variance_beta
 
 
 # Returns a kdi that is the original Kg + delta I
 def _find_best_kdi_as_needed(
-    eigendata, covar, covar_r, pheno_r, use_reml, log_delta=None
+    K0_eigen, covar, covar_r, pheno_r, use_reml, log_delta=None
 ):
     if log_delta is None:
         # cmk As per the paper, we optimized delta with use_reml=True, but
         # cmk we will later optimize beta and find log likelihood with ML (use_reml=False)
         h2 = _find_h2(
-            eigendata, covar, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
+            K0_eigen, covar, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
         )["h2"]
-        return KdI.from_eigendata(eigendata, h2=h2)
+        return KdI.from_eigendata(K0_eigen, h2=h2)
     else:
         # !!!cmk internal/external doesn't matter if full rank, right???
-        return KdI.from_eigendata(eigendata, log_delta=log_delta)
+        return KdI.from_eigendata(K0_eigen, log_delta=log_delta)
 
 
 # !!!cmk similar to single_snp.py and single_snp_scale
