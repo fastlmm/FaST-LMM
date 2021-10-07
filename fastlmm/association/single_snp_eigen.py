@@ -509,7 +509,7 @@ def _find_h2(
 
 def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     # !!!cmk may want to check that all three kdi's are equal
-    r2_list = []
+    rss_list = []
     beta_list = []
     eigen_xkx_list = []
     for y_index in range(len(yKy.pheno)):  #!!!cmk kludge
@@ -517,41 +517,60 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
         XKX_i = XKX[:, :, y_index : y_index + 1]
         XKy_i = XKy[:, :, y_index : y_index + 1]
 
+        ###############################################################
+        # BETA
+        #
         # ref: https://math.unm.edu/~james/w15-STAT576b.pdf
-        # You can minimize squared error in linear regression with beta of
+        # You can minimize squared error in linear regression with a beta of
         # XTX = X.T.dot(X)
         # beta = np.linalg.inv(XTX).dot(X.T.dot(y))
-
+        #
         # ref: https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix#Matrix_inverse_via_eigendecomposition
         # You can find an inverse of XTX using eigen
         # print(np.linalg.inv(XTX))
         # values,vectors = np.linalg.eigh(XTX)
         # print((vectors/values).dot(vectors.T))
-
+        #
         # So, beta = (vectors/values).dot(vectors.T).dot(X.T.dot(y))
         # or  beta = vectors.dot(vectors.T.dot(X.T.dot(y))/values)
 
         eigen_xkx_i = EigenData.from_aka(XKX_i, keep_above=1e-10)
         XKy_r_s = eigen_xkx_i.rotate_and_scale(XKy_i, ignore_low_rank=True)
         beta_i = eigen_xkx_i.rotate_back(XKy_r_s)
-        r2_i = PstData(
+
+
+        ##################################################################
+        # RSS (aka SSR aka SSE)
+        #
+        # ref 1: https://en.wikipedia.org/wiki/Residual_sum_of_squares#Matrix_expression_for_the_OLS_residual_sum_of_squares
+        # ref 2: http://www.web.stanford.edu/~mrosenfe/soc_meth_proj3/matrix_OLS_NYU_notes.pdf
+        # RSS = ((y-y_predicted)**2).sum()
+        # RSS = ((y-y_predicted).T.dot(y-y_predicted))
+        # RSS = (y - X.dot(beta)).T.dot(y - X.dot(beta))
+        # recall that (a-b).T.dot(a-b)=a.T.dot(a)-2*a.T.dot(b)+b.T.dot(b)
+        # RSS = y.T.dot(y) - 2*y.T.dot(X.dot(beta)) + X.dot(beta).T.dot(X.dot(beta))
+        # ref2: beta is choosen s.t. y.T.dot(X) = X.dot(beta).T.dot(X) aka X.T.dot(X).dot(beta)
+        # RSS = y.T.dot(y) - 2*y.T.dot(X.dot(beta)) + y.T.dot(X).dot(beta))
+        # RSS = y.T.dot(y) - y.T.dot(X.dot(beta)))
+
+        rss_i = PstData(
             val=yKy_i.val - XKy_i.val.T.dot(beta_i.val),
             row=yKy_i.row,
             col=yKy_i.col,
         )
-        r2_list.append(r2_i)
+        rss_list.append(rss_i)
         beta_list.append(beta_i)
         eigen_xkx_list.append(eigen_xkx_i)
 
-    r2 = PstData(
-        val=np.array([pstdata.val[0, 0] for pstdata in r2_list]).reshape(1, 1, -1),
+    rss = PstData(
+        val=np.array([pstdata.val[0, 0] for pstdata in rss_list]).reshape(1, 1, -1),
         row=yKy.row,
         col=yKy.col,
     )
     val = rearrange([pstdata.val for pstdata in beta_list], "p c 1 -> c p")
     beta = PstData(val=val, row=XKy.row, col=yKy.pheno)  #!!!cmk kludge
 
-    return r2, beta, eigen_xkx_list
+    return rss, beta, eigen_xkx_list
 
 
 def _loglikelihood(X, yKy, XKX, XKy, use_reml):
@@ -565,7 +584,7 @@ def _loglikelihood(X, yKy, XKX, XKy, use_reml):
 def _loglikelihood_reml(X, yKy, XKX, XKy):
     kdi = yKy.kdi  # !!!cmk may want to check that all three kdi's are equal
 
-    r2, beta, eigen_xkx_list = _common_code(yKy, XKX, XKy)
+    rss, beta, eigen_xkx_list = _common_code(yKy, XKX, XKy)
 
     nLL_list = []
     for y_index, _ in enumerate(yKy.pheno):
@@ -578,7 +597,7 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
 
         logdetXKX, _ = eigen_xkx_list[y_index].logdet()
         X_row_less_col = X.row_count - X.col_count
-        sigma2 = float(r2.val[:, :, y_index]) / X_row_less_col
+        sigma2 = float(rss.val[:, :, y_index]) / X_row_less_col
         nLL_i = 0.5 * (
             kdi_i.logdet
             + logdetXKX
@@ -596,7 +615,7 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
 
 
 def _loglikelihood_ml(yKy, XKX, XKy):
-    r2, beta, eigen_xkx_list = _common_code(yKy, XKX, XKy)
+    rss, beta, eigen_xkx_list = _common_code(yKy, XKX, XKy)
     kdi = yKy.kdi  # !!!cmk may want to check that all three kdi's are equal
 
     nLL_list = []
@@ -604,7 +623,7 @@ def _loglikelihood_ml(yKy, XKX, XKy):
     for y_index, _ in enumerate(yKy.pheno):  #!!!cmk kludge
         eigen_xkx_i = eigen_xkx_list[y_index]
         kdi_i = kdi[y_index]
-        sigma2 = float(r2.val[:, :, y_index]) / kdi_i.row_count
+        sigma2 = float(rss.val[:, :, y_index]) / kdi_i.row_count
         nLL_i = 0.5 * (
             kdi_i.logdet + kdi_i.row_count * (np.log(2.0 * np.pi * sigma2) + 1)
         )
