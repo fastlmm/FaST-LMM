@@ -1,4 +1,5 @@
 import logging
+
 #!!!cmk kludge replace dot with @
 logging.basicConfig(level=logging.DEBUG)  # cmk
 import unittest
@@ -78,12 +79,12 @@ class TestSingleSnpEigen(unittest.TestCase):
         snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
-        if False:
+        if True:
             runner2 = None  # LocalMultiProc(6, just_one_process=False)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0.1
         else:
-            runner2 = LocalMultiProc(6, just_one_process=True)
+            runner2 = LocalMultiProc(6, just_one_process=False)
             exception_to_catch = Exception
             extra_fraction = 1
         matrix = {
@@ -94,7 +95,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn, pheno01],
         }
-        first_list = [{"use_reml":0}]
+        first_list = [{"use_reml": 0}]
 
         def mapper2(option):
             try:
@@ -103,6 +104,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 from pysnptools.kernelstandardizer import Identity as KernelIdentity
                 from pysnptools.util.mapreduce1 import map_reduce
                 from fastlmm.association import single_snp_eigen
+                from fastlmm.association.single_snp_eigen import eigen_from_kernel
 
                 use_reml = option["use_reml"]
                 cov = option["cov"]
@@ -1038,54 +1040,6 @@ def getTestSuite():
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpEigen)
     # suite2 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpEigenLeaveOutOneChrom)
     return unittest.TestSuite([suite1])  # cmk,suite2])
-
-
-def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
-    """!!!cmk documentation"""
-    # !!!cmk could offer a low-memory path that uses memmapped files
-    from pysnptools.kernelreader import SnpKernel
-    from pysnptools.kernelstandardizer import Identity as KS_Identity
-
-    assert K0 is not None
-    K0 = _kernel_fixup(K0, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
-    assert K0.iid0 is K0.iid1, "Expect K0 to be square"
-
-    if isinstance(
-        K0, SnpKernel
-    ):  # !!!make eigen creation a method on all kernel readers
-        assert isinstance(
-            kernel_standardizer, KS_Identity
-        ), "cmk need code for other kernel standardizers"
-        vectors, sqrt_values, _ = np.linalg.svd(
-            K0.snpreader.read().standardize(K0.standardizer).val,
-            full_matrices=False,
-        )
-        if np.any(sqrt_values < -0.1):
-            logging.warning("kernel contains a negative Eigenvalue")
-        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K0.iid)
-    else:
-        # !!!cmk understand _read_kernel, _read_with_standardizing
-
-        K0 = K0._read_with_standardizing(
-            kernel_standardizer=kernel_standardizer,
-            to_kerneldata=True,
-            return_trained=False,
-        )
-        # !!! cmk ??? pass in a new argument, the kernel_standardizer(???)
-        logging.debug("About to eigh")
-        w, v = np.linalg.eigh(K0.val)  # !!! cmk do SVD sometimes?
-        logging.debug("Done with to eigh")
-        if np.any(w < -0.1):
-            logging.warning(
-                "kernel contains a negative Eigenvalue"
-            )  # !!!cmk this shouldn't happen with a RRM, right?
-        # !!!cmk remove very small eigenvalues
-        # !!!cmk remove very small eigenvalues in a way that doesn't require a memcopy?
-        eigen = EigenData(values=w, vectors=v, iid=K0.iid)
-        # eigen.vectors[:,eigen.values<.0001]=0.0
-        # eigen.values[eigen.values<.0001]=0.0
-        # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
-    return eigen
 
 
 if __name__ == "__main__":
