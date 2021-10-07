@@ -82,8 +82,8 @@ def single_snp_eigen(
     # Next rotate covar and pheno.
     #
     # An "EigenReader" object includes both the vectors and values.
-    # A Rotation object always includes rotated=eigenvectors * a.
-    # If low-rank EigenReader, also includes double=a-eigenvectors*rotated.
+    # A Rotation object always includes rotated=eigenvectors.T@a
+    # If low-rank EigenReader, also includes double=a-eigenvectors@rotated.
     # =========================
     K0_eigen = K0_eigen.read(view_ok=True, order="A")
     covar = _covar_read_with_bias(covar)
@@ -378,6 +378,7 @@ class KdI:
     def row_count(self):
         return len(self.row)
 
+
 # !!!cmk move to PySnpTools
 class AKB(PstData):
     def __init__(self, val, row, col, kdi):
@@ -389,10 +390,10 @@ class AKB(PstData):
         if aK is None:
             aK = a_r.val / kdi.Sd[:, np.newaxis]
 
-        val = aK.T.dot(b_r.val)
+        val = aK.T @ b_r.val
 
         if kdi.is_low_rank:
-            val += a_r.double.val.T.dot(b_r.double.val) / kdi.delta
+            val += a_r.double.val.T @ b_r.double.val / kdi.delta
 
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
         return result, aK
@@ -462,17 +463,17 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     #
     # ref: https://math.unm.edu/~james/w15-STAT576b.pdf
     # You can minimize squared error in linear regression with a beta of
-    # XTX = X.T.dot(X)
-    # beta = np.linalg.inv(XTX).dot(X.T.dot(y))
+    # XTX = X.T @ X
+    # beta = np.linalg.inv(XTX) @ X.T @ y
     #
     # ref: https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix#Matrix_inverse_via_eigendecomposition
     # You can find an inverse of XTX using eigen
     # print(np.linalg.inv(XTX))
     # values,vectors = np.linalg.eigh(XTX)
-    # print((vectors/values).dot(vectors.T))
+    # print((vectors/values) @ vectors.T)
     #
-    # So, beta = (vectors/values).dot(vectors.T).dot(X.T.dot(y))
-    # or  beta = vectors.dot(vectors.T.dot(X.T.dot(y))/values)
+    # So, beta = (vectors/values) @ vectors.T @ X.T @ y
+    # or  beta = vectors @ (vectors.T @ (X.T @ y)/values)
 
     eigen_xkx = EigenData.from_aka(XKX, keep_above=1e-10)
     XKy_r_s = eigen_xkx.rotate_and_scale(XKy, ignore_low_rank=True)
@@ -484,15 +485,15 @@ def _common_code(yKy, XKX, XKy):  # !!! cmk rename
     # ref 1: https://en.wikipedia.org/wiki/Residual_sum_of_squares#Matrix_expression_for_the_OLS_residual_sum_of_squares
     # ref 2: http://www.web.stanford.edu/~mrosenfe/soc_meth_proj3/matrix_OLS_NYU_notes.pdf
     # RSS = ((y-y_predicted)**2).sum()
-    # RSS = ((y-y_predicted).T.dot(y-y_predicted))
-    # RSS = (y - X.dot(beta)).T.dot(y - X.dot(beta))
-    # recall that (a-b).T.dot(a-b)=a.T.dot(a)-2*a.T.dot(b)+b.T.dot(b)
-    # RSS = y.T.dot(y) - 2*y.T.dot(X.dot(beta)) + X.dot(beta).T.dot(X.dot(beta))
-    # ref2: beta is choosen s.t. y.T.dot(X) = X.dot(beta).T.dot(X) aka X.T.dot(X).dot(beta)
-    # RSS = y.T.dot(y) - 2*y.T.dot(X.dot(beta)) + y.T.dot(X).dot(beta))
-    # RSS = y.T.dot(y) - y.T.dot(X.dot(beta)))
+    # RSS = ((y-y_predicted).T @ (y-y_predicted))
+    # RSS = (y - X @ beta).T @ (y - X @ beta)
+    # recall that (a-b).T @ (a-b) = a.T @ a-2*a.T @ b+b.T @ b
+    # RSS = y.T @ y - 2*y.T @ (X @ beta) + X @ beta.T @ (X @ beta)
+    # ref2: beta is choosen s.t. y.T @ X = X @ beta.T @ X aka X.T @ X @ beta
+    # RSS = y.T @ y - 2*y.T @ (X @ beta) + y.T @ X @ beta)
+    # RSS = y.T @ y - y.T @ X @ beta
 
-    rss = float(yKy.val - XKy.val.T.dot(beta.val))
+    rss = float(yKy.val - XKy.val.T @ beta.val)
 
     return rss, beta, eigen_xkx  #!!!cmk kludge beta before rss
 
@@ -512,7 +513,7 @@ def _loglikelihood_reml(X, yKy, XKX, XKy):
 
     # !!!cmk isn't this a kernel?
     #!!!cmk rename XX to xtx
-    XX = PstData(val=X.val.T.dot(X.val), row=X.sid, col=X.sid)
+    XX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
     eigen_xx = EigenData.from_aka(XX)
     logdetXX, _ = eigen_xx.logdet()
 
