@@ -56,6 +56,11 @@ class TestSingleSnpEigen(unittest.TestCase):
         bed_fn = example_file(
             "fastlmm/feature_selection/examples/toydata.5chrom.*", "*.bed"
         )
+        snps_reader1 = Bed(bed_fn, count_A1=False)
+        snps_reader5 = snps_reader1.read()
+        snps_reader5.pos[:,0] = [i%5+1 for i in range(snps_reader5.sid_count)]
+            
+
         pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
         pheno0 = Pheno(pheno_fn).read()
         pheno000 = SnpData(
@@ -76,7 +81,6 @@ class TestSingleSnpEigen(unittest.TestCase):
         cov_reader = cov_reader.read()
         cov_reader.col[0] = "cov0"  # Rename pheno0 to cov0
 
-        snp_reader = Bed(bed_fn)
         delta_default = 1.0
         runner = None  # LocalMultiProc(6, just_one_process=False)
         if True:
@@ -94,8 +98,9 @@ class TestSingleSnpEigen(unittest.TestCase):
             "delta": [None, 0.20000600000000002, delta_default],
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn, pheno01],
+            "snps_reader": [snps_reader1, snps_reader5]
         }
-        first_list = [{"use_reml": 1, "delta": 1}, {"use_reml": 0, "delta": 1}]
+        first_list = [{"snps_reader": 1}]
 
         def mapper2(option):
             try:
@@ -111,19 +116,19 @@ class TestSingleSnpEigen(unittest.TestCase):
                 train_count = option["train_count"]
                 delta = option["delta"]
                 pheno = option["pheno"]
+                snps_reader = option["snps_reader"]
 
                 # !!!cmk why not diag standardize?
                 K0_eigen = eigen_from_kernel(
-                    snp_reader[:, :train_count],
+                    snps_reader[:, :train_count],
                     kernel_standardizer=KernelIdentity(),
                 )
-                test_snps=Bed(bed_fn, count_A1=False)[
-                        :, train_count : train_count + test_count
-                    ]
-                #test_snps = test_snps.read()
-                #for i in range(test_snps.iid_count):
-                #    test_snps.pos[i,0] = i*5//test_snps.iid_count+1
-                K0_eigen_by_chrom = {chrom:K0_eigen for chrom in set(test_snps.pos[:,0])}
+                test_snps = snps_reader[
+                    :, train_count : train_count + test_count
+                ]
+                K0_eigen_by_chrom = {
+                    chrom: K0_eigen for chrom in set(test_snps.pos[:, 0])
+                }
                 frame = single_snp_eigen(
                     test_snps=test_snps,
                     pheno=pheno,
@@ -137,7 +142,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                     runner=runner,
                 )
 
-                G = snp_reader.read().standardize().val
+                G = snps_reader.read().standardize().val
                 if cov is not None:
                     cov_val = np.c_[cov.read().val, np.ones((cov.iid_count, 1))]
                 else:
