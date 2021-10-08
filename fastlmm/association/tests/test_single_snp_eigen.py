@@ -81,13 +81,14 @@ class TestSingleSnpEigen(unittest.TestCase):
         cov_reader.col[0] = "cov0"  # Rename pheno0 to cov0
 
         delta_default = 1.0
-        runner = None  # LocalMultiProc(6, just_one_process=False)
         if True:
-            runner2 = None  # LocalMultiProc(6, just_one_process=False)
+            runner2 = None
+            runner = LocalMultiProc(6, just_one_process=False)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0.1
         else:
             runner2 = LocalMultiProc(6, just_one_process=False)
+            runner = None
             exception_to_catch = Exception
             extra_fraction = 1
         matrix = {

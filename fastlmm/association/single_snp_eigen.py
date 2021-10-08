@@ -2,7 +2,7 @@ import logging
 import pandas as pd
 import os
 from pathlib import Path
-from collections import namedtuple
+import types
 import numpy as np
 import scipy.stats as stats
 from einops import rearrange
@@ -62,10 +62,11 @@ def single_snp_eigen(
     # test_snps, pheno, and covar.
     # =========================
     chrom_list_K0_eigen = list(K0_eigen_by_chrom.keys())
-    chrom_list_test_snps = set(test_snps.pos[:, 0])
-    assert chrom_list_test_snps.issubset(
+    chrom_set_test_snps = set(test_snps.pos[:, 0])
+    assert chrom_set_test_snps.issubset(
         chrom_list_K0_eigen
     ), "Every chromosome in test_snps but have a K0_eigen"
+    chrom_list_test_snps = list(chrom_set_test_snps)
     K0_eigen_list = list(K0_eigen_by_chrom.values())
     assert len(K0_eigen_list) > 0, "Expect at least one K0_eigen"
     iid_count_before = K0_eigen_list[0].row_count
@@ -119,9 +120,8 @@ def single_snp_eigen(
     # For each chrom & each pheno
     # find the best h2 and related info
     # ===============================
-    per_pheno_per_chrom_list = []
-    for chrom in chrom_list_test_snps:
-        per_pheno_list = _find_per_pheno_list(
+    def mapper_find_per_pheno_list(chrom):
+        return _find_per_pheno_list(
             K0_eigen_by_chrom,
             chrom,
             covar,
@@ -131,10 +131,13 @@ def single_snp_eigen(
             test_via_reml,
             log_delta,
             x_sid,
-            cc,
-            runner,
+            cc
         )
-        per_pheno_per_chrom_list.append(per_pheno_list)
+    per_pheno_per_chrom_list = map_reduce(
+        chrom_list_test_snps,
+        nested=mapper_find_per_pheno_list,
+        runner=runner
+        )
 
     # ==================================
     # Test SNPs in batches
@@ -143,7 +146,7 @@ def single_snp_eigen(
 
     df_per_chrom_list = []
     for chrom_index, chrom in enumerate(chrom_list_test_snps):
-        per_pheno = per_pheno_per_chrom_list[chrom_index]
+        per_pheno_list = per_pheno_per_chrom_list[chrom_index]
 
         # =========================
         # Create a testsnp reader for this chrom, but don't read yet.
@@ -623,7 +626,6 @@ def _find_per_pheno_list(
     log_delta,
     x_sid,
     cc,
-    runner,
 ):
     # =========================
     # Read K0_eigen for this chrom into memory.
@@ -661,18 +663,7 @@ def _find_per_pheno_list(
     # =========================
 
     def mapper_search(pheno_index):
-        per_pheno = namedtuple(
-            "per_pheno",
-            [
-                "K0_kdi",
-                "pheno_r",
-                "covarK",
-                "XKX",
-                "XKpheno",
-                "phenoKpheno",
-                "ll_null",
-            ],
-        )
+        per_pheno = types.SimpleNamespace()
 
         per_pheno.pheno_r = K0_eigen.rotate(pheno[:, pheno_index].read(view_ok=True))
 
@@ -717,10 +708,8 @@ def _find_per_pheno_list(
 
         return per_pheno
 
-    per_pheno_list = map_reduce(
+    return map_reduce(
         range(pheno.col_count),
-        mapper=mapper_search,
-        runner=runner,
+        mapper=mapper_search
     )
-    return per_pheno_list
 
