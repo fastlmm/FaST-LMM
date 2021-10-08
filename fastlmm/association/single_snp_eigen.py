@@ -66,7 +66,7 @@ def single_snp_eigen(
     assert chrom_set_test_snps.issubset(
         chrom_list_K0_eigen
     ), "Every chromosome in test_snps but have a K0_eigen"
-    chrom_list_test_snps = list(chrom_set_test_snps)
+    chrom_list = list(chrom_set_test_snps)
     K0_eigen_list = list(K0_eigen_by_chrom.values())
     assert len(K0_eigen_list) > 0, "Expect at least one K0_eigen"
     iid_count_before = K0_eigen_list[0].row_count
@@ -118,7 +118,7 @@ def single_snp_eigen(
     # find the best h2 and related info
     # ===============================
     per_pheno_per_chrom_list = _find_per_pheno_per_chrom_list(
-        chrom_list_test_snps,
+        chrom_list,
         K0_eigen_by_chrom,
         covar,
         pheno,
@@ -134,8 +134,9 @@ def single_snp_eigen(
     batch_size = 100  # !!!cmk const
     cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
 
-    df_per_chrom_list = []
-    for chrom_index, chrom in enumerate(chrom_list_test_snps):
+    # for each chrom (in parallel):
+    def df_per_chrom_mapper(chrom_index):
+        chrom = chrom_list[chrom_index]
         per_pheno_list = per_pheno_per_chrom_list[chrom_index]
 
         # =========================
@@ -143,6 +144,7 @@ def single_snp_eigen(
         # =========================
         #!!!cmk similar code elsewhere kludge
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
+        #!!!cmk move into innner loop? kludge
         K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
         covar_r = K0_eigen.rotate(covar)
 
@@ -245,17 +247,31 @@ def single_snp_eigen(
 
             return df_per_batch
 
-        df_per_batch_list = map_reduce(
-            range(0, test_snps_for_chrom.sid_count, batch_size),
-            mapper=mapper,
-            runner=runner,
-        )
-        df_per_chrom = pd.concat(df_per_batch_list)
-        df_per_chrom_list.append(df_per_chrom)
+        def reducer2(df_per_batch_sequence): #!!!cmk kludge rename
+            df_per_chrom = pd.concat(df_per_batch_sequence)
+            return df_per_chrom
 
-    dataframe = pd.concat(df_per_chrom_list)
-    dataframe.sort_values(by="PValue", inplace=True)
-    dataframe.index = np.arange(len(dataframe))
+
+        return map_reduce(
+            range(0, test_snps_for_chrom.sid_count, batch_size),
+            mapper=mapper, #!!!cmk kludge rename
+            reducer=reducer2
+        )
+
+
+    def df_per_chrom_reducer(df_per_batch_sequence):
+        dataframe = pd.concat(df_per_batch_sequence)
+        dataframe.sort_values(by="PValue", inplace=True)
+        dataframe.index = np.arange(len(dataframe))
+        return dataframe
+
+
+    dataframe = map_reduce(
+            range(len(chrom_list)),
+            nested=df_per_chrom_mapper, #!!!cmk kludge rename
+            reducer=df_per_chrom_reducer,
+            runner=runner
+        )
 
     if output_file_name is not None:
         dataframe.to_csv(output_file_name, sep="\t", index=False)
