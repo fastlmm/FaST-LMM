@@ -112,16 +112,22 @@ class TestSingleSnpEigen(unittest.TestCase):
                 delta = option["delta"]
                 pheno = option["pheno"]
 
+                # !!!cmk why not diag standardize?
                 K0_eigen = eigen_from_kernel(
                     snp_reader[:, :train_count],
                     kernel_standardizer=KernelIdentity(),
-                )  # !!!cmk why not diag standardize?
-                frame = single_snp_eigen(
-                    test_snps=Bed(bed_fn, count_A1=False)[
+                )
+                test_snps=Bed(bed_fn, count_A1=False)[
                         :, train_count : train_count + test_count
-                    ],
+                    ]
+                #test_snps = test_snps.read()
+                #for i in range(test_snps.iid_count):
+                #    test_snps.pos[i,0] = i*5//test_snps.iid_count+1
+                K0_eigen_by_chrom = {chrom:K0_eigen for chrom in set(test_snps.pos[:,0])}
+                frame = single_snp_eigen(
+                    test_snps=test_snps,
                     pheno=pheno,
-                    K0_eigen=K0_eigen,
+                    K0_eigen_by_chrom=K0_eigen_by_chrom,
                     covar=cov,
                     output_file_name=None,
                     log_delta=np.log(delta) if delta is not None else None,
