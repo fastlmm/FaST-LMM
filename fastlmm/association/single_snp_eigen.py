@@ -58,24 +58,30 @@ def single_snp_eigen(
     # =========================
     # Intersect and order individuals.
     # Make sure every K0_eigen has the same individuals.
-    # Also that these individuals have data in 
+    # Also that these individuals have data in
     # test_snps, pheno, and covar.
     # =========================
     chrom_list_K0_eigen = list(K0_eigen_by_chrom.keys())
     chrom_list_test_snps = set(test_snps.pos[:, 0])
-    assert chrom_list_test_snps.issubset(chrom_list_K0_eigen), "Every chromosome in test_snps but have a K0_eigen"
+    assert chrom_list_test_snps.issubset(
+        chrom_list_K0_eigen
+    ), "Every chromosome in test_snps but have a K0_eigen"
     K0_eigen_list = list(K0_eigen_by_chrom.values())
-    assert len(K0_eigen_list)>0, "Expect at least one K0_eigen"
+    assert len(K0_eigen_list) > 0, "Expect at least one K0_eigen"
     iid_count_before = K0_eigen_list[0].row_count
-    assert ( np.all([K0_eigen.row_count == iid_count_before for K0_eigen in K0_eigen_list])
+    assert np.all(
+        [K0_eigen.row_count == iid_count_before for K0_eigen in K0_eigen_list]
     ), "Every K0_eigen must have the same number of individuals"
     intersected = pstutil.intersect_apply([test_snps, pheno, covar] + K0_eigen_list)
     test_snps, pheno, covar = intersected[0:3]
     K0_eigen_list = intersected[3:]
-    assert ( np.all([K0_eigen.row_count == iid_count_before for K0_eigen in K0_eigen_list])
+    assert np.all(
+        [K0_eigen.row_count == iid_count_before for K0_eigen in K0_eigen_list]
     ), "Must have test_snps, pheno, and covar data for each K0_eigen individual"
 
-    K0_eigen_by_chrom = {chrom:K0_eigen for chrom,K0_eigen in zip(chrom_list_K0_eigen, K0_eigen_list)}
+    K0_eigen_by_chrom = {
+        chrom: K0_eigen for chrom, K0_eigen in zip(chrom_list_K0_eigen, K0_eigen_list)
+    }
 
     # !!!cmk assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False,
     #  'covar_by_chrom' must be None"
@@ -109,114 +115,43 @@ def single_snp_eigen(
     else:
         X = None
 
-
-    # find the set of all chroms mentioned in test_snps, the main testing data
-    df_per_chrom_list = []
+    # ===============================
+    # For each chrom & each pheno
+    # find the best h2 and related info
+    # ===============================
+    per_pheno_per_chrom_list = []
     for chrom in chrom_list_test_snps:
+        per_pheno_list = _find_per_pheno_list(
+            K0_eigen_by_chrom,
+            chrom,
+            covar,
+            test_snps,
+            pheno,
+            find_delta_via_reml,
+            test_via_reml,
+            log_delta,
+            x_sid,
+            cc,
+            runner,
+        )
+        per_pheno_per_chrom_list.append(per_pheno_list)
 
-        # =========================
-        # Read K0_eigen for this chrom into memory.
-        # Next rotate covar.
-        #
-        # An "EigenReader" object includes both the vectors and values.
-        # A Rotation object always includes both the main "rotated" array.
-        # In addition, if eigen was low rank, then also a "double" array
-        # [such that double = input-eigenvectors@rotated] 
-        # that captures information lost by the low rank.
-        # =========================
-        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
-        covar_r = K0_eigen.rotate(covar)
+    # ==================================
+    # Test SNPs in batches
+    # ==================================
+    batch_size = 100  # !!!cmk const
+
+    df_per_chrom_list = []
+    for chrom_index, chrom in enumerate(chrom_list_test_snps):
+        per_pheno = per_pheno_per_chrom_list[chrom_index]
 
         # =========================
         # Create a testsnp reader for this chrom, but don't read yet.
         # =========================
-        test_snps_for_chrom = test_snps[:,test_snps.pos[:,0]==chrom]
-
-
-        # =========================
-        # For each phenotype, in parallel, ...
-        # Find the K0+delta I with the best likelihood.
-        # A KdI object includes
-        #   * Sd = eigenvalues + delta
-        #   * is_low_rank (True/False)
-        #   * logdet
-        #
-        # Next, find A^T * K^-1 * B for covar and pheno.
-        # "AKB.from_rotations" works for both full and low-rank.
-        # A AKB object includes
-        #   * The AKB value
-        #   * The KdI objected use to create it.
-        #
-        # Finally, find null likelihood.
-        # =========================
-
-        def mapper_search(pheno_index):
-            per_pheno = namedtuple(
-                "per_pheno",
-                [
-                    "K0_kdi",
-                    "pheno_r",
-                    "covarK",
-                    "XKX",
-                    "XKpheno",
-                    "phenoKpheno",
-                    "ll_null",
-                ],
-            )
-
-            per_pheno.pheno_r = K0_eigen.rotate(pheno[:, pheno_index].read(view_ok=True))
-
-            per_pheno.K0_kdi = _find_best_kdi_as_needed(
-                K0_eigen,
-                covar,
-                covar_r,
-                per_pheno.pheno_r,
-                use_reml=find_delta_via_reml,
-                log_delta=log_delta,  # optional
-            )
-            covarKcovar, per_pheno.covarK = AKB.from_rotations(
-                covar_r, per_pheno.K0_kdi, covar_r
-            )
-            per_pheno.phenoKpheno, _ = AKB.from_rotations(
-                per_pheno.pheno_r, per_pheno.K0_kdi, per_pheno.pheno_r
-            )
-            covarKpheno, _ = AKB.from_rotations(
-                covar_r, per_pheno.K0_kdi, per_pheno.pheno_r, aK=per_pheno.covarK
-            )
-
-            per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
-                covar,
-                per_pheno.phenoKpheno,
-                covarKcovar,
-                covarKpheno,
-                use_reml=test_via_reml,
-            )
-
-            # ==================================
-            # Recall that X is the covariates (with bias) and one test SNP.
-            # Create an XKX, and XKpheno where
-            # the last part can be swapped for each test SNP.
-            # ==================================
-            per_pheno.XKX = AKB.empty(row=x_sid, col=x_sid, kdi=per_pheno.K0_kdi)
-            per_pheno.XKX[:cc, :cc] = covarKcovar  # upper left
-
-            per_pheno.XKpheno = AKB.empty(
-                x_sid, per_pheno.pheno_r.col, kdi=per_pheno.K0_kdi
-            )
-            per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
-
-            return per_pheno
-
-        per_pheno_list = map_reduce(
-            range(pheno.col_count),
-            mapper=mapper_search,
-            runner=runner,
-        )
-
-        # ==================================
-        # Test SNPs in batches
-        # ==================================
-        batch_size = 100  # !!!cmk const
+        #!!!cmk similar code elsewhere kludge
+        test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
+        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+        covar_r = K0_eigen.rotate(covar)
 
         def mapper(sid_start):
             # ==================================
@@ -226,7 +161,9 @@ def single_snp_eigen(
             #   Find the likelihood and pvalue for each test SNP.
             # ==================================
             alt_batch = (
-                test_snps_for_chrom[:, sid_start : sid_start + batch_size].read().standardize()
+                test_snps_for_chrom[:, sid_start : sid_start + batch_size]
+                .read()
+                .standardize()
             )
             alt_batch_r = K0_eigen.rotate(alt_batch)
 
@@ -259,7 +196,9 @@ def single_snp_eigen(
                         alt_r, per_pheno.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
                     )
 
-                    per_pheno.XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
+                    per_pheno.XKX[:cc, cc:] = covarKalt_batch[
+                        :, i : i + 1
+                    ]  # upper right
                     per_pheno.XKX[cc:, :cc] = per_pheno.XKX[:cc, cc:].T  # lower left
                     per_pheno.XKX[cc:, cc:] = altKalt[:, :]  # lower right
 
@@ -303,7 +242,8 @@ def single_snp_eigen(
             df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno.col_count)
             df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno.col_count)
             df_per_batch["Nullh2"] = np.tile(
-                [per_pheno.K0_kdi.h2 for per_pheno in per_pheno_list], alt_batch.sid_count
+                [per_pheno.K0_kdi.h2 for per_pheno in per_pheno_list],
+                alt_batch.sid_count,
             )
             # !!!cmk in lmmcov, but not lmm
             # df_per_batch['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
@@ -313,7 +253,9 @@ def single_snp_eigen(
             return df_per_batch
 
         df_per_batch_list = map_reduce(
-            range(0, test_snps_for_chrom.sid_count, batch_size), mapper=mapper, runner=runner
+            range(0, test_snps_for_chrom.sid_count, batch_size),
+            mapper=mapper,
+            runner=runner,
         )
         df_per_chrom = pd.concat(df_per_batch_list)
         df_per_chrom_list.append(df_per_chrom)
@@ -410,6 +352,8 @@ class KdI:
         return len(self.row)
 
 
+
+
 # !!!cmk move to PySnpTools
 class AKB(PstData):
     def __init__(self, val, row, col, kdi):
@@ -458,9 +402,7 @@ class AKB(PstData):
 
 
 # !!!cmk change use_reml etc to 'use_reml'
-def _find_h2(
-    K0_eigen, X, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999
-):
+def _find_h2(K0_eigen, X, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its kdi's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
@@ -669,3 +611,116 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen.values[eigen.values<.0001]=0.0
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
+
+def _find_per_pheno_list(
+    K0_eigen_by_chrom,
+    chrom,
+    covar,
+    test_snps,
+    pheno,
+    find_delta_via_reml,
+    test_via_reml,
+    log_delta,
+    x_sid,
+    cc,
+    runner,
+):
+    # =========================
+    # Read K0_eigen for this chrom into memory.
+    # Next rotate covar.
+    #
+    # An "EigenReader" object includes both the vectors and values.
+    # A Rotation object always includes both the main "rotated" array.
+    # In addition, if eigen was low rank, then also a "double" array
+    # [such that double = input-eigenvectors@rotated]
+    # that captures information lost by the low rank.
+    # =========================
+    K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+    covar_r = K0_eigen.rotate(covar)
+
+    # =========================
+    # Create a testsnp reader for this chrom, but don't read yet.
+    # =========================
+    test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
+
+    # =========================
+    # For each phenotype, in parallel, ...
+    # Find the K0+delta I with the best likelihood.
+    # A KdI object includes
+    #   * Sd = eigenvalues + delta
+    #   * is_low_rank (True/False)
+    #   * logdet
+    #
+    # Next, find A^T * K^-1 * B for covar and pheno.
+    # "AKB.from_rotations" works for both full and low-rank.
+    # A AKB object includes
+    #   * The AKB value
+    #   * The KdI objected use to create it.
+    #
+    # Finally, find null likelihood.
+    # =========================
+
+    def mapper_search(pheno_index):
+        per_pheno = namedtuple(
+            "per_pheno",
+            [
+                "K0_kdi",
+                "pheno_r",
+                "covarK",
+                "XKX",
+                "XKpheno",
+                "phenoKpheno",
+                "ll_null",
+            ],
+        )
+
+        per_pheno.pheno_r = K0_eigen.rotate(pheno[:, pheno_index].read(view_ok=True))
+
+        per_pheno.K0_kdi = _find_best_kdi_as_needed(
+            K0_eigen,
+            covar,
+            covar_r,
+            per_pheno.pheno_r,
+            use_reml=find_delta_via_reml,
+            log_delta=log_delta,  # optional
+        )
+        covarKcovar, per_pheno.covarK = AKB.from_rotations(
+            covar_r, per_pheno.K0_kdi, covar_r
+        )
+        per_pheno.phenoKpheno, _ = AKB.from_rotations(
+            per_pheno.pheno_r, per_pheno.K0_kdi, per_pheno.pheno_r
+        )
+        covarKpheno, _ = AKB.from_rotations(
+            covar_r, per_pheno.K0_kdi, per_pheno.pheno_r, aK=per_pheno.covarK
+        )
+
+        per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
+            covar,
+            per_pheno.phenoKpheno,
+            covarKcovar,
+            covarKpheno,
+            use_reml=test_via_reml,
+        )
+
+        # ==================================
+        # Recall that X is the covariates (with bias) and one test SNP.
+        # Create an XKX, and XKpheno where
+        # the last part can be swapped for each test SNP.
+        # ==================================
+        per_pheno.XKX = AKB.empty(row=x_sid, col=x_sid, kdi=per_pheno.K0_kdi)
+        per_pheno.XKX[:cc, :cc] = covarKcovar  # upper left
+
+        per_pheno.XKpheno = AKB.empty(
+            x_sid, per_pheno.pheno_r.col, kdi=per_pheno.K0_kdi
+        )
+        per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
+
+        return per_pheno
+
+    per_pheno_list = map_reduce(
+        range(pheno.col_count),
+        mapper=mapper_search,
+        runner=runner,
+    )
+    return per_pheno_list
+

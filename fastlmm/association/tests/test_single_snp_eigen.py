@@ -58,8 +58,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         )
         snps_reader1 = Bed(bed_fn, count_A1=False)
         snps_reader5 = snps_reader1.read()
-        snps_reader5.pos[:,0] = [i%5+1 for i in range(snps_reader5.sid_count)]
-            
+        snps_reader5.pos[:, 0] = [i % 5 + 1 for i in range(snps_reader5.sid_count)]
 
         pheno_fn = example_file("fastlmm/feature_selection/examples/toydata.phe")
         pheno0 = Pheno(pheno_fn).read()
@@ -98,7 +97,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "delta": [None, 0.20000600000000002, delta_default],
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn, pheno01],
-            "snps_reader": [snps_reader1, snps_reader5]
+            "snps_reader": [snps_reader1, snps_reader5],
         }
         first_list = [{"snps_reader": 1}]
 
@@ -123,9 +122,9 @@ class TestSingleSnpEigen(unittest.TestCase):
                     snps_reader[:, :train_count],
                     kernel_standardizer=KernelIdentity(),
                 )
-                test_snps = snps_reader[
-                    :, train_count : train_count + test_count
-                ]
+                test_snps = snps_reader[:, train_count : train_count + test_count]
+
+                #!!!cmk kludge need to test with different eigens
                 K0_eigen_by_chrom = {
                     chrom: K0_eigen for chrom in set(test_snps.pos[:, 0])
                 }
