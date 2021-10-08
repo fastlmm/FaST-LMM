@@ -92,27 +92,6 @@ def single_snp_eigen(
     # if h2 is not None and not isinstance(h2, np.ndarray):
     #     h2 = np.repeat(h2, pheno.shape[1])
 
-    # =========================
-    # Read covar and pheno into memory.
-    # =========================
-    covar = _covar_read_with_bias(covar)
-    pheno = pheno.read(view_ok=True, order="A")
-
-    if test_via_reml:
-        # ==================================
-        # X is the covariates plus one test SNP called "alt"
-        # Only need explicit "X" for REML.
-        # cc is covariate count (not including "alt")
-        cc, x_sid = _cc_and_x_sid(covar)
-        X = SnpData(
-            val=np.full((covar.iid_count, len(x_sid)), fill_value=np.nan),
-            iid=covar.iid,
-            sid=x_sid,
-        )
-        X.val[:, :cc] = covar.val  # left
-    else:
-        X = None
-
     # ===============================
     # In parallel, for each chrom & each pheno
     # find the best h2 and related info
@@ -134,13 +113,11 @@ def single_snp_eigen(
     batch_size = 100  # !!!cmk const
     dataframe = _test_in_batches(
         covar,
-        chrom_list,
         per_pheno_per_chrom_list,
         test_snps,
         K0_eigen_by_chrom,
         batch_size,
         test_via_reml,
-        X,
         runner,
     )
 
@@ -495,15 +472,24 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
 def _find_per_pheno_per_chrom_list(
     chrom_list,
     K0_eigen_by_chrom,
-    covar,
-    pheno,
+    covar0,
+    pheno0,
     find_delta_via_reml,
     test_via_reml,
     log_delta,
     runner,
 ):
+
+    #!!!cmk move to inner loop?
+    ## =========================
+    ## Read covar and pheno into memory. #!!!cmk kludge why?
+    ## =========================
+    covar = _covar_read_with_bias(covar0)
+    pheno = pheno0.read(view_ok=True, order="A")
+
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
+
 
         # =========================
         # Read K0_eigen for this chrom into memory.
@@ -515,7 +501,7 @@ def _find_per_pheno_per_chrom_list(
         # [such that double = input-eigenvectors@rotated]
         # that captures information lost by the low rank.
         # =========================
-        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A") #!!!cmk kludge move these into inner loop?
         covar_r = K0_eigen.rotate(covar)
 
         # ========================================
@@ -544,6 +530,7 @@ def _find_per_pheno_per_chrom_list(
         # for each pheno (in parallel):
         def mapper_search(pheno_index):
             per_pheno = types.SimpleNamespace()
+            per_pheno.chrom = chrom
 
             per_pheno.pheno_r = K0_eigen.rotate(
                 pheno[:, pheno_index].read(view_ok=True)
@@ -604,22 +591,39 @@ def _cc_and_x_sid(covar):
 
 #!!!cmk reorder inputs kludge
 def _test_in_batches(
-    covar,
-    chrom_list,
+    covar0,
     per_pheno_per_chrom_list,
     test_snps,
     K0_eigen_by_chrom,
     batch_size,
     test_via_reml,
-    X,
     runner,
 ):
+    #!!!cmk move to inner loop?
+    ## =========================
+    ## Read covar into memory. #!!!cmk kludge why?
+    ## =========================
+    covar = _covar_read_with_bias(covar0)
+
+    # ==================================
+    # X is the covariates plus one test SNP called "alt"
+    # Only need explicit "X" for REML.
+    # cc is covariate count (not including "alt")
     cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
+    if test_via_reml:
+        X = SnpData(
+            val=np.full((covar.iid_count, len(x_sid)), fill_value=np.nan),
+            iid=covar.iid,
+            sid=x_sid,
+        )
+        X.val[:, :cc] = covar.val  # left
+    else:
+        X = None
+
 
     # for each chrom (in parallel):
-    def df_per_chrom_mapper(chrom_index):
-        chrom = chrom_list[chrom_index]
-        per_pheno_list = per_pheno_per_chrom_list[chrom_index]
+    def df_per_chrom_mapper(per_pheno_list):
+        chrom = per_pheno_list[0].chrom
         pheno_count = len(per_pheno_list)
 
         # =========================
@@ -747,7 +751,7 @@ def _test_in_batches(
         return dataframe
 
     dataframe = map_reduce(
-        range(len(chrom_list)),
+        per_pheno_per_chrom_list,
         nested=df_per_chrom_mapper,  #!!!cmk kludge rename
         reducer=df_per_chrom_reducer,
         runner=runner,
