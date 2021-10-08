@@ -98,15 +98,12 @@ def single_snp_eigen(
     covar = _covar_read_with_bias(covar)
     pheno = pheno.read(view_ok=True, order="A")
 
-    # ==================================
-    # Count the number of covariates (including bias).
-    # X is the covariates plus one test SNP called "alt"
-    # If an explicit X will be needed later, create it.
-    # !!!cmk what if "alt" name is taken?
-    cc = covar.sid_count  # covariate count (including bias)
-    x_sid = np.append(covar.sid, "alt")
     if test_via_reml:
-        # Only need explicit "X" for REML
+        # ==================================
+        # X is the covariates plus one test SNP called "alt"
+        # Only need explicit "X" for REML.
+        # cc is covariate count (not including "alt")
+        cc, x_sid = _cc_and_x_sid(covar)
         X = SnpData(
             val=np.full((covar.iid_count, len(x_sid)), fill_value=np.nan),
             iid=covar.iid,
@@ -117,32 +114,29 @@ def single_snp_eigen(
         X = None
 
     # ===============================
-    # For each chrom & each pheno
+    # In parallel, for each chrom & each pheno
     # find the best h2 and related info
     # ===============================
     def mapper_find_per_pheno_list(chrom):
+
+        # =========================
+        # Create K0_eigen reader for this chrom, but don't read yet.
+        # =========================
+        K0_eigen = K0_eigen_by_chrom[chrom]
+
         return _find_per_pheno_list(
-            K0_eigen_by_chrom,
-            chrom,
-            covar,
-            test_snps,
-            pheno,
-            find_delta_via_reml,
-            test_via_reml,
-            log_delta,
-            x_sid,
-            cc
+            K0_eigen, covar, pheno, find_delta_via_reml, test_via_reml, log_delta
         )
+
     per_pheno_per_chrom_list = map_reduce(
-        chrom_list_test_snps,
-        nested=mapper_find_per_pheno_list,
-        runner=runner
-        )
+        chrom_list_test_snps, nested=mapper_find_per_pheno_list, runner=runner
+    )
 
     # ==================================
     # Test SNPs in batches
     # ==================================
     batch_size = 100  # !!!cmk const
+    cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
 
     df_per_chrom_list = []
     for chrom_index, chrom in enumerate(chrom_list_test_snps):
@@ -353,8 +347,6 @@ class KdI:
     @property
     def row_count(self):
         return len(self.row)
-
-
 
 
 # !!!cmk move to PySnpTools
@@ -615,17 +607,15 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
 
+
+#!!!cmk kludge - reorder inputs
 def _find_per_pheno_list(
-    K0_eigen_by_chrom,
-    chrom,
+    K0_eigen,
     covar,
-    test_snps,
     pheno,
     find_delta_via_reml,
     test_via_reml,
     log_delta,
-    x_sid,
-    cc,
 ):
     # =========================
     # Read K0_eigen for this chrom into memory.
@@ -637,13 +627,14 @@ def _find_per_pheno_list(
     # [such that double = input-eigenvectors@rotated]
     # that captures information lost by the low rank.
     # =========================
-    K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+    K0_eigen = K0_eigen.read(view_ok=True, order="A")
     covar_r = K0_eigen.rotate(covar)
 
-    # =========================
-    # Create a testsnp reader for this chrom, but don't read yet.
-    # =========================
-    test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
+    # ========================================
+    # cc is the covariate count.
+    # x_sid is the names of the covariates plus "alt"
+    # ========================================
+    cc, x_sid = _cc_and_x_sid(covar)
 
     # =========================
     # For each phenotype, in parallel, ...
@@ -673,7 +664,7 @@ def _find_per_pheno_list(
             covar_r,
             per_pheno.pheno_r,
             use_reml=find_delta_via_reml,
-            log_delta=log_delta,  # optional
+            log_delta=log_delta,
         )
         covarKcovar, per_pheno.covarK = AKB.from_rotations(
             covar_r, per_pheno.K0_kdi, covar_r
@@ -708,8 +699,12 @@ def _find_per_pheno_list(
 
         return per_pheno
 
-    return map_reduce(
-        range(pheno.col_count),
-        mapper=mapper_search
-    )
+    return map_reduce(range(pheno.col_count), mapper=mapper_search)
 
+
+# !!!cmk what if "alt" name is taken?
+def _cc_and_x_sid(covar):
+    cc = covar.sid_count  # covariate count (including bias)
+    x_sid = np.append(covar.sid, "alt")
+
+    return cc, x_sid
