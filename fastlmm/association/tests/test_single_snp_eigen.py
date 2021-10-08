@@ -83,7 +83,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         delta_default = 1.0
         if True:
             runner2 = None
-            runner = LocalMultiProc(6, just_one_process=False)
+            runner = None # LocalMultiProc(6, just_one_process=False)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0.1
         else:
@@ -174,7 +174,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 gwas_pvalues_list = map_reduce(
                     range(phenox.sid_count), mapper=mapper, runner=runner
                 )
-                #cmk kludge rename phenox
+                # cmk kludge rename phenox
                 for pheno_index in range(phenox.sid_count):
                     frame_i = frame[frame["Pheno"] == phenox.sid[pheno_index]]
                     # check p-values in log-space!

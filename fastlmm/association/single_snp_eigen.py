@@ -132,146 +132,17 @@ def single_snp_eigen(
     # Test SNPs in batches
     # ==================================
     batch_size = 100  # !!!cmk const
-    cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
-
-    # for each chrom (in parallel):
-    def df_per_chrom_mapper(chrom_index):
-        chrom = chrom_list[chrom_index]
-        per_pheno_list = per_pheno_per_chrom_list[chrom_index]
-
-        # =========================
-        # Create a testsnp reader for this chrom, but don't read yet.
-        # =========================
-        #!!!cmk similar code elsewhere kludge
-        test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
-        #!!!cmk move into innner loop? kludge
-        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
-        covar_r = K0_eigen.rotate(covar)
-
-        def mapper(sid_start):
-            # ==================================
-            # Read and standardize a batch of test SNPs. Then rotate.
-            # Then, for each pheno ...
-            #   Find A^T * K^-1 * B for covar & pheno vs. the batch
-            #   Find the likelihood and pvalue for each test SNP.
-            # ==================================
-            alt_batch = (
-                test_snps_for_chrom[:, sid_start : sid_start + batch_size]
-                .read()
-                .standardize()
-            )
-            alt_batch_r = K0_eigen.rotate(alt_batch)
-
-            # ==================================
-            # For each phenotype
-            # ==================================
-            result_list = []
-            for pheno_index, per_pheno in enumerate(per_pheno_list):
-
-                covarKalt_batch, _ = AKB.from_rotations(
-                    covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
-                )
-                alt_batchKpheno, alt_batchK = AKB.from_rotations(
-                    alt_batch_r, per_pheno.K0_kdi, per_pheno.pheno_r
-                )
-
-                # ==================================
-                # For each test SNP in the batch
-                # ==================================
-                for i in range(alt_batch.sid_count):
-                    alt_r = alt_batch_r[i]
-
-                    # ==================================
-                    # For each pheno (as the last dimension in the matrix) ...
-                    # Find alt^T * K^-1 * alt for the test SNP.
-                    # Fill in last value of X, XKX and XKpheno
-                    # with the alt value.
-                    # ==================================
-                    altKalt, _ = AKB.from_rotations(
-                        alt_r, per_pheno.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
-                    )
-
-                    per_pheno.XKX[:cc, cc:] = covarKalt_batch[
-                        :, i : i + 1
-                    ]  # upper right
-                    per_pheno.XKX[cc:, :cc] = per_pheno.XKX[:cc, cc:].T  # lower left
-                    per_pheno.XKX[cc:, cc:] = altKalt[:, :]  # lower right
-
-                    per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
-
-                    if test_via_reml:  # Only need "X" for REML
-                        X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
-
-                    # ==================================
-                    # Find likelihood with test SNP and score.
-                    # ==================================
-                    # O(sid_count * (covar+1)^6)
-                    ll_alt, beta, variance_beta = _loglikelihood(
-                        X,
-                        per_pheno.phenoKpheno,
-                        per_pheno.XKX,
-                        per_pheno.XKpheno,
-                        use_reml=test_via_reml,
-                    )
-
-                    test_statistic = ll_alt - per_pheno.ll_null
-
-                    result_list.append(
-                        {
-                            "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-                            "SnpWeight": beta.val,  #!!!cmk
-                            "SnpWeightSE": np.sqrt(variance_beta)
-                            if variance_beta is not None
-                            else None,
-                            # !!!cmk right name and place?
-                            "Pheno": per_pheno.pheno_r.col[0],
-                        }
-                    )
-
-            df_per_batch = _create_dataframe().append(result_list, ignore_index=True)
-            df_per_batch["sid_index"] = np.repeat(
-                np.arange(sid_start, sid_start + alt_batch.sid_count), pheno.col_count
-            )
-            df_per_batch["SNP"] = np.repeat(alt_batch.sid, pheno.col_count)
-            df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno.col_count)
-            df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno.col_count)
-            df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno.col_count)
-            df_per_batch["Nullh2"] = np.tile(
-                [per_pheno.K0_kdi.h2 for per_pheno in per_pheno_list],
-                alt_batch.sid_count,
-            )
-            # !!!cmk in lmmcov, but not lmm
-            # df_per_batch['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
-            # !!!cmk Feature not supported. could add "0"
-            # df_per_batch['Mixing'] = np.zeros((len(sid))) + 0
-
-            return df_per_batch
-
-        def reducer2(df_per_batch_sequence): #!!!cmk kludge rename
-            df_per_chrom = pd.concat(df_per_batch_sequence)
-            return df_per_chrom
-
-
-        return map_reduce(
-            range(0, test_snps_for_chrom.sid_count, batch_size),
-            mapper=mapper, #!!!cmk kludge rename
-            reducer=reducer2
-        )
-
-
-    def df_per_chrom_reducer(df_per_batch_sequence):
-        dataframe = pd.concat(df_per_batch_sequence)
-        dataframe.sort_values(by="PValue", inplace=True)
-        dataframe.index = np.arange(len(dataframe))
-        return dataframe
-
-
-    dataframe = map_reduce(
-            range(len(chrom_list)),
-            nested=df_per_chrom_mapper, #!!!cmk kludge rename
-            reducer=df_per_chrom_reducer,
-            runner=runner
-        )
+    dataframe = _test_in_batches(
+        covar,
+        chrom_list,
+        per_pheno_per_chrom_list,
+        test_snps,
+        K0_eigen_by_chrom,
+        batch_size,
+        test_via_reml,
+        X,
+        runner,
+    )
 
     if output_file_name is not None:
         dataframe.to_csv(output_file_name, sep="\t", index=False)
@@ -728,5 +599,158 @@ def _find_per_pheno_per_chrom_list(
 def _cc_and_x_sid(covar):
     cc = covar.sid_count  # covariate count (including bias)
     x_sid = np.append(covar.sid, "alt")
-
     return cc, x_sid
+
+
+#!!!cmk reorder inputs kludge
+def _test_in_batches(
+    covar,
+    chrom_list,
+    per_pheno_per_chrom_list,
+    test_snps,
+    K0_eigen_by_chrom,
+    batch_size,
+    test_via_reml,
+    X,
+    runner,
+):
+    cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
+
+    # for each chrom (in parallel):
+    def df_per_chrom_mapper(chrom_index):
+        chrom = chrom_list[chrom_index]
+        per_pheno_list = per_pheno_per_chrom_list[chrom_index]
+        pheno_count = len(per_pheno_list)
+
+        # =========================
+        # Create a testsnp reader for this chrom, but don't read yet.
+        # =========================
+        #!!!cmk similar code elsewhere kludge
+        test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
+        #!!!cmk move into innner loop? kludge
+        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+        covar_r = K0_eigen.rotate(covar)
+
+        def mapper(sid_start):
+            # ==================================
+            # Read and standardize a batch of test SNPs. Then rotate.
+            # Then, for each pheno ...
+            #   Find A^T * K^-1 * B for covar & pheno vs. the batch
+            #   Find the likelihood and pvalue for each test SNP.
+            # ==================================
+            alt_batch = (
+                test_snps_for_chrom[:, sid_start : sid_start + batch_size]
+                .read()
+                .standardize()
+            )
+            alt_batch_r = K0_eigen.rotate(alt_batch)
+
+            # ==================================
+            # For each phenotype
+            # ==================================
+            result_list = []
+            for pheno_index, per_pheno in enumerate(per_pheno_list):
+
+                covarKalt_batch, _ = AKB.from_rotations(
+                    covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
+                )
+                alt_batchKpheno, alt_batchK = AKB.from_rotations(
+                    alt_batch_r, per_pheno.K0_kdi, per_pheno.pheno_r
+                )
+
+                # ==================================
+                # For each test SNP in the batch
+                # ==================================
+                for i in range(alt_batch.sid_count):
+                    alt_r = alt_batch_r[i]
+
+                    # ==================================
+                    # For each pheno (as the last dimension in the matrix) ...
+                    # Find alt^T * K^-1 * alt for the test SNP.
+                    # Fill in last value of X, XKX and XKpheno
+                    # with the alt value.
+                    # ==================================
+                    altKalt, _ = AKB.from_rotations(
+                        alt_r, per_pheno.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                    )
+
+                    per_pheno.XKX[:cc, cc:] = covarKalt_batch[
+                        :, i : i + 1
+                    ]  # upper right
+                    per_pheno.XKX[cc:, :cc] = per_pheno.XKX[:cc, cc:].T  # lower left
+                    per_pheno.XKX[cc:, cc:] = altKalt[:, :]  # lower right
+
+                    per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
+
+                    if test_via_reml:  # Only need "X" for REML
+                        X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
+
+                    # ==================================
+                    # Find likelihood with test SNP and score.
+                    # ==================================
+                    # O(sid_count * (covar+1)^6)
+                    ll_alt, beta, variance_beta = _loglikelihood(
+                        X,
+                        per_pheno.phenoKpheno,
+                        per_pheno.XKX,
+                        per_pheno.XKpheno,
+                        use_reml=test_via_reml,
+                    )
+
+                    test_statistic = ll_alt - per_pheno.ll_null
+
+                    result_list.append(
+                        {
+                            "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
+                            "SnpWeight": beta.val,  #!!!cmk
+                            "SnpWeightSE": np.sqrt(variance_beta)
+                            if variance_beta is not None
+                            else None,
+                            # !!!cmk right name and place?
+                            "Pheno": per_pheno.pheno_r.col[0],
+                        }
+                    )
+
+            df_per_batch = _create_dataframe().append(result_list, ignore_index=True)
+            df_per_batch["sid_index"] = np.repeat(
+                np.arange(sid_start, sid_start + alt_batch.sid_count), pheno_count
+            )
+            df_per_batch["SNP"] = np.repeat(alt_batch.sid, pheno_count)
+            df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_count)
+            df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_count)
+            df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_count)
+            df_per_batch["Nullh2"] = np.tile(
+                [per_pheno.K0_kdi.h2 for per_pheno in per_pheno_list],
+                alt_batch.sid_count,
+            )
+            # !!!cmk in lmmcov, but not lmm
+            # df_per_batch['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
+            # !!!cmk Feature not supported. could add "0"
+            # df_per_batch['Mixing'] = np.zeros((len(sid))) + 0
+
+            return df_per_batch
+
+        def reducer2(df_per_batch_sequence):  #!!!cmk kludge rename
+            df_per_chrom = pd.concat(df_per_batch_sequence)
+            return df_per_chrom
+
+        return map_reduce(
+            range(0, test_snps_for_chrom.sid_count, batch_size),
+            mapper=mapper,  #!!!cmk kludge rename
+            reducer=reducer2,
+        )
+
+    def df_per_chrom_reducer(df_per_batch_sequence):
+        dataframe = pd.concat(df_per_batch_sequence)
+        dataframe.sort_values(by="PValue", inplace=True)
+        dataframe.index = np.arange(len(dataframe))
+        return dataframe
+
+    dataframe = map_reduce(
+        range(len(chrom_list)),
+        nested=df_per_chrom_mapper,  #!!!cmk kludge rename
+        reducer=df_per_chrom_reducer,
+        runner=runner,
+    )
+
+    return dataframe
