@@ -92,14 +92,39 @@ def single_snp_eigen(
     # if h2 is not None and not isinstance(h2, np.ndarray):
     #     h2 = np.repeat(h2, pheno.shape[1])
 
+    # =========================
+    # Read covar into memory. #!!!cmk0???
+    # =========================
+    #!!!cmk0
+    if test_via_reml or find_delta_via_reml:
+        covar1 = _covar_read_with_bias(covar)
+        covarTcovar = PstData(val=covar1.val.T @ covar1.val, row=covar1.sid, col=covar1.sid)
+        eigen_covarTcovar = EigenData.from_aka(covarTcovar)
+        logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
+    else:
+        covarTcovar = None
+        logdet_covarTcovar = None
+
+
+    # ===============================
+    # In parallel, for each chrom
+    # rotate the covariates
+    # ===============================
+    per_chrom_list = _find_per_chrom_list(
+        chrom_list,
+        K0_eigen_by_chrom,
+        covar,
+        runner,
+    )
+
     # ===============================
     # In parallel, for each chrom & each pheno
     # find the best h2 and related info
     # ===============================
     per_pheno_per_chrom_list = _find_per_pheno_per_chrom_list(
-        chrom_list,
+        logdet_covarTcovar,
+        per_chrom_list,
         K0_eigen_by_chrom,
-        covar,
         pheno,
         find_delta_via_reml,
         test_via_reml,
@@ -485,31 +510,21 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
 
 
 #!!!cmk kludge - reorder inputs
-def _find_per_pheno_per_chrom_list(
+def _find_per_chrom_list(
     chrom_list,
     K0_eigen_by_chrom,
     covar0,
-    pheno0,
-    find_delta_via_reml,
-    test_via_reml,
-    log_delta,
     runner,
 ):
 
-    # =========================
-    # Read covar and pheno into memory. #!!!cmk0???
-    # =========================
-    covar = _covar_read_with_bias(covar0)
-    pheno = pheno0.read(view_ok=True, order="A")
-    if test_via_reml:
-        covarTcovar = PstData(val=covar.val.T @ covar.val, row=covar.sid, col=covar.sid)
-        eigen_covarTcovar = EigenData.from_aka(covarTcovar)
-        logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
-    else:
-        logdet_covarTcovar = None
+    #!!!cmk0 restore comment
+    covar = _covar_read_with_bias(covar0) #!!!cmk0 rename covar to covar1, and covar0 to covar
+
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
+
+
         # =========================
         # Read K0_eigen for this chrom into memory.
         # Next rotate covar.
@@ -526,11 +541,55 @@ def _find_per_pheno_per_chrom_list(
         #!!!cmk0 rotate both inputs in batches?
         covar_r = K0_eigen.rotate(covar)
 
+        return {"chrom":int(chrom), "covar_r":covar_r}
+    return map_reduce(
+        chrom_list,
+        mapper=mapper_find_per_pheno_list,
+        runner=runner,
+    )
+
+
+#!!!cmk kludge - reorder inputs
+def _find_per_pheno_per_chrom_list(
+    logdet_covarTcovar,
+    per_chrom_list,
+    K0_eigen_by_chrom,
+    pheno0,
+    find_delta_via_reml,
+    test_via_reml,
+    log_delta,
+    runner,
+):
+
+    # =========================
+    # Read pheno into memory. #!!!cmk0???
+    # =========================
+    pheno = pheno0.read(view_ok=True, order="A")
+
+    # for each chrom (in parallel):
+    def mapper_find_per_pheno_list(per_chrom):
+        chrom = per_chrom["chrom"]
+        covar_r = per_chrom["covar_r"]
+
+        # =========================
+        # Read K0_eigen for this chrom into memory.
+        #
+        # An "EigenReader" object includes both the vectors and values.
+        # A Rotation object always includes both the main "rotated" array.
+        # In addition, if eigen was low rank, then also a "double" array
+        # [such that double = input-eigenvectors@rotated]
+        # that captures information lost by the low rank.
+        # =========================
+        # cmk0 instead of reading all into membory, how about rotating in batches?
+        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+        # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
+        #!!!cmk0 rotate both inputs in batches?
+
         # ========================================
         # cc is the covariate count.
         # x_sid is the names of the covariates plus "alt"
         # ========================================
-        cc, x_sid = _cc_and_x_sid(covar)
+        cc, x_sid = _cc_and_x_sid(covar_r) #!!!cmk0
 
         # =========================
         # For each phenotype, in parallel, ...
@@ -577,7 +636,7 @@ def _find_per_pheno_per_chrom_list(
 
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
                 logdet_covarTcovar,
-                covar.row_count, #!!!cmk0 avoid covar here?
+                K0_eigen.row_count, #!!!cmk0 avoid covar here?
                 per_pheno.phenoKpheno,
                 covarKcovar,
                 covarKpheno,
@@ -604,7 +663,7 @@ def _find_per_pheno_per_chrom_list(
     #!!!cmk kludge be consistent with if "reducer", "mapper", "eigen" go at front or back of variable
     #!!!cmk0 do a parallel run to pre-compute covar_r for each chrom
     return map_reduce(
-        chrom_list,
+        per_chrom_list,
         nested=mapper_find_per_pheno_list,
         runner=runner,
     )
@@ -612,8 +671,8 @@ def _find_per_pheno_per_chrom_list(
 
 # !!!cmk what if "alt" name is taken?
 def _cc_and_x_sid(covar):
-    cc = covar.sid_count  # covariate count (including bias)
-    x_sid = np.append(covar.sid, "alt")
+    cc = covar.col_count  # covariate count (including bias)
+    x_sid = np.append(covar.col, "alt")
     return cc, x_sid
 
 
