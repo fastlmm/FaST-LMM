@@ -10,6 +10,7 @@ import pysnptools.util as pstutil
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
+from pysnptools.snpreader import _MergeSIDs
 from pysnptools.eigenreader import EigenData
 from pysnptools.eigenreader.eigendata import Rotation
 from pysnptools.util.mapreduce1 import map_reduce
@@ -97,7 +98,8 @@ def single_snp_eigen(
     # =========================
     #!!!cmk0
     if test_via_reml or find_delta_via_reml:
-        covar1 = _covar_read_with_bias(covar)
+        #!!!cmk01 later think about caching pheno and covar1 into memory mapped files
+        covar1 = _append_bias(covar).read(view_ok=True)
         covarTcovar = PstData(val=covar1.val.T @ covar1.val, row=covar1.sid, col=covar1.sid)
         eigen_covarTcovar = EigenData.from_aka(covarTcovar)
         logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
@@ -153,6 +155,9 @@ def single_snp_eigen(
 
 
 def _pheno_fixup_and_check_missing(pheno, count_A1):
+     # We read pheno here and again in _find_per_pheno_per_chrom_list
+     # because they might be running in different processes and 
+     # re-reading isn't expensive.
     pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
     good_values_per_iid = (pheno.val == pheno.val).sum(axis=1)
     assert not np.any(
@@ -168,18 +173,14 @@ def _pheno_fixup_and_check_missing(pheno, count_A1):
     return pheno
 
 
-def _covar_read_with_bias(covar):
-    covar_val0 = covar.read(view_ok=True, order="A").val
-    covar_val1 = np.c_[
-        covar_val0, np.ones((covar.iid_count, 1))
-    ]  # view_ok because np.c_ will allocation new memory
+def _append_bias(covar):
     # !!!cmk what is "bias' is already used as column name
-    covar_and_bias = SnpData(
+    bias = SnpData(
         iid=covar.iid,
-        sid=list(covar.sid) + ["bias"],
-        val=covar_val1,
-        name=f"{covar}&bias",
-    )
+        sid=["bias"],
+        val=np.ones((covar.iid_count, 1))
+        )
+    covar_and_bias = _MergeSIDs([covar, bias])
     return covar_and_bias
 
 
@@ -518,7 +519,7 @@ def _find_per_chrom_list(
 ):
 
     #!!!cmk0 restore comment
-    covar = _covar_read_with_bias(covar0) #!!!cmk0 rename covar to covar1, and covar0 to covar
+    covar = _append_bias(covar0) #!!!cmk0 rename covar to covar1, and covar0 to covar
 
 
     # for each chrom (in parallel):
@@ -539,7 +540,7 @@ def _find_per_chrom_list(
         K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
         #!!!cmk0 rotate both inputs in batches?
-        covar_r = K0_eigen.rotate(covar)
+        covar_r = K0_eigen.rotate(covar.read(view_ok=True))
 
         return {"chrom":int(chrom), "covar_r":covar_r}
     return map_reduce(
@@ -554,7 +555,7 @@ def _find_per_pheno_per_chrom_list(
     logdet_covarTcovar,
     per_chrom_list,
     K0_eigen_by_chrom,
-    pheno0,
+    pheno,
     find_delta_via_reml,
     test_via_reml,
     log_delta,
@@ -562,9 +563,10 @@ def _find_per_pheno_per_chrom_list(
 ):
 
     # =========================
-    # Read pheno into memory. #!!!cmk0???
+    # Read pheno into memory.
+    # This avoids reading from disk for each chrom x pheno
     # =========================
-    pheno = pheno0.read(view_ok=True, order="A")
+    pheno = pheno.read(view_ok=True, order="A")
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(per_chrom):
@@ -686,10 +688,10 @@ def _test_in_batches(
     test_via_reml,
     runner,
 ):
-    ## =========================
-    ## Read covar into memory. #!!!cmk0 kludge why?
-    ## =========================
-    covar = _covar_read_with_bias(covar0)
+    # =========================
+    # Read covar reader with bias column
+    # =========================
+    covar = _append_bias(covar0)
 
     # ==================================
     # X is the covariates plus one test SNP called "alt"
@@ -702,7 +704,7 @@ def _test_in_batches(
             iid=covar.iid,
             sid=x_sid,
         )
-        X.val[:, :cc] = covar.val  # left
+        X.val[:, :cc] = covar.read(view_ok=True).val  # left
     else:
         X = None
 
@@ -721,7 +723,7 @@ def _test_in_batches(
         # !!!cmk0 iid x eid
         # !!!cmk0 Can we rotate both inputs in batches?
         K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
-        covar_r = K0_eigen.rotate(covar)
+        covar_r = K0_eigen.rotate(covar.read(view_ok=True))
 
         def mapper(sid_start):
             # ==================================
