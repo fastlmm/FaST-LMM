@@ -148,6 +148,7 @@ def single_snp_eigen(
     # ==================================
     dataframe = _test_in_batches(
         covar,
+        covarTcovar,
         per_pheno_per_chrom_list,
         test_snps,
         K0_eigen_by_chrom,
@@ -686,6 +687,7 @@ def _cc_and_x_sid(covar):
 #!!!cmk reorder inputs kludge
 def _test_in_batches(
     covar,
+    covarTcovar,
     per_pheno_per_chrom_list,
     test_snps,
     K0_eigen_by_chrom,
@@ -693,21 +695,23 @@ def _test_in_batches(
     batch_size,
     runner,
 ):
+    #!!!cmk0 comment
+    covar = covar.read(view_ok=True)
+
     # ==================================
     # X is the covariates plus one test SNP called "alt"
     # Only need explicit "X" for REML.
     # cc is covariate count (not including "alt")
     cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
     if test_via_reml:
-        X = SnpData(
-            val=np.full((covar.iid_count, len(x_sid)), fill_value=np.nan),
-            iid=covar.iid,
-            sid=x_sid,
+        XTX = PstData(
+            val=np.full((cc+1,cc+1), fill_value=np.nan),
+            row=x_sid,
+            col=x_sid,
         )
-        X.val[:, :cc] = covar.read(view_ok=True).val  # left
+        XTX.val[:cc,:cc] = covarTcovar.val
     else:
-        X = None
-
+        XTX = None
 
     # for each chrom (in parallel):
     def df_per_chrom_mapper(per_pheno_list):
@@ -720,7 +724,7 @@ def _test_in_batches(
         # !!!cmk0 iid x eid
         # !!!cmk0 Can/should we rotate all inputs in batches?
         K0_eigen = K0_eigen_by_chrom[chrom]
-        covar_r = K0_eigen.rotate(covar.read(view_ok=True), batch_size)
+        covar_r = K0_eigen.rotate(covar, batch_size)
 
         # =========================
         # Create a testsnp reader for this chrom, but don't read yet.
@@ -785,9 +789,13 @@ def _test_in_batches(
 
                     #!!!cmk0 didn't some of this get pre-computeed
                     if test_via_reml:  # Only need "X" for REML
-                        X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
+                        alt_val = alt_batch.val[:, i : i + 1]
+                        #X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
                         #!!!cmk0 can most of the calculation be moved up?
-                        XTX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
+                        #XTX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
+                        XTX.val[cc:,:cc] = alt_val.T @ covar.val
+                        XTX.val[:cc,cc:] = XTX.val[cc:,:cc].T
+                        XTX.val[cc:,cc:] = alt_val.T @ alt_val
                         eigen_xtx = EigenData.from_aka(XTX)
                         logdet_xtx, _ = eigen_xtx.logdet()
 
@@ -797,7 +805,6 @@ def _test_in_batches(
                     # ==================================
                     # Find likelihood with test SNP and score.
                     # ==================================
-                    # O(sid_count * (covar+1)^6)
                     ll_alt, beta, variance_beta = _loglikelihood(
                         logdet_xtx,
                         K0_eigen.row_count,
