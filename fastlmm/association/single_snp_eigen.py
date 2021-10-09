@@ -63,7 +63,6 @@ def single_snp_eigen(
     # =========================
     covar = _append_bias(covar)
 
-
     # =========================
     # Intersect and order individuals.
     # Make sure every K0_eigen has the same individuals.
@@ -102,9 +101,12 @@ def single_snp_eigen(
     # if h2 is not None and not isinstance(h2, np.ndarray):
     #     h2 = np.repeat(h2, pheno.shape[1])
 
-    #!!!cmk0
+    #!!!cmk1 cache this
+    # ===============================
+    # If needed later for REML, compute covarTcovar
+    # and logdet(eigen(covarTcovar))
+    # ===============================
     if test_via_reml or find_delta_via_reml:
-        #!!!cmk01 later think about caching pheno and covar_data into memory mapped files
         covar_data = covar.read(view_ok=True)
         covarTcovar = PstData(
             val=covar_data.val.T @ covar_data.val, row=covar.sid, col=covar.sid
@@ -115,6 +117,7 @@ def single_snp_eigen(
         covarTcovar = None
         logdet_covarTcovar = None
 
+    #!!!cmk1 cache this
     # ===============================
     # In parallel, for each chrom
     # rotate the covariates
@@ -149,6 +152,7 @@ def single_snp_eigen(
     dataframe = _test_in_batches(
         covar,
         covarTcovar,
+        per_chrom_list,
         per_pheno_per_chrom_list,
         test_snps,
         K0_eigen_by_chrom,
@@ -287,7 +291,7 @@ class AKB(PstData):
         )
 
 
-# We pass K0_eigen, but only use metadata such as the eigenvalues. cmk0
+# We pass K0_eigen, but only use metadata such as the eigenvalues
 def _find_h2(
     K0_eigen,
     logdet_xtx,
@@ -523,6 +527,8 @@ def _find_per_chrom_list(
     batch_size,
     runner,
 ):
+    #!!!cmk0 need comment
+    covar = covar.read(view_ok=True)
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
@@ -537,13 +543,9 @@ def _find_per_chrom_list(
         # [such that double = input-eigenvectors@rotated]
         # that captures information lost by the low rank.
         # =========================
-        # cmk0 instead of reading all into memory, how about rotating in batches?
         K0_eigen = K0_eigen_by_chrom[chrom]
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
-        #!!!cmk0 rotate both inputs in batches?
-        covar_r = K0_eigen.rotate(
-            covar.read(view_ok=True), batch_rows=batch_size,
-        )  #!!!cmk0 const7
+        covar_r = K0_eigen.rotate(covar,batch_rows=batch_size)
 
         return {"chrom": int(chrom), "covar_r": covar_r}
 
@@ -587,16 +589,13 @@ def _find_per_pheno_per_chrom_list(
         # [such that double = input-eigenvectors@rotated]
         # that captures information lost by the low rank.
         # =========================
-        # cmk0 instead of reading all into memory, how about rotating in batches?
         K0_eigen = K0_eigen_by_chrom[chrom]
-        # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
-        #!!!cmk0 rotate both inputs in batches?
 
         # ========================================
         # cc is the covariate count.
         # x_sid is the names of the covariates plus "alt"
         # ========================================
-        cc, x_sid = _cc_and_x_sid(covar_r)  #!!!cmk0
+        cc, x_sid = _cc_and_x_sid(covar_r)
 
         # =========================
         # For each phenotype, in parallel, ...
@@ -618,11 +617,9 @@ def _find_per_pheno_per_chrom_list(
         # for each pheno (in parallel):
         def mapper_search(pheno_index):
             per_pheno = types.SimpleNamespace()
-            per_pheno.chrom = chrom
-            #!!!cmk0 rotate both in batches?
+            #!!!cmk0 at the very least rotate all phenos at once. May want to do them with covar
             per_pheno.pheno_r = K0_eigen.rotate(
-                pheno[:, pheno_index].read(view_ok=True),
-                batch_rows=batch_size
+                pheno[:, pheno_index].read(view_ok=True), batch_rows=batch_size
             )
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
@@ -644,7 +641,7 @@ def _find_per_pheno_per_chrom_list(
 
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
                 logdet_covarTcovar,
-                K0_eigen.row_count,  #!!!cmk0 avoid covar here?
+                K0_eigen.row_count,
                 per_pheno.phenoKpheno,
                 covarKcovar,
                 covarKpheno,
@@ -669,7 +666,6 @@ def _find_per_pheno_per_chrom_list(
         return map_reduce(range(pheno.col_count), mapper=mapper_search)
 
     #!!!cmk kludge be consistent with if "reducer", "mapper", "eigen" go at front or back of variable
-    #!!!cmk0 do a parallel run to pre-compute covar_r for each chrom
     return map_reduce(
         per_chrom_list,
         nested=mapper_find_per_pheno_list,
@@ -688,6 +684,7 @@ def _cc_and_x_sid(covar):
 def _test_in_batches(
     covar,
     covarTcovar,
+    per_chrom_list,
     per_pheno_per_chrom_list,
     test_snps,
     K0_eigen_by_chrom,
@@ -705,35 +702,37 @@ def _test_in_batches(
     cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
     if test_via_reml:
         XTX = PstData(
-            val=np.full((cc+1,cc+1), fill_value=np.nan),
+            val=np.full((cc + 1, cc + 1), fill_value=np.nan),
             row=x_sid,
             col=x_sid,
         )
-        XTX.val[:cc,:cc] = covarTcovar.val
+        XTX.val[:cc, :cc] = covarTcovar.val
     else:
         XTX = None
 
     # for each chrom (in parallel):
-    def df_per_chrom_mapper(per_pheno_list):
+    def df_per_chrom_mapper(chrom_index):
+        per_chrom = per_chrom_list[chrom_index]
+        per_pheno_list = per_pheno_per_chrom_list[chrom_index]
         # !!!cmk0: per_pheno_per_chrom_list chrom x pheno x iid(sd, pheno_r) x covar (covarK)
         # !!!cmk0 need random access per chrom and pheno
-        chrom = per_pheno_list[0].chrom
+        chrom = per_chrom["chrom"]
+        covar_r = per_chrom["covar_r"]
         pheno_count = len(per_pheno_list)
 
         #!!!cmk0 add comments
         # !!!cmk0 iid x eid
-        # !!!cmk0 Can/should we rotate all inputs in batches?
         K0_eigen = K0_eigen_by_chrom[chrom]
-        covar_r = K0_eigen.rotate(covar, batch_size)
+        #!!!cmk0 didn't pre-compute this? covar_r = K0_eigen.rotate(covar, batch_size)
 
         # =========================
         # Create a testsnp reader for this chrom, but don't read yet.
         # =========================
         #!!!cmk similar code elsewhere kludge
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
-        batch_size_test_snps = batch_size if batch_size is not None else test_snps_for_chrom.sid_count+1
-
-   
+        batch_size_test_snps = (
+            batch_size if batch_size is not None else test_snps_for_chrom.sid_count + 1
+        )
 
         def mapper(sid_start):
             # ==================================
@@ -755,7 +754,7 @@ def _test_in_batches(
             result_list = []
             for pheno_index, per_pheno in enumerate(per_pheno_list):
 
-                # !!!cmk0 doesn't make since to cache covarK and pheno_r, but not covar_r
+                # !!!cmk0 doesn't make sence to cache covarK and pheno_r, but not covar_r
                 covarKalt_batch, _ = AKB.from_rotations(
                     covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
                 )
@@ -787,18 +786,13 @@ def _test_in_batches(
 
                     per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
 
-                    #!!!cmk0 didn't some of this get pre-computeed
                     if test_via_reml:  # Only need "X" for REML
                         alt_val = alt_batch.val[:, i : i + 1]
-                        #X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
-                        #!!!cmk0 can most of the calculation be moved up?
-                        #XTX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
-                        XTX.val[cc:,:cc] = alt_val.T @ covar.val
-                        XTX.val[:cc,cc:] = XTX.val[cc:,:cc].T
-                        XTX.val[cc:,cc:] = alt_val.T @ alt_val
+                        XTX.val[cc:, :cc] = alt_val.T @ covar.val
+                        XTX.val[:cc, cc:] = XTX.val[cc:, :cc].T
+                        XTX.val[cc:, cc:] = alt_val.T @ alt_val
                         eigen_xtx = EigenData.from_aka(XTX)
                         logdet_xtx, _ = eigen_xtx.logdet()
-
                     else:
                         logdet_xtx = None
 
@@ -864,7 +858,7 @@ def _test_in_batches(
         return dataframe
 
     dataframe = map_reduce(
-        per_pheno_per_chrom_list,
+        range(len(per_chrom_list)),
         nested=df_per_chrom_mapper,  #!!!cmk kludge rename
         reducer=df_per_chrom_reducer,
         runner=runner,

@@ -79,7 +79,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         )
 
         delta_default = 1.0
-        if False:
+        if True:
             runner2 = None
             runner = LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
@@ -1029,8 +1029,7 @@ def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
     rng.shuffle(permutations_dicts)
     count = int(np.ceil(len(permutations_dicts) * extra_fraction))
 
-
-    total = len(first_list)+max_values+count
+    total = len(first_list) + max_values + count
     index = -1
     for dict_of_interest in first_list:
         index += 1
