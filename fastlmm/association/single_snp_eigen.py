@@ -12,7 +12,7 @@ from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
 from pysnptools.snpreader import _MergeSIDs
 from pysnptools.eigenreader import EigenData
-from pysnptools.eigenreader.eigendata import Rotation
+from pysnptools.eigenreader.eigenreader import Rotation
 from pysnptools.util.mapreduce1 import map_reduce
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
@@ -74,6 +74,7 @@ def single_snp_eigen(
     assert np.all(
         [K0_eigen.row_count == iid_count_before for K0_eigen in K0_eigen_list]
     ), "Every K0_eigen must have the same number of individuals"
+    #!!!cmk kludge is it OK if some K0_eigens are repeats and they get reordered?
     intersected = pstutil.intersect_apply([test_snps, pheno, covar] + K0_eigen_list)
     test_snps, pheno, covar = intersected[0:3]
     K0_eigen_list = intersected[3:]
@@ -536,11 +537,11 @@ def _find_per_chrom_list(
         # [such that double = input-eigenvectors@rotated]
         # that captures information lost by the low rank.
         # =========================
-        # cmk0 instead of reading all into membory, how about rotating in batches?
-        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+        # cmk0 instead of reading all into memory, how about rotating in batches?
+        K0_eigen = K0_eigen_by_chrom[chrom]
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
         #!!!cmk0 rotate both inputs in batches?
-        covar_r = K0_eigen.rotate(covar.read(view_ok=True))
+        covar_r = K0_eigen.rotate(covar.read(view_ok=True), batch_rows=7) #!!!cmk0 const7
 
         return {"chrom":int(chrom), "covar_r":covar_r}
     return map_reduce(
@@ -582,8 +583,8 @@ def _find_per_pheno_per_chrom_list(
         # [such that double = input-eigenvectors@rotated]
         # that captures information lost by the low rank.
         # =========================
-        # cmk0 instead of reading all into membory, how about rotating in batches?
-        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+        # cmk0 instead of reading all into memory, how about rotating in batches?
+        K0_eigen = K0_eigen_by_chrom[chrom]
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
         #!!!cmk0 rotate both inputs in batches?
 
@@ -722,7 +723,7 @@ def _test_in_batches(
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
         # !!!cmk0 iid x eid
         # !!!cmk0 Can we rotate both inputs in batches?
-        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
+        K0_eigen = K0_eigen_by_chrom[chrom]
         covar_r = K0_eigen.rotate(covar.read(view_ok=True))
 
         def mapper(sid_start):
