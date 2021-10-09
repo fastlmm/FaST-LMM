@@ -547,10 +547,7 @@ def _find_per_chrom_list(
         # that captures information lost by the low rank.
         # =========================
         K0_eigen = K0_eigen_by_chrom[chrom]
-        # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
-        #!!!cmk 0 covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno],batch_rows=batch_size)
-        covar_r = K0_eigen.rotate(covar,batch_rows=batch_size)
-        pheno_r = K0_eigen.rotate(pheno,batch_rows=batch_size)
+        covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
         return {"chrom": int(chrom), "covar_r": covar_r, "pheno_r": pheno_r}
 
@@ -623,14 +620,8 @@ def _find_per_pheno_per_chrom_list(
         # for each pheno (in parallel):
         def mapper_search(pheno_index):
             per_pheno = types.SimpleNamespace()
-            #!!!cmk0 pheno_r_i = pheno_r[pheno_index]
-            per_pheno.pheno_r = K0_eigen.rotate(
-                pheno[:, pheno_index].read(view_ok=True), batch_rows=batch_size
-            )
-            pheno_r_i=per_pheno.pheno_r #!!!cmk0
+            pheno_r_i = pheno_r[pheno_index]
 
-
-            #!!!cmk0 at the very least rotate all phenos at once. May want to do them with covar
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
                 logdet_covarTcovar,
@@ -666,9 +657,7 @@ def _find_per_pheno_per_chrom_list(
             per_pheno.XKX = AKB.empty(row=x_sid, col=x_sid, kdi=per_pheno.K0_kdi)
             per_pheno.XKX[:cc, :cc] = covarKcovar  # upper left
 
-            per_pheno.XKpheno = AKB.empty(
-                x_sid, pheno_r_i.col, kdi=per_pheno.K0_kdi
-            )
+            per_pheno.XKpheno = AKB.empty(x_sid, pheno_r_i.col, kdi=per_pheno.K0_kdi)
             per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
 
             return per_pheno
@@ -763,8 +752,8 @@ def _test_in_batches(
             # ==================================
             result_list = []
             for pheno_index, per_pheno in enumerate(per_pheno_list):
-                #!!!cmk0 pheno_r_i = pheno_r[pheno_index]
-                pheno_r_i = per_pheno.pheno_r
+                pheno_r_i = pheno_r[pheno_index]
+                #!!!cmk0pheno_r_i = per_pheno.pheno_r
                 covarKalt_batch, _ = AKB.from_rotations(
                     covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
                 )
