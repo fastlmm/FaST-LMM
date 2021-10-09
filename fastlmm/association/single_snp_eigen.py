@@ -257,7 +257,7 @@ class AKB(PstData):
 
 
 # !!!cmk change use_reml etc to 'use_reml'
-def _find_h2(K0_eigen, X, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999):
+def _find_h2(K0_eigen, XTX, X_row_count, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its kdi's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
@@ -269,7 +269,7 @@ def _find_h2(K0_eigen, X, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0
         XKX, XK = AKB.from_rotations(X_r, kdi, X_r)
         XKpheno, _ = AKB.from_rotations(X_r, kdi, pheno_r, aK=XK)
 
-        nLL, _, _ = _loglikelihood(X, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
+        nLL, _, _ = _loglikelihood(XTX, X_row_count, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
             resmin[0] = {"nLL": nLL, "h2": x}
@@ -321,27 +321,24 @@ def _find_beta(yKy, XKX, XKy):
 
     return eigen_xkx, beta, rss
 
-
-def _loglikelihood(X, yKy, XKX, XKy, use_reml):
+def _loglikelihood(XTX, X_row_count, yKy, XKX, XKy, use_reml):
     if use_reml:
-        nLL, beta = _loglikelihood_reml(X, yKy, XKX, XKy)
+        nLL, beta = _loglikelihood_reml(XTX, X_row_count, yKy, XKX, XKy)
         return nLL, beta, None
     else:
         return _loglikelihood_ml(yKy, XKX, XKy)
 
-
-def _loglikelihood_reml(X, yKy, XKX, XKy):
+# Note we have both XKX with XTX
+def _loglikelihood_reml(XTX, X_row_count, yKy, XKX, XKy):
     kdi = yKy.kdi
 
     eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
     logdet_xkx, _ = eigen_xkx.logdet()
 
-    # Note we have both XKX with XTX
-    XTX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
-    eigen_xtx = EigenData.from_aka(XTX)
+    eigen_xtx = EigenData.from_aka(XTX) #!!!cmk0 should be pre-compute this?
     logdet_xtx, _ = eigen_xtx.logdet()
+    X_row_less_col = X_row_count - XTX.shape[0]
 
-    X_row_less_col = X.row_count - X.col_count
     sigma2 = rss / X_row_less_col
     nLL = 0.5 * (
         kdi.logdet
@@ -380,14 +377,17 @@ def _loglikelihood_ml(yKy, XKX, XKy):
 
 
 # Returns a kdi that is the original Kg + delta I
+# !!!cmk0 why does this need both covar and covar_r?
+# !!!cmk0 does it really need all of K0_eigen?
+# Needs both covar and covar_r for _loglikelihood_reml
 def _find_best_kdi_as_needed(
-    K0_eigen, covar, covar_r, pheno_r, use_reml, log_delta=None
+    K0_eigen, covarTcovar, covar_r, pheno_r, use_reml, log_delta=None
 ):
     if log_delta is None:
         # cmk As per the paper, we optimized delta with use_reml=True, but
         # cmk we will later optimize beta and find log likelihood with ML (use_reml=False)
         h2 = _find_h2(
-            K0_eigen, covar, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
+            K0_eigen, covarTcovar, K0_eigen.row_count, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
         )["h2"]
         return KdI.from_eigendata(K0_eigen, h2=h2)
     else:
@@ -480,17 +480,19 @@ def _find_per_pheno_per_chrom_list(
     runner,
 ):
 
-    #!!!cmk move to inner loop?
-    ## =========================
-    ## Read covar and pheno into memory. #!!!cmk kludge why?
-    ## =========================
+    # =========================
+    # Read covar and pheno into memory.
+    # =========================
     covar = _covar_read_with_bias(covar0)
     pheno = pheno0.read(view_ok=True, order="A")
+    if test_via_reml: #!!!cmk0
+        covarTcovar = PstData(val=covar.val.T @ covar.val, row=covar.sid, col=covar.sid)
+    else:
+        covarTcovar = None
+
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
-
-
         # =========================
         # Read K0_eigen for this chrom into memory.
         # Next rotate covar.
@@ -502,6 +504,7 @@ def _find_per_pheno_per_chrom_list(
         # that captures information lost by the low rank.
         # =========================
         K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A") #!!!cmk kludge move these into inner loop?
+        # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
         covar_r = K0_eigen.rotate(covar)
 
         # ========================================
@@ -538,7 +541,7 @@ def _find_per_pheno_per_chrom_list(
 
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
-                covar,
+                covarTcovar,
                 covar_r,
                 per_pheno.pheno_r,
                 use_reml=find_delta_via_reml,
@@ -555,7 +558,8 @@ def _find_per_pheno_per_chrom_list(
             )
 
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
-                covar,
+                covarTcovar,
+                covar.row_count,
                 per_pheno.phenoKpheno,
                 covarKcovar,
                 covarKpheno,
@@ -623,6 +627,7 @@ def _test_in_batches(
 
     # for each chrom (in parallel):
     def df_per_chrom_mapper(per_pheno_list):
+        # !!!cmk0: per_pheno_per_chrom_list chrom x pheno x iid(sd, pheno_r) x covar (covarK)
         chrom = per_pheno_list[0].chrom
         pheno_count = len(per_pheno_list)
 
@@ -631,7 +636,8 @@ def _test_in_batches(
         # =========================
         #!!!cmk similar code elsewhere kludge
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
-        #!!!cmk move into innner loop? kludge
+        # !!!cmk0 iid x eid
+        # !!!cmk0 Can we rotate in batches?
         K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
         covar_r = K0_eigen.rotate(covar)
 
@@ -688,13 +694,18 @@ def _test_in_batches(
 
                     if test_via_reml:  # Only need "X" for REML
                         X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
+                        #!!!cmk0 can most of the calculation be moved up?
+                        XTX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
+                    else:
+                        XTX = None
 
                     # ==================================
                     # Find likelihood with test SNP and score.
                     # ==================================
                     # O(sid_count * (covar+1)^6)
                     ll_alt, beta, variance_beta = _loglikelihood(
-                        X,
+                        XTX,
+                        K0_eigen.row_count,
                         per_pheno.phenoKpheno,
                         per_pheno.XKX,
                         per_pheno.XKpheno,

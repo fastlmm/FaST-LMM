@@ -100,7 +100,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "pheno": [pheno000, pheno_fn, pheno01],
             "snps_reader": [snps_reader1, snps_reader5],
         }
-        first_list = [{"snps_reader": 1}]
+        first_list = [{"snps_reader": 1, "pheno":0,"cov":0,"train_count":0}]
 
         def mapper2(option):
             try:
