@@ -256,8 +256,18 @@ class AKB(PstData):
         )
 
 
-# !!!cmk change use_reml etc to 'use_reml'
-def _find_h2(K0_eigen, logdet_xtx, X_row_count, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999):
+# We pass K0_eigen, but only use metadata such as the eigenvalues. cmk0
+def _find_h2(
+    K0_eigen,
+    logdet_xtx,
+    X_row_count,
+    X_r,
+    pheno_r,
+    use_reml,
+    nGridH2=10,
+    minH2=0.0,
+    maxH2=0.99999,
+):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its kdi's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
@@ -269,7 +279,9 @@ def _find_h2(K0_eigen, logdet_xtx, X_row_count, X_r, pheno_r, use_reml, nGridH2=
         XKX, XK = AKB.from_rotations(X_r, kdi, X_r)
         XKpheno, _ = AKB.from_rotations(X_r, kdi, pheno_r, aK=XK)
 
-        nLL, _, _ = _loglikelihood(logdet_xtx, X_row_count, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
+        nLL, _, _ = _loglikelihood(
+            logdet_xtx, X_row_count, phenoKpheno, XKX, XKpheno, use_reml=use_reml
+        )
         nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
             resmin[0] = {"nLL": nLL, "h2": x}
@@ -321,12 +333,14 @@ def _find_beta(yKy, XKX, XKy):
 
     return eigen_xkx, beta, rss
 
+
 def _loglikelihood(logdet_xtx, X_row_count, yKy, XKX, XKy, use_reml):
     if use_reml:
         nLL, beta = _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy)
         return nLL, beta, None
     else:
         return _loglikelihood_ml(yKy, XKX, XKy)
+
 
 # Note we have both XKX with XTX
 def _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy):
@@ -375,9 +389,7 @@ def _loglikelihood_ml(yKy, XKX, XKy):
 
 
 # Returns a kdi that is the original Kg + delta I
-# !!!cmk0 why does this need both covar and covar_r?
-# !!!cmk0 does it really need all of K0_eigen?
-# Needs both covar and covar_r for _loglikelihood_reml
+# (We pass K0_eigen, but only use metadata such as eigenvalues)
 def _find_best_kdi_as_needed(
     K0_eigen, logdet_covarTcovar, covar_r, pheno_r, use_reml, log_delta=None
 ):
@@ -385,7 +397,13 @@ def _find_best_kdi_as_needed(
         # cmk As per the paper, we optimized delta with use_reml=True, but
         # cmk we will later optimize beta and find log likelihood with ML (use_reml=False)
         h2 = _find_h2(
-            K0_eigen, logdet_covarTcovar, K0_eigen.row_count, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
+            K0_eigen,
+            logdet_covarTcovar,
+            K0_eigen.row_count,
+            covar_r,
+            pheno_r,
+            use_reml=use_reml,
+            minH2=0.00001,
         )["h2"]
         return KdI.from_eigendata(K0_eigen, h2=h2)
     else:
@@ -479,17 +497,16 @@ def _find_per_pheno_per_chrom_list(
 ):
 
     # =========================
-    # Read covar and pheno into memory.
+    # Read covar and pheno into memory. #!!!cmk0???
     # =========================
     covar = _covar_read_with_bias(covar0)
     pheno = pheno0.read(view_ok=True, order="A")
-    if test_via_reml: #!!!cmk0
+    if test_via_reml:
         covarTcovar = PstData(val=covar.val.T @ covar.val, row=covar.sid, col=covar.sid)
         eigen_covarTcovar = EigenData.from_aka(covarTcovar)
         logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
     else:
         logdet_covarTcovar = None
-
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
@@ -503,8 +520,10 @@ def _find_per_pheno_per_chrom_list(
         # [such that double = input-eigenvectors@rotated]
         # that captures information lost by the low rank.
         # =========================
-        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A") #!!!cmk kludge move these into inner loop?
+        # cmk0 instead of reading all into membory, how about rotating in batches?
+        K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
+        #!!!cmk0 rotate both inputs in batches?
         covar_r = K0_eigen.rotate(covar)
 
         # ========================================
@@ -534,11 +553,10 @@ def _find_per_pheno_per_chrom_list(
         def mapper_search(pheno_index):
             per_pheno = types.SimpleNamespace()
             per_pheno.chrom = chrom
-
+            #!!!cmk0 rotate both in batches?
             per_pheno.pheno_r = K0_eigen.rotate(
                 pheno[:, pheno_index].read(view_ok=True)
             )
-
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
                 logdet_covarTcovar,
@@ -559,7 +577,7 @@ def _find_per_pheno_per_chrom_list(
 
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
                 logdet_covarTcovar,
-                covar.row_count,
+                covar.row_count, #!!!cmk0 avoid covar here?
                 per_pheno.phenoKpheno,
                 covarKcovar,
                 covarKpheno,
@@ -583,7 +601,13 @@ def _find_per_pheno_per_chrom_list(
 
         return map_reduce(range(pheno.col_count), mapper=mapper_search)
 
-    return map_reduce(chrom_list, nested=mapper_find_per_pheno_list, runner=runner)
+    #!!!cmk kludge be consistent with if "reducer", "mapper", "eigen" go at front or back of variable
+    #!!!cmk0 do a parallel run to pre-compute covar_r for each chrom
+    return map_reduce(
+        chrom_list,
+        nested=mapper_find_per_pheno_list,
+        runner=runner,
+    )
 
 
 # !!!cmk what if "alt" name is taken?
@@ -603,9 +627,8 @@ def _test_in_batches(
     test_via_reml,
     runner,
 ):
-    #!!!cmk move to inner loop?
     ## =========================
-    ## Read covar into memory. #!!!cmk kludge why?
+    ## Read covar into memory. #!!!cmk0 kludge why?
     ## =========================
     covar = _covar_read_with_bias(covar0)
 
@@ -624,10 +647,10 @@ def _test_in_batches(
     else:
         X = None
 
-
     # for each chrom (in parallel):
     def df_per_chrom_mapper(per_pheno_list):
         # !!!cmk0: per_pheno_per_chrom_list chrom x pheno x iid(sd, pheno_r) x covar (covarK)
+        # !!!cmk0 need random access per chrom and pheno
         chrom = per_pheno_list[0].chrom
         pheno_count = len(per_pheno_list)
 
@@ -637,7 +660,7 @@ def _test_in_batches(
         #!!!cmk similar code elsewhere kludge
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
         # !!!cmk0 iid x eid
-        # !!!cmk0 Can we rotate in batches?
+        # !!!cmk0 Can we rotate both inputs in batches?
         K0_eigen = K0_eigen_by_chrom[chrom].read(view_ok=True, order="A")
         covar_r = K0_eigen.rotate(covar)
 
@@ -661,6 +684,7 @@ def _test_in_batches(
             result_list = []
             for pheno_index, per_pheno in enumerate(per_pheno_list):
 
+                # !!!cmk0 doesn't make since to cache covarK and pheno_r, but not covar_r
                 covarKalt_batch, _ = AKB.from_rotations(
                     covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
                 )
