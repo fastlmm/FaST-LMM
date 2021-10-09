@@ -257,7 +257,7 @@ class AKB(PstData):
 
 
 # !!!cmk change use_reml etc to 'use_reml'
-def _find_h2(K0_eigen, XTX, X_row_count, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999):
+def _find_h2(K0_eigen, logdet_xtx, X_row_count, X_r, pheno_r, use_reml, nGridH2=10, minH2=0.0, maxH2=0.99999):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its kdi's diagonal would sum to iid_count
     logging.info("searching for delta/h2/logdelta")
 
@@ -269,7 +269,7 @@ def _find_h2(K0_eigen, XTX, X_row_count, X_r, pheno_r, use_reml, nGridH2=10, min
         XKX, XK = AKB.from_rotations(X_r, kdi, X_r)
         XKpheno, _ = AKB.from_rotations(X_r, kdi, pheno_r, aK=XK)
 
-        nLL, _, _ = _loglikelihood(XTX, X_row_count, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
+        nLL, _, _ = _loglikelihood(logdet_xtx, X_row_count, phenoKpheno, XKX, XKpheno, use_reml=use_reml)
         nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
             resmin[0] = {"nLL": nLL, "h2": x}
@@ -288,7 +288,7 @@ def _find_beta(yKy, XKX, XKy):
     # ref: https://math.unm.edu/~james/w15-STAT576b.pdf
     # You can minimize squared error in linear regression with a beta of
     # beta = np.linalg.inv(XTX) @ X.T @ y
-    #  where XTX = X.T @ X
+    #  where XTX = X.T @ X #!!!cmk kludge give reference for XKX, too
     #
     # ref: https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix#Matrix_inverse_via_eigendecomposition
     # You can find an inverse of XTX using eigen
@@ -321,23 +321,21 @@ def _find_beta(yKy, XKX, XKy):
 
     return eigen_xkx, beta, rss
 
-def _loglikelihood(XTX, X_row_count, yKy, XKX, XKy, use_reml):
+def _loglikelihood(logdet_xtx, X_row_count, yKy, XKX, XKy, use_reml):
     if use_reml:
-        nLL, beta = _loglikelihood_reml(XTX, X_row_count, yKy, XKX, XKy)
+        nLL, beta = _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy)
         return nLL, beta, None
     else:
         return _loglikelihood_ml(yKy, XKX, XKy)
 
 # Note we have both XKX with XTX
-def _loglikelihood_reml(XTX, X_row_count, yKy, XKX, XKy):
+def _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy):
     kdi = yKy.kdi
 
     eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
     logdet_xkx, _ = eigen_xkx.logdet()
 
-    eigen_xtx = EigenData.from_aka(XTX) #!!!cmk0 should be pre-compute this?
-    logdet_xtx, _ = eigen_xtx.logdet()
-    X_row_less_col = X_row_count - XTX.shape[0]
+    X_row_less_col = X_row_count - XKX.shape[0]
 
     sigma2 = rss / X_row_less_col
     nLL = 0.5 * (
@@ -381,13 +379,13 @@ def _loglikelihood_ml(yKy, XKX, XKy):
 # !!!cmk0 does it really need all of K0_eigen?
 # Needs both covar and covar_r for _loglikelihood_reml
 def _find_best_kdi_as_needed(
-    K0_eigen, covarTcovar, covar_r, pheno_r, use_reml, log_delta=None
+    K0_eigen, logdet_covarTcovar, covar_r, pheno_r, use_reml, log_delta=None
 ):
     if log_delta is None:
         # cmk As per the paper, we optimized delta with use_reml=True, but
         # cmk we will later optimize beta and find log likelihood with ML (use_reml=False)
         h2 = _find_h2(
-            K0_eigen, covarTcovar, K0_eigen.row_count, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
+            K0_eigen, logdet_covarTcovar, K0_eigen.row_count, covar_r, pheno_r, use_reml=use_reml, minH2=0.00001
         )["h2"]
         return KdI.from_eigendata(K0_eigen, h2=h2)
     else:
@@ -487,8 +485,10 @@ def _find_per_pheno_per_chrom_list(
     pheno = pheno0.read(view_ok=True, order="A")
     if test_via_reml: #!!!cmk0
         covarTcovar = PstData(val=covar.val.T @ covar.val, row=covar.sid, col=covar.sid)
+        eigen_covarTcovar = EigenData.from_aka(covarTcovar)
+        logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
     else:
-        covarTcovar = None
+        logdet_covarTcovar = None
 
 
     # for each chrom (in parallel):
@@ -541,7 +541,7 @@ def _find_per_pheno_per_chrom_list(
 
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
-                covarTcovar,
+                logdet_covarTcovar,
                 covar_r,
                 per_pheno.pheno_r,
                 use_reml=find_delta_via_reml,
@@ -558,7 +558,7 @@ def _find_per_pheno_per_chrom_list(
             )
 
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
-                covarTcovar,
+                logdet_covarTcovar,
                 covar.row_count,
                 per_pheno.phenoKpheno,
                 covarKcovar,
@@ -696,15 +696,18 @@ def _test_in_batches(
                         X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
                         #!!!cmk0 can most of the calculation be moved up?
                         XTX = PstData(val=X.val.T @ X.val, row=X.sid, col=X.sid)
+                        eigen_xtx = EigenData.from_aka(XTX)
+                        logdet_xtx, _ = eigen_xtx.logdet()
+
                     else:
-                        XTX = None
+                        logdet_xtx = None
 
                     # ==================================
                     # Find likelihood with test SNP and score.
                     # ==================================
                     # O(sid_count * (covar+1)^6)
                     ll_alt, beta, variance_beta = _loglikelihood(
-                        XTX,
+                        logdet_xtx,
                         K0_eigen.row_count,
                         per_pheno.phenoKpheno,
                         per_pheno.XKX,

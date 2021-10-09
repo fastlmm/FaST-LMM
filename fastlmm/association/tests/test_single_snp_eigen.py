@@ -83,7 +83,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         delta_default = 1.0
         if True:
             runner2 = None
-            runner = None # LocalMultiProc(6, just_one_process=False)
+            runner = None  # LocalMultiProc(6, just_one_process=False)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0.1
         else:
@@ -100,7 +100,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "pheno": [pheno000, pheno_fn, pheno01],
             "snps_reader": [snps_reader1, snps_reader5],
         }
-        first_list = [{"snps_reader": 1, "pheno":0,"cov":0,"train_count":0}]
+        first_list = [{"snps_reader": 1, "pheno": 0, "cov": 0, "train_count": 0}]
 
         def mapper2(option):
             try:
