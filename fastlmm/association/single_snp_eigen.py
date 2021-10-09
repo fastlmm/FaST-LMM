@@ -101,13 +101,14 @@ def single_snp_eigen(
     if test_via_reml or find_delta_via_reml:
         #!!!cmk01 later think about caching pheno and covar1 into memory mapped files
         covar1 = _append_bias(covar).read(view_ok=True)
-        covarTcovar = PstData(val=covar1.val.T @ covar1.val, row=covar1.sid, col=covar1.sid)
+        covarTcovar = PstData(
+            val=covar1.val.T @ covar1.val, row=covar1.sid, col=covar1.sid
+        )
         eigen_covarTcovar = EigenData.from_aka(covarTcovar)
         logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
     else:
         covarTcovar = None
         logdet_covarTcovar = None
-
 
     # ===============================
     # In parallel, for each chrom
@@ -156,9 +157,9 @@ def single_snp_eigen(
 
 
 def _pheno_fixup_and_check_missing(pheno, count_A1):
-     # We read pheno here and again in _find_per_pheno_per_chrom_list
-     # because they might be running in different processes and 
-     # re-reading isn't expensive.
+    # We read pheno here and again in _find_per_pheno_per_chrom_list
+    # because they might be running in different processes and
+    # re-reading isn't expensive.
     pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
     good_values_per_iid = (pheno.val == pheno.val).sum(axis=1)
     assert not np.any(
@@ -176,11 +177,7 @@ def _pheno_fixup_and_check_missing(pheno, count_A1):
 
 def _append_bias(covar):
     # !!!cmk what is "bias' is already used as column name
-    bias = SnpData(
-        iid=covar.iid,
-        sid=["bias"],
-        val=np.ones((covar.iid_count, 1))
-        )
+    bias = SnpData(iid=covar.iid, sid=["bias"], val=np.ones((covar.iid_count, 1)))
     covar_and_bias = _MergeSIDs([covar, bias])
     return covar_and_bias
 
@@ -520,12 +517,10 @@ def _find_per_chrom_list(
 ):
 
     #!!!cmk0 restore comment
-    covar = _append_bias(covar0) #!!!cmk0 rename covar to covar1, and covar0 to covar
-
+    covar = _append_bias(covar0)  #!!!cmk0 rename covar to covar1, and covar0 to covar
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
-
 
         # =========================
         # Read K0_eigen for this chrom into memory.
@@ -541,9 +536,12 @@ def _find_per_chrom_list(
         K0_eigen = K0_eigen_by_chrom[chrom]
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
         #!!!cmk0 rotate both inputs in batches?
-        covar_r = K0_eigen.rotate(covar.read(view_ok=True), batch_rows=7) #!!!cmk0 const7
+        covar_r = K0_eigen.rotate(
+            covar.read(view_ok=True), batch_rows=7
+        )  #!!!cmk0 const7
 
-        return {"chrom":int(chrom), "covar_r":covar_r}
+        return {"chrom": int(chrom), "covar_r": covar_r}
+
     return map_reduce(
         chrom_list,
         mapper=mapper_find_per_pheno_list,
@@ -592,7 +590,7 @@ def _find_per_pheno_per_chrom_list(
         # cc is the covariate count.
         # x_sid is the names of the covariates plus "alt"
         # ========================================
-        cc, x_sid = _cc_and_x_sid(covar_r) #!!!cmk0
+        cc, x_sid = _cc_and_x_sid(covar_r)  #!!!cmk0
 
         # =========================
         # For each phenotype, in parallel, ...
@@ -639,7 +637,7 @@ def _find_per_pheno_per_chrom_list(
 
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
                 logdet_covarTcovar,
-                K0_eigen.row_count, #!!!cmk0 avoid covar here?
+                K0_eigen.row_count,  #!!!cmk0 avoid covar here?
                 per_pheno.phenoKpheno,
                 covarKcovar,
                 covarKpheno,

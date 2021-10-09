@@ -77,9 +77,6 @@ class TestSingleSnpEigen(unittest.TestCase):
         cov_reader = Pheno(
             example_file("fastlmm/feature_selection/examples/toydata.cov")
         )
-        #cmk0 don't do this because we want to read it off disk
-        #cov_reader = cov_reader.read()
-        #cov_reader.col[0] = "cov0"  # Rename pheno0 to cov0
 
         delta_default = 1.0
         if True:
@@ -124,7 +121,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 K0_eigen = eigen_from_kernel(
                     snps_reader[:, :train_count],
                     kernel_standardizer=KernelIdentity(),
-                )[:,:]
+                )[:, :]
                 test_snps = snps_reader[:, train_count : train_count + test_count]
 
                 #!!!cmk kludge need to test with different eigens
