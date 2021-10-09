@@ -79,11 +79,11 @@ class TestSingleSnpEigen(unittest.TestCase):
         )
 
         delta_default = 1.0
-        if True:
+        if False:
             runner2 = None
-            runner = None  # LocalMultiProc(6, just_one_process=False)
+            runner = LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
-            extra_fraction = 0.1
+            extra_fraction = 0
         else:
             runner2 = LocalMultiProc(6, just_one_process=False)
             runner = None
@@ -97,10 +97,13 @@ class TestSingleSnpEigen(unittest.TestCase):
             # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn, pheno01],
             "snps_reader": [snps_reader1, snps_reader5],
+            "batch_size": [None, 7, 100_000],
         }
         first_list = [{"use_reml": 0, "train_count": 1}]
 
-        def mapper2(option):
+        def mapper2(index_total_option):
+            index, total, option = index_total_option
+            print(f"============{index} of {total}==================")
             try:
                 import numpy as np
                 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -115,6 +118,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 delta = option["delta"]
                 pheno = option["pheno"]
                 snps_reader = option["snps_reader"]
+                batch_size = option["batch_size"]
 
                 # !!!cmk why not diag standardize?
                 # The [:,:] stops it from being an in-memory EigenData
@@ -138,6 +142,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                     find_delta_via_reml=use_reml,
                     test_via_reml=use_reml,
                     count_A1=False,
+                    batch_size=batch_size,
                     runner=runner,
                 )
 
@@ -1019,7 +1024,16 @@ def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
     values = [rng.permutation(value) for value in old_values]
     max_values = max([len(value) for value in values])
 
+    # !!!cmk don't yield same ones again (but does it really matter?)
+    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    rng.shuffle(permutations_dicts)
+    count = int(np.ceil(len(permutations_dicts) * extra_fraction))
+
+
+    total = len(first_list)+max_values+count
+    index = -1
     for dict_of_interest in first_list:
+        index += 1
         output = {}
         for key_index, key in enumerate(keys):
             value = values[key_index]
@@ -1028,22 +1042,20 @@ def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
                 output[key] = old_values[key_index][value_index_of_interest]
             else:
                 output[key] = value[0]
-        yield output
+
+        yield index, total, output
 
     for i in range(max_values):
+        index += 1
         output = {}
         for key_index, key in enumerate(keys):
             value = values[key_index]
             output[key] = value[i % len(value)]
-        yield output
+        yield index, total, output
 
-    # !!!cmk don't yield same ones again (but does it really matter?)
-    permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
-
-    rng.shuffle(permutations_dicts)
-    count = int(np.ceil(len(permutations_dicts) * extra_fraction))
     for i in range(count):
-        yield permutations_dicts[i]
+        index += 1
+        yield index, total, permutations_dicts[i]
 
 
 def getTestSuite():

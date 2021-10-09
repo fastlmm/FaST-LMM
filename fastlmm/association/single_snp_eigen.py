@@ -42,6 +42,7 @@ def single_snp_eigen(
     find_delta_via_reml=True,
     test_via_reml=False,
     count_A1=None,
+    batch_size=None,
     runner=None,
 ):
     """cmk documentation"""
@@ -118,6 +119,7 @@ def single_snp_eigen(
         chrom_list,
         K0_eigen_by_chrom,
         covar,
+        batch_size,
         runner,
     )
 
@@ -133,20 +135,20 @@ def single_snp_eigen(
         find_delta_via_reml,
         test_via_reml,
         log_delta,
+        batch_size,
         runner,
     )
 
     # ==================================
     # Test SNPs in batches
     # ==================================
-    batch_size = 100  # !!!cmk const
     dataframe = _test_in_batches(
         covar,
         per_pheno_per_chrom_list,
         test_snps,
         K0_eigen_by_chrom,
-        batch_size,
         test_via_reml,
+        batch_size,
         runner,
     )
 
@@ -513,6 +515,7 @@ def _find_per_chrom_list(
     chrom_list,
     K0_eigen_by_chrom,
     covar0,
+    batch_size,
     runner,
 ):
 
@@ -537,7 +540,7 @@ def _find_per_chrom_list(
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
         #!!!cmk0 rotate both inputs in batches?
         covar_r = K0_eigen.rotate(
-            covar.read(view_ok=True), batch_rows=7
+            covar.read(view_ok=True), batch_rows=batch_size,
         )  #!!!cmk0 const7
 
         return {"chrom": int(chrom), "covar_r": covar_r}
@@ -558,6 +561,7 @@ def _find_per_pheno_per_chrom_list(
     find_delta_via_reml,
     test_via_reml,
     log_delta,
+    batch_size,
     runner,
 ):
 
@@ -615,7 +619,8 @@ def _find_per_pheno_per_chrom_list(
             per_pheno.chrom = chrom
             #!!!cmk0 rotate both in batches?
             per_pheno.pheno_r = K0_eigen.rotate(
-                pheno[:, pheno_index].read(view_ok=True)
+                pheno[:, pheno_index].read(view_ok=True),
+                batch_rows=batch_size
             )
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
@@ -683,12 +688,13 @@ def _test_in_batches(
     per_pheno_per_chrom_list,
     test_snps,
     K0_eigen_by_chrom,
-    batch_size,
     test_via_reml,
+    batch_size,
     runner,
 ):
     # =========================
-    # Read covar reader with bias column
+    # Create a covar reader with bias column
+    # (but don't read from it, yet)
     # =========================
     covar = _append_bias(covar0)
 
@@ -707,6 +713,7 @@ def _test_in_batches(
     else:
         X = None
 
+
     # for each chrom (in parallel):
     def df_per_chrom_mapper(per_pheno_list):
         # !!!cmk0: per_pheno_per_chrom_list chrom x pheno x iid(sd, pheno_r) x covar (covarK)
@@ -714,15 +721,20 @@ def _test_in_batches(
         chrom = per_pheno_list[0].chrom
         pheno_count = len(per_pheno_list)
 
+        #!!!cmk0 add comments
+        # !!!cmk0 iid x eid
+        # !!!cmk0 Can/should we rotate all inputs in batches?
+        K0_eigen = K0_eigen_by_chrom[chrom]
+        covar_r = K0_eigen.rotate(covar.read(view_ok=True), batch_size)
+
         # =========================
         # Create a testsnp reader for this chrom, but don't read yet.
         # =========================
         #!!!cmk similar code elsewhere kludge
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
-        # !!!cmk0 iid x eid
-        # !!!cmk0 Can we rotate both inputs in batches?
-        K0_eigen = K0_eigen_by_chrom[chrom]
-        covar_r = K0_eigen.rotate(covar.read(view_ok=True))
+        batch_size_test_snps = batch_size if batch_size is not None else test_snps_for_chrom.sid_count+1
+
+   
 
         def mapper(sid_start):
             # ==================================
@@ -732,11 +744,11 @@ def _test_in_batches(
             #   Find the likelihood and pvalue for each test SNP.
             # ==================================
             alt_batch = (
-                test_snps_for_chrom[:, sid_start : sid_start + batch_size]
+                test_snps_for_chrom[:, sid_start : sid_start + batch_size_test_snps]
                 .read()
                 .standardize()
             )
-            alt_batch_r = K0_eigen.rotate(alt_batch)
+            alt_batch_r = K0_eigen.rotate(alt_batch, batch_rows=batch_size)
 
             # ==================================
             # For each phenotype
@@ -776,6 +788,7 @@ def _test_in_batches(
 
                     per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
 
+                    #!!!cmk0 didn't some of this get pre-computeed
                     if test_via_reml:  # Only need "X" for REML
                         X.val[:, cc:] = alt_batch.val[:, i : i + 1]  # right
                         #!!!cmk0 can most of the calculation be moved up?
@@ -837,7 +850,7 @@ def _test_in_batches(
             return df_per_chrom
 
         return map_reduce(
-            range(0, test_snps_for_chrom.sid_count, batch_size),
+            range(0, test_snps_for_chrom.sid_count, batch_size_test_snps),
             mapper=mapper,  #!!!cmk kludge rename
             reducer=reducer2,
         )
