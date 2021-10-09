@@ -58,6 +58,13 @@ def single_snp_eigen(
     covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
 
     # =========================
+    # Create a covar reader with bias column
+    # (but don't read from it, yet)
+    # =========================
+    covar = _append_bias(covar)
+
+
+    # =========================
     # Intersect and order individuals.
     # Make sure every K0_eigen has the same individuals.
     # Also that these individuals have data in
@@ -95,15 +102,12 @@ def single_snp_eigen(
     # if h2 is not None and not isinstance(h2, np.ndarray):
     #     h2 = np.repeat(h2, pheno.shape[1])
 
-    # =========================
-    # Read covar into memory. #!!!cmk0???
-    # =========================
     #!!!cmk0
     if test_via_reml or find_delta_via_reml:
-        #!!!cmk01 later think about caching pheno and covar1 into memory mapped files
-        covar1 = _append_bias(covar).read(view_ok=True)
+        #!!!cmk01 later think about caching pheno and covar_data into memory mapped files
+        covar_data = covar.read(view_ok=True)
         covarTcovar = PstData(
-            val=covar1.val.T @ covar1.val, row=covar1.sid, col=covar1.sid
+            val=covar_data.val.T @ covar_data.val, row=covar.sid, col=covar.sid
         )
         eigen_covarTcovar = EigenData.from_aka(covarTcovar)
         logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
@@ -514,13 +518,10 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
 def _find_per_chrom_list(
     chrom_list,
     K0_eigen_by_chrom,
-    covar0,
+    covar,
     batch_size,
     runner,
 ):
-
-    #!!!cmk0 restore comment
-    covar = _append_bias(covar0)  #!!!cmk0 rename covar to covar1, and covar0 to covar
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
@@ -684,7 +685,7 @@ def _cc_and_x_sid(covar):
 
 #!!!cmk reorder inputs kludge
 def _test_in_batches(
-    covar0,
+    covar,
     per_pheno_per_chrom_list,
     test_snps,
     K0_eigen_by_chrom,
@@ -692,12 +693,6 @@ def _test_in_batches(
     batch_size,
     runner,
 ):
-    # =========================
-    # Create a covar reader with bias column
-    # (but don't read from it, yet)
-    # =========================
-    covar = _append_bias(covar0)
-
     # ==================================
     # X is the covariates plus one test SNP called "alt"
     # Only need explicit "X" for REML.
