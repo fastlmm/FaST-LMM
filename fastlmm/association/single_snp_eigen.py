@@ -723,7 +723,6 @@ def _test_in_batches(
         #!!!cmk0 add comments
         # !!!cmk0 iid x eid
         K0_eigen = K0_eigen_by_chrom[chrom]
-        #!!!cmk0 didn't pre-compute this? covar_r = K0_eigen.rotate(covar, batch_size)
 
         # =========================
         # Create a testsnp reader for this chrom, but don't read yet.
