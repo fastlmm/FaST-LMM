@@ -80,26 +80,25 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         delta_default = 1.0
         if True:
-            runner2 = None
-            runner = LocalMultiProc(6, just_one_process=True)
+            runner2 = LocalMultiProc(6, just_one_process=True)
+            runner = None # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
             extra_fraction = 0
         else:
             runner2 = LocalMultiProc(6, just_one_process=False)
             runner = None
             exception_to_catch = Exception
-            extra_fraction = 0.01
+            extra_fraction = .05 # 0.01
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],
             "cov": [cov_reader, None],
             "delta": [None, 0.20000600000000002, delta_default],
-            # pheno000, pheno_fn]: #!!!cmk, pheno012]:
             "pheno": [pheno000, pheno_fn, pheno01],
             "snps_reader": [snps_reader1, snps_reader5],
             "batch_size": [None, 7, 100_000],
         }
-        first_list = [{"use_reml": 0, "train_count": 1}]
+        first_list = [{"delta": 1}]
 
         def mapper2(index_total_option):
             index, total, option = index_total_option

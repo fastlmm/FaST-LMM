@@ -126,6 +126,7 @@ def single_snp_eigen(
         chrom_list,
         K0_eigen_by_chrom,
         covar,
+        pheno,
         batch_size,
         runner,
     )
@@ -524,11 +525,13 @@ def _find_per_chrom_list(
     chrom_list,
     K0_eigen_by_chrom,
     covar,
+    pheno,
     batch_size,
     runner,
 ):
     #!!!cmk0 need comment
     covar = covar.read(view_ok=True)
+    pheno = pheno.read(view_ok=True)
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
@@ -545,9 +548,11 @@ def _find_per_chrom_list(
         # =========================
         K0_eigen = K0_eigen_by_chrom[chrom]
         # !!!cmk0 should be rotate covar and all the phenos in one pass of K0_eigen?
+        #!!!cmk 0 covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno],batch_rows=batch_size)
         covar_r = K0_eigen.rotate(covar,batch_rows=batch_size)
+        pheno_r = K0_eigen.rotate(pheno,batch_rows=batch_size)
 
-        return {"chrom": int(chrom), "covar_r": covar_r}
+        return {"chrom": int(chrom), "covar_r": covar_r, "pheno_r": pheno_r}
 
     return map_reduce(
         chrom_list,
@@ -579,6 +584,7 @@ def _find_per_pheno_per_chrom_list(
     def mapper_find_per_pheno_list(per_chrom):
         chrom = per_chrom["chrom"]
         covar_r = per_chrom["covar_r"]
+        pheno_r = per_chrom["pheno_r"]
 
         # =========================
         # Read K0_eigen for this chrom into memory.
@@ -617,15 +623,19 @@ def _find_per_pheno_per_chrom_list(
         # for each pheno (in parallel):
         def mapper_search(pheno_index):
             per_pheno = types.SimpleNamespace()
-            #!!!cmk0 at the very least rotate all phenos at once. May want to do them with covar
+            #!!!cmk0 pheno_r_i = pheno_r[pheno_index]
             per_pheno.pheno_r = K0_eigen.rotate(
                 pheno[:, pheno_index].read(view_ok=True), batch_rows=batch_size
             )
+            pheno_r_i=per_pheno.pheno_r #!!!cmk0
+
+
+            #!!!cmk0 at the very least rotate all phenos at once. May want to do them with covar
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
                 logdet_covarTcovar,
                 covar_r,
-                per_pheno.pheno_r,
+                pheno_r_i,
                 use_reml=find_delta_via_reml,
                 log_delta=log_delta,
             )
@@ -633,10 +643,10 @@ def _find_per_pheno_per_chrom_list(
                 covar_r, per_pheno.K0_kdi, covar_r
             )
             per_pheno.phenoKpheno, _ = AKB.from_rotations(
-                per_pheno.pheno_r, per_pheno.K0_kdi, per_pheno.pheno_r
+                pheno_r_i, per_pheno.K0_kdi, pheno_r_i
             )
             covarKpheno, _ = AKB.from_rotations(
-                covar_r, per_pheno.K0_kdi, per_pheno.pheno_r, aK=per_pheno.covarK
+                covar_r, per_pheno.K0_kdi, pheno_r_i, aK=per_pheno.covarK
             )
 
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
@@ -657,7 +667,7 @@ def _find_per_pheno_per_chrom_list(
             per_pheno.XKX[:cc, :cc] = covarKcovar  # upper left
 
             per_pheno.XKpheno = AKB.empty(
-                x_sid, per_pheno.pheno_r.col, kdi=per_pheno.K0_kdi
+                x_sid, pheno_r_i.col, kdi=per_pheno.K0_kdi
             )
             per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
 
@@ -718,6 +728,7 @@ def _test_in_batches(
         # !!!cmk0 need random access per chrom and pheno
         chrom = per_chrom["chrom"]
         covar_r = per_chrom["covar_r"]
+        pheno_r = per_chrom["pheno_r"]
         pheno_count = len(per_pheno_list)
 
         #!!!cmk0 add comments
@@ -752,13 +763,13 @@ def _test_in_batches(
             # ==================================
             result_list = []
             for pheno_index, per_pheno in enumerate(per_pheno_list):
-
-                # !!!cmk0 doesn't make sence to cache covarK and pheno_r, but not covar_r
+                #!!!cmk0 pheno_r_i = pheno_r[pheno_index]
+                pheno_r_i = per_pheno.pheno_r
                 covarKalt_batch, _ = AKB.from_rotations(
                     covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
                 )
                 alt_batchKpheno, alt_batchK = AKB.from_rotations(
-                    alt_batch_r, per_pheno.K0_kdi, per_pheno.pheno_r
+                    alt_batch_r, per_pheno.K0_kdi, pheno_r_i
                 )
 
                 # ==================================
@@ -817,7 +828,7 @@ def _test_in_batches(
                             if variance_beta is not None
                             else None,
                             # !!!cmk right name and place?
-                            "Pheno": per_pheno.pheno_r.col[0],
+                            "Pheno": pheno_r_i.col[0],
                         }
                     )
 
