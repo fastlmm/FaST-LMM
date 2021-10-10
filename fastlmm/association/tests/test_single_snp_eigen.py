@@ -91,9 +91,9 @@ class TestSingleSnpEigen(unittest.TestCase):
 
 
         delta_default = 1.0
-        if False:
+        if True:
             test_runner = None # LocalMultiProc(6, just_one_process=True)
-            runner = None  # LocalMultiProc(6, just_one_process=True)
+            runner = LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
             extra_lambda = lambda case_number: 0
         else:

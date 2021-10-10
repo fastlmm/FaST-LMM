@@ -572,24 +572,19 @@ def _find_per_chrom_list(
     cache_folder,
     runner,
 ):
-
-    is_complete = False
-    if cache_folder is not None:
-        cache_folder1 = cache_folder / "per_chrom_list"
-        is_complete = (cache_folder1 / "is_complete.txt").exists()
-        cache_folder1.mkdir(exist_ok=True)
-
-    if is_complete:
-        covar = None
-        pheno = None
-    else:
-        # =========================
-        # Read covar and pheno into memory
-        # so that we can rotate them by each
-        # chromosome's eigen.
-        #!!!cmk0 don't want to read these if cache is available
+    # =========================
+    # Unless the cache is complete,
+    # read covar and pheno into memory
+    # so that we can rotate them by each
+    # chromosome's eigen.
+    # =========================
+    cache_folder1 = create_cache_subfolder(cache_folder, "per_chrom_list")
+    if not cache_is_complete(cache_folder1):
         covar = covar.read(view_ok=True)
         pheno = pheno.read(view_ok=True)
+    else:
+        covar = None
+        pheno = None
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
@@ -992,3 +987,19 @@ def _test_in_batches(
     )
 
     return dataframe
+
+def create_cache_subfolder(cache_folder, subfolder_name):
+    if cache_folder is None:
+        return None
+    else:
+        cache_subfolder = cache_folder / subfolder_name
+        cache_subfolder.mkdir(exist_ok=True)
+        return cache_subfolder
+
+
+def cache_is_complete(cache_subfolder):
+    if cache_subfolder is None:
+        return False
+
+    return (cache_subfolder/"is_complete.txt").exists()
+
