@@ -694,9 +694,9 @@ def _find_per_pheno_per_chrom_list(
         def mapper_search(pheno_index):
             cache_folder3 = create_cache_subfolder(cache_folder2, f"pheno{pheno_index}")
             if cache_is_complete(cache_folder3):
-                return load(str(cache_folder3 / "per_pheno.pickle"))
+                return PerPhenoReader.write(cache_folder3 / "per_pheno.pickle")
 
-            per_pheno = types.SimpleNamespace()
+            per_pheno = PerPhenoData()
 
             pheno_r_i = pheno_r[pheno_index]
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
@@ -740,7 +740,9 @@ def _find_per_pheno_per_chrom_list(
                 if cache_folder3.exists():
                     shutil.rmtree(cache_folder3)
                 cache_folder3.mkdir()
-                save(str(cache_folder3 / "per_pheno.pickle"), per_pheno)
+                per_pheno = PerPhenoReader.write(
+                    cache_folder3 / "per_pheno.pickle", per_pheno
+                )
                 mark_cache_complete(cache_folder3)
 
             return per_pheno
@@ -839,13 +841,21 @@ def _test_in_batches(
             # For each phenotype
             # ==================================
             result_list = []
-            for pheno_index, per_pheno in enumerate(per_pheno_list):
+            for pheno_index, per_pheno_reader in enumerate(per_pheno_list):
                 pheno_r_i = pheno_r[pheno_index]
+
+                per_pheno_data = (
+                    per_pheno_reader.read()
+                )  #!!!cmk0 rename to per_pheno_reader and per_pheno_data
+
                 covarKalt_batch, _ = AKB.from_rotations(
-                    covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
+                    covar_r,
+                    per_pheno_data.K0_kdi,
+                    alt_batch_r,
+                    aK=per_pheno_data.covarK,
                 )
                 alt_batchKpheno, alt_batchK = AKB.from_rotations(
-                    alt_batch_r, per_pheno.K0_kdi, pheno_r_i
+                    alt_batch_r, per_pheno_data.K0_kdi, pheno_r_i
                 )
 
                 # ==================================
@@ -861,16 +871,20 @@ def _test_in_batches(
                     # with the alt value.
                     # ==================================
                     altKalt, _ = AKB.from_rotations(
-                        alt_r, per_pheno.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                        alt_r, per_pheno_data.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
                     )
 
-                    per_pheno.XKX[:cc, cc:] = covarKalt_batch[
+                    per_pheno_data.XKX[:cc, cc:] = covarKalt_batch[
                         :, i : i + 1
                     ]  # upper right
-                    per_pheno.XKX[cc:, :cc] = per_pheno.XKX[:cc, cc:].T  # lower left
-                    per_pheno.XKX[cc:, cc:] = altKalt[:, :]  # lower right
+                    per_pheno_data.XKX[cc:, :cc] = per_pheno_data.XKX[
+                        :cc, cc:
+                    ].T  # lower left
+                    per_pheno_data.XKX[cc:, cc:] = altKalt[:, :]  # lower right
 
-                    per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
+                    per_pheno_data.XKpheno[cc:, :] = alt_batchKpheno[
+                        i : i + 1, :
+                    ]  # lower
 
                     # Only need "logdet_xtx" for REML
                     if test_via_reml:
@@ -889,13 +903,13 @@ def _test_in_batches(
                     ll_alt, beta, variance_beta = _loglikelihood(
                         logdet_xtx,
                         K0_eigen.row_count,
-                        per_pheno.phenoKpheno,
-                        per_pheno.XKX,
-                        per_pheno.XKpheno,
+                        per_pheno_data.phenoKpheno,
+                        per_pheno_data.XKX,
+                        per_pheno_data.XKpheno,
                         use_reml=test_via_reml,
                     )
 
-                    test_statistic = ll_alt - per_pheno.ll_null
+                    test_statistic = ll_alt - per_pheno_data.ll_null
 
                     result_list.append(
                         {
@@ -906,6 +920,7 @@ def _test_in_batches(
                             else None,
                             # !!!cmk right name and place?
                             "Pheno": pheno_r_i.col[0],
+                            "Nullh2": per_pheno_data.K0_kdi.h2,
                         }
                     )
 
@@ -917,10 +932,6 @@ def _test_in_batches(
             df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_count)
             df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_count)
             df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_count)
-            df_per_batch["Nullh2"] = np.tile(
-                [per_pheno.K0_kdi.h2 for per_pheno in per_pheno_list],
-                alt_batch.sid_count,
-            )
             # !!!cmk in lmmcov, but not lmm
             # df_per_batch['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
             # !!!cmk Feature not supported. could add "0"
@@ -982,3 +993,25 @@ def cache_is_complete(cache_subfolder):
 def mark_cache_complete(cache_folder):
     if cache_folder is not None:
         (cache_folder / "complete.txt").touch()  #!!!cmk const
+
+
+class PerPhenoData:
+    def __init__(self):
+        pass
+
+    def read(self):
+        return self
+
+
+class PerPhenoReader:
+    def __init__(self, filename):
+        self.filename = Path(filename)
+
+    def read(self):
+        return load(self.filename)
+
+    @staticmethod
+    def write(filename, per_pheno_data):
+        filename = str(filename)
+        save(filename, per_pheno_data)
+        return PerPhenoReader(filename)
