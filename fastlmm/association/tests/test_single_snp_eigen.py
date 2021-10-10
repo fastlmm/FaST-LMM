@@ -80,14 +80,24 @@ class TestSingleSnpEigen(unittest.TestCase):
             example_file("fastlmm/feature_selection/examples/toydata.cov")
         )
 
+        date_str = str(datetime.datetime.now())[0:16]
+        i = 0
+        while True:
+            cache_file0 = Path(r"m:/deldir/eigentest") / f"{date_str}.{i}".replace(":", "-")
+            if not cache_file0.exists():
+                break
+            i += 1
+        cache_file0.mkdir(parents=True)
+
+
         delta_default = 1.0
-        if True:
-            runner2 = LocalMultiProc(6, just_one_process=True)
+        if False:
+            test_runner = None # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
             extra_lambda = lambda case_number: 0
         else:
-            runner2 = LocalMultiProc(6, just_one_process=False)
+            test_runner = LocalMultiProc(6, just_one_process=False)
             runner = None
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
@@ -99,7 +109,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "pheno": [pheno000, pheno_fn, pheno01],
             "snps_reader": [snps_reader1, snps_reader5],
             "batch_size": [None, 7, 100_000],
-            "cache_file": [None, Path(r"m:/deldir/eigentest")],
+            "cache_file": [None, cache_file0],
         }
         first_list = [{"cache_file": 1}]
 
@@ -125,14 +135,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 cache_file = option["cache_file"]
 
                 if cache_file is not None:
-                    cache_file.mkdir(parents=True, exist_ok=True)
-                    date_str = str(datetime.datetime.now())[0:16]
-                    i = 0
-                    while True:
-                        cache_file2 = cache_file / f"{date_str}.{i}".replace(":", "-")
-                        if not cache_file2.exists():
-                            break
-                        i += 1
+                    cache_file2 = cache_file / str(index)
                 else:
                     cache_file2 = None
 
@@ -228,7 +231,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             ),
             mapper=mapper2,
             reducer=reducer2,
-            runner=runner2,
+            runner=test_runner,
         )
         assert is_ok
 
