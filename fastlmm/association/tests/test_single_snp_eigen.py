@@ -1,8 +1,10 @@
 import logging
+import datetime
 
 #!!!cmk kludge replace dot with @
 logging.basicConfig(level=logging.DEBUG)  # cmk
 import unittest
+from pathlib import Path
 import os.path
 import numpy as np
 
@@ -88,7 +90,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             runner2 = LocalMultiProc(6, just_one_process=False)
             runner = None
             exception_to_catch = Exception
-            extra_lambda = lambda case_number: case_number **.5
+            extra_lambda = lambda case_number: case_number ** 0.5
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],
@@ -97,9 +99,11 @@ class TestSingleSnpEigen(unittest.TestCase):
             "pheno": [pheno000, pheno_fn, pheno01],
             "snps_reader": [snps_reader1, snps_reader5],
             "batch_size": [None, 7, 100_000],
+            "cache_file": [None, Path(r"m:/deldir/eigentest")],
         }
-        first_list = [{"delta": 1}]
+        first_list = [{"cache_file": 1}]
 
+        #!!!cmk0 test READING from cache
         def mapper2(index_total_option):
             index, total, option = index_total_option
             print(f"============{index} of {total}==================")
@@ -118,6 +122,19 @@ class TestSingleSnpEigen(unittest.TestCase):
                 pheno = option["pheno"]
                 snps_reader = option["snps_reader"]
                 batch_size = option["batch_size"]
+                cache_file = option["cache_file"]
+
+                if cache_file is not None:
+                    cache_file.mkdir(parents=True, exist_ok=True)
+                    date_str = str(datetime.datetime.now())[0:16]
+                    i = 0
+                    while True:
+                        cache_file2 = cache_file / f"{date_str}.{i}".replace(":", "-")
+                        if not cache_file2.exists():
+                            break
+                        i += 1
+                else:
+                    cache_file2 = None
 
                 # !!!cmk why not diag standardize?
                 # The [:,:] stops it from being an in-memory EigenData
@@ -142,6 +159,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                     test_via_reml=use_reml,
                     count_A1=False,
                     batch_size=batch_size,
+                    cache_folder=cache_file2,
                     runner=runner,
                 )
 

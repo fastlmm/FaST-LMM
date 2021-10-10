@@ -9,7 +9,7 @@ import scipy.stats as stats
 from einops import rearrange
 import pysnptools.util as pstutil
 from pysnptools.standardizer import Unit
-from pysnptools.snpreader import SnpData
+from pysnptools.snpreader import SnpData, SnpNpz
 from pysnptools.pstreader import PstData
 from pysnptools.snpreader import _MergeSIDs
 from pysnptools.eigenreader import EigenData
@@ -34,7 +34,7 @@ def single_snp_eigen(
     leave_out_one_chrom=True,
     output_file_name=None,
     log_delta=None,
-    cache_folder = None,
+    cache_folder=None,
     # !!!cmk cache_file=None, GB_goal=None, interact_with_snp=None,
     # !!!cmk pvalue_threshold=None,
     # !!!cmk random_threshold=None,
@@ -56,7 +56,6 @@ def single_snp_eigen(
     if cache_folder is not None:
         cache_folder = Path(cache_folder)
         cache_folder.mkdir()
-
 
     # =========================
     # Figure out the data format for every input
@@ -568,61 +567,68 @@ def _find_per_chrom_list(
         if cache_folder is not None:
             cache_folder2 = cache_folder1 / str(chrom)
             if cache_folder2.exists():
-                covar_r_rotated = SnpNpz(cache_folder2/"covar_r_rotated.npz")
-                covar_r_double_path = cache_folder2/"covar_r_double.npz"
+                covar_r_rotated = SnpNpz(cache_folder2 / "covar_r_rotated.npz")
+                covar_r_double_path = cache_folder2 / "covar_r_double.npz"
                 if covar_r_double_path.exists():
                     covar_r_double = SnpNpz(covar_r_double_path)
                 else:
                     covar_r_double = None
-                pheno_r_rotated = SnpNpz(cache_folder2/"pheno_r_rotated.npz")
-                pheno_r_double_path = cache_folder2/"pheno_r_double.npz"
+                pheno_r_rotated = SnpNpz(cache_folder2 / "pheno_r_rotated.npz")
+                pheno_r_double_path = cache_folder2 / "pheno_r_double.npz"
                 if pheno_r_double_path.exists():
                     pheno_r_double = SnpNpz(pheno_r_double_path)
                 else:
                     pheno_r_double = None
-                return {"chrom": int(chrom),
-                              "covar_r_rotated":covar_r_rotated,
-                              "covar_r_double":covar_r_double,
-                              "pheno_r_rotated":pheno_r_rotated,
-                              "pheno_r_double":pheno_r_double,
-                             }
+                return {
+                    "chrom": int(chrom),
+                    "covar_r_rotated": covar_r_rotated,
+                    "covar_r_double": covar_r_double,
+                    "pheno_r_rotated": pheno_r_rotated,
+                    "pheno_r_double": pheno_r_double,
+                }
 
         K0_eigen = K0_eigen_by_chrom[chrom]
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
         if cache_folder is None:
-                return {"chrom": int(chrom),
-                              "covar_r_rotated":covar_r.rotated,
-                              "covar_r_double":covar_r.double,
-                              "pheno_r_rotated":pheno_r.rotated,
-                              "pheno_r_double":pheno_r.double,
-                             }
+            return {
+                "chrom": int(chrom),
+                "covar_r_rotated": covar_r.rotated,
+                "covar_r_double": covar_r.double,
+                "pheno_r_rotated": pheno_r.rotated,
+                "pheno_r_double": pheno_r.double,
+            }
 
         cache_folder2temp = cache_folder1 / f"{chrom}.temp"
         if cache_folder2temp.exists():
             shutil.rmtree(cache_folder2temp)
         cache_folder2temp.mkdir()
-        covar_r_rotated = SnpNpz.write(cache_folder2/"covar_r_rotated.npz", covar_r.rotated)
-        covar_r_double_path = cache_folder2/"covar_r_double.npz"
-        if covar_r.double_path is not None:
-            covar_r_double = SnpNpz.write(covar_r_double_path, covar_r.double_path)
+        covar_r_rotated = SnpNpz.write(
+            str(cache_folder2temp / "covar_r_rotated.npz"), covar_r.rotated
+        )
+        covar_r_double_path = cache_folder2temp / "covar_r_double.npz"
+        if covar_r.double is not None:
+            covar_r_double = SnpNpz.write(str(covar_r_double_path), covar_r.double)
         else:
             covar_r_double = None
-        pheno_r_rotated = SnpNpz.write(cache_folder2/"pheno_r_rotated.npz", pheno_r.rotated)
-        pheno_r_double_path = cache_folder2/"pheno_r_double.npz"
-        if pheno_r.double_path is not None:
-            pheno_r_double = SnpNpz.write(pheno_r_double_path, pheno_r.double_path)
+        pheno_r_rotated = SnpNpz.write(
+            str(cache_folder2temp / "pheno_r_rotated.npz"), pheno_r.rotated
+        )
+        pheno_r_double_path = cache_folder2temp / "pheno_r_double.npz"
+        if pheno_r.double is not None:
+            pheno_r_double = SnpNpz.write(str(pheno_r_double_path), pheno_r.double)
         else:
             pheno_r_double = None
+        cache_folder2temp.rename(cache_folder2)
 
-
-        return {"chrom": int(chrom),
-                "covar_r_rotated":covar_r_rotated,
-                "covar_r_double":covar_r_double,
-                "pheno_r_rotated":pheno_r_rotated,
-                "pheno_r_double":pheno_r_double,
-                }
-
+        #!!!cmk0 we don't use the cache because it got renamed
+        return {
+            "chrom": int(chrom),
+            "covar_r_rotated": covar_r.rotated,
+            "covar_r_double": covar_r.double,
+            "pheno_r_rotated": pheno_r.rotated,
+            "pheno_r_double": pheno_r.double,
+        }
 
     return map_reduce(
         chrom_list,
@@ -654,14 +660,18 @@ def _find_per_pheno_per_chrom_list(
     def mapper_find_per_pheno_list(per_chrom):
         chrom = per_chrom["chrom"]
         # !!!cmk do view_ok's also need order="A"?
-        covar_r = Rotation(per_chrom["covar_r_rotated"].read(view_ok=True),
-                          double=per_chrom["covar_r_double"].read(view_ok=True)
-                          if per_chrom["covar_r_double"] is not None else None
-                          )
-        pheno_r = Rotation(per_chrom["pheno_r_rotated"].read(view_ok=True),
-                          double=per_chrom["pheno_r_double"].read(view_ok=True)
-                          if per_chrom["pheno_r_double"] is not None else None
-                          )
+        covar_r = Rotation(
+            per_chrom["covar_r_rotated"].read(view_ok=True),
+            double=per_chrom["covar_r_double"].read(view_ok=True)
+            if per_chrom["covar_r_double"] is not None
+            else None,
+        )
+        pheno_r = Rotation(
+            per_chrom["pheno_r_rotated"].read(view_ok=True),
+            double=per_chrom["pheno_r_double"].read(view_ok=True)
+            if per_chrom["pheno_r_double"] is not None
+            else None,
+        )
 
         # =========================
         # Read K0_eigen for this chrom into memory.
@@ -801,14 +811,18 @@ def _test_in_batches(
         per_pheno_list = per_pheno_per_chrom_list[chrom_index]
         chrom = per_chrom["chrom"]
         #!!!cmk similar code elsewhere
-        covar_r = Rotation(per_chrom["covar_r_rotated"].read(view_ok=True),
-                          double=per_chrom["covar_r_double"].read(view_ok=True)
-                          if per_chrom["covar_r_double"] is not None else None
-                          )
-        pheno_r = Rotation(per_chrom["pheno_r_rotated"].read(view_ok=True),
-                          double=per_chrom["pheno_r_double"].read(view_ok=True)
-                          if per_chrom["pheno_r_double"] is not None else None
-                          )
+        covar_r = Rotation(
+            per_chrom["covar_r_rotated"].read(view_ok=True),
+            double=per_chrom["covar_r_double"].read(view_ok=True)
+            if per_chrom["covar_r_double"] is not None
+            else None,
+        )
+        pheno_r = Rotation(
+            per_chrom["pheno_r_rotated"].read(view_ok=True),
+            double=per_chrom["pheno_r_double"].read(view_ok=True)
+            if per_chrom["pheno_r_double"] is not None
+            else None,
+        )
         pheno_count = len(per_pheno_list)
 
         # ==============================
