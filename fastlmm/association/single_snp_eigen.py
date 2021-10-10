@@ -35,6 +35,7 @@ def single_snp_eigen(
     output_file_name=None,
     log_delta=None,
     cache_folder=None,
+    stop_early = None,
     # !!!cmk cache_file=None, GB_goal=None, interact_with_snp=None,
     # !!!cmk pvalue_threshold=None,
     # !!!cmk random_threshold=None,
@@ -55,7 +56,7 @@ def single_snp_eigen(
 
     if cache_folder is not None:
         cache_folder = Path(cache_folder)
-        cache_folder.mkdir()
+        cache_folder.mkdir(exist_ok=True)
 
     # =========================
     # Figure out the data format for every input
@@ -100,6 +101,7 @@ def single_snp_eigen(
         chrom: K0_eigen for chrom, K0_eigen in zip(chrom_list_K0_eigen, K0_eigen_list)
     }
 
+
     # !!!cmk assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False,
     #  'covar_by_chrom' must be None"
     # !!!cmk K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal,
@@ -107,6 +109,9 @@ def single_snp_eigen(
     # !!! cmk
     # if h2 is not None and not isinstance(h2, np.ndarray):
     #     h2 = np.repeat(h2, pheno.shape[1])
+
+    if stop_early==0:
+        return
 
     #!!!cmk1 cache this
     # ===============================
@@ -124,6 +129,9 @@ def single_snp_eigen(
         covarTcovar = None
         logdet_covarTcovar = None
 
+    if stop_early==1:
+        return
+
     #!!!cmk1 cache this
     # ===============================
     # In parallel, for each chrom,
@@ -138,6 +146,9 @@ def single_snp_eigen(
         cache_folder,
         runner,
     )
+
+    if stop_early==2:
+        return
 
     # ===============================
     # In parallel, for each chrom & each pheno
@@ -154,6 +165,9 @@ def single_snp_eigen(
         batch_size,
         runner,
     )
+
+    if stop_early==3:
+        return
 
     # ==================================
     # Test SNPs in batches
@@ -548,7 +562,7 @@ def _find_per_chrom_list(
 
     if cache_folder is not None:
         cache_folder1 = cache_folder / "per_chrom_list"
-        cache_folder1.mkdir()
+        cache_folder1.mkdir(exist_ok=True)
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):

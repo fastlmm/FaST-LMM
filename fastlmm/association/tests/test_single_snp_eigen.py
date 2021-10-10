@@ -110,8 +110,9 @@ class TestSingleSnpEigen(unittest.TestCase):
             "snps_reader": [snps_reader1, snps_reader5],
             "batch_size": [None, 7, 100_000],
             "cache_file": [None, cache_file0],
+            "stop_early": [None, 2],
         }
-        first_list = [{"cache_file": 1}]
+        first_list = [{"cache_file": 1, "stop_early":1}]
 
         #!!!cmk0 test READING from cache
         def mapper2(index_total_option):
@@ -133,6 +134,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 snps_reader = option["snps_reader"]
                 batch_size = option["batch_size"]
                 cache_file = option["cache_file"]
+                stop_early = option["stop_early"]
 
                 if cache_file is not None:
                     cache_file2 = cache_file / str(index)
@@ -151,20 +153,27 @@ class TestSingleSnpEigen(unittest.TestCase):
                 K0_eigen_by_chrom = {
                     chrom: K0_eigen for chrom in set(test_snps.pos[:, 0])
                 }
-                frame = single_snp_eigen(
-                    test_snps=test_snps,
-                    pheno=pheno,
-                    K0_eigen_by_chrom=K0_eigen_by_chrom,
-                    covar=cov,
-                    output_file_name=None,
-                    log_delta=np.log(delta) if delta is not None else None,
-                    find_delta_via_reml=use_reml,
-                    test_via_reml=use_reml,
-                    count_A1=False,
-                    batch_size=batch_size,
-                    cache_folder=cache_file2,
-                    runner=runner,
-                )
+
+                while True:
+                    frame = single_snp_eigen(
+                        test_snps=test_snps,
+                        pheno=pheno,
+                        K0_eigen_by_chrom=K0_eigen_by_chrom,
+                        covar=cov,
+                        output_file_name=None,
+                        log_delta=np.log(delta) if delta is not None else None,
+                        find_delta_via_reml=use_reml,
+                        test_via_reml=use_reml,
+                        count_A1=False,
+                        batch_size=batch_size,
+                        cache_folder=cache_file2,
+                        stop_early = stop_early,
+                        runner=runner,
+                    )
+
+                    if stop_early is None:
+                        break
+                    stop_early = None
 
                 G = snps_reader.read().standardize().val
                 if cov is not None:
