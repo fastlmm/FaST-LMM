@@ -79,16 +79,16 @@ class TestSingleSnpEigen(unittest.TestCase):
         )
 
         delta_default = 1.0
-        if False:
+        if True:
             runner2 = LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
-            extra_lambda = lambda case_number : 0
+            extra_lambda = lambda case_number: 0
         else:
             runner2 = LocalMultiProc(6, just_one_process=False)
             runner = None
             exception_to_catch = Exception
-            extra_lambda = lambda case_number : case_number # **.5
+            extra_lambda = lambda case_number: case_number **.5
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],

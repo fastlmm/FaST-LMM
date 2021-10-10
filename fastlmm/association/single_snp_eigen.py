@@ -1,5 +1,6 @@
 import logging
 import pandas as pd
+from pathlib import Path
 import os
 from pathlib import Path
 import types
@@ -24,6 +25,7 @@ from fastlmm.util.mingrid import minimize1D
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
 #  might be a covar mix up.(but only if a SnpKernel
+# cmk0 be good at doing one K0_eigen, too
 def single_snp_eigen(
     test_snps,
     pheno,
@@ -32,6 +34,7 @@ def single_snp_eigen(
     leave_out_one_chrom=True,
     output_file_name=None,
     log_delta=None,
+    cache_folder = None,
     # !!!cmk cache_file=None, GB_goal=None, interact_with_snp=None,
     # !!!cmk pvalue_threshold=None,
     # !!!cmk random_threshold=None,
@@ -49,6 +52,11 @@ def single_snp_eigen(
     # !!!LATER raise error if covar has NaN
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent, exist_ok=True)
+
+    if cache_folder is not None:
+        cache_folder = Path(cache_folder)
+        cache_folder.mkdir()
+
 
     # =========================
     # Figure out the data format for every input
@@ -119,7 +127,7 @@ def single_snp_eigen(
 
     #!!!cmk1 cache this
     # ===============================
-    # In parallel, for each chrom
+    # In parallel, for each chrom,
     # rotate the covariates
     # ===============================
     per_chrom_list = _find_per_chrom_list(
@@ -128,6 +136,7 @@ def single_snp_eigen(
         covar,
         pheno,
         batch_size,
+        cache_folder,
         runner,
     )
 
@@ -527,6 +536,7 @@ def _find_per_chrom_list(
     covar,
     pheno,
     batch_size,
+    cache_folder,
     runner,
 ):
 
@@ -537,9 +547,12 @@ def _find_per_chrom_list(
     covar = covar.read(view_ok=True)
     pheno = pheno.read(view_ok=True)
 
+    if cache_folder is not None:
+        cache_folder1 = cache_folder / "per_chrom_list"
+        cache_folder1.mkdir()
+
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
-
         # =========================
         # Find the K0_eigen for this chrom.
         # Next, read it in batches and
@@ -551,10 +564,65 @@ def _find_per_chrom_list(
         # [such that double = input-eigenvectors@rotated]
         # that captures information lost by the low rank.
         # =========================
+
+        if cache_folder is not None:
+            cache_folder2 = cache_folder1 / str(chrom)
+            if cache_folder2.exists():
+                covar_r_rotated = SnpNpz(cache_folder2/"covar_r_rotated.npz")
+                covar_r_double_path = cache_folder2/"covar_r_double.npz"
+                if covar_r_double_path.exists():
+                    covar_r_double = SnpNpz(covar_r_double_path)
+                else:
+                    covar_r_double = None
+                pheno_r_rotated = SnpNpz(cache_folder2/"pheno_r_rotated.npz")
+                pheno_r_double_path = cache_folder2/"pheno_r_double.npz"
+                if pheno_r_double_path.exists():
+                    pheno_r_double = SnpNpz(pheno_r_double_path)
+                else:
+                    pheno_r_double = None
+                return {"chrom": int(chrom),
+                              "covar_r_rotated":covar_r_rotated,
+                              "covar_r_double":covar_r_double,
+                              "pheno_r_rotated":pheno_r_rotated,
+                              "pheno_r_double":pheno_r_double,
+                             }
+
         K0_eigen = K0_eigen_by_chrom[chrom]
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
-        return {"chrom": int(chrom), "covar_r": covar_r, "pheno_r": pheno_r}
+        if cache_folder is None:
+                return {"chrom": int(chrom),
+                              "covar_r_rotated":covar_r.rotated,
+                              "covar_r_double":covar_r.double,
+                              "pheno_r_rotated":pheno_r.rotated,
+                              "pheno_r_double":pheno_r.double,
+                             }
+
+        cache_folder2temp = cache_folder1 / f"{chrom}.temp"
+        if cache_folder2temp.exists():
+            shutil.rmtree(cache_folder2temp)
+        cache_folder2temp.mkdir()
+        covar_r_rotated = SnpNpz.write(cache_folder2/"covar_r_rotated.npz", covar_r.rotated)
+        covar_r_double_path = cache_folder2/"covar_r_double.npz"
+        if covar_r.double_path is not None:
+            covar_r_double = SnpNpz.write(covar_r_double_path, covar_r.double_path)
+        else:
+            covar_r_double = None
+        pheno_r_rotated = SnpNpz.write(cache_folder2/"pheno_r_rotated.npz", pheno_r.rotated)
+        pheno_r_double_path = cache_folder2/"pheno_r_double.npz"
+        if pheno_r.double_path is not None:
+            pheno_r_double = SnpNpz.write(pheno_r_double_path, pheno_r.double_path)
+        else:
+            pheno_r_double = None
+
+
+        return {"chrom": int(chrom),
+                "covar_r_rotated":covar_r_rotated,
+                "covar_r_double":covar_r_double,
+                "pheno_r_rotated":pheno_r_rotated,
+                "pheno_r_double":pheno_r_double,
+                }
+
 
     return map_reduce(
         chrom_list,
@@ -585,8 +653,15 @@ def _find_per_pheno_per_chrom_list(
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(per_chrom):
         chrom = per_chrom["chrom"]
-        covar_r = per_chrom["covar_r"]
-        pheno_r = per_chrom["pheno_r"]
+        # !!!cmk do view_ok's also need order="A"?
+        covar_r = Rotation(per_chrom["covar_r_rotated"].read(view_ok=True),
+                          double=per_chrom["covar_r_double"].read(view_ok=True)
+                          if per_chrom["covar_r_double"] is not None else None
+                          )
+        pheno_r = Rotation(per_chrom["pheno_r_rotated"].read(view_ok=True),
+                          double=per_chrom["pheno_r_double"].read(view_ok=True)
+                          if per_chrom["pheno_r_double"] is not None else None
+                          )
 
         # =========================
         # Read K0_eigen for this chrom into memory.
@@ -725,8 +800,15 @@ def _test_in_batches(
         per_chrom = per_chrom_list[chrom_index]
         per_pheno_list = per_pheno_per_chrom_list[chrom_index]
         chrom = per_chrom["chrom"]
-        covar_r = per_chrom["covar_r"]
-        pheno_r = per_chrom["pheno_r"]
+        #!!!cmk similar code elsewhere
+        covar_r = Rotation(per_chrom["covar_r_rotated"].read(view_ok=True),
+                          double=per_chrom["covar_r_double"].read(view_ok=True)
+                          if per_chrom["covar_r_double"] is not None else None
+                          )
+        pheno_r = Rotation(per_chrom["pheno_r_rotated"].read(view_ok=True),
+                          double=per_chrom["pheno_r_double"].read(view_ok=True)
+                          if per_chrom["pheno_r_double"] is not None else None
+                          )
         pheno_count = len(per_pheno_list)
 
         # ==============================
@@ -796,7 +878,7 @@ def _test_in_batches(
                     per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
 
                     # Only need "logdet_xtx" for REML
-                    if test_via_reml:  
+                    if test_via_reml:
                         alt_val = alt_batch.val[:, i : i + 1]
                         XTX.val[cc:, :cc] = alt_val.T @ covar.val
                         XTX.val[:cc, cc:] = XTX.val[cc:, :cc].T
