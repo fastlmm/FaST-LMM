@@ -1,4 +1,5 @@
 import logging
+import shutil
 import pandas as pd
 from pathlib import Path
 import os
@@ -21,6 +22,7 @@ from fastlmm.inference.fastlmm_predictor import (
     _kernel_fixup,
 )
 from fastlmm.util.mingrid import minimize1D
+
 
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
@@ -54,9 +56,7 @@ def single_snp_eigen(
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent, exist_ok=True)
 
-    if cache_folder is not None:
-        cache_folder = Path(cache_folder)
-        cache_folder.mkdir(exist_ok=True)
+    cache_folder = create_cache_folder(cache_folder)
 
     # =========================
     # Figure out the data format for every input
@@ -600,10 +600,9 @@ def _find_per_chrom_list(
         # that captures information lost by the low rank.
         # =========================
 
-        if cache_folder is not None:
-            cache_folder2 = cache_folder1 / str(chrom)
-            if cache_folder2.exists():
-                return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
+        cache_folder2 = create_cache_subfolder(cache_folder1, str(chrom))
+        if cache_is_complete(cache_folder2):
+            return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
 
         K0_eigen = K0_eigen_by_chrom[chrom]
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
@@ -617,27 +616,26 @@ def _find_per_chrom_list(
                 "pheno_r_double": pheno_r.double,
             }
 
-        cache_folder2temp = cache_folder1 / f"{chrom}.temp"
-        if cache_folder2temp.exists():
-            shutil.rmtree(cache_folder2temp)
-        cache_folder2temp.mkdir()
+        if cache_folder2.exists():
+            shutil.rmtree(cache_folder2)
+        cache_folder2.mkdir()
         covar_r_rotated = SnpNpz.write(
-            str(cache_folder2temp / "covar_r_rotated.npz"), covar_r.rotated
+            str(cache_folder2 / "covar_r_rotated.npz"), covar_r.rotated
         )
-        covar_r_double_path = cache_folder2temp / "covar_r_double.npz"
+        covar_r_double_path = cache_folder2 / "covar_r_double.npz"
         if covar_r.double is not None:
             covar_r_double = SnpNpz.write(str(covar_r_double_path), covar_r.double)
         else:
             covar_r_double = None
         pheno_r_rotated = SnpNpz.write(
-            str(cache_folder2temp / "pheno_r_rotated.npz"), pheno_r.rotated
+            str(cache_folder2 / "pheno_r_rotated.npz"), pheno_r.rotated
         )
-        pheno_r_double_path = cache_folder2temp / "pheno_r_double.npz"
+        pheno_r_double_path = cache_folder2 / "pheno_r_double.npz"
         if pheno_r.double is not None:
             pheno_r_double = SnpNpz.write(str(pheno_r_double_path), pheno_r.double)
         else:
             pheno_r_double = None
-        cache_folder2temp.rename(cache_folder2)
+        mark_cache_complete(cache_folder2)
 
         return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
 
@@ -647,8 +645,7 @@ def _find_per_chrom_list(
         runner=runner,
     )
 
-    if cache_folder is not None:
-        (cache_folder1 / "is_complete.txt").touch()
+    mark_cache_complete(cache_folder1)
 
     return per_chrom_list
 
@@ -988,6 +985,15 @@ def _test_in_batches(
 
     return dataframe
 
+def create_cache_folder(cache_folder):
+    if cache_folder is None:
+        return None
+    else:
+        cache_folder = Path(cache_folder)
+        cache_folder.mkdir(exist_ok=True)
+        return cache_folder
+
+
 def create_cache_subfolder(cache_folder, subfolder_name):
     if cache_folder is None:
         return None
@@ -996,10 +1002,14 @@ def create_cache_subfolder(cache_folder, subfolder_name):
         cache_subfolder.mkdir(exist_ok=True)
         return cache_subfolder
 
-
+#!!!cmk0 add versioning
 def cache_is_complete(cache_subfolder):
     if cache_subfolder is None:
         return False
+    return (cache_subfolder/"complete.txt").exists()
 
-    return (cache_subfolder/"is_complete.txt").exists()
+def mark_cache_complete(cache_folder):
+    if cache_folder is not None:
+        (cache_folder / "complete.txt").touch() #!!!cmk const
+
 
