@@ -529,7 +529,11 @@ def _find_per_chrom_list(
     batch_size,
     runner,
 ):
-    #!!!cmk0 need comment
+
+    # =========================
+    # Read covar and pheno into memory
+    # so that we can rotate them by each
+    # chromosome's eigen.
     covar = covar.read(view_ok=True)
     pheno = pheno.read(view_ok=True)
 
@@ -537,8 +541,9 @@ def _find_per_chrom_list(
     def mapper_find_per_pheno_list(chrom):
 
         # =========================
-        # Read K0_eigen for this chrom into memory.
-        # Next rotate covar.
+        # Find the K0_eigen for this chrom.
+        # Next, read it in batches and
+        # rotate covar and pheno.
         #
         # An "EigenReader" object includes both the vectors and values.
         # A Rotation object always includes both the main "rotated" array.
@@ -620,8 +625,8 @@ def _find_per_pheno_per_chrom_list(
         # for each pheno (in parallel):
         def mapper_search(pheno_index):
             per_pheno = types.SimpleNamespace()
-            pheno_r_i = pheno_r[pheno_index]
 
+            pheno_r_i = pheno_r[pheno_index]
             per_pheno.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
                 logdet_covarTcovar,
@@ -639,7 +644,6 @@ def _find_per_pheno_per_chrom_list(
             covarKpheno, _ = AKB.from_rotations(
                 covar_r, per_pheno.K0_kdi, pheno_r_i, aK=per_pheno.covarK
             )
-
             per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
                 logdet_covarTcovar,
                 K0_eigen.row_count,
@@ -691,8 +695,10 @@ def _test_in_batches(
     batch_size,
     runner,
 ):
-    #!!!cmk0 comment
-    covar = covar.read(view_ok=True)
+
+    if test_via_reml:  # Only need "X" for REML
+        covar = covar.read(view_ok=True)
+        #!!!cmk if we are already saving covar_r and pheno_r why not covar if needed?
 
     # ==================================
     # X is the covariates plus one test SNP called "alt"
@@ -711,28 +717,33 @@ def _test_in_batches(
 
     # for each chrom (in parallel):
     def df_per_chrom_mapper(chrom_index):
-        per_chrom = per_chrom_list[chrom_index]
-        per_pheno_list = per_pheno_per_chrom_list[chrom_index]
+        # ===========================
+        # Look up the pre-computed info for this chromosome.
+        # ===========================
         # !!!cmk0: per_pheno_per_chrom_list chrom x pheno x iid(sd, pheno_r) x covar (covarK)
         # !!!cmk0 need random access per chrom and pheno
+        per_chrom = per_chrom_list[chrom_index]
+        per_pheno_list = per_pheno_per_chrom_list[chrom_index]
         chrom = per_chrom["chrom"]
         covar_r = per_chrom["covar_r"]
         pheno_r = per_chrom["pheno_r"]
         pheno_count = len(per_pheno_list)
 
-        #!!!cmk0 add comments
-        # !!!cmk0 iid x eid
+        # ==============================
+        # Find the EigenReader for this chrom,
+        # but don't read, yet.
+        # ==============================
         K0_eigen = K0_eigen_by_chrom[chrom]
 
         # =========================
         # Create a testsnp reader for this chrom, but don't read yet.
         # =========================
-        #!!!cmk similar code elsewhere kludge
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
         batch_size_test_snps = (
             batch_size if batch_size is not None else test_snps_for_chrom.sid_count + 1
         )
 
+        # For each test_snp batch (in parallel) ...
         def mapper(sid_start):
             # ==================================
             # Read and standardize a batch of test SNPs. Then rotate.
@@ -753,7 +764,6 @@ def _test_in_batches(
             result_list = []
             for pheno_index, per_pheno in enumerate(per_pheno_list):
                 pheno_r_i = pheno_r[pheno_index]
-                #!!!cmk0pheno_r_i = per_pheno.pheno_r
                 covarKalt_batch, _ = AKB.from_rotations(
                     covar_r, per_pheno.K0_kdi, alt_batch_r, aK=per_pheno.covarK
                 )
@@ -785,7 +795,8 @@ def _test_in_batches(
 
                     per_pheno.XKpheno[cc:, :] = alt_batchKpheno[i : i + 1, :]  # lower
 
-                    if test_via_reml:  # Only need "X" for REML
+                    # Only need "logdet_xtx" for REML
+                    if test_via_reml:  
                         alt_val = alt_batch.val[:, i : i + 1]
                         XTX.val[cc:, :cc] = alt_val.T @ covar.val
                         XTX.val[:cc, cc:] = XTX.val[cc:, :cc].T

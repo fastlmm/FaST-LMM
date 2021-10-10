@@ -79,16 +79,16 @@ class TestSingleSnpEigen(unittest.TestCase):
         )
 
         delta_default = 1.0
-        if True:
+        if False:
             runner2 = LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
-            extra_fraction = 0
+            extra_lambda = lambda case_number : 0
         else:
             runner2 = LocalMultiProc(6, just_one_process=False)
             runner = None
             exception_to_catch = Exception
-            extra_fraction = 0.05  # 0.01
+            extra_lambda = lambda case_number : case_number # **.5
         matrix = {
             "use_reml": [True, False],
             "train_count": [750, 50],
@@ -204,7 +204,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 matrix_combo(
                     matrix,
                     seed=10234,
-                    extra_fraction=extra_fraction,
+                    extra_lambda=extra_lambda,
                     first_list=first_list,
                 )
             ),
@@ -1014,7 +1014,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 #            raise Exception("snps differ too much from file '{0}' at these snps {1}".format(name,bad))
 
 # !!!cmk find similar code. Move to utils, perhaps pysnptools
-def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
+def matrix_combo(option_matrix, seed, extra_lambda, first_list=[]):
     # https://stackoverflow.com/questions/38721847/how-to-generate-all-combination-from-values-in-dict-of-lists-in-python
     import itertools
 
@@ -1026,7 +1026,7 @@ def matrix_combo(option_matrix, seed, extra_fraction=1.0, first_list=[]):
     # !!!cmk don't yield same ones again (but does it really matter?)
     permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
     rng.shuffle(permutations_dicts)
-    count = int(np.ceil(len(permutations_dicts) * extra_fraction))
+    count = int(np.ceil(extra_lambda(len(permutations_dicts))))
 
     total = len(first_list) + max_values + count
     index = -1
