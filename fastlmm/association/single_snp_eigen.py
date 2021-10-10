@@ -14,7 +14,7 @@ from pysnptools.snpreader import SnpData, SnpNpz
 from pysnptools.pstreader import PstData
 from pysnptools.snpreader import _MergeSIDs
 from pysnptools.eigenreader import EigenData
-from pysnptools.eigenreader.eigenreader import Rotation
+from pysnptools.eigenreader.eigenreader import Rotation, RotationNpz
 from pysnptools.util.mapreduce1 import map_reduce
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
@@ -22,7 +22,6 @@ from fastlmm.inference.fastlmm_predictor import (
     _kernel_fixup,
 )
 from fastlmm.util.mingrid import minimize1D
-
 
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
@@ -37,7 +36,7 @@ def single_snp_eigen(
     output_file_name=None,
     log_delta=None,
     cache_folder=None,
-    stop_early = None,
+    stop_early=None,
     # !!!cmk cache_file=None, GB_goal=None, interact_with_snp=None,
     # !!!cmk pvalue_threshold=None,
     # !!!cmk random_threshold=None,
@@ -101,7 +100,6 @@ def single_snp_eigen(
         chrom: K0_eigen for chrom, K0_eigen in zip(chrom_list_K0_eigen, K0_eigen_list)
     }
 
-
     # !!!cmk assert covar_by_chrom is None, "When 'leave_out_one_chrom' is False,
     #  'covar_by_chrom' must be None"
     # !!!cmk K0, K1, block_size = _set_block_size(K0, K1, mixing, GB_goal,
@@ -110,7 +108,7 @@ def single_snp_eigen(
     # if h2 is not None and not isinstance(h2, np.ndarray):
     #     h2 = np.repeat(h2, pheno.shape[1])
 
-    if stop_early==0:
+    if stop_early == 0:
         return
 
     #!!!cmk1 cache this
@@ -129,7 +127,7 @@ def single_snp_eigen(
         covarTcovar = None
         logdet_covarTcovar = None
 
-    if stop_early==1:
+    if stop_early == 1:
         return
 
     #!!!cmk1 cache this
@@ -147,7 +145,7 @@ def single_snp_eigen(
         runner,
     )
 
-    if stop_early==2:
+    if stop_early == 2:
         return
 
     # ===============================
@@ -166,7 +164,7 @@ def single_snp_eigen(
         runner,
     )
 
-    if stop_early==3:
+    if stop_early == 3:
         return
 
     # ==================================
@@ -541,26 +539,14 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
 
+
 def _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2):
-        covar_r_rotated = SnpNpz(cache_folder2 / "covar_r_rotated.npz")
-        covar_r_double_path = cache_folder2 / "covar_r_double.npz"
-        if covar_r_double_path.exists():
-            covar_r_double = SnpNpz(covar_r_double_path)
-        else:
-            covar_r_double = None
-        pheno_r_rotated = SnpNpz(cache_folder2 / "pheno_r_rotated.npz")
-        pheno_r_double_path = cache_folder2 / "pheno_r_double.npz"
-        if pheno_r_double_path.exists():
-            pheno_r_double = SnpNpz(pheno_r_double_path)
-        else:
-            pheno_r_double = None
-        return {
-            "chrom": int(chrom),
-            "covar_r_rotated": covar_r_rotated,
-            "covar_r_double": covar_r_double,
-            "pheno_r_rotated": pheno_r_rotated,
-            "pheno_r_double": pheno_r_double,
-        }
+    return {
+        "chrom": int(chrom),
+        "covar_r": RotationNpz(cache_folder2 / "covar_r.{0}.npz"),
+        "pheno_r": RotationNpz(cache_folder2 / "pheno_r.{0}.npz"),
+    }
+
 
 #!!!cmk kludge - reorder inputs
 def _find_per_chrom_list(
@@ -607,37 +593,19 @@ def _find_per_chrom_list(
         K0_eigen = K0_eigen_by_chrom[chrom]
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
-        if cache_folder is None:
-            return {
-                "chrom": int(chrom),
-                "covar_r_rotated": covar_r.rotated,
-                "covar_r_double": covar_r.double,
-                "pheno_r_rotated": pheno_r.rotated,
-                "pheno_r_double": pheno_r.double,
-            }
+        if cache_folder is not None:
+            if cache_folder2.exists():
+                shutil.rmtree(cache_folder2)
+            cache_folder2.mkdir()
+            covar_r = RotationNpz.write(cache_folder2 / "covar_r.{0}.npz", covar_r)
+            pheno_r = RotationNpz.write(cache_folder2 / "pheno_r.{0}.npz", pheno_r)
+            mark_cache_complete(cache_folder2)
 
-        if cache_folder2.exists():
-            shutil.rmtree(cache_folder2)
-        cache_folder2.mkdir()
-        covar_r_rotated = SnpNpz.write(
-            str(cache_folder2 / "covar_r_rotated.npz"), covar_r.rotated
-        )
-        covar_r_double_path = cache_folder2 / "covar_r_double.npz"
-        if covar_r.double is not None:
-            covar_r_double = SnpNpz.write(str(covar_r_double_path), covar_r.double)
-        else:
-            covar_r_double = None
-        pheno_r_rotated = SnpNpz.write(
-            str(cache_folder2 / "pheno_r_rotated.npz"), pheno_r.rotated
-        )
-        pheno_r_double_path = cache_folder2 / "pheno_r_double.npz"
-        if pheno_r.double is not None:
-            pheno_r_double = SnpNpz.write(str(pheno_r_double_path), pheno_r.double)
-        else:
-            pheno_r_double = None
-        mark_cache_complete(cache_folder2)
-
-        return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
+        return {
+            "chrom": int(chrom),
+            "covar_r": covar_r,
+            "pheno_r": pheno_r,
+        }
 
     per_chrom_list = map_reduce(
         chrom_list,
@@ -673,18 +641,8 @@ def _find_per_pheno_per_chrom_list(
     def mapper_find_per_pheno_list(per_chrom):
         chrom = per_chrom["chrom"]
         # !!!cmk do view_ok's also need order="A"?
-        covar_r = Rotation(
-            per_chrom["covar_r_rotated"].read(view_ok=True),
-            double=per_chrom["covar_r_double"].read(view_ok=True)
-            if per_chrom["covar_r_double"] is not None
-            else None,
-        )
-        pheno_r = Rotation(
-            per_chrom["pheno_r_rotated"].read(view_ok=True),
-            double=per_chrom["pheno_r_double"].read(view_ok=True)
-            if per_chrom["pheno_r_double"] is not None
-            else None,
-        )
+        covar_r = per_chrom["covar_r"].read(view_ok=True)
+        pheno_r = per_chrom["pheno_r"].read(view_ok=True)
 
         # =========================
         # Read K0_eigen for this chrom into memory.
@@ -824,18 +782,8 @@ def _test_in_batches(
         per_pheno_list = per_pheno_per_chrom_list[chrom_index]
         chrom = per_chrom["chrom"]
         #!!!cmk similar code elsewhere
-        covar_r = Rotation(
-            per_chrom["covar_r_rotated"].read(view_ok=True),
-            double=per_chrom["covar_r_double"].read(view_ok=True)
-            if per_chrom["covar_r_double"] is not None
-            else None,
-        )
-        pheno_r = Rotation(
-            per_chrom["pheno_r_rotated"].read(view_ok=True),
-            double=per_chrom["pheno_r_double"].read(view_ok=True)
-            if per_chrom["pheno_r_double"] is not None
-            else None,
-        )
+        covar_r = per_chrom["covar_r"].read(view_ok=True)
+        pheno_r = per_chrom["pheno_r"].read(view_ok=True)
         pheno_count = len(per_pheno_list)
 
         # ==============================
@@ -985,6 +933,7 @@ def _test_in_batches(
 
     return dataframe
 
+
 def create_cache_folder(cache_folder):
     if cache_folder is None:
         return None
@@ -1002,14 +951,14 @@ def create_cache_subfolder(cache_folder, subfolder_name):
         cache_subfolder.mkdir(exist_ok=True)
         return cache_subfolder
 
+
 #!!!cmk0 add versioning
 def cache_is_complete(cache_subfolder):
     if cache_subfolder is None:
         return False
-    return (cache_subfolder/"complete.txt").exists()
+    return (cache_subfolder / "complete.txt").exists()
+
 
 def mark_cache_complete(cache_folder):
     if cache_folder is not None:
-        (cache_folder / "complete.txt").touch() #!!!cmk const
-
-
+        (cache_folder / "complete.txt").touch()  #!!!cmk const

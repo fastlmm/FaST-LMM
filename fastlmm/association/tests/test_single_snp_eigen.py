@@ -83,17 +83,18 @@ class TestSingleSnpEigen(unittest.TestCase):
         date_str = str(datetime.datetime.now())[0:16]
         i = 0
         while True:
-            cache_file0 = Path(r"m:/deldir/eigentest") / f"{date_str}.{i}".replace(":", "-")
+            cache_file0 = Path(r"m:/deldir/eigentest") / f"{date_str}.{i}".replace(
+                ":", "-"
+            )
             if not cache_file0.exists():
                 break
             i += 1
         cache_file0.mkdir(parents=True)
 
-
         delta_default = 1.0
-        if True:
-            test_runner = None # LocalMultiProc(6, just_one_process=True)
-            runner = LocalMultiProc(6, just_one_process=True)
+        if False:
+            test_runner = None  # LocalMultiProc(6, just_one_process=True)
+            runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
             extra_lambda = lambda case_number: 0
         else:
@@ -112,7 +113,19 @@ class TestSingleSnpEigen(unittest.TestCase):
             "cache_file": [None, cache_file0],
             "stop_early": [None, 2],
         }
-        first_list = [{"cache_file": 1, "stop_early":1}]
+        first_list = [
+            {
+                "batch_size": 0,
+                "cache_file": 0,
+                "cov": 1,
+                "delta": 1,
+                "pheno": 0,
+                "snps_reader": 1,
+                "stop_early": 1,
+                "train_count": 0,
+                "use_reml": 0,
+            }
+        ]
 
         #!!!cmk0 test READING from cache
         def mapper2(index_total_option):
@@ -167,7 +180,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                         count_A1=False,
                         batch_size=batch_size,
                         cache_folder=cache_file2,
-                        stop_early = stop_early,
+                        stop_early=stop_early,
                         runner=runner,
                     )
 
