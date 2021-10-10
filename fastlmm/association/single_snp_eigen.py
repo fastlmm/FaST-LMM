@@ -541,6 +541,26 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         # eigen = eigen[:,eigen.values >= .0001] # !!!cmk const
     return eigen
 
+def _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2):
+        covar_r_rotated = SnpNpz(cache_folder2 / "covar_r_rotated.npz")
+        covar_r_double_path = cache_folder2 / "covar_r_double.npz"
+        if covar_r_double_path.exists():
+            covar_r_double = SnpNpz(covar_r_double_path)
+        else:
+            covar_r_double = None
+        pheno_r_rotated = SnpNpz(cache_folder2 / "pheno_r_rotated.npz")
+        pheno_r_double_path = cache_folder2 / "pheno_r_double.npz"
+        if pheno_r_double_path.exists():
+            pheno_r_double = SnpNpz(pheno_r_double_path)
+        else:
+            pheno_r_double = None
+        return {
+            "chrom": int(chrom),
+            "covar_r_rotated": covar_r_rotated,
+            "covar_r_double": covar_r_double,
+            "pheno_r_rotated": pheno_r_rotated,
+            "pheno_r_double": pheno_r_double,
+        }
 
 #!!!cmk kludge - reorder inputs
 def _find_per_chrom_list(
@@ -581,25 +601,7 @@ def _find_per_chrom_list(
         if cache_folder is not None:
             cache_folder2 = cache_folder1 / str(chrom)
             if cache_folder2.exists():
-                covar_r_rotated = SnpNpz(cache_folder2 / "covar_r_rotated.npz")
-                covar_r_double_path = cache_folder2 / "covar_r_double.npz"
-                if covar_r_double_path.exists():
-                    covar_r_double = SnpNpz(covar_r_double_path)
-                else:
-                    covar_r_double = None
-                pheno_r_rotated = SnpNpz(cache_folder2 / "pheno_r_rotated.npz")
-                pheno_r_double_path = cache_folder2 / "pheno_r_double.npz"
-                if pheno_r_double_path.exists():
-                    pheno_r_double = SnpNpz(pheno_r_double_path)
-                else:
-                    pheno_r_double = None
-                return {
-                    "chrom": int(chrom),
-                    "covar_r_rotated": covar_r_rotated,
-                    "covar_r_double": covar_r_double,
-                    "pheno_r_rotated": pheno_r_rotated,
-                    "pheno_r_double": pheno_r_double,
-                }
+                return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
 
         K0_eigen = K0_eigen_by_chrom[chrom]
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
@@ -635,14 +637,7 @@ def _find_per_chrom_list(
             pheno_r_double = None
         cache_folder2temp.rename(cache_folder2)
 
-        #!!!cmk0 we don't use the cache because it got renamed
-        return {
-            "chrom": int(chrom),
-            "covar_r_rotated": covar_r.rotated,
-            "covar_r_double": covar_r.double,
-            "pheno_r_rotated": pheno_r.rotated,
-            "pheno_r_double": pheno_r.double,
-        }
+        return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
 
     return map_reduce(
         chrom_list,
