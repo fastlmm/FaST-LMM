@@ -22,7 +22,7 @@ from fastlmm.inference.fastlmm_predictor import (
     _kernel_fixup,
 )
 from fastlmm.util.mingrid import minimize1D
-
+from fastlmm.util.pickle_io import load, save
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
 #  might be a covar mix up.(but only if a SnpKernel
@@ -161,6 +161,7 @@ def single_snp_eigen(
         test_via_reml,
         log_delta,
         batch_size,
+        cache_folder,
         runner,
     )
 
@@ -540,14 +541,6 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
     return eigen
 
 
-def _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2):
-    return {
-        "chrom": int(chrom),
-        "covar_r": RotationNpz(cache_folder2 / "covar_r.{0}.npz"),
-        "pheno_r": RotationNpz(cache_folder2 / "pheno_r.{0}.npz"),
-    }
-
-
 #!!!cmk kludge - reorder inputs
 def _find_per_chrom_list(
     chrom_list,
@@ -586,9 +579,13 @@ def _find_per_chrom_list(
         # that captures information lost by the low rank.
         # =========================
 
-        cache_folder2 = create_cache_subfolder(cache_folder1, str(chrom))
+        cache_folder2 = create_cache_subfolder(cache_folder1, f"chrom{chrom}")
         if cache_is_complete(cache_folder2):
-            return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
+            return {
+                "chrom": int(chrom),
+                "covar_r": RotationNpz(cache_folder2 / "covar_r.{0}.npz"),
+                "pheno_r": RotationNpz(cache_folder2 / "pheno_r.{0}.npz"),
+            }
 
         K0_eigen = K0_eigen_by_chrom[chrom]
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
@@ -628,38 +625,53 @@ def _find_per_pheno_per_chrom_list(
     test_via_reml,
     log_delta,
     batch_size,
+    cache_folder,
     runner,
 ):
 
     # =========================
-    # Read pheno into memory.
+    # Unless the cache is complete,
+    # read pheno into memory.
     # This avoids reading from disk for each chrom x pheno
     # =========================
-    pheno = pheno.read(view_ok=True, order="A")
+    cache_folder1 = create_cache_subfolder(cache_folder, "per_pheno_per_chrom_list")
+    if not cache_is_complete(cache_folder1):
+        pheno = pheno.read(view_ok=True, order="A")
+    else:
+        pheno = None
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(per_chrom):
         chrom = per_chrom["chrom"]
+        cache_folder2 = create_cache_subfolder(cache_folder1, f"chrom{chrom}")
         # !!!cmk do view_ok's also need order="A"?
-        covar_r = per_chrom["covar_r"].read(view_ok=True)
-        pheno_r = per_chrom["pheno_r"].read(view_ok=True)
 
-        # =========================
-        # Read K0_eigen for this chrom into memory.
-        #
-        # An "EigenReader" object includes both the vectors and values.
-        # A Rotation object always includes both the main "rotated" array.
-        # In addition, if eigen was low rank, then also a "double" array
-        # [such that double = input-eigenvectors@rotated]
-        # that captures information lost by the low rank.
-        # =========================
-        K0_eigen = K0_eigen_by_chrom[chrom]
+        # !!!cmk0 comments
+        if not cache_is_complete(cache_folder2):
+            covar_r = per_chrom["covar_r"].read(view_ok=True)
+            pheno_r = per_chrom["pheno_r"].read(view_ok=True)
+            # =========================
+            # Read K0_eigen for this chrom into memory.
+            #
+            # An "EigenReader" object includes both the vectors and values.
+            # A Rotation object always includes both the main "rotated" array.
+            # In addition, if eigen was low rank, then also a "double" array
+            # [such that double = input-eigenvectors@rotated]
+            # that captures information lost by the low rank.
+            # =========================
+            K0_eigen = K0_eigen_by_chrom[chrom]
 
-        # ========================================
-        # cc is the covariate count.
-        # x_sid is the names of the covariates plus "alt"
-        # ========================================
-        cc, x_sid = _cc_and_x_sid(covar_r)
+            # ========================================
+            # cc is the covariate count.
+            # x_sid is the names of the covariates plus "alt"
+            # ========================================
+            cc, x_sid = _cc_and_x_sid(covar_r)
+
+        else:
+            covar_r = None
+            pheno_r = None
+            K0_eigen = None
+            cc, x_sid = None, None
 
         # =========================
         # For each phenotype, in parallel, ...
@@ -680,6 +692,10 @@ def _find_per_pheno_per_chrom_list(
 
         # for each pheno (in parallel):
         def mapper_search(pheno_index):
+            cache_folder3 = create_cache_subfolder(cache_folder2, f"pheno{pheno_index}")
+            if cache_is_complete(cache_folder3):
+                return load(str(cache_folder3 / "per_pheno.pickle"))
+
             per_pheno = types.SimpleNamespace()
 
             pheno_r_i = pheno_r[pheno_index]
@@ -720,6 +736,13 @@ def _find_per_pheno_per_chrom_list(
             per_pheno.XKpheno = AKB.empty(x_sid, pheno_r_i.col, kdi=per_pheno.K0_kdi)
             per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
 
+            if cache_folder is not None:
+                if cache_folder3.exists():
+                    shutil.rmtree(cache_folder3)
+                cache_folder3.mkdir()
+                save(str(cache_folder3 / "per_pheno.pickle"), per_pheno)
+                mark_cache_complete(cache_folder3)
+
             return per_pheno
 
         return map_reduce(range(pheno.col_count), mapper=mapper_search)
@@ -752,16 +775,13 @@ def _test_in_batches(
     runner,
 ):
 
-    if test_via_reml:  # Only need "X" for REML
-        covar = covar.read(view_ok=True)
-        #!!!cmk if we are already saving covar_r and pheno_r why not covar if needed?
-
     # ==================================
     # X is the covariates plus one test SNP called "alt"
-    # Only need explicit "X" for REML.
+    # Only need in-memory covar and XTX for REML.
     # cc is covariate count (not including "alt")
-    cc, x_sid = _cc_and_x_sid(covar)  #!!!cmk add comment
+    cc, x_sid = _cc_and_x_sid(covar)
     if test_via_reml:
+        covar = covar.read(view_ok=True)
         XTX = PstData(
             val=np.full((cc + 1, cc + 1), fill_value=np.nan),
             row=x_sid,

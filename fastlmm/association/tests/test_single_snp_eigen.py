@@ -92,7 +92,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         cache_file0.mkdir(parents=True)
 
         delta_default = 1.0
-        if False:
+        if True:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
@@ -150,7 +150,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                 stop_early = option["stop_early"]
 
                 if cache_file is not None:
-                    cache_file2 = cache_file / str(index)
+                    cache_file2 = cache_file / f"test{index}"
                 else:
                     cache_file2 = None
 
