@@ -573,16 +573,23 @@ def _find_per_chrom_list(
     runner,
 ):
 
-    # =========================
-    # Read covar and pheno into memory
-    # so that we can rotate them by each
-    # chromosome's eigen.
-    covar = covar.read(view_ok=True)
-    pheno = pheno.read(view_ok=True)
-
+    is_complete = False
     if cache_folder is not None:
         cache_folder1 = cache_folder / "per_chrom_list"
+        is_complete = (cache_folder1 / "is_complete.txt").exists()
         cache_folder1.mkdir(exist_ok=True)
+
+    if is_complete:
+        covar = None
+        pheno = None
+    else:
+        # =========================
+        # Read covar and pheno into memory
+        # so that we can rotate them by each
+        # chromosome's eigen.
+        #!!!cmk0 don't want to read these if cache is available
+        covar = covar.read(view_ok=True)
+        pheno = pheno.read(view_ok=True)
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
@@ -639,11 +646,16 @@ def _find_per_chrom_list(
 
         return _read_mapper_find_per_pheno_list_cache(chrom, cache_folder2)
 
-    return map_reduce(
+    per_chrom_list = map_reduce(
         chrom_list,
         mapper=mapper_find_per_pheno_list,
         runner=runner,
     )
+
+    if cache_folder is not None:
+        (cache_folder1 / "is_complete.txt").touch()
+
+    return per_chrom_list
 
 
 #!!!cmk kludge - reorder inputs
