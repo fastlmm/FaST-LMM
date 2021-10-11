@@ -91,7 +91,49 @@ class TestSingleSnpEigen(unittest.TestCase):
             i += 1
         cache_file0.mkdir(parents=True)
 
-        if False:
+        value_dict = {
+            "False": False,
+            "True": True,
+            "50": 50,
+            "750" : 750,
+            "None": None,
+            "cov_reader": cov_reader,
+            "1.0": 1.0,
+            "0.20000600000000002": 0.20000600000000002,
+            "pheno_fn":pheno_fn,
+            "pheno01":pheno01,
+            "pheno000": pheno000,
+            "snps_reader1":snps_reader1,
+            "snps_reader5":snps_reader5,
+            "7":7,
+            "100_000":100_000,
+            "cache_file0":cache_file0,
+            "0":0,
+            "1":1,
+            "2":2,
+            "3":3,
+            }
+
+        add_for_coverage = [
+            {
+                "use_reml": "True",
+                "cache_file": "cache_file0",
+                "stop_early": "3",
+            }]
+
+        matrix = {
+            "use_reml": ["False", "True"],
+            "train_count": ["50", "750"],
+            "cov": ["None", "cov_reader"],
+            "delta": ["None", "1.0", "0.20000600000000002"],
+            "pheno": ["pheno_fn", "pheno01", "pheno000"],
+            "snps_reader": ["snps_reader1", "snps_reader5"],
+            "batch_size": ["None", "7", "100_000"],
+            "cache_file": ["None", "cache_file0"],
+            "stop_early": ["None", "0", "1", "2", "3"],
+        }
+
+        if True:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
@@ -101,29 +143,24 @@ class TestSingleSnpEigen(unittest.TestCase):
             runner = None
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
-        matrix = {
-            "use_reml": [False, True],
-            "train_count": [50, 750],
-            "cov": [None, cov_reader],
-            "delta": [None, 1.0, 0.20000600000000002],
-            "pheno": [pheno_fn, pheno01, pheno000],
-            "snps_reader": [snps_reader1, snps_reader5],
-            "batch_size": [None, 7, 100_000],
-            "cache_file": [None, cache_file0],
-            "stop_early": [None, 0, 1, 2, 3],
-        }
-        first_list = [
-            {
-                "use_reml": 1,
-                "cache_file": 1,
-                "stop_early": 2,
-            }
-        ]
+        first_list = [] + add_for_coverage
 
         #!!!cmk0 test READING from cache
         def mapper2(index_total_option):
             index, total, option = index_total_option
             print(f"============{index} of {total}==================")
+            print(f"==={option}")
+
+            use_reml = value_dict[option["use_reml"]]
+            cov = value_dict[option["cov"]]
+            train_count = value_dict[option["train_count"]]
+            delta = value_dict[option["delta"]]
+            pheno = value_dict[option["pheno"]]
+            snps_reader = value_dict[option["snps_reader"]]
+            batch_size = value_dict[option["batch_size"]]
+            cache_file = value_dict[option["cache_file"]]
+            stop_early = value_dict[option["stop_early"]]
+
             try:
                 import numpy as np
                 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -132,15 +169,6 @@ class TestSingleSnpEigen(unittest.TestCase):
                 from fastlmm.association import single_snp_eigen
                 from fastlmm.association.single_snp_eigen import eigen_from_kernel
 
-                use_reml = option["use_reml"]
-                cov = option["cov"]
-                train_count = option["train_count"]
-                delta = option["delta"]
-                pheno = option["pheno"]
-                snps_reader = option["snps_reader"]
-                batch_size = option["batch_size"]
-                cache_file = option["cache_file"]
-                stop_early = option["stop_early"]
 
                 if cache_file is not None:
                     cache_file2 = cache_file / f"test{index}"
@@ -1073,7 +1101,7 @@ def matrix_combo(option_matrix, seed, extra_lambda, first_list=[]):
             value = values[key_index]
             if key in dict_of_interest:
                 value_index_of_interest = dict_of_interest[key]
-                output[key] = old_values[key_index][value_index_of_interest]
+                output[key] = value_index_of_interest
             else:
                 output[key] = value[0]
 

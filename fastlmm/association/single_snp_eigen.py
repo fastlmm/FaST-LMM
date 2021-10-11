@@ -181,7 +181,7 @@ def single_snp_eigen(
         runner,
     )
 
-    if output_file_name is not None:
+    if output_file_name is not None:  #!!!cmk test
         dataframe.to_csv(output_file_name, sep="\t", index=False)
 
     return dataframe
@@ -251,7 +251,7 @@ class KdI:
             log_delta = log_delta
             delta = np.exp(log_delta)
             h2 = 1.0 / (delta + 1)
-        elif delta is not None:
+        elif delta is not None:  #!!!cmk test
             delta = delta
             log_delta = np.log(delta) if delta != 0 else None
             h2 = 1.0 / (delta + 1)
@@ -516,7 +516,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K0.iid)
     else:
         # !!!cmk understand _read_kernel, _read_with_standardizing
-
+        #!!!cmk test
         K0 = K0._read_with_standardizing(
             kernel_standardizer=kernel_standardizer,
             to_kerneldata=True,
@@ -633,10 +633,11 @@ def _find_per_pheno_per_chrom_list(
     # This avoids reading from disk for each chrom x pheno
     # =========================
     cache_folder1 = create_cache_subfolder(cache_folder, "per_pheno_per_chrom_list")
-    if not cache_is_complete(cache_folder1):
-        pheno = pheno.read(view_ok=True, order="A")
+    if cache_is_complete(cache_folder1):
+        # Make this "do nothing" explicit for coverage testing
+        pheno = pheno
     else:
-        pheno = None
+        pheno = pheno.read(view_ok=True, order="A")
 
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(per_chrom):
@@ -645,7 +646,13 @@ def _find_per_pheno_per_chrom_list(
         # !!!cmk do view_ok's also need order="A"?
 
         # !!!cmk0 comments
-        if not cache_is_complete(cache_folder2):
+        if cache_is_complete(cache_folder2):
+            #!!!cmk0 test
+            covar_r = None
+            pheno_r = None
+            K0_eigen = None
+            cc, x_sid = None, None
+        else:
             covar_r = per_chrom["covar_r"].read(view_ok=True)
             pheno_r = per_chrom["pheno_r"].read(view_ok=True)
             # =========================
@@ -664,12 +671,6 @@ def _find_per_pheno_per_chrom_list(
             # x_sid is the names of the covariates plus "alt"
             # ========================================
             cc, x_sid = _cc_and_x_sid(covar_r)
-
-        else:
-            covar_r = None
-            pheno_r = None
-            K0_eigen = None
-            cc, x_sid = None, None
 
         # =========================
         # For each phenotype, in parallel, ...
@@ -692,9 +693,7 @@ def _find_per_pheno_per_chrom_list(
         def mapper_search(pheno_index):
             cache_folder3 = create_cache_subfolder(cache_folder2, f"pheno{pheno_index}")
             if cache_is_complete(cache_folder3):
-                return PerPhenoReader(
-                    cache_folder3 / "per_pheno.pickle"
-                )  #!!!cmk0 test this
+                return PerPhenoReader(cache_folder3 / "per_pheno.pickle")
 
             per_pheno = PerPhenoData()
 
@@ -747,14 +746,24 @@ def _find_per_pheno_per_chrom_list(
 
             return per_pheno
 
-        return map_reduce(range(pheno.col_count), mapper=mapper_search)
+        def reducer_search(per_pheno_sequence):
+            per_pheno_list = list(per_pheno_sequence)
+            mark_cache_complete(cache_folder2)
+            return per_pheno_list
+
+        return map_reduce(
+            range(pheno.col_count), mapper=mapper_search, reducer=reducer_search
+        )
 
     #!!!cmk kludge be consistent with if "reducer", "mapper", "eigen" go at front or back of variable
-    return map_reduce(
+    per_pheno_per_chrom_list = map_reduce(
         per_chrom_list,
         nested=mapper_find_per_pheno_list,
         runner=runner,
     )
+
+    mark_cache_complete(cache_folder1)
+    return per_pheno_per_chrom_list
 
 
 # !!!cmk what if "alt" name is taken?
