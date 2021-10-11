@@ -57,7 +57,9 @@ def single_snp_eigen(
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent, exist_ok=True)
 
-    cache_folder = create_cache_folder(cache_folder)
+    cache_version = 2
+
+    cache_folder = create_cache_folder(cache_folder, cache_version)
 
     # =========================
     # Figure out the data format for every input
@@ -555,7 +557,7 @@ def _find_per_chrom_list(
     # so that we can rotate them by each
     # chromosome's eigen.
     # =========================
-    cache_folder1 = create_cache_subfolder(cache_folder, "per_chrom_list")
+    cache_folder1 = create_cache_subfolder(cache_folder, "step2.per_chrom_list")
     if not cache_is_complete(cache_folder1):
         covar = covar.read(view_ok=True)
         pheno = pheno.read(view_ok=True)
@@ -630,7 +632,7 @@ def _find_per_pheno_per_chrom_list(
     # read pheno into memory.
     # This avoids reading from disk for each chrom x pheno
     # =========================
-    cache_folder1 = create_cache_subfolder(cache_folder, "per_pheno_per_chrom_list")
+    cache_folder1 = create_cache_subfolder(cache_folder, "step3.per_pheno_per_chrom_list")
     if cache_is_complete(cache_folder1):
         # Make this "do nothing" explicit for coverage testing
         pheno = pheno
@@ -974,11 +976,11 @@ def _test_in_batches(
     return dataframe
 
 
-def create_cache_folder(cache_folder):
+def create_cache_folder(cache_folder, version):
     if cache_folder is None:
         return None
     else:
-        cache_folder = Path(cache_folder)
+        cache_folder = Path(f"{cache_folder}.v{version}")
         cache_folder.mkdir(exist_ok=True)
         return cache_folder
 
@@ -1033,9 +1035,10 @@ class PerPhenoReader:
 
 
 def _find_covarTcovar_etc(covar, cache_folder):
-    cache_folder1 = create_cache_subfolder(cache_folder, "covarTcovar_etc")
+    cache_prefix = "step1.covarTcovar_etc"
+    cache_folder1 = create_cache_subfolder(cache_folder, cache_prefix)
     if cache_is_complete(cache_folder1):
-        return load(str(cache_folder1 / "covarTcovar_etc.pickle"))
+        return load(str(cache_folder1 / (cache_prefix+".pickle")))
 
     covar_data = covar.read(view_ok=True)
     covarTcovar = PstData(
@@ -1047,7 +1050,7 @@ def _find_covarTcovar_etc(covar, cache_folder):
     if cache_folder is not None:
         empty_cache(cache_folder1)
         save(
-            str(cache_folder1 / "covarTcovar_etc.pickle"),
+            str(cache_folder1 / (cache_prefix+".pickle")),
             (covarTcovar, logdet_covarTcovar),
         )
         mark_cache_complete(cache_folder1)
