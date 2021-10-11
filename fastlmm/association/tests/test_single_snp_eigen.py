@@ -142,7 +142,9 @@ class TestSingleSnpEigen(unittest.TestCase):
             runner = None
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
-        first_list = [] + add_for_coverage
+        first_list = [
+            {'use_reml': 'True', 'train_count': '750', 'cov': 'None', 'delta': 'None', 'pheno': 'pheno01', 'snps_reader': 'snps_reader1', 'batch_size': '100_000', 'cache_file': 'cache_file0', 'stop_early': '3'}
+            ] + add_for_coverage
 
         def mapper2(index_total_option):
             index, total, option = index_total_option

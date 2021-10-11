@@ -1,14 +1,17 @@
 import logging
 import shutil
+import copy
 import pandas as pd
 from pathlib import Path
 import os
 from pathlib import Path
 import types
+from contextlib import contextmanager
 import numpy as np
 import scipy.stats as stats
 from einops import rearrange
 import pysnptools.util as pstutil
+from bgen_reader._multimemmap import MultiMemMap
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
@@ -57,7 +60,7 @@ def single_snp_eigen(
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent, exist_ok=True)
 
-    cache_version = 3
+    cache_version = 4
 
     cache_folder = create_cache_folder(cache_folder, cache_version)
 
@@ -369,8 +372,9 @@ def _find_beta(yKy, XKX, XKy):
     # or  beta = vectors @ (vectors.T @ (X.T @ y)/values)
 
     eigen_xkx = EigenData.from_aka(XKX, keep_above=1e-10)
+    #!!!cmk0 why two different ways to talk about chking low rank?
     XKy_r_s = eigen_xkx.rotate_and_scale(XKy, ignore_low_rank=True)
-    beta = eigen_xkx.rotate_back(XKy_r_s)
+    beta = eigen_xkx.rotate_back(XKy_r_s, check_low_rank=False) 
 
     ##################################################################
     # residual sum of squares, RSS (aka SSR aka SSE)
@@ -692,7 +696,7 @@ def _find_per_pheno_per_chrom_list(
         def mapper_search(pheno_index):
             cache_folder3 = create_cache_subfolder(cache_folder2, f"pheno{pheno_index}")
             if cache_is_complete(cache_folder3):
-                return PerPhenoReader(cache_folder3 / "per_pheno.pickle")
+                return PerPhenoReader(cache_folder3)
 
             per_pheno_data = PerPhenoData()
 
@@ -741,7 +745,7 @@ def _find_per_pheno_per_chrom_list(
             if cache_folder is not None:
                 empty_cache(cache_folder3)
                 per_pheno_reader = PerPhenoReader.write(
-                    cache_folder3 / "per_pheno.pickle", per_pheno_data
+                    cache_folder3, per_pheno_data
                 )
                 mark_cache_complete(cache_folder3)
             else:
@@ -855,83 +859,84 @@ def _test_in_batches(
             for pheno_index, per_pheno_reader in enumerate(per_pheno_list):
                 pheno_r_i = pheno_r[pheno_index]
 
-                per_pheno_data = per_pheno_reader.read()
+                with per_pheno_reader.read() as per_pheno_data:
 
-                covarKalt_batch, _ = AKB.from_rotations(
-                    covar_r,
-                    per_pheno_data.K0_kdi,
-                    alt_batch_r,
-                    aK=per_pheno_data.covarK,
-                )
-                alt_batchKpheno, alt_batchK = AKB.from_rotations(
-                    alt_batch_r, per_pheno_data.K0_kdi, pheno_r_i
-                )
-
-                # ==================================
-                # For each test SNP in the batch
-                # ==================================
-                for i in range(alt_batch.sid_count):
-                    alt_r = alt_batch_r[i]
-
-                    # ==================================
-                    # For each pheno (as the last dimension in the matrix) ...
-                    # Find alt^T * K^-1 * alt for the test SNP.
-                    # Fill in last value of X, XKX and XKpheno
-                    # with the alt value.
-                    # ==================================
-                    altKalt, _ = AKB.from_rotations(
-                        alt_r, per_pheno_data.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                    #!!!cmk0 this is getting overly intended. Move to new function
+                    covarKalt_batch, _ = AKB.from_rotations(
+                        covar_r,
+                        per_pheno_data.K0_kdi,
+                        alt_batch_r,
+                        aK=per_pheno_data.covarK,
+                    )
+                    alt_batchKpheno, alt_batchK = AKB.from_rotations(
+                        alt_batch_r, per_pheno_data.K0_kdi, pheno_r_i
                     )
 
-                    per_pheno_data.XKX[:cc, cc:] = covarKalt_batch[
-                        :, i : i + 1
-                    ]  # upper right
-                    per_pheno_data.XKX[cc:, :cc] = per_pheno_data.XKX[
-                        :cc, cc:
-                    ].T  # lower left
-                    per_pheno_data.XKX[cc:, cc:] = altKalt[:, :]  # lower right
-
-                    per_pheno_data.XKpheno[cc:, :] = alt_batchKpheno[
-                        i : i + 1, :
-                    ]  # lower
-
-                    # Only need "logdet_xtx" for REML
-                    if test_via_reml:
-                        alt_val = alt_batch.val[:, i : i + 1]
-                        XTX.val[cc:, :cc] = alt_val.T @ covar.val
-                        XTX.val[:cc, cc:] = XTX.val[cc:, :cc].T
-                        XTX.val[cc:, cc:] = alt_val.T @ alt_val
-                        eigen_xtx = EigenData.from_aka(XTX)
-                        logdet_xtx, _ = eigen_xtx.logdet()
-                    else:
-                        logdet_xtx = None
-
                     # ==================================
-                    # Find likelihood with test SNP and score.
+                    # For each test SNP in the batch
                     # ==================================
-                    ll_alt, beta, variance_beta = _loglikelihood(
-                        logdet_xtx,
-                        K0_eigen.row_count,
-                        per_pheno_data.phenoKpheno,
-                        per_pheno_data.XKX,
-                        per_pheno_data.XKpheno,
-                        use_reml=test_via_reml,
-                    )
+                    for i in range(alt_batch.sid_count):
+                        alt_r = alt_batch_r[i]
 
-                    test_statistic = ll_alt - per_pheno_data.ll_null
+                        # ==================================
+                        # For each pheno (as the last dimension in the matrix) ...
+                        # Find alt^T * K^-1 * alt for the test SNP.
+                        # Fill in last value of X, XKX and XKpheno
+                        # with the alt value.
+                        # ==================================
+                        altKalt, _ = AKB.from_rotations(
+                            alt_r, per_pheno_data.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                        )
 
-                    result_list.append(
-                        {
-                            "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-                            "SnpWeight": beta.val,  #!!!cmk
-                            "SnpWeightSE": np.sqrt(variance_beta)
-                            if variance_beta is not None
-                            else None,
-                            # !!!cmk right name and place?
-                            "Pheno": pheno_r_i.col[0],
-                            "Nullh2": per_pheno_data.K0_kdi.h2,
-                        }
-                    )
+                        per_pheno_data.XKX[:cc, cc:] = covarKalt_batch[
+                            :, i : i + 1
+                        ]  # upper right
+                        per_pheno_data.XKX[cc:, :cc] = per_pheno_data.XKX[
+                            :cc, cc:
+                        ].T  # lower left
+                        per_pheno_data.XKX[cc:, cc:] = altKalt[:, :]  # lower right
+
+                        per_pheno_data.XKpheno[cc:, :] = alt_batchKpheno[
+                            i : i + 1, :
+                        ]  # lower
+
+                        # Only need "logdet_xtx" for REML
+                        if test_via_reml:
+                            alt_val = alt_batch.val[:, i : i + 1]
+                            XTX.val[cc:, :cc] = alt_val.T @ covar.val
+                            XTX.val[:cc, cc:] = XTX.val[cc:, :cc].T
+                            XTX.val[cc:, cc:] = alt_val.T @ alt_val
+                            eigen_xtx = EigenData.from_aka(XTX)
+                            logdet_xtx, _ = eigen_xtx.logdet()
+                        else:
+                            logdet_xtx = None
+
+                        # ==================================
+                        # Find likelihood with test SNP and score.
+                        # ==================================
+                        ll_alt, beta, variance_beta = _loglikelihood(
+                            logdet_xtx,
+                            K0_eigen.row_count,
+                            per_pheno_data.phenoKpheno,
+                            per_pheno_data.XKX,
+                            per_pheno_data.XKpheno,
+                            use_reml=test_via_reml,
+                        )
+
+                        test_statistic = ll_alt - per_pheno_data.ll_null
+
+                        result_list.append(
+                            {
+                                "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
+                                "SnpWeight": beta.val,  #!!!cmk
+                                "SnpWeightSE": np.sqrt(variance_beta)
+                                if variance_beta is not None
+                                else None,
+                                # !!!cmk right name and place?
+                                "Pheno": pheno_r_i.col[0],
+                                "Nullh2": per_pheno_data.K0_kdi.h2,
+                            }
+                        )
 
             df_per_batch = _create_dataframe().append(result_list, ignore_index=True)
             df_per_batch["sid_index"] = np.repeat(
@@ -1013,22 +1018,68 @@ class PerPhenoData:
     def __init__(self):
         pass
 
+    @contextmanager
     def read(self):
-        return self
+        yield self
 
 
 class PerPhenoReader:
-    def __init__(self, filename):
-        self.filename = Path(filename)
+    def __init__(self, folder):
+        self.folder = Path(folder)
 
+    @contextmanager
     def read(self):
-        return load(self.filename)
+        per_pheno_data = load(str(self.folder / "smallstuff.pickle"))
+        mmm_r = MultiMemMap(self.folder / "covarK_Sd_row.memmap", mode="r")
+        try:
+            per_pheno_data.covarK = mmm_r["covarK"]
+            per_pheno_data.K0_kdi.Sd = mmm_r["Sd"]
+            per_pheno_data.K0_kdi.row = mmm_r["row"]
+            per_pheno_data.XKX.kdi = per_pheno_data.K0_kdi
+            per_pheno_data.XKpheno.kdi = per_pheno_data.K0_kdi
+            per_pheno_data.phenoKpheno.kdi = per_pheno_data.K0_kdi
+            yield per_pheno_data
+        finally:
+            mmm_r.close()
 
     @staticmethod
-    def write(filename, per_pheno_data):
-        filename = str(filename)
-        save(filename, per_pheno_data)
-        return PerPhenoReader(filename)
+    def write(folder, per_pheno_data):
+        folder = Path(folder)
+
+        # Create a shallow copy of the per_pheno_data.
+        # Then pull out the big stuff and, in the copy, set big stuff to None
+        # Finally save the small stuff as a pickle
+        # and the big stuff as a file with multiple memory maps.
+        per_pheno_data1 = copy.copy(per_pheno_data)
+        covarK = per_pheno_data1.covarK
+        per_pheno_data1.covarK = None
+        per_pheno_data1.K0_kdi = copy.copy(per_pheno_data1.K0_kdi)
+        Sd = per_pheno_data1.K0_kdi.Sd
+        per_pheno_data1.K0_kdi.Sd = None
+        row = per_pheno_data1.K0_kdi.row
+        per_pheno_data1.K0_kdi.row = None
+        per_pheno_data1.XKX = copy.copy(per_pheno_data1.XKX)
+        per_pheno_data1.XKX.kdi = None
+        per_pheno_data1.XKpheno = copy.copy(per_pheno_data1.XKpheno)
+        per_pheno_data1.XKpheno.kdi = None
+        per_pheno_data1.phenoKpheno = copy.copy(per_pheno_data1.phenoKpheno)
+        per_pheno_data1.phenoKpheno.kdi = None
+
+        save(str(folder / "smallstuff.pickle"), per_pheno_data1)
+        with MultiMemMap(folder / "covarK_Sd_row.memmap", mode="w+") as mmm_wplus:
+            mmm_wplus.append_empty("covarK", shape=covarK.shape, dtype=covarK.dtype)[...]=covarK
+            mmm_wplus.append_empty("Sd", shape=Sd.shape, dtype=Sd.dtype)[...]=Sd
+            mmm_wplus.append_empty("row", shape=row.shape, dtype=row.dtype)[...]=row
+
+
+        #print(len(per_pheno_data.K0_kdi.Sd))
+        #print(len(per_pheno_data.covarK))
+        #print(len(per_pheno_data.K0_kdi.row))
+        #print(len(per_pheno_data.XKpheno.kdi.Sd)) # same as above
+        #print(len(per_pheno_data.phenoKpheno.kdi.Sd)) # same as above
+        #filename = str(filename)
+        #save(filename, per_pheno_data)
+        return PerPhenoReader(folder)
 
 
 def _find_covarTcovar_etc(covar, cache_folder):
