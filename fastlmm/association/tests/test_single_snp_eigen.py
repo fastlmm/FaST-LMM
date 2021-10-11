@@ -91,8 +91,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             i += 1
         cache_file0.mkdir(parents=True)
 
-        delta_default = 1.0
-        if True:
+        if False:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
@@ -103,27 +102,21 @@ class TestSingleSnpEigen(unittest.TestCase):
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
         matrix = {
-            "use_reml": [True, False],
-            "train_count": [750, 50],
-            "cov": [cov_reader, None],
-            "delta": [None, 0.20000600000000002, delta_default],
-            "pheno": [pheno000, pheno_fn, pheno01],
+            "use_reml": [False, True],
+            "train_count": [50, 750],
+            "cov": [None, cov_reader],
+            "delta": [None, 1.0, 0.20000600000000002],
+            "pheno": [pheno_fn, pheno01, pheno000],
             "snps_reader": [snps_reader1, snps_reader5],
             "batch_size": [None, 7, 100_000],
             "cache_file": [None, cache_file0],
-            "stop_early": [None, 2],
+            "stop_early": [None, 0, 1, 2, 3],
         }
         first_list = [
             {
-                "batch_size": 0,
-                "cache_file": 0,
-                "cov": 1,
-                "delta": 1,
-                "pheno": 0,
-                "snps_reader": 1,
-                "stop_early": 1,
-                "train_count": 0,
-                "use_reml": 0,
+                "use_reml": 1,
+                "cache_file": 1,
+                "stop_early": 2,
             }
         ]
 

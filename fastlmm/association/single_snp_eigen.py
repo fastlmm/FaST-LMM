@@ -24,6 +24,15 @@ from fastlmm.inference.fastlmm_predictor import (
 from fastlmm.util.mingrid import minimize1D
 from fastlmm.util.pickle_io import load, save
 
+# Features could add if there is interest
+#   * eigenvalues and vectors in any reasonable format
+#   * snp interaction ???
+#   * filter output rows to keep low p-values and a random sample
+#   * Allow pre-rotated phenotype and/or covarate data (order of eigens will need to match K0_eigen
+#   * Directions for a run on cluster
+#   * (perhaps) Work with GPUs
+
+
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
 #  might be a covar mix up.(but only if a SnpKernel
 # cmk0 be good at doing one K0_eigen, too
@@ -37,13 +46,6 @@ def single_snp_eigen(
     log_delta=None,
     cache_folder=None,
     stop_early=None,
-    # !!!cmk cache_file=None, GB_goal=None, interact_with_snp=None,
-    # !!!cmk pvalue_threshold=None,
-    # !!!cmk random_threshold=None,
-    # !!!cmk random_seed = 0,
-    # min_log_delta=-5,  # !!!cmk make this a range???
-    # max_log_delta=10,
-    # !!!cmk xp=None,
     find_delta_via_reml=True,
     test_via_reml=False,
     count_A1=None,
@@ -117,12 +119,7 @@ def single_snp_eigen(
     # and logdet(eigen(covarTcovar))
     # ===============================
     if test_via_reml or find_delta_via_reml:
-        covar_data = covar.read(view_ok=True)
-        covarTcovar = PstData(
-            val=covar_data.val.T @ covar_data.val, row=covar.sid, col=covar.sid
-        )
-        eigen_covarTcovar = EigenData.from_aka(covarTcovar)
-        logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
+        covarTcovar, logdet_covarTcovar = _find_covarTcovar_etc(covar, cache_folder)
     else:
         covarTcovar = None
         logdet_covarTcovar = None
@@ -165,6 +162,7 @@ def single_snp_eigen(
         runner,
     )
 
+    #!!!cmk0 give an error mesage if out of range
     if stop_early == 3:
         return
 
@@ -694,7 +692,9 @@ def _find_per_pheno_per_chrom_list(
         def mapper_search(pheno_index):
             cache_folder3 = create_cache_subfolder(cache_folder2, f"pheno{pheno_index}")
             if cache_is_complete(cache_folder3):
-                return PerPhenoReader.write(cache_folder3 / "per_pheno.pickle")
+                return PerPhenoReader(
+                    cache_folder3 / "per_pheno.pickle"
+                )  #!!!cmk0 test this
 
             per_pheno = PerPhenoData()
 
@@ -1015,3 +1015,30 @@ class PerPhenoReader:
         filename = str(filename)
         save(filename, per_pheno_data)
         return PerPhenoReader(filename)
+
+
+def _find_covarTcovar_etc(covar, cache_folder):
+    cache_folder1 = create_cache_subfolder(cache_folder, "covarTcovar_etc")
+    if cache_is_complete(cache_folder1):
+        #!!!cmk0 test this
+        return load(str(cache_folder1 / "covarTcovar_etc.pickle"))
+
+    covar_data = covar.read(view_ok=True)
+    covarTcovar = PstData(
+        val=covar_data.val.T @ covar_data.val, row=covar.sid, col=covar.sid
+    )
+    eigen_covarTcovar = EigenData.from_aka(covarTcovar)
+    logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
+
+    if cache_folder is not None:
+        #!!!cmk0 make these three lines a function
+        if cache_folder1.exists():
+            shutil.rmtree(cache_folder1)
+        cache_folder1.mkdir()
+        save(
+            str(cache_folder1 / "covarTcovar_etc.pickle"),
+            (covarTcovar, logdet_covarTcovar),
+        )
+        mark_cache_complete(cache_folder1)
+
+    return covarTcovar, logdet_covarTcovar
