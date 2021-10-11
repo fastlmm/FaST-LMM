@@ -10,11 +10,11 @@ import scipy.stats as stats
 from einops import rearrange
 import pysnptools.util as pstutil
 from pysnptools.standardizer import Unit
-from pysnptools.snpreader import SnpData, SnpNpz
+from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
 from pysnptools.snpreader import _MergeSIDs
 from pysnptools.eigenreader import EigenData
-from pysnptools.eigenreader.eigenreader import Rotation, RotationNpz
+from pysnptools.eigenreader.eigenreader import Rotation, RotationMemMap
 from pysnptools.util.mapreduce1 import map_reduce
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
@@ -57,7 +57,7 @@ def single_snp_eigen(
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent, exist_ok=True)
 
-    cache_version = 2
+    cache_version = 3
 
     cache_folder = create_cache_folder(cache_folder, cache_version)
 
@@ -583,8 +583,8 @@ def _find_per_chrom_list(
         if cache_is_complete(cache_folder2):
             return {
                 "chrom": int(chrom),
-                "covar_r": RotationNpz(cache_folder2 / "covar_r.{0}.npz"),
-                "pheno_r": RotationNpz(cache_folder2 / "pheno_r.{0}.npz"),
+                "covar_r": RotationMemMap(cache_folder2 / "covar_r.{0}.memmap"),
+                "pheno_r": RotationMemMap(cache_folder2 / "pheno_r.{0}.memmap"),
             }
 
         K0_eigen = K0_eigen_by_chrom[chrom]
@@ -592,8 +592,8 @@ def _find_per_chrom_list(
 
         if cache_folder is not None:
             empty_cache(cache_folder2)
-            covar_r = RotationNpz.write(cache_folder2 / "covar_r.{0}.npz", covar_r)
-            pheno_r = RotationNpz.write(cache_folder2 / "pheno_r.{0}.npz", pheno_r)
+            covar_r = RotationMemMap.write(cache_folder2 / "covar_r.{0}.memmap", covar_r)
+            pheno_r = RotationMemMap.write(cache_folder2 / "pheno_r.{0}.memmap", pheno_r)
             mark_cache_complete(cache_folder2)
 
         return {
@@ -855,9 +855,7 @@ def _test_in_batches(
             for pheno_index, per_pheno_reader in enumerate(per_pheno_list):
                 pheno_r_i = pheno_r[pheno_index]
 
-                per_pheno_data = (
-                    per_pheno_reader.read()
-                )  #!!!cmk0 rename to per_pheno_reader and per_pheno_data
+                per_pheno_data = per_pheno_reader.read()
 
                 covarKalt_batch, _ = AKB.from_rotations(
                     covar_r,
@@ -994,7 +992,6 @@ def create_cache_subfolder(cache_folder, subfolder_name):
         return cache_subfolder
 
 
-#!!!cmk0 add versioning
 def cache_is_complete(cache_subfolder):
     if cache_subfolder is None:
         return False
