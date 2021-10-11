@@ -5,11 +5,9 @@ import pandas as pd
 from pathlib import Path
 import os
 from pathlib import Path
-import types
 from contextlib import contextmanager
 import numpy as np
 import scipy.stats as stats
-from einops import rearrange
 import pysnptools.util as pstutil
 from bgen_reader._multimemmap import MultiMemMap
 from pysnptools.standardizer import Unit
@@ -17,7 +15,7 @@ from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
 from pysnptools.snpreader import _MergeSIDs
 from pysnptools.eigenreader import EigenData
-from pysnptools.eigenreader.eigenreader import Rotation, RotationMemMap
+from pysnptools.eigenreader.eigenreader import RotationMemMap
 from pysnptools.util.mapreduce1 import map_reduce
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
@@ -31,7 +29,7 @@ from fastlmm.util.pickle_io import load, save
 #   * eigenvalues and vectors in any reasonable format
 #   * snp interaction ???
 #   * filter output rows to keep low p-values and a random sample
-#   * Allow pre-rotated phenotype and/or covarate data (order of eigens will need to match K0_eigen
+#   * Allow pre-rotated phenotype and/or covariate data (order of eigens will need to match K0_eigen
 #   * Directions for a run on cluster
 #   * (perhaps) Work with GPUs
 
@@ -374,7 +372,7 @@ def _find_beta(yKy, XKX, XKy):
     eigen_xkx = EigenData.from_aka(XKX, keep_above=1e-10)
     #!!!cmk0 why two different ways to talk about chking low rank?
     XKy_r_s = eigen_xkx.rotate_and_scale(XKy, ignore_low_rank=True)
-    beta = eigen_xkx.rotate_back(XKy_r_s, check_low_rank=False) 
+    beta = eigen_xkx.rotate_back(XKy_r_s, check_low_rank=False)
 
     ##################################################################
     # residual sum of squares, RSS (aka SSR aka SSE)
@@ -596,8 +594,12 @@ def _find_per_chrom_list(
 
         if cache_folder is not None:
             empty_cache(cache_folder2)
-            covar_r = RotationMemMap.write(cache_folder2 / "covar_r.{0}.memmap", covar_r)
-            pheno_r = RotationMemMap.write(cache_folder2 / "pheno_r.{0}.memmap", pheno_r)
+            covar_r = RotationMemMap.write(
+                cache_folder2 / "covar_r.{0}.memmap", covar_r
+            )
+            pheno_r = RotationMemMap.write(
+                cache_folder2 / "pheno_r.{0}.memmap", pheno_r
+            )
             mark_cache_complete(cache_folder2)
 
         return {
@@ -636,7 +638,9 @@ def _find_per_pheno_per_chrom_list(
     # read pheno into memory.
     # This avoids reading from disk for each chrom x pheno
     # =========================
-    cache_folder1 = create_cache_subfolder(cache_folder, "step3.per_pheno_per_chrom_list")
+    cache_folder1 = create_cache_subfolder(
+        cache_folder, "step3.per_pheno_per_chrom_list"
+    )
     if cache_is_complete(cache_folder1):
         # Make this "do nothing" explicit for coverage testing
         pheno = pheno
@@ -744,9 +748,7 @@ def _find_per_pheno_per_chrom_list(
 
             if cache_folder is not None:
                 empty_cache(cache_folder3)
-                per_pheno_reader = PerPhenoReader.write(
-                    cache_folder3, per_pheno_data
-                )
+                per_pheno_reader = PerPhenoReader.write(cache_folder3, per_pheno_data)
                 mark_cache_complete(cache_folder3)
             else:
                 per_pheno_reader = per_pheno_data
@@ -885,7 +887,10 @@ def _test_in_batches(
                         # with the alt value.
                         # ==================================
                         altKalt, _ = AKB.from_rotations(
-                            alt_r, per_pheno_data.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1]
+                            alt_r,
+                            per_pheno_data.K0_kdi,
+                            alt_r,
+                            aK=alt_batchK[:, i : i + 1],
                         )
 
                         per_pheno_data.XKX[:cc, cc:] = covarKalt_batch[
@@ -1067,18 +1072,19 @@ class PerPhenoReader:
 
         save(str(folder / "smallstuff.pickle"), per_pheno_data1)
         with MultiMemMap(folder / "covarK_Sd_row.memmap", mode="w+") as mmm_wplus:
-            mmm_wplus.append_empty("covarK", shape=covarK.shape, dtype=covarK.dtype)[...]=covarK
-            mmm_wplus.append_empty("Sd", shape=Sd.shape, dtype=Sd.dtype)[...]=Sd
-            mmm_wplus.append_empty("row", shape=row.shape, dtype=row.dtype)[...]=row
+            mmm_wplus.append_empty("covarK", shape=covarK.shape, dtype=covarK.dtype)[
+                ...
+            ] = covarK
+            mmm_wplus.append_empty("Sd", shape=Sd.shape, dtype=Sd.dtype)[...] = Sd
+            mmm_wplus.append_empty("row", shape=row.shape, dtype=row.dtype)[...] = row
 
-
-        #print(len(per_pheno_data.K0_kdi.Sd))
-        #print(len(per_pheno_data.covarK))
-        #print(len(per_pheno_data.K0_kdi.row))
-        #print(len(per_pheno_data.XKpheno.kdi.Sd)) # same as above
-        #print(len(per_pheno_data.phenoKpheno.kdi.Sd)) # same as above
-        #filename = str(filename)
-        #save(filename, per_pheno_data)
+        # print(len(per_pheno_data.K0_kdi.Sd))
+        # print(len(per_pheno_data.covarK))
+        # print(len(per_pheno_data.K0_kdi.row))
+        # print(len(per_pheno_data.XKpheno.kdi.Sd)) # same as above
+        # print(len(per_pheno_data.phenoKpheno.kdi.Sd)) # same as above
+        # filename = str(filename)
+        # save(filename, per_pheno_data)
         return PerPhenoReader(folder)
 
 
@@ -1086,7 +1092,7 @@ def _find_covarTcovar_etc(covar, cache_folder):
     cache_prefix = "step1.covarTcovar_etc"
     cache_folder1 = create_cache_subfolder(cache_folder, cache_prefix)
     if cache_is_complete(cache_folder1):
-        return load(str(cache_folder1 / (cache_prefix+".pickle")))
+        return load(str(cache_folder1 / (cache_prefix + ".pickle")))
 
     covar_data = covar.read(view_ok=True)
     covarTcovar = PstData(
@@ -1098,7 +1104,7 @@ def _find_covarTcovar_etc(covar, cache_folder):
     if cache_folder is not None:
         empty_cache(cache_folder1)
         save(
-            str(cache_folder1 / (cache_prefix+".pickle")),
+            str(cache_folder1 / (cache_prefix + ".pickle")),
             (covarTcovar, logdet_covarTcovar),
         )
         mark_cache_complete(cache_folder1)

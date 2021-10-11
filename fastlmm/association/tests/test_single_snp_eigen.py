@@ -10,15 +10,12 @@ import numpy as np
 
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelstandardizer import Identity as KernelIdentity
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.runner import LocalMultiProc
 from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.standardizer import Unit
 from pysnptools.eigenreader import EigenData
 
 from fastlmm.util import example_file  # Download and return local file name
 from fastlmm.association import single_snp_eigen
-from fastlmm.association.tests.test_gwas import GwasPrototype
-from fastlmm.inference.fastlmm_predictor import _kernel_fixup
 
 
 class TestSingleSnpEigen(unittest.TestCase):
@@ -94,31 +91,32 @@ class TestSingleSnpEigen(unittest.TestCase):
             "False": False,
             "True": True,
             "50": 50,
-            "750" : 750,
+            "750": 750,
             "None": None,
             "cov_reader": cov_reader,
             "1.0": 1.0,
             "0.20000600000000002": 0.20000600000000002,
-            "pheno_fn":pheno_fn,
-            "pheno01":pheno01,
+            "pheno_fn": pheno_fn,
+            "pheno01": pheno01,
             "pheno000": pheno000,
-            "snps_reader1":snps_reader1,
-            "snps_reader5":snps_reader5,
-            "7":7,
-            "100_000":100_000,
-            "cache_file0":cache_file0,
-            "0":0,
-            "1":1,
-            "2":2,
-            "3":3,
-            }
+            "snps_reader1": snps_reader1,
+            "snps_reader5": snps_reader5,
+            "7": 7,
+            "100_000": 100_000,
+            "cache_file0": cache_file0,
+            "0": 0,
+            "1": 1,
+            "2": 2,
+            "3": 3,
+        }
 
         add_for_coverage = [
             {
                 "use_reml": "True",
                 "cache_file": "cache_file0",
                 "stop_early": "3",
-            }]
+            }
+        ]
 
         matrix = {
             "use_reml": ["False", "True"],
@@ -143,8 +141,18 @@ class TestSingleSnpEigen(unittest.TestCase):
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
         first_list = [
-            {'use_reml': 'True', 'train_count': '750', 'cov': 'None', 'delta': 'None', 'pheno': 'pheno01', 'snps_reader': 'snps_reader1', 'batch_size': '100_000', 'cache_file': 'cache_file0', 'stop_early': '3'}
-            ] + add_for_coverage
+            {
+                "use_reml": "True",
+                "train_count": "750",
+                "cov": "None",
+                "delta": "None",
+                "pheno": "pheno01",
+                "snps_reader": "snps_reader1",
+                "batch_size": "100_000",
+                "cache_file": "cache_file0",
+                "stop_early": "3",
+            }
+        ] + add_for_coverage
 
         def mapper2(index_total_option):
             index, total, option = index_total_option
@@ -168,7 +176,6 @@ class TestSingleSnpEigen(unittest.TestCase):
                 from pysnptools.util.mapreduce1 import map_reduce
                 from fastlmm.association import single_snp_eigen
                 from fastlmm.association.single_snp_eigen import eigen_from_kernel
-
 
                 if cache_file is not None:
                     cache_file2 = cache_file / f"test{index}"
