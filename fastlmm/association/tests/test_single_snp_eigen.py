@@ -45,7 +45,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    #!!!cmk0 make faster of possible by swapping UX and X
+    #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not
 
     def test_same_as_old_code(self):  #!!!cmk too slow???
