@@ -589,9 +589,7 @@ def _find_per_chrom_list(
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
         if cache_folder is not None:
-            if cache_folder2.exists():
-                shutil.rmtree(cache_folder2)
-            cache_folder2.mkdir()
+            empty_cache(cache_folder2)
             covar_r = RotationNpz.write(cache_folder2 / "covar_r.{0}.npz", covar_r)
             pheno_r = RotationNpz.write(cache_folder2 / "pheno_r.{0}.npz", pheno_r)
             mark_cache_complete(cache_folder2)
@@ -647,7 +645,6 @@ def _find_per_pheno_per_chrom_list(
 
         # !!!cmk0 comments
         if cache_is_complete(cache_folder2):
-            #!!!cmk0 test
             covar_r = None
             pheno_r = None
             K0_eigen = None
@@ -695,10 +692,10 @@ def _find_per_pheno_per_chrom_list(
             if cache_is_complete(cache_folder3):
                 return PerPhenoReader(cache_folder3 / "per_pheno.pickle")
 
-            per_pheno = PerPhenoData()
+            per_pheno_data = PerPhenoData()
 
             pheno_r_i = pheno_r[pheno_index]
-            per_pheno.K0_kdi = _find_best_kdi_as_needed(
+            per_pheno_data.K0_kdi = _find_best_kdi_as_needed(
                 K0_eigen,
                 logdet_covarTcovar,
                 covar_r,
@@ -706,19 +703,19 @@ def _find_per_pheno_per_chrom_list(
                 use_reml=find_delta_via_reml,
                 log_delta=log_delta,
             )
-            covarKcovar, per_pheno.covarK = AKB.from_rotations(
-                covar_r, per_pheno.K0_kdi, covar_r
+            covarKcovar, per_pheno_data.covarK = AKB.from_rotations(
+                covar_r, per_pheno_data.K0_kdi, covar_r
             )
-            per_pheno.phenoKpheno, _ = AKB.from_rotations(
-                pheno_r_i, per_pheno.K0_kdi, pheno_r_i
+            per_pheno_data.phenoKpheno, _ = AKB.from_rotations(
+                pheno_r_i, per_pheno_data.K0_kdi, pheno_r_i
             )
             covarKpheno, _ = AKB.from_rotations(
-                covar_r, per_pheno.K0_kdi, pheno_r_i, aK=per_pheno.covarK
+                covar_r, per_pheno_data.K0_kdi, pheno_r_i, aK=per_pheno_data.covarK
             )
-            per_pheno.ll_null, _beta, _variance_beta = _loglikelihood(
+            per_pheno_data.ll_null, _beta, _variance_beta = _loglikelihood(
                 logdet_covarTcovar,
                 K0_eigen.row_count,
-                per_pheno.phenoKpheno,
+                per_pheno_data.phenoKpheno,
                 covarKcovar,
                 covarKpheno,
                 use_reml=test_via_reml,
@@ -729,22 +726,26 @@ def _find_per_pheno_per_chrom_list(
             # Create an XKX, and XKpheno where
             # the last part can be swapped for each test SNP.
             # ==================================
-            per_pheno.XKX = AKB.empty(row=x_sid, col=x_sid, kdi=per_pheno.K0_kdi)
-            per_pheno.XKX[:cc, :cc] = covarKcovar  # upper left
+            per_pheno_data.XKX = AKB.empty(
+                row=x_sid, col=x_sid, kdi=per_pheno_data.K0_kdi
+            )
+            per_pheno_data.XKX[:cc, :cc] = covarKcovar  # upper left
 
-            per_pheno.XKpheno = AKB.empty(x_sid, pheno_r_i.col, kdi=per_pheno.K0_kdi)
-            per_pheno.XKpheno[:cc, :] = covarKpheno  # upper
+            per_pheno_data.XKpheno = AKB.empty(
+                x_sid, pheno_r_i.col, kdi=per_pheno_data.K0_kdi
+            )
+            per_pheno_data.XKpheno[:cc, :] = covarKpheno  # upper
 
             if cache_folder is not None:
-                if cache_folder3.exists():
-                    shutil.rmtree(cache_folder3)
-                cache_folder3.mkdir()
-                per_pheno = PerPhenoReader.write(
-                    cache_folder3 / "per_pheno.pickle", per_pheno
+                empty_cache(cache_folder3)
+                per_pheno_reader = PerPhenoReader.write(
+                    cache_folder3 / "per_pheno.pickle", per_pheno_data
                 )
                 mark_cache_complete(cache_folder3)
+            else:
+                per_pheno_reader = per_pheno_data
 
-            return per_pheno
+            return per_pheno_reader
 
         def reducer_search(per_pheno_sequence):
             per_pheno_list = list(per_pheno_sequence)
@@ -808,7 +809,6 @@ def _test_in_batches(
         # Look up the pre-computed info for this chromosome.
         # ===========================
         # !!!cmk0: per_pheno_per_chrom_list chrom x pheno x iid(sd, pheno_r) x covar (covarK)
-        # !!!cmk0 need random access per chrom and pheno
         per_chrom = per_chrom_list[chrom_index]
         per_pheno_list = per_pheno_per_chrom_list[chrom_index]
         chrom = per_chrom["chrom"]
@@ -1004,6 +1004,12 @@ def mark_cache_complete(cache_folder):
         (cache_folder / "complete.txt").touch()  #!!!cmk const
 
 
+def empty_cache(cache_folder):
+    if cache_folder.exists():
+        shutil.rmtree(cache_folder)
+    cache_folder.mkdir()
+
+
 class PerPhenoData:
     def __init__(self):
         pass
@@ -1029,7 +1035,6 @@ class PerPhenoReader:
 def _find_covarTcovar_etc(covar, cache_folder):
     cache_folder1 = create_cache_subfolder(cache_folder, "covarTcovar_etc")
     if cache_is_complete(cache_folder1):
-        #!!!cmk0 test this
         return load(str(cache_folder1 / "covarTcovar_etc.pickle"))
 
     covar_data = covar.read(view_ok=True)
@@ -1040,10 +1045,7 @@ def _find_covarTcovar_etc(covar, cache_folder):
     logdet_covarTcovar, _ = eigen_covarTcovar.logdet()
 
     if cache_folder is not None:
-        #!!!cmk0 make these three lines a function
-        if cache_folder1.exists():
-            shutil.rmtree(cache_folder1)
-        cache_folder1.mkdir()
+        empty_cache(cache_folder1)
         save(
             str(cache_folder1 / "covarTcovar_etc.pickle"),
             (covarTcovar, logdet_covarTcovar),

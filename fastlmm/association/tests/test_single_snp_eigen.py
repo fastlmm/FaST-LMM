@@ -49,7 +49,6 @@ class TestSingleSnpEigen(unittest.TestCase):
         return temp_fn
 
     #!!!cmk0 make faster of possible by swapping UX and X
-    #!!!cmk0 search for best delta
     #!!!cmk0 understand use_reml vs not
 
     def test_same_as_old_code(self):  #!!!cmk too slow???
@@ -145,7 +144,6 @@ class TestSingleSnpEigen(unittest.TestCase):
             extra_lambda = lambda case_number: case_number ** 0.5
         first_list = [] + add_for_coverage
 
-        #!!!cmk0 test READING from cache
         def mapper2(index_total_option):
             index, total, option = index_total_option
             print(f"============{index} of {total}==================")
