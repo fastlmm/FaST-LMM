@@ -1,5 +1,6 @@
 import logging
 import datetime
+import shutil
 
 #!!!cmk kludge replace dot with @
 logging.basicConfig(level=logging.DEBUG)  # cmk
@@ -12,7 +13,7 @@ from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelstandardizer import Identity as KernelIdentity
 from pysnptools.util.mapreduce1.runner import LocalMultiProc
 from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.eigenreader import EigenData
+from pysnptools.eigenreader import EigenData, EigenMemMap
 
 from fastlmm.util import example_file  # Download and return local file name
 from fastlmm.association import single_snp_eigen
@@ -47,8 +48,67 @@ class TestSingleSnpEigen(unittest.TestCase):
 
     #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not
+    def test_big_file(self):
+        iid_count = 10_000
+        sid_count = 10_000
+        rng = np.random.RandomState(3343)
 
-    def test_same_as_old_code(self):  #!!!cmk too slow???
+        #!!!cmk can't really run this
+        bed = Bed(r"M:\deldir\genbgen\2\merged_487400x220000.1.bed",count_A1=False)[:iid_count,:sid_count]
+        #print(bed.shape)
+        #print(set(bed.pos[:,0]))
+        #print("!!!cmk")
+
+        #!!!cmk0 add some chroms
+        pheno5 = SnpData(val=rng.random((bed.iid_count,5)),iid=bed.iid,sid=[f"pheno{i}" for i in range(5)])
+        covar3 = SnpData(val=rng.random((bed.iid_count,3)),iid=bed.iid,sid=[f"covar{i}" for i in range(3)])
+        runner = None # LocalMultiProc(4, just_one_process=False)
+
+        eigen_path = Path(f"m:/deldir/eigentest/{iid_count}.eigen.memmap")
+        eigen_path_temp = Path(f"{eigen_path}.temp")
+        if not eigen_path.exists():
+            logging.info(f"about to create empty '{eigen_path}'")
+            eigenmemmap = EigenMemMap.empty(iid=bed.iid,values=rng.random((iid_count)),filename=str(eigen_path_temp))
+            step = int(np.ceil(iid_count**.5))
+            for start in range(0,iid_count,step):
+                logging.info(f"filling in random values {start:,d}:{iid_count:,d},{step:,d}")
+                end = min(iid_count, start+step)
+                width = int(np.ceil((end-start)**.5))
+                random_bit = rng.random((iid_count,width))
+                eigenmemmap.val[:,start:start+width] = random_bit
+                #eigenmemmap.val[start:start+width,:] = random_bit.T
+            logging.info(f"flushing")
+            eigenmemmap.flush()
+            shutil.move(eigen_path_temp, eigen_path) #!!!cmk what if alreay there?
+
+        eigen = EigenMemMap(eigen_path)
+
+
+        K0_eigen_by_chrom = {1: eigen}
+        batch_size = int(iid_count**.5)
+        cache_folder = Path(r"M:\deldir\eigentest\bigtest" + f"/{iid_count}")
+        cache_folder.parent.mkdir(parents=True,exist_ok=True)
+
+
+        frame = single_snp_eigen(
+            test_snps=bed,
+            pheno=pheno5,
+            K0_eigen_by_chrom=K0_eigen_by_chrom,
+            covar=covar3,
+            output_file_name=None,
+            log_delta=None,
+            find_delta_via_reml=True,
+            test_via_reml=False,
+            batch_size=batch_size,
+            cache_folder=cache_folder,
+            stop_early=None, #stop_early,
+            runner=runner,
+        )
+
+        print(frame)
+
+
+    def cmktest_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(

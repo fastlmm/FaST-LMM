@@ -132,7 +132,7 @@ def single_snp_eigen(
     #!!!cmk1 cache this
     # ===============================
     # In parallel, for each chrom,
-    # rotate the covariates
+    # rotate the covariates and phenotypes
     # ===============================
     per_chrom_list = _find_per_chrom_list(
         chrom_list,
@@ -516,7 +516,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         )
         if np.any(sqrt_values < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
-        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, row=K0.iid)
+        eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, iid=K0.iid)
     else:
         # !!!cmk understand _read_kernel, _read_with_standardizing
         #!!!cmk test
@@ -589,6 +589,7 @@ def _find_per_chrom_list(
             }
 
         K0_eigen = K0_eigen_by_chrom[chrom]
+        logging.info("rotating covar and pheno")
         covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
         if cache_folder is not None:
@@ -839,6 +840,7 @@ def _test_in_batches(
 
         # For each test_snp batch (in parallel) ...
         def mapper(sid_start):
+            logging.info(f"sid_start={sid_start:,d} of {test_snps_for_chrom.sid_count:,d} by {batch_size_test_snps:,d}")
             # ==================================
             # Read and standardize a batch of test SNPs. Then rotate.
             # Then, for each pheno ...
@@ -856,7 +858,8 @@ def _test_in_batches(
             # For each phenotype
             # ==================================
             result_list = []
-            for per_pheno_reader, pheno_r_i in zip(per_pheno_list, pheno_r):
+            for pheno_index, (per_pheno_reader, pheno_r_i) in enumerate(zip(per_pheno_list, pheno_r)):
+                #logging.info(f"sid_start={sid_start}, pheno={pheno_index}")
                 with per_pheno_reader.read() as per_pheno_data:
 
                     for result in _generate_results(
