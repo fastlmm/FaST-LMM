@@ -11,7 +11,7 @@ import numpy as np
 
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.kernelstandardizer import Identity as KernelIdentity
-from pysnptools.util.mapreduce1.runner import LocalMultiProc
+from pysnptools.util.mapreduce1.runner import LocalMultiProc, Local
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.eigenreader import EigenData, EigenMemMap
 
@@ -48,8 +48,8 @@ class TestSingleSnpEigen(unittest.TestCase):
 
     #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not
-    def test_big_file(self):
-        iid_count = 10_000
+    def cmk0test_big_file(self):
+        iid_count = 100_000
         sid_count = 10_000
         rng = np.random.RandomState(3343)
 
@@ -62,7 +62,9 @@ class TestSingleSnpEigen(unittest.TestCase):
         #!!!cmk0 add some chroms
         pheno5 = SnpData(val=rng.random((bed.iid_count,5)),iid=bed.iid,sid=[f"pheno{i}" for i in range(5)])
         covar3 = SnpData(val=rng.random((bed.iid_count,3)),iid=bed.iid,sid=[f"covar{i}" for i in range(3)])
-        runner = None # LocalMultiProc(4, just_one_process=False)
+
+        ####### Runner ###############
+        runner = LocalMultiProc(6, just_one_process=False)
 
         eigen_path = Path(f"m:/deldir/eigentest/{iid_count}.eigen.memmap")
         eigen_path_temp = Path(f"{eigen_path}.temp")
@@ -108,7 +110,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         print(frame)
 
 
-    def cmktest_same_as_old_code(self):  #!!!cmk too slow???
+    def test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
@@ -192,7 +194,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         if True:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
-            runner = None  # LocalMultiProc(6, just_one_process=True)
+            runner = Local()  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
             extra_lambda = lambda case_number: 0
         else:

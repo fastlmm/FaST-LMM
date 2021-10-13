@@ -566,6 +566,18 @@ def _find_per_chrom_list(
         covar = None
         pheno = None
 
+    chrom_to_do_list = []
+    chrom_done_dict = {}
+    for chrom in chrom_list:
+        cache_folder2 = create_cache_subfolder(cache_folder1, f"chrom{chrom}")
+        if cache_is_complete(cache_folder2):
+            chrom_done_dict[chrom] = (
+                RotationMemMap(cache_folder2 / "covar_r.{0}.memmap"),
+                RotationMemMap(cache_folder2 / "pheno_r.{0}.memmap"),
+            )
+        else:
+            chrom_to_do_list.append(chrom)
+
     # for each chrom (in parallel):
     def mapper_find_per_pheno_list(chrom):
         # =========================
@@ -580,39 +592,48 @@ def _find_per_chrom_list(
         # that captures information lost by the low rank.
         # =========================
 
-        cache_folder2 = create_cache_subfolder(cache_folder1, f"chrom{chrom}")
-        if cache_is_complete(cache_folder2):
-            return {
-                "chrom": int(chrom),
-                "covar_r": RotationMemMap(cache_folder2 / "covar_r.{0}.memmap"),
-                "pheno_r": RotationMemMap(cache_folder2 / "pheno_r.{0}.memmap"),
-            }
-
         K0_eigen = K0_eigen_by_chrom[chrom]
         logging.info("rotating covar and pheno")
-        covar_r, pheno_r = K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
-        if cache_folder is not None:
-            empty_cache(cache_folder2)
-            covar_r = RotationMemMap.write(
-                cache_folder2 / "covar_r.{0}.memmap", covar_r
-            )
-            pheno_r = RotationMemMap.write(
-                cache_folder2 / "pheno_r.{0}.memmap", pheno_r
-            )
-            mark_cache_complete(cache_folder2)
+        return K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
-        return {
-            "chrom": int(chrom),
-            "covar_r": covar_r,
-            "pheno_r": pheno_r,
-        }
+    def reducer_find_per_pheno_list(covar_r_pheno_r_list):
+        chrom_later_dict = {}
+        for chrom, (covar_r, pheno_r) in zip(chrom_to_do_list, covar_r_pheno_r_list):
+            cache_folder2 = create_cache_subfolder(cache_folder1, f"chrom{chrom}")
+            if cache_folder is not None:
+                empty_cache(cache_folder2)
+                covar_r = RotationMemMap.write(
+                    cache_folder2 / "covar_r.{0}.memmap", covar_r
+                )
+                pheno_r = RotationMemMap.write(
+                    cache_folder2 / "pheno_r.{0}.memmap", pheno_r
+                )
+                mark_cache_complete(cache_folder2)
 
-    per_chrom_list = map_reduce(
-        chrom_list,
-        mapper=mapper_find_per_pheno_list,
+            chrom_later_dict[chrom] = (covar_r, pheno_r)
+        return chrom_later_dict
+
+    chrom_later_dict = map_reduce(
+        chrom_to_do_list,
+        nested=mapper_find_per_pheno_list,
+        reducer=reducer_find_per_pheno_list,
         runner=runner,
     )
+
+    per_chrom_list = []
+    for chrom in chrom_list:
+        if chrom in chrom_done_dict:
+            covar_r, pheno_r = chrom_done_dict[chrom]
+        else:
+            covar_r, pheno_r = chrom_later_dict[chrom]
+        per_chrom_list.append(
+            {
+                "chrom": int(chrom),
+                "covar_r": covar_r,
+                "pheno_r": pheno_r,
+            }
+        )
 
     mark_cache_complete(cache_folder1)
 
@@ -840,7 +861,9 @@ def _test_in_batches(
 
         # For each test_snp batch (in parallel) ...
         def mapper(sid_start):
-            logging.info(f"sid_start={sid_start:,d} of {test_snps_for_chrom.sid_count:,d} by {batch_size_test_snps:,d}")
+            logging.info(
+                f"sid_start={sid_start:,d} of {test_snps_for_chrom.sid_count:,d} by {batch_size_test_snps:,d}"
+            )
             # ==================================
             # Read and standardize a batch of test SNPs. Then rotate.
             # Then, for each pheno ...
@@ -852,14 +875,18 @@ def _test_in_batches(
                 .read()
                 .standardize()
             )
+
+            #!!!cmk could add another level of map_reduce here
             alt_batch_r = K0_eigen.rotate(alt_batch, batch_rows=batch_size)
 
             # ==================================
             # For each phenotype
             # ==================================
             result_list = []
-            for pheno_index, (per_pheno_reader, pheno_r_i) in enumerate(zip(per_pheno_list, pheno_r)):
-                #logging.info(f"sid_start={sid_start}, pheno={pheno_index}")
+            for pheno_index, (per_pheno_reader, pheno_r_i) in enumerate(
+                zip(per_pheno_list, pheno_r)
+            ):
+                # logging.info(f"sid_start={sid_start}, pheno={pheno_index}")
                 with per_pheno_reader.read() as per_pheno_data:
 
                     for result in _generate_results(
