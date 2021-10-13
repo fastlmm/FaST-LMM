@@ -14,6 +14,7 @@ from pysnptools.kernelstandardizer import Identity as KernelIdentity
 from pysnptools.util.mapreduce1.runner import LocalMultiProc, Local
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.eigenreader import EigenData, EigenMemMap
+from pysnptools.snpreader import _MergeSIDs
 
 from fastlmm.util import example_file  # Download and return local file name
 from fastlmm.association import single_snp_eigen
@@ -48,13 +49,15 @@ class TestSingleSnpEigen(unittest.TestCase):
 
     #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not
-    def cmk0test_big_file(self):
-        iid_count = 100_000
-        sid_count = 10_000
+    def test_big_file(self):
+        iid_count = 200_000
+        sid_count = 50_000
         rng = np.random.RandomState(3343)
 
         #!!!cmk can't really run this
-        bed = Bed(r"M:\deldir\genbgen\2\merged_487400x220000.1.bed",count_A1=False)[:iid_count,:sid_count]
+        bed1 = Bed(r"M:\deldir\genbgen\2\merged_487400x220000.1.bed",count_A1=False)[:iid_count,:sid_count]
+        bed2 = Bed(r"M:\deldir\genbgen\2\merged_487400x220000.2.bed",count_A1=False)[:iid_count,:sid_count]
+        bed = _MergeSIDs([bed1,bed2])
         #print(bed.shape)
         #print(set(bed.pos[:,0]))
         #print("!!!cmk")
@@ -73,7 +76,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             eigenmemmap = EigenMemMap.empty(iid=bed.iid,values=rng.random((iid_count)),filename=str(eigen_path_temp))
             step = int(np.ceil(iid_count**.5))
             for start in range(0,iid_count,step):
-                logging.info(f"filling in random values {start:,d}:{iid_count:,d},{step:,d}")
+                logging.info(f"filling in random values {start:,d} : {iid_count:,d} , {step:,d}")
                 end = min(iid_count, start+step)
                 width = int(np.ceil((end-start)**.5))
                 random_bit = rng.random((iid_count,width))
@@ -86,7 +89,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         eigen = EigenMemMap(eigen_path)
 
 
-        K0_eigen_by_chrom = {1: eigen}
+        K0_eigen_by_chrom = {1: eigen, 2: eigen}
         batch_size = int(iid_count**.5)
         cache_folder = Path(r"M:\deldir\eigentest\bigtest" + f"/{iid_count}")
         cache_folder.parent.mkdir(parents=True,exist_ok=True)
@@ -110,7 +113,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         print(frame)
 
 
-    def test_same_as_old_code(self):  #!!!cmk too slow???
+    def cmk0test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
@@ -194,12 +197,12 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         if True:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
-            runner = Local()  # LocalMultiProc(6, just_one_process=True)
+            runner = Local() # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
-            extra_lambda = lambda case_number: 0
+            extra_lambda = lambda case_number: 0 # case_number ** 0.5
         else:
             test_runner = LocalMultiProc(6, just_one_process=False)
-            runner = None
+            runner = Local()
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
         first_list = [

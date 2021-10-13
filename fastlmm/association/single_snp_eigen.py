@@ -84,7 +84,7 @@ def single_snp_eigen(
     chrom_set_test_snps = set(test_snps.pos[:, 0])
     assert chrom_set_test_snps.issubset(
         chrom_list_K0_eigen
-    ), "Every chromosome in test_snps but have a K0_eigen"
+    ), "Every chromosome in test_snps must have a K0_eigen"
     chrom_list = list(chrom_set_test_snps)
     K0_eigen_list = list(K0_eigen_by_chrom.values())
     assert len(K0_eigen_list) > 0, "Expect at least one K0_eigen"
