@@ -45,12 +45,12 @@ def single_snp_eigen(
     output_file_name=None,
     log_delta=None,
     cache_folder=None,
+    GB_goal=1,
     stop_early=None,
-    find_delta_via_reml=True,
-    test_via_reml=False,
     count_A1=None,
-    batch_size=None,
     runner=None,
+    _find_delta_via_reml=True,
+    _test_via_reml=False,
 ):
     """cmk documentation"""
     # !!!LATER raise error if covar has NaN
@@ -60,6 +60,7 @@ def single_snp_eigen(
     cache_version = 4
 
     cache_folder = create_cache_folder(cache_folder, cache_version)
+    assert GB_goal is not None, "GB_goal cannot be None"
 
     # =========================
     # Figure out the data format for every input
@@ -120,7 +121,7 @@ def single_snp_eigen(
     # If needed later for REML, compute covarTcovar
     # and logdet(eigen(covarTcovar))
     # ===============================
-    if test_via_reml or find_delta_via_reml:
+    if _test_via_reml or _find_delta_via_reml:
         covarTcovar, logdet_covarTcovar = _find_covarTcovar_etc(covar, cache_folder)
     else:
         covarTcovar = None
@@ -139,7 +140,7 @@ def single_snp_eigen(
         K0_eigen_by_chrom,
         covar,
         pheno,
-        batch_size,
+        GB_goal,
         cache_folder,
         runner,
     )
@@ -156,10 +157,9 @@ def single_snp_eigen(
         per_chrom_list,
         K0_eigen_by_chrom,
         pheno,
-        find_delta_via_reml,
-        test_via_reml,
+        _find_delta_via_reml,
+        _test_via_reml,
         log_delta,
-        batch_size,
         cache_folder,
         runner,
     )
@@ -178,8 +178,8 @@ def single_snp_eigen(
         per_pheno_per_chrom_list,
         test_snps,
         K0_eigen_by_chrom,
-        test_via_reml,
-        batch_size,
+        _test_via_reml,
+        GB_goal,
         runner,
     )
 
@@ -548,7 +548,7 @@ def _find_per_chrom_list(
     K0_eigen_by_chrom,
     covar,
     pheno,
-    batch_size,
+    GB_goal,
     cache_folder,
     runner,
 ):
@@ -594,6 +594,13 @@ def _find_per_chrom_list(
 
         K0_eigen = K0_eigen_by_chrom[chrom]
         logging.info("rotating covar and pheno")
+
+        #!!!cmk move
+        eid_count = K0_eigen.eid_count
+        iid_count = covar.iid_count
+        sid_count = covar.sid_count + pheno.sid_count
+        GB_total = iid_count * sid_count * eid_count * 8.0 / (1024.0**3)
+        batch_size = int(np.ceil(GB_goal * eid_count / GB_total))
 
         return K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
 
@@ -649,7 +656,6 @@ def _find_per_pheno_per_chrom_list(
     find_delta_via_reml,
     test_via_reml,
     log_delta,
-    batch_size,
     cache_folder,
     runner,
 ):
@@ -812,7 +818,7 @@ def _test_in_batches(
     test_snps,
     K0_eigen_by_chrom,
     test_via_reml,
-    batch_size,
+    GB_goal,
     runner,
 ):
 
@@ -855,14 +861,18 @@ def _test_in_batches(
         # Create a testsnp reader for this chrom, but don't read yet.
         # =========================
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
-        batch_size_test_snps = (
-            batch_size if batch_size is not None else test_snps_for_chrom.sid_count + 1
-        )
+        #!!!cmk0 check that GB_goal is right for low-rank Eigen
+
+        eid_count = K0_eigen.eid_count
+        iid_count = test_snps.iid_count
+        sid_count = test_snps_for_chrom.sid_count
+        GB_total = iid_count * sid_count * eid_count * 8.0 / (1024.0**3)
+        batch_size = int(np.ceil(GB_goal * eid_count / GB_total))
 
         # For each test_snp batch (in parallel) ...
         def mapper(sid_start):
             logging.info(
-                f"sid_start={sid_start:,d} of {test_snps_for_chrom.sid_count:,d} by {batch_size_test_snps:,d}"
+                f"sid_start={sid_start:,d} of {test_snps_for_chrom.sid_count:,d} by {batch_size:,d}"
             )
             # ==================================
             # Read and standardize a batch of test SNPs. Then rotate.
@@ -871,7 +881,7 @@ def _test_in_batches(
             #   Find the likelihood and pvalue for each test SNP.
             # ==================================
             alt_batch = (
-                test_snps_for_chrom[:, sid_start : sid_start + batch_size_test_snps]
+                test_snps_for_chrom[:, sid_start : sid_start + batch_size]
                 .read()
                 .standardize()
             )
@@ -923,7 +933,7 @@ def _test_in_batches(
             return df_per_chrom
 
         return map_reduce(
-            range(0, test_snps_for_chrom.sid_count, batch_size_test_snps),
+            range(0, test_snps_for_chrom.sid_count, batch_size),
             mapper=mapper,  #!!!cmk kludge rename
             reducer=reducer2,
         )
@@ -1155,3 +1165,21 @@ def _generate_results(
             "Pheno": pheno_r_i.col[0],
             "Nullh2": per_pheno_data.K0_kdi.h2,
         }
+
+def _set_block_size(K0, K1, mixing, GB_goal, force_full_rank, force_low_rank):
+    min_count = _internal_determine_block_size(K0, K1, mixing, force_full_rank, force_low_rank)
+    iid_count = K0.iid_count if K0 is not None else K1.iid_count
+    block_size = _block_size_from_GB_goal(GB_goal, iid_count, min_count)
+    #logging.info("Dividing SNPs by {0}".format(-(test_snps.sid_count//-block_size)))
+
+    try:
+        K0.block_size = block_size
+    except:
+        pass # ignore
+
+    try:
+        K1.block_size = block_size
+    except:
+        pass # ignore
+
+    return K0, K1, block_size

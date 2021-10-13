@@ -49,7 +49,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
     #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not
-    def test_big_file(self):
+    def cmk0test_big_file(self):
         iid_count = 200_000
         sid_count = 50_000
         rng = np.random.RandomState(3343)
@@ -102,18 +102,18 @@ class TestSingleSnpEigen(unittest.TestCase):
             covar=covar3,
             output_file_name=None,
             log_delta=None,
-            find_delta_via_reml=True,
-            test_via_reml=False,
-            batch_size=batch_size,
+            GB_goal=GB_goal,
             cache_folder=cache_folder,
             stop_early=None, #stop_early,
             runner=runner,
+            _find_delta_via_reml=True,
+            _test_via_reml=False,
         )
 
         print(frame)
 
 
-    def cmk0test_same_as_old_code(self):  #!!!cmk too slow???
+    def test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
@@ -166,7 +166,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "pheno000": pheno000,
             "snps_reader1": snps_reader1,
             "snps_reader5": snps_reader5,
-            "7": 7,
+            ".01": .01,
             "100_000": 100_000,
             "cache_file0": cache_file0,
             "0": 0,
@@ -190,7 +190,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "delta": ["None", "1.0", "0.20000600000000002"],
             "pheno": ["pheno_fn", "pheno01", "pheno000"],
             "snps_reader": ["snps_reader1", "snps_reader5"],
-            "batch_size": ["None", "7", "100_000"],
+            "GB_goal": ["1", ".01", "100_000"],
             "cache_file": ["None", "cache_file0"],
             "stop_early": ["None", "0", "1", "2", "3"],
         }
@@ -207,15 +207,13 @@ class TestSingleSnpEigen(unittest.TestCase):
             extra_lambda = lambda case_number: case_number ** 0.5
         first_list = [
             {
-                "use_reml": "True",
-                "train_count": "750",
-                "cov": "None",
-                "delta": "None",
-                "pheno": "pheno01",
-                "snps_reader": "snps_reader1",
-                "batch_size": "100_000",
-                "cache_file": "cache_file0",
-                "stop_early": "3",
+                "GB_goal": "1",
+            },
+            {
+                "GB_goal": ".01",
+            },
+            {
+                "GB_goal": "100_000",
             }
         ] + add_for_coverage
 
@@ -230,7 +228,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             delta = value_dict[option["delta"]]
             pheno = value_dict[option["pheno"]]
             snps_reader = value_dict[option["snps_reader"]]
-            batch_size = value_dict[option["batch_size"]]
+            GB_goal = value_dict[option["GB_goal"]]
             cache_file = value_dict[option["cache_file"]]
             stop_early = value_dict[option["stop_early"]]
 
@@ -268,13 +266,13 @@ class TestSingleSnpEigen(unittest.TestCase):
                         covar=cov,
                         output_file_name=None,
                         log_delta=np.log(delta) if delta is not None else None,
-                        find_delta_via_reml=use_reml,
-                        test_via_reml=use_reml,
                         count_A1=False,
-                        batch_size=batch_size,
+                        GB_goal=GB_goal,
                         cache_folder=cache_file2,
                         stop_early=stop_early,
                         runner=runner,
+                        _find_delta_via_reml=use_reml,
+                        _test_via_reml=use_reml,
                     )
 
                     if stop_early is None:
