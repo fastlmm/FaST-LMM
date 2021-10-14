@@ -595,14 +595,7 @@ def _find_per_chrom_list(
         K0_eigen = K0_eigen_by_chrom[chrom]
         logging.info("rotating covar and pheno")
 
-        #!!!cmk move
-        eid_count = K0_eigen.eid_count
-        iid_count = covar.iid_count
-        sid_count = covar.sid_count + pheno.sid_count
-        GB_total = iid_count * sid_count * eid_count * 8.0 / (1024.0**3)
-        batch_size = int(np.ceil(GB_goal * eid_count / GB_total))
-
-        return K0_eigen.rotate_list([covar, pheno], batch_rows=batch_size)
+        return K0_eigen.rotate_list([covar, pheno], GB_goal=GB_goal)
 
     def reducer_find_per_pheno_list(covar_r_pheno_r_list):
         chrom_later_dict = {}
@@ -863,16 +856,15 @@ def _test_in_batches(
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
         #!!!cmk0 check that GB_goal is right for low-rank Eigen
 
-        eid_count = K0_eigen.eid_count
-        iid_count = test_snps.iid_count
         sid_count = test_snps_for_chrom.sid_count
-        GB_total = iid_count * sid_count * eid_count * 8.0 / (1024.0**3)
-        batch_size = int(np.ceil(GB_goal * eid_count / GB_total))
+        iid_count = test_snps_for_chrom.iid_count
+        GB_total = iid_count * sid_count * 8.0 / (1024.0**3)
+        sid_step = min(sid_count, int(np.ceil(GB_goal * sid_count / GB_total)))
 
         # For each test_snp batch (in parallel) ...
         def mapper(sid_start):
             logging.info(
-                f"sid_start={sid_start:,d} of {test_snps_for_chrom.sid_count:,d} by {batch_size:,d}"
+                f"sid_start={sid_start:,d} of {test_snps_for_chrom.sid_count:,d} by {sid_step:,d}"
             )
             # ==================================
             # Read and standardize a batch of test SNPs. Then rotate.
@@ -881,13 +873,13 @@ def _test_in_batches(
             #   Find the likelihood and pvalue for each test SNP.
             # ==================================
             alt_batch = (
-                test_snps_for_chrom[:, sid_start : sid_start + batch_size]
+                test_snps_for_chrom[:, sid_start : sid_start + sid_step]
                 .read()
                 .standardize()
             )
 
             #!!!cmk could add another level of map_reduce here
-            alt_batch_r = K0_eigen.rotate(alt_batch, batch_rows=batch_size)
+            alt_batch_r = K0_eigen.rotate(alt_batch, GB_goal = GB_goal)
 
             # ==================================
             # For each phenotype
@@ -933,7 +925,7 @@ def _test_in_batches(
             return df_per_chrom
 
         return map_reduce(
-            range(0, test_snps_for_chrom.sid_count, batch_size),
+            range(0, test_snps_for_chrom.sid_count, sid_step),
             mapper=mapper,  #!!!cmk kludge rename
             reducer=reducer2,
         )

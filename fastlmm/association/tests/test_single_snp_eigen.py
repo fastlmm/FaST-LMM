@@ -49,9 +49,11 @@ class TestSingleSnpEigen(unittest.TestCase):
 
     #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not
-    def cmk0test_big_file(self):
+    def test_big_file(self):
+        runner = LocalMultiProc(10, just_one_process=False)
         iid_count = 200_000
         sid_count = 50_000
+        GB_goal = .5
         rng = np.random.RandomState(3343)
 
         #!!!cmk can't really run this
@@ -66,17 +68,14 @@ class TestSingleSnpEigen(unittest.TestCase):
         pheno5 = SnpData(val=rng.random((bed.iid_count,5)),iid=bed.iid,sid=[f"pheno{i}" for i in range(5)])
         covar3 = SnpData(val=rng.random((bed.iid_count,3)),iid=bed.iid,sid=[f"covar{i}" for i in range(3)])
 
-        ####### Runner ###############
-        runner = LocalMultiProc(6, just_one_process=False)
-
         eigen_path = Path(f"m:/deldir/eigentest/{iid_count}.eigen.memmap")
         eigen_path_temp = Path(f"{eigen_path}.temp")
         if not eigen_path.exists():
             logging.info(f"about to create empty '{eigen_path}'")
-            eigenmemmap = EigenMemMap.empty(iid=bed.iid,values=rng.random((iid_count)),filename=str(eigen_path_temp))
+            eigenmemmap = EigenMemMap.empty(iid=bed.iid,values=rng.random((iid_count)),filename=str(eigen_path_temp),order="F")
             step = int(np.ceil(iid_count**.5))
             for start in range(0,iid_count,step):
-                logging.info(f"filling in random values {start:,d} : {iid_count:,d} , {step:,d}")
+                logging.info(f"Filling in random values {start:,d} : {iid_count:,d} : {step:,d}")
                 end = min(iid_count, start+step)
                 width = int(np.ceil((end-start)**.5))
                 random_bit = rng.random((iid_count,width))
@@ -110,10 +109,11 @@ class TestSingleSnpEigen(unittest.TestCase):
             _test_via_reml=False,
         )
 
-        print(frame)
+        print(len(frame))
+        print("!!!cmk0")
 
 
-    def test_same_as_old_code(self):  #!!!cmk too slow???
+    def cmk0test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
@@ -144,7 +144,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         date_str = str(datetime.datetime.now())[0:16]
         i = 0
         while True:
-            cache_file0 = Path(r"m:/deldir/eigentest") / f"{date_str}.{i}".replace(
+            cache_file0 = Path(r"m:/deldir/eigentest/same_as_old") / f"{date_str}.{i}".replace(
                 ":", "-"
             )
             if not cache_file0.exists():
@@ -166,7 +166,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "pheno000": pheno000,
             "snps_reader1": snps_reader1,
             "snps_reader5": snps_reader5,
-            ".01": .01,
+            ".0001": .0001,
             "100_000": 100_000,
             "cache_file0": cache_file0,
             "0": 0,
@@ -190,7 +190,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "delta": ["None", "1.0", "0.20000600000000002"],
             "pheno": ["pheno_fn", "pheno01", "pheno000"],
             "snps_reader": ["snps_reader1", "snps_reader5"],
-            "GB_goal": ["1", ".01", "100_000"],
+            "GB_goal": ["1", ".0001", "100_000"],
             "cache_file": ["None", "cache_file0"],
             "stop_early": ["None", "0", "1", "2", "3"],
         }
@@ -205,17 +205,10 @@ class TestSingleSnpEigen(unittest.TestCase):
             runner = Local()
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
-        first_list = [
-            {
-                "GB_goal": "1",
-            },
-            {
-                "GB_goal": ".01",
-            },
-            {
-                "GB_goal": "100_000",
-            }
-        ] + add_for_coverage
+        first_list = [{"GB_goal": ".0001"},
+                      {"GB_goal": "1"},
+                      {"GB_goal": "100_000"}
+            ] + add_for_coverage
 
         def mapper2(index_total_option):
             index, total, option = index_total_option
