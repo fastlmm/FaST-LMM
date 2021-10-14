@@ -478,7 +478,7 @@ def get_G0_memmap(G0, file_cache_parent, X, Xdagger, memory_factor):
                 #   Use memory mapped files? SPARK? would be nice if could run on carlk4
                 #===========================================================
                 G0_data_piece = G0[:,start:stop].read().standardize(Unit())
-                ss_per_snp[start:stop] = np.einsum('i...,i...',G0_data_piece.val,G0_data_piece.val) #Find the (G0_data.val**2).sum(0) without memory allocation
+                ss_per_snp[start:stop] = np.einsum('i...,i...',G0_data_piece.val,G0_data_piece.val, optimize=True) #Find the (G0_data.val**2).sum(0) without memory allocation
                 #!!!Might be slightly better if this code and the original FaSTLMM code standardized the diagonal AFTER regressing away the covariants
     
                 ##=============================================================

@@ -49,8 +49,8 @@ class TestSingleSnpEigen(unittest.TestCase):
 
     #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not
-    def test_big_file(self):
-        runner = LocalMultiProc(10, just_one_process=False)
+    def cmk0test_big_file(self):
+        runner = None # LocalMultiProc(10, just_one_process=False)
         iid_count = 200_000
         sid_count = 50_000
         GB_goal = .5
@@ -113,7 +113,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         print("!!!cmk0")
 
 
-    def cmk0test_same_as_old_code(self):  #!!!cmk too slow???
+    def test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
@@ -197,7 +197,7 @@ class TestSingleSnpEigen(unittest.TestCase):
 
         if True:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
-            runner = Local() # LocalMultiProc(6, just_one_process=True)
+            runner = None # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
             extra_lambda = lambda case_number: 0 # case_number ** 0.5
         else:
@@ -263,7 +263,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                         GB_goal=GB_goal,
                         cache_folder=cache_file2,
                         stop_early=stop_early,
-                        runner=runner,
+                        runner=Local() if runner is None else runner,
                         _find_delta_via_reml=use_reml,
                         _test_via_reml=use_reml,
                     )
@@ -302,7 +302,7 @@ class TestSingleSnpEigen(unittest.TestCase):
                     return sorted(gwas.p_values)
 
                 gwas_pvalues_list = map_reduce(
-                    range(phenox.sid_count), mapper=mapper, runner=runner
+                    range(phenox.sid_count), mapper=mapper, runner=Local() if runner is None else runner
                 )
                 # cmk kludge rename phenox
                 for pheno_index in range(phenox.sid_count):
