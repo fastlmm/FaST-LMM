@@ -18,6 +18,7 @@ from pysnptools.snpreader import _MergeSIDs
 
 from fastlmm.util import example_file  # Download and return local file name
 from fastlmm.association import single_snp_eigen
+from fastlmm.association.single_snp_eigen import KdI
 
 
 class TestSingleSnpEigen(unittest.TestCase):
@@ -46,6 +47,53 @@ class TestSingleSnpEigen(unittest.TestCase):
         if os.path.exists(temp_fn):
             os.remove(temp_fn)
         return temp_fn
+
+    def cmk0test_compare_with_single_snp(self):
+        from pysnptools.snpreader import Bed
+        import numpy as np
+        from fastlmm.association import single_snp
+        from fastlmm.util import example_file # Download and return local file name
+        from fastlmm.association.single_snp_eigen import eigen_from_kernel
+
+        pheno1 = Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt")).read()
+        pheno3 = SnpData(iid=pheno1.iid,
+                         sid=["original","sqrt","square"],
+                         val= np.c_[pheno1.val,pheno1.val**2,pheno1.val**3]
+        )
+        bed_fn = example_file('tests/datasets/synth/all.*','*.bed')
+        cov_fn = example_file("tests/datasets/synth/cov.txt")
+
+        h2 = 0.300930 #!!!cmk0
+        _, log_delta, _ = KdI._hld(h2=h2)
+
+        bed = Bed(bed_fn,count_A1=False)
+        bed_chrom5 = bed[:,bed.pos[:,0]==5]
+        bed_chrom5_52 = bed_chrom5[:,52]
+        df_ss = single_snp(force_full_rank=True, test_snps=bed_chrom5_52, K0=bed, log_delta=log_delta, pheno=pheno3, covar=cov_fn, count_A1=False)
+        print(df_ss)
+        #   sid_index                  SNP  Chr  ...    Nullh2     Pheno  PhenoCount
+        #0          0  snp495_m0_.01m1_.04  5.0  ...  0.300930    square           3
+        #1          0  snp495_m0_.01m1_.04  5.0  ...  0.451557      sqrt           3
+        #2          0  snp495_m0_.01m1_.04  5.0  ...  0.451117  original           3
+
+        K0_eigen_by_chrom = {5.0 : eigen_from_kernel(bed[:,bed.pos[:,0]!= 5.0], KernelIdentity())}
+        print(K0_eigen_by_chrom)
+
+
+        use_reml = True
+        df_sse5 = single_snp_eigen(log_delta=log_delta, K0_eigen_by_chrom=K0_eigen_by_chrom, test_snps=bed_chrom5, pheno=pheno3, covar=cov_fn, count_A1=False, runner=Local(),
+            _find_delta_via_reml=use_reml,
+            _test_via_reml=use_reml,
+        )
+        print(df_sse5[:4])
+
+        #df_sse5_52 = single_snp_eigen(K0_eigen_by_chrom=K0_eigen_by_chrom, test_snps=bed_chrom5_52, pheno=pheno3, covar=cov_fn, count_A1=False, runner=Local(),
+        #    _find_delta_via_reml=use_reml,
+        #    _test_via_reml=use_reml,
+        #)
+        #print(df_sse5_52)
+        print("!!!cmk")
+
 
     #!!!cmk0 make faster if possible by swapping UX and X
     #!!!cmk0 understand use_reml vs not

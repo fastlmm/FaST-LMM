@@ -888,9 +888,8 @@ def _test_in_batches(
             for pheno_index, (per_pheno_reader, pheno_r_i) in enumerate(
                 zip(per_pheno_list, pheno_r)
             ):
-                # logging.info(f"sid_start={sid_start}, pheno={pheno_index}")
+                logging.info(f"sid_start={sid_start:,d}, sid_step={sid_step:,d}, pheno={pheno_index:,d}")
                 with per_pheno_reader.read() as per_pheno_data:
-
                     for result in _generate_results(
                         K0_eigen,
                         per_pheno_data,
@@ -906,13 +905,15 @@ def _test_in_batches(
                         result_list.append(result)
 
             df_per_batch = _create_dataframe().append(result_list, ignore_index=True)
-            df_per_batch["sid_index"] = np.repeat(
+            df_per_batch["sid_index"] = np.tile(
                 np.arange(sid_start, sid_start + alt_batch.sid_count), pheno_count
             )
-            df_per_batch["SNP"] = np.repeat(alt_batch.sid, pheno_count)
-            df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_count)
-            df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_count)
-            df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_count)
+            #!!!cmk0
+            #df_per_batch["SNP"] = np.repeat(alt_batch.sid, pheno_count)
+            #df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_count)
+            #df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_count)
+            #df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_count)
+
             # !!!cmk in lmmcov, but not lmm
             # df_per_batch['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
             # !!!cmk Feature not supported. could add "0"
@@ -1148,9 +1149,13 @@ def _generate_results(
         test_statistic = ll_alt - per_pheno_data.ll_null
 
         yield {
+            "SNP": alt_r.col[0],
+            "Chr": alt_batch.pos[i,0], 
+            "GenDist": alt_batch.pos[i,1], 
+            "ChrPos": alt_batch.pos[i,2], 
             "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-            "SnpWeight": beta.val,  #!!!cmk
-            "SnpWeightSE": np.sqrt(variance_beta)
+            "SnpWeight": beta.val[-1,0],  #!!!cmk
+            "SnpWeightSE": np.sqrt(variance_beta[-1])
             if variance_beta is not None
             else None,
             # !!!cmk right name and place?

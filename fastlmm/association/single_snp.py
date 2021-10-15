@@ -727,6 +727,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     multi_y = xp.asarray(multi_pheno.read(view_ok=True,order='A').val)
 
     y_0 = multi_y[:,0:1]
+    h2_0 = h2[0] if h2 is not None else None
     cache_file_extra = f"{cache_file}.extra.npz" if cache_file is not None else None
 
     logging.info("Finding SU and then h2 for first phenotype")
@@ -736,7 +737,7 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
         lmm_0, h2_0, mixing_0 = _find_h2_s_u_for_one_pheno(K0, K1, 
                                                     covar_val, True, None,
                                                     y_0,
-                                                    mixing, h2, force_full_rank, force_low_rank,
+                                                    mixing, h2_0, force_full_rank, force_low_rank,
                                                     None,None,None,
                                                     xp)
 
@@ -748,32 +749,38 @@ def _find_h2_s_u(mixing, h2, multi_pheno, covar_val, xp,
     elif cache_file_extra is not None and os.path.exists(cache_file_extra):
         return load_cache_extra(lmm_0, multi_y, cache_file_extra, xp)
     else:
-        lmm_multi, multi_h2, multi_mixing = compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp)
+        lmm_multi, multi_h2, multi_mixing = compute_extra(K0, K1, lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp)
         if cache_file_extra is not None:
             save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp)
         return lmm_multi, multi_h2, multi_mixing
 
-def compute_extra(lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp):
-    uy_list=[lmm_0.UY[:,0]]
-    if lmm_0.UUY is not None:
-        uuy_list=[lmm_0.UUY[:,0]]
-    h2_list=[h2_0]
-    mixing_list = [mixing_0]
+def compute_extra(K0, K1, lmm_0, h2, h2_0, mixing_0, multi_y, multi_pheno, cache_file_extra, force_full_rank, force_low_rank, runner, xp):
 
     def mapper(pheno_index):
         logging.info(f"working on pheno_index {pheno_index} of {multi_pheno.sid_count}")
         return _find_h2_s_u_for_one_pheno(
-                                K0=None, K1=None,
+                                K0=K0, K1=K1,
                                 covar_val=lmm_0.X, regressX=lmm_0.regressX, linreg=lmm_0.linreg,
                                 y=multi_y[:,pheno_index:pheno_index+1],
-                                mixing=mixing_0, h2=h2, force_full_rank=force_full_rank, force_low_rank=force_low_rank,
-                                K=lmm_0.K,S=lmm_0.S,U=lmm_0.U,
+                                mixing=mixing_0,
+                                h2=h2[pheno_index] if h2 is not None else None,
+                                force_full_rank=force_full_rank, force_low_rank=force_low_rank,
+                                #cmk K=lmm_0.K,S=lmm_0.S,U=lmm_0.U,
+                                K=None,S=None,U=None,
                                 xp=xp)
 
     result_list = map_reduce(range(1, multi_pheno.col_count),mapper=mapper,runner=runner)
-    #could do this with runner
+
+    #!!!cmk this code fails when h2 is given and there are multiple phenos
+    uy_list=[lmm_0.UY[:,0] if lmm_0.UY is not None else None]
+    if lmm_0.UUY is not None:
+        uuy_list=[lmm_0.UUY[:,0]] #!!!cmk
+    h2_list=[h2_0]
+    mixing_list = [mixing_0]
+
+    #could do this with reducer
     for lmm_p, h2_p, mixing_p in result_list:
-        uy_list.append(lmm_p.UY[:,0])
+        uy_list.append(lmm_p.UY[:,0] if lmm_p.UY is not None else None)
         if lmm_p.UUY is not None:
             uuy_list.append(lmm_p.UUY[:,0])
         h2_list.append(h2_p)
