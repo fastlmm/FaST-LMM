@@ -136,13 +136,7 @@ def single_snp_eigen(
     # rotate the covariates and phenotypes
     # ===============================
     per_chrom_list = _find_per_chrom_list(
-        chrom_list,
-        K0_eigen_by_chrom,
-        covar,
-        pheno,
-        GB_goal,
-        cache_folder,
-        runner,
+        chrom_list, K0_eigen_by_chrom, covar, pheno, GB_goal, cache_folder, runner,
     )
 
     if stop_early == 2:
@@ -300,10 +294,7 @@ class AKB(PstData):
     def __getitem__(self, index):
         val = self.val[index]
         return AKB(
-            val=val,
-            row=self.row[index[0]],
-            col=self.col[index[1]],
-            kdi=self.kdi,
+            val=val, row=self.row[index[0]], col=self.col[index[1]], kdi=self.kdi,
         )
 
     @property
@@ -322,7 +313,7 @@ def _find_h2(
     pheno_r,
     use_reml,
     nGridH2=10,
-    minH2=0.0,
+    minH2=0.00001,
     maxH2=0.99999,
 ):
     # !!!cmk log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its kdi's diagonal would sum to iid_count
@@ -345,7 +336,7 @@ def _find_h2(
         logging.debug(f"search\t{x}\t{nLL}")
         return nLL
 
-    _ = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2)
+    _ = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
     return resmin[0]
 
 
@@ -383,7 +374,7 @@ def _find_beta(yKy, XKX, XKy):
     # RSS = (y - X @ beta).T @ (y - X @ beta)
     # recall that (a-b).T @ (a-b) = a.T@a - 2*a.T@b + b.T@b
     # RSS = y.T @ y - 2*y.T @ (X @ beta) + X @ beta.T @ (X @ beta)
-    # ref2: beta is choosen s.t. y.T@X = X@beta.T@X aka X.T@X@beta
+    # ref2: beta is chosen s.t. y.T@X = X@beta.T@X aka X.T@X@beta
     # RSS = y.T @ y - 2*y.T @ (X @ beta) + y.T @ X @ beta)
     # RSS = y.T @ y - y.T @ X @ beta
 
@@ -445,6 +436,8 @@ def _loglikelihood_ml(yKy, XKX, XKy):
     # !!!cmk which is negative loglikelihood and which is LL?
     return -nLL, beta, variance_beta
 
+
+#!!!cmk rename covar_row_count to individual_count
 
 # Returns a kdi that is the original Kg + delta I
 # (We pass K0_eigen, but only use metadata such as eigenvalues)
@@ -511,8 +504,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
             kernel_standardizer, KS_Identity
         ), "cmk need code for other kernel standardizers"
         vectors, sqrt_values, _ = np.linalg.svd(
-            K0.snpreader.read().standardize(K0.standardizer).val,
-            full_matrices=False,
+            K0.snpreader.read().standardize(K0.standardizer).val, full_matrices=False,
         )
         if np.any(sqrt_values < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
@@ -544,13 +536,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
 
 #!!!cmk kludge - reorder inputs
 def _find_per_chrom_list(
-    chrom_list,
-    K0_eigen_by_chrom,
-    covar,
-    pheno,
-    GB_goal,
-    cache_folder,
-    runner,
+    chrom_list, K0_eigen_by_chrom, covar, pheno, GB_goal, cache_folder, runner,
 ):
     # =========================
     # Unless the cache is complete,
@@ -628,11 +614,7 @@ def _find_per_chrom_list(
         else:
             covar_r, pheno_r = chrom_later_dict[chrom]
         per_chrom_list.append(
-            {
-                "chrom": int(chrom),
-                "covar_r": covar_r,
-                "pheno_r": pheno_r,
-            }
+            {"chrom": int(chrom), "covar_r": covar_r, "pheno_r": pheno_r,}
         )
 
     mark_cache_complete(cache_folder1)
@@ -786,9 +768,7 @@ def _find_per_pheno_per_chrom_list(
 
     #!!!cmk kludge be consistent with if "reducer", "mapper", "eigen" go at front or back of variable
     per_pheno_per_chrom_list = map_reduce(
-        per_chrom_list,
-        nested=mapper_find_per_pheno_list,
-        runner=runner,
+        per_chrom_list, nested=mapper_find_per_pheno_list, runner=runner,
     )
 
     mark_cache_complete(cache_folder1)
@@ -823,9 +803,7 @@ def _test_in_batches(
     if test_via_reml:
         covar = covar.read(view_ok=True)
         XTX = PstData(
-            val=np.full((cc + 1, cc + 1), fill_value=np.nan),
-            row=x_sid,
-            col=x_sid,
+            val=np.full((cc + 1, cc + 1), fill_value=np.nan), row=x_sid, col=x_sid,
         )
         XTX.val[:cc, :cc] = covarTcovar.val
     else:
@@ -858,7 +836,7 @@ def _test_in_batches(
 
         sid_count = test_snps_for_chrom.sid_count
         iid_count = test_snps_for_chrom.iid_count
-        GB_total = iid_count * sid_count * 8.0 / (1024.0**3)
+        GB_total = iid_count * sid_count * 8.0 / (1024.0 ** 3)
         sid_step = min(sid_count, int(np.ceil(GB_goal * sid_count / GB_total)))
 
         # For each test_snp batch (in parallel) ...
@@ -879,7 +857,7 @@ def _test_in_batches(
             )
 
             #!!!cmk could add another level of map_reduce here
-            alt_batch_r = K0_eigen.rotate(alt_batch, GB_goal = GB_goal)
+            alt_batch_r = K0_eigen.rotate(alt_batch, GB_goal=GB_goal)
 
             # ==================================
             # For each phenotype
@@ -888,7 +866,9 @@ def _test_in_batches(
             for pheno_index, (per_pheno_reader, pheno_r_i) in enumerate(
                 zip(per_pheno_list, pheno_r)
             ):
-                logging.info(f"sid_start={sid_start:,d}, sid_step={sid_step:,d}, pheno={pheno_index:,d}")
+                logging.info(
+                    f"sid_start={sid_start:,d}, sid_step={sid_step:,d}, pheno={pheno_index:,d}"
+                )
                 with per_pheno_reader.read() as per_pheno_data:
                     for result in _generate_results(
                         K0_eigen,
@@ -909,10 +889,10 @@ def _test_in_batches(
                 np.arange(sid_start, sid_start + alt_batch.sid_count), pheno_count
             )
             #!!!cmk0
-            #df_per_batch["SNP"] = np.repeat(alt_batch.sid, pheno_count)
-            #df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_count)
-            #df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_count)
-            #df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_count)
+            # df_per_batch["SNP"] = np.repeat(alt_batch.sid, pheno_count)
+            # df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_count)
+            # df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_count)
+            # df_per_batch["ChrPos"] = np.repeat(alt_batch.pos[:, 2], pheno_count)
 
             # !!!cmk in lmmcov, but not lmm
             # df_per_batch['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
@@ -1089,10 +1069,7 @@ def _generate_results(
 ):
 
     covarKalt_batch, _ = AKB.from_rotations(
-        covar_r,
-        per_pheno_data.K0_kdi,
-        alt_batch_r,
-        aK=per_pheno_data.covarK,
+        covar_r, per_pheno_data.K0_kdi, alt_batch_r, aK=per_pheno_data.covarK,
     )
     alt_batchKpheno, alt_batchK = AKB.from_rotations(
         alt_batch_r, per_pheno_data.K0_kdi, pheno_r_i
@@ -1111,10 +1088,7 @@ def _generate_results(
         # with the alt value.
         # ==================================
         altKalt, _ = AKB.from_rotations(
-            alt_r,
-            per_pheno_data.K0_kdi,
-            alt_r,
-            aK=alt_batchK[:, i : i + 1],
+            alt_r, per_pheno_data.K0_kdi, alt_r, aK=alt_batchK[:, i : i + 1],
         )
 
         per_pheno_data.XKX[:cc, cc:] = covarKalt_batch[:, i : i + 1]  # upper right
@@ -1150,12 +1124,12 @@ def _generate_results(
 
         yield {
             "SNP": alt_r.col[0],
-            "Chr": alt_batch.pos[i,0], 
-            "GenDist": alt_batch.pos[i,1], 
-            "ChrPos": alt_batch.pos[i,2], 
+            "Chr": alt_batch.pos[i, 0],
+            "GenDist": alt_batch.pos[i, 1],
+            "ChrPos": alt_batch.pos[i, 2],
             "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-            "SnpWeight": beta.val[-1,0],  #!!!cmk
-            "SnpWeightSE": np.sqrt(variance_beta[-1])
+            "SnpWeight": beta.val[-1, 0],  #!!!cmk
+            "SnpWeightSE": np.NaN  #!!!cmk0 np.sqrt(variance_beta[-1])
             if variance_beta is not None
             else None,
             # !!!cmk right name and place?
@@ -1163,20 +1137,23 @@ def _generate_results(
             "Nullh2": per_pheno_data.K0_kdi.h2,
         }
 
+
 def _set_block_size(K0, K1, mixing, GB_goal, force_full_rank, force_low_rank):
-    min_count = _internal_determine_block_size(K0, K1, mixing, force_full_rank, force_low_rank)
+    min_count = _internal_determine_block_size(
+        K0, K1, mixing, force_full_rank, force_low_rank
+    )
     iid_count = K0.iid_count if K0 is not None else K1.iid_count
     block_size = _block_size_from_GB_goal(GB_goal, iid_count, min_count)
-    #logging.info("Dividing SNPs by {0}".format(-(test_snps.sid_count//-block_size)))
+    # logging.info("Dividing SNPs by {0}".format(-(test_snps.sid_count//-block_size)))
 
     try:
         K0.block_size = block_size
     except:
-        pass # ignore
+        pass  # ignore
 
     try:
         K1.block_size = block_size
     except:
-        pass # ignore
+        pass  # ignore
 
     return K0, K1, block_size

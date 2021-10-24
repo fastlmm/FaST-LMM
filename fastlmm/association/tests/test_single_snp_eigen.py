@@ -48,7 +48,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def cmk0test_compare_with_single_snp(self):
+    def test_compare_with_single_snp(self):
         from pysnptools.snpreader import Bed
         import numpy as np
         from fastlmm.association import single_snp
@@ -161,7 +161,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         print("!!!cmk0")
 
 
-    def test_same_as_old_code(self):  #!!!cmk too slow???
+    def cmk0test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
@@ -253,9 +253,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             runner = Local()
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
-        first_list = [{"GB_goal": ".0001"},
-                      {"GB_goal": "1"},
-                      {"GB_goal": "100_000"}
+        first_list = [{"use_reml": "True"},
             ] + add_for_coverage
 
         def mapper2(index_total_option):
