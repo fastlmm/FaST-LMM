@@ -160,16 +160,15 @@ class TestSingleSnpSimple(unittest.TestCase):
                 K0 = to_kernel(snps_reader[:, :train_count], kernel_standardizer=KernelIdentity())
                 test_snps = snps_reader[:, train_count : train_count + test_count]
 
-                while True:
-                    frame = single_snp_simple(
-                        test_snps=test_snps.read().val,
-                        pheno=pheno.read().val,
-                        K0=K0.read().val,
-                        covar=cov.read().val,
-                        log_delta=np.log(delta) if delta is not None else None,
-                        _find_delta_via_reml=use_reml,
-                        _test_via_reml=use_reml,
-                    )
+                frame = single_snp_simple(
+                    test_snps=test_snps.read().val,
+                    pheno=pheno.read().val,
+                    K=K0.read().val,
+                    covar=cov.read().val,
+                    log_delta=np.log(delta) if delta is not None else None,
+                    _find_delta_via_reml=use_reml,
+                    _test_via_reml=use_reml,
+                )
 
                 G = snps_reader.read().standardize().val
                 if cov is not None:

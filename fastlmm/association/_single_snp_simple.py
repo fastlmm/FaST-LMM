@@ -104,12 +104,13 @@ def _find_h2(
         covarKpheno = covarK.T @ pheno_r
 
         nLL, _, _ = _loglikelihood(
-            logdet_covarTcovar,
-            individual_count,
+            K_eigenvalues_plus_delta,
             phenoKpheno,
             covarKcovar,
             covarKpheno,
-            use_reml=use_reml,
+            use_reml,
+            logdet_covarTcovar,
+            individual_count,
         )
         nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
@@ -118,29 +119,30 @@ def _find_h2(
         return nLL
 
     _ = minimize1D(f=f, nGrid=nGridH2, minval=0.00001, maxval=maxH2)
-    return resmin[0]
+    return resmin[0]["h2"]
 
 
-def _loglikelihood(logdet_xtx, X_row_count, yKy, XKX, XKy, use_reml):
+def _loglikelihood(K_eigenvalues_plus_delta, yKy, XKX, XKy, use_reml, logdet_xtx, X_row_count):
     if use_reml:  # !!!cmk don't trust the REML path
-        nLL, beta = _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy)
+        nLL, beta = _loglikelihood_reml(K_eigenvalues_plus_delta, logdet_xtx, X_row_count, yKy, XKX, XKy)
         return nLL, beta, None
     else:
         return _loglikelihood_ml(yKy, XKX, XKy)
 
 
 # Note we have both XKX with XTX
-def _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy):
-    kdi = yKy.kdi
+def _loglikelihood_reml(K_eigenvalues_plus_delta, logdet_xtx, X_row_count, yKy, XKX, XKy):
+    logdet = np.log(K_eigenvalues_plus_delta.sum())
 
-    eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
-    logdet_xkx, _ = eigen_xkx.logdet()
+
+    (xkx_eigenvalues, _), beta, rss = _find_beta(yKy, XKX, XKy)
+    logdet_xkx = np.log(xkx_eigenvalues.sum())
 
     X_row_less_col = X_row_count - XKX.shape[0]
 
     sigma2 = rss / X_row_less_col
     nLL = 0.5 * (
-        kdi.logdet
+        logdet
         + logdet_xkx
         - logdet_xtx
         + X_row_less_col * (np.log(2.0 * np.pi * sigma2) + 1)
@@ -153,13 +155,15 @@ def _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy):
     return -nLL, beta
 
 
-def _loglikelihood_ml(yKy, XKX, XKy):
-    kdi = yKy.kdi
+def _loglikelihood_ml(K_eigenvalues_plus_delta, yKy, XKX, XKy):
+    #!!!cmk full-rank only
+    logdet = np.log(K_eigenvalues_plus_delta.sum())
+    row_count = len(K_eigenvalues_plus_delta)
 
     eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
 
-    sigma2 = rss / kdi.row_count
-    nLL = 0.5 * (kdi.logdet + kdi.row_count * (np.log(2.0 * np.pi * sigma2) + 1))
+    sigma2 = rss / row_count
+    nLL = 0.5 * (logdet + row_count * (np.log(2.0 * np.pi * sigma2) + 1))
     assert np.isreal(
         nLL
     ), "nLL has an imaginary component, possibly due to constant covariates"
@@ -194,10 +198,14 @@ def _find_beta(yKy, XKX, XKy):
     # So, beta = (vectors/values) @ vectors.T @ X.T @ y
     # or  beta = vectors @ (vectors.T @ (X.T @ y)/values)
 
-    eigen_xkx = EigenData.from_aka(XKX, keep_above=1e-10)
-    # !!!cmk why two different ways to talk about chking low rank?
-    XKy_r_s = eigen_xkx.rotate_and_scale(XKy, ignore_low_rank=True)
-    beta = eigen_xkx.rotate_back(XKy_r_s, check_low_rank=False)
+    XKX_eigenvalues, XKX_eigenvectors = np.linalg.eigh(XKX)
+    keep = XKX_eigenvalues > 1e-10
+    XKX_eigenvalues = XKX_eigenvalues[keep]
+    XKX_eigenvectors = XKX_eigenvectors[:,keep]
+
+    #!!!cmk doesn't work with low-rank???
+    beta = XKX_eigenvectors @ (XKX_eigenvectors.T @ XKy / XKX_eigenvalues)
+
 
     ##################################################################
     # residual sum of squares, RSS (aka SSR aka SSE)
@@ -213,6 +221,6 @@ def _find_beta(yKy, XKX, XKy):
     # RSS = y.T @ y - 2*y.T @ (X @ beta) + y.T @ X @ beta)
     # RSS = y.T @ y - y.T @ X @ beta
 
-    rss = float(yKy.val - XKy.val.T @ beta.val)
+    rss = float(yKy - XKy.T @ beta)
 
-    return eigen_xkx, beta, rss
+    return (XKX_eigenvalues, XKX_eigenvectors), beta, rss
