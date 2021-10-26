@@ -8,7 +8,7 @@ from pathlib import Path
 from pysnptools.snpreader import Bed, Pheno, SnpData
 from pysnptools.util.mapreduce1.runner import LocalMultiProc, Local
 from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.standardizer import Standardizer, Unit
+from pysnptools.standardizer import Unit
 
 from fastlmm.inference.fastlmm_predictor import _kernel_fixup
 from fastlmm.util import example_file  # Download and return local file name
@@ -104,8 +104,8 @@ class TestSingleSnpSimple(unittest.TestCase):
         }
 
         matrix = {
-            "use_reml": ["False", "True"],
-            "train_count": ["50", "750"],
+            "use_reml": ["False"],  # !!!cmk0, "True"],
+            "train_count": ["750"],  # cmk0 ["50", "750"],
             "cov": ["None", "cov_reader"],
             "delta": ["None", "1.0", "0.20000600000000002"],
             "pheno": ["pheno_fn"],
@@ -122,11 +122,11 @@ class TestSingleSnpSimple(unittest.TestCase):
             runner = Local()
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
-        first_list = [{"use_reml": "True"}]
+        first_list = [{'use_reml': 'False', 'train_count': '750', 'cov': 'cov_reader', 'delta': '0.20000600000000002', 'pheno': 'pheno_fn', 'snps_reader': 'snps_reader5'}]
 
         def mapper2(index_total_option):
             import numpy as np
-            from pysnptools.snpreader import Bed, Pheno, SnpData
+            from pysnptools.snpreader import Pheno, SnpData
 
             index, total, option = index_total_option
             print(f"============{index} of {total}==================")
@@ -148,7 +148,6 @@ class TestSingleSnpSimple(unittest.TestCase):
             else:
                 cov = _append_bias(cov)
 
-
             try:
                 from pysnptools.kernelstandardizer import Identity as KernelIdentity
                 from pysnptools.util.mapreduce1 import map_reduce
@@ -156,14 +155,16 @@ class TestSingleSnpSimple(unittest.TestCase):
                 from fastlmm.association.single_snp_eigen import eigen_from_kernel
 
                 # !!!cmk why not diag standardize?
-                # The [:,:] stops it from being an in-memory EigenData
-                K0 = to_kernel(snps_reader[:, :train_count], kernel_standardizer=KernelIdentity())
+                K_eigen = eigen_from_kernel(
+                    snps_reader[:, :train_count], kernel_standardizer=KernelIdentity(),
+                )
                 test_snps = snps_reader[:, train_count : train_count + test_count]
 
                 frame = single_snp_simple(
-                    test_snps=test_snps.read().val,
+                    test_snps=test_snps.read().standardize().val,
+                    test_snps_ids=test_snps.sid,
                     pheno=pheno.read().val,
-                    K=K0.read().val,
+                    K_eigen=(K_eigen.values, K_eigen.vectors),
                     covar=cov.read().val,
                     log_delta=np.log(delta) if delta is not None else None,
                     _find_delta_via_reml=use_reml,
@@ -202,15 +203,11 @@ class TestSingleSnpSimple(unittest.TestCase):
                     mapper=mapper,
                     runner=Local() if runner is None else runner,
                 )
-                # cmk kludge rename phenox
-                for pheno_index in range(phenox.sid_count):
-                    frame_i = frame[frame["Pheno"] == phenox.sid[pheno_index]]
-                    # check p-values in log-space!
-                    np.testing.assert_array_almost_equal(
-                        np.log(gwas_pvalues_list[pheno_index]),
-                        np.log(frame_i.PValue),  # !!!cmk
-                        decimal=7,
-                    )
+                np.testing.assert_array_almost_equal(
+                    np.log(gwas_pvalues_list[0]),
+                    np.log(sorted(frame.PValue.values)),
+                    decimal=6,
+                )
             except exception_to_catch as e:
                 print(str(e))
                 return option
@@ -282,26 +279,24 @@ def matrix_combo(option_matrix, seed, extra_lambda, first_list=[]):
         index += 1
         yield index, total, permutations_dicts[i]
 
-#!!!cmk where should this live?
+
+# !!!cmk where should this live?
 def to_kernel(K0, kernel_standardizer, count_A1=None):
     """!!!cmk documentation"""
     # !!!cmk could offer a low-memory path that uses memmapped files
-    from pysnptools.kernelreader import SnpKernel
-    from pysnptools.kernelstandardizer import Identity as KS_Identity
 
     assert K0 is not None
     K0 = _kernel_fixup(K0, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
     assert K0.iid0 is K0.iid1, "Expect K0 to be square"
 
     # !!!cmk understand _read_kernel, _read_with_standardizing
-    #!!!cmk test
+    # !!!cmk test
     K0 = K0._read_with_standardizing(
         kernel_standardizer=kernel_standardizer,
         to_kerneldata=True,
         return_trained=False,
     )
     return K0
-
 
 
 def getTestSuite():

@@ -1,18 +1,25 @@
-import numpy as np
 import logging
+
+import numpy as np
+import scipy as sp
+import pandas as pd
+
 from fastlmm.util.mingrid import minimize1D
 
 
 def single_snp_simple(
     test_snps,
+    test_snps_ids,
     pheno,
-    K,
+    K_eigen, # !!!cmk be consistant with K_eigen vs eigen_K etc
     covar,
-    log_delta,
+    log_delta=None,
     _find_delta_via_reml=True,
     _test_via_reml=False,
 ):
-    """K should be a symmetric matrix (???cmk with diag sum=shape[0]???)
+    """
+    test_snps should already be unit standardized()
+    K should be a symmetric matrix (???cmk with diag sum=shape[0]???)
     with full-rank eigenvectors(???)
     covar should already have a column of 1's
     set log_delta to None for search
@@ -29,12 +36,10 @@ def single_snp_simple(
     else:
         covarTcovar, logdet_covarTcovar = None, None
 
-    K_eigenvalues, K_eigenvectors = np.linalg.eigh(K)  # cmk assumes full rank
+    K_eigenvalues, K_eigenvectors = K_eigen  # cmk assumes full rank
 
-    covar_r = K_eigenvectors.T @ covar # !!!cmk correction
+    covar_r = K_eigenvectors.T @ covar  # !!!cmk correction
     pheno_r = K_eigenvectors.T @ pheno
-
-    cc = covar.shape[1]
 
     if log_delta is None:
         h2 = _find_h2(
@@ -46,10 +51,81 @@ def single_snp_simple(
             use_reml=_find_delta_via_reml,
         )
 
-        _, _, delta = _hld(h2=h2)
+        h2, _, delta = _hld(h2=h2)
     else:
-        _, _, delta = _hld(log_delta=log_delta)
+        h2, _, delta = _hld(log_delta=log_delta)
     K_eigenvalues_plus_delta = K_eigenvalues + delta
+
+    covarK = covar_r / K_eigenvalues_plus_delta[:, np.newaxis]
+    covarKcovar = covarK.T @ covar_r  # !!!cmk full rank only
+
+    phenoK = pheno_r / K_eigenvalues_plus_delta[:, np.newaxis]
+    phenoKpheno = phenoK.T @ pheno_r  # !!!cmk full rank only
+
+    covarKpheno = covarK.T @ pheno_r  # !!!cmk full rank only
+
+    ll_null, _, _ = _loglikelihood(
+        K_eigenvalues_plus_delta,
+        h2,
+        phenoKpheno,
+        covarKcovar,
+        covarKpheno,
+        _test_via_reml,
+        logdet_covarTcovar,
+        pheno.shape[0],
+    )
+
+    result_list = []
+    for test_snp_index in range(test_snps.shape[1]):
+        alt = test_snps[:, test_snp_index : test_snp_index + 1]
+
+        X = np.c_[covar, alt]
+        X_r = K_eigenvectors.T @ X
+        XK = X_r / K_eigenvalues_plus_delta[:, np.newaxis]
+        XKX = XK.T @ X_r
+
+        # Only need XTX and "logdet_xtx" for REML
+        if _test_via_reml:
+            XTX = X.T @ X
+            eigenvalues_XTX, _ = np.linalg.eigh(XTX)
+            logdet_xtx = np.log(eigenvalues_XTX.sum())
+        else:
+            XTX = None
+            logdet_xtx = None
+
+        XKpheno = XK.T @ pheno_r
+
+        # ==================================
+        # Find likelihood with test SNP and score.
+        # ==================================
+        ll_alt, beta, variance_beta = _loglikelihood(
+            K_eigenvalues_plus_delta,
+            h2,
+            phenoKpheno,
+            XKX,
+            XKpheno,
+            _test_via_reml,
+            logdet_xtx,
+            pheno.shape[0],
+        )
+
+        test_statistic = ll_alt - ll_null
+
+        result_list.append(
+            {
+                "SNP": test_snps_ids[test_snp_index],
+                "PValue": sp.stats.chi2.sf(2.0 * test_statistic, df=1),
+                "SnpWeight": beta[-1, 0],  # !!!cmk
+                "SnpWeightSE": np.NaN  # !!!cmk0 np.sqrt(variance_beta[-1])
+                if variance_beta is not None
+                else None,
+                # !!!cmk right name and place?
+                "Nullh2": h2,
+            }
+        )
+
+    df = pd.DataFrame(result_list)
+    return df
 
 
 def _hld(h2=None, log_delta=None, delta=None):
@@ -105,6 +181,7 @@ def _find_h2(
 
         nLL, _, _ = _loglikelihood(
             K_eigenvalues_plus_delta,
+            h2,
             phenoKpheno,
             covarKcovar,
             covarKpheno,
@@ -122,18 +199,23 @@ def _find_h2(
     return resmin[0]["h2"]
 
 
-def _loglikelihood(K_eigenvalues_plus_delta, yKy, XKX, XKy, use_reml, logdet_xtx, X_row_count):
+def _loglikelihood(
+    K_eigenvalues_plus_delta, h2, yKy, XKX, XKy, use_reml, logdet_xtx, X_row_count
+):
     if use_reml:  # !!!cmk don't trust the REML path
-        nLL, beta = _loglikelihood_reml(K_eigenvalues_plus_delta, logdet_xtx, X_row_count, yKy, XKX, XKy)
+        nLL, beta = _loglikelihood_reml(
+            K_eigenvalues_plus_delta, logdet_xtx, X_row_count, yKy, XKX, XKy
+        )
         return nLL, beta, None
     else:
-        return _loglikelihood_ml(yKy, XKX, XKy)
+        return _loglikelihood_ml(K_eigenvalues_plus_delta, h2, yKy, XKX, XKy)
 
 
 # Note we have both XKX with XTX
-def _loglikelihood_reml(K_eigenvalues_plus_delta, logdet_xtx, X_row_count, yKy, XKX, XKy):
-    logdet = np.log(K_eigenvalues_plus_delta.sum())
-
+def _loglikelihood_reml(
+    K_eigenvalues_plus_delta, logdet_xtx, X_row_count, yKy, XKX, XKy
+):
+    logdet = np.log(K_eigenvalues_plus_delta).sum()
 
     (xkx_eigenvalues, _), beta, rss = _find_beta(yKy, XKX, XKy)
     logdet_xkx = np.log(xkx_eigenvalues.sum())
@@ -155,12 +237,12 @@ def _loglikelihood_reml(K_eigenvalues_plus_delta, logdet_xtx, X_row_count, yKy, 
     return -nLL, beta
 
 
-def _loglikelihood_ml(K_eigenvalues_plus_delta, yKy, XKX, XKy):
-    #!!!cmk full-rank only
-    logdet = np.log(K_eigenvalues_plus_delta.sum())
+def _loglikelihood_ml(K_eigenvalues_plus_delta, h2, yKy, XKX, XKy):
+    # !!!cmk full-rank only
+    logdet = np.log(K_eigenvalues_plus_delta).sum()
     row_count = len(K_eigenvalues_plus_delta)
 
-    eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
+    (eigen_xkx_values, eigen_xkx_vectors), beta, rss = _find_beta(yKy, XKX, XKy)
 
     sigma2 = rss / row_count
     nLL = 0.5 * (logdet + row_count * (np.log(2.0 * np.pi * sigma2) + 1))
@@ -171,9 +253,7 @@ def _loglikelihood_ml(K_eigenvalues_plus_delta, yKy, XKX, XKy):
     # where h2*sigma2 is sigma2_g
     # !!!cmk kludge need to test these
     variance_beta = (
-        kdi.h2
-        * sigma2
-        * (eigen_xkx.vectors / eigen_xkx.values * eigen_xkx.vectors).sum(-1)
+        h2 * sigma2 * (eigen_xkx_vectors / eigen_xkx_values * eigen_xkx_vectors).sum(-1)
     )
     # !!!cmk which is negative loglikelihood and which is LL?
     return -nLL, beta, variance_beta
@@ -196,16 +276,15 @@ def _find_beta(yKy, XKX, XKy):
     # print((vectors/values) @ vectors.T)
     #
     # So, beta = (vectors/values) @ vectors.T @ X.T @ y
-    # or  beta = vectors @ (vectors.T @ (X.T @ y)/values)
+    # or  beta = vectors @ (vectors.T @ (X.T @ y)/values) ???!!!cmk
 
     XKX_eigenvalues, XKX_eigenvectors = np.linalg.eigh(XKX)
     keep = XKX_eigenvalues > 1e-10
     XKX_eigenvalues = XKX_eigenvalues[keep]
-    XKX_eigenvectors = XKX_eigenvectors[:,keep]
+    XKX_eigenvectors = XKX_eigenvectors[:, keep]
 
-    #!!!cmk doesn't work with low-rank???
-    beta = XKX_eigenvectors @ (XKX_eigenvectors.T @ XKy / XKX_eigenvalues)
-
+    # !!!cmk doesn't work with low-rank???
+    beta = (XKX_eigenvectors / XKX_eigenvalues) @ XKX_eigenvectors.T @ XKy
 
     ##################################################################
     # residual sum of squares, RSS (aka SSR aka SSE)

@@ -39,6 +39,7 @@ from fastlmm.util.pickle_io import load, save
 def single_snp_eigen(
     test_snps,
     pheno,
+    # !!!cmk rename K0 to K because there is no K1
     K0_eigen_by_chrom,
     covar=None,  # !!!cmk covar_by_chrom=None,
     leave_out_one_chrom=True,
@@ -93,7 +94,7 @@ def single_snp_eigen(
     assert np.all(
         [K0_eigen.row_count == iid_count_before for K0_eigen in K0_eigen_list]
     ), "Every K0_eigen must have the same number of individuals"
-    #!!!cmk kludge is it OK if some K0_eigens are repeats and they get reordered?
+    # !!!cmk kludge is it OK if some K0_eigens are repeats and they get reordered?
     intersected = pstutil.intersect_apply([test_snps, pheno, covar] + K0_eigen_list)
     test_snps, pheno, covar = intersected[0:3]
     K0_eigen_list = intersected[3:]
@@ -116,7 +117,7 @@ def single_snp_eigen(
     if stop_early == 0:
         return
 
-    #!!!cmk1 cache this
+    # !!!cmk1 cache this
     # ===============================
     # If needed later for REML, compute covarTcovar
     # and logdet(eigen(covarTcovar))
@@ -130,7 +131,7 @@ def single_snp_eigen(
     if stop_early == 1:
         return
 
-    #!!!cmk1 cache this
+    # !!!cmk1 cache this
     # ===============================
     # In parallel, for each chrom,
     # rotate the covariates and phenotypes
@@ -158,7 +159,7 @@ def single_snp_eigen(
         runner,
     )
 
-    #!!!cmk give an error mesage if out of range
+    # !!!cmk give an error mesage if out of range
     if stop_early == 3:
         return
 
@@ -177,7 +178,7 @@ def single_snp_eigen(
         runner,
     )
 
-    if output_file_name is not None:  #!!!cmk test
+    if output_file_name is not None:  # !!!cmk test
         dataframe.to_csv(output_file_name, sep="\t", index=False)
 
     return dataframe
@@ -247,7 +248,7 @@ class KdI:
             log_delta = log_delta
             delta = np.exp(log_delta)
             h2 = 1.0 / (delta + 1)
-        elif delta is not None:  #!!!cmk test
+        elif delta is not None:  # !!!cmk test
             delta = delta
             log_delta = np.log(delta) if delta != 0 else None
             h2 = 1.0 / (delta + 1)
@@ -360,7 +361,7 @@ def _find_beta(yKy, XKX, XKy):
     # or  beta = vectors @ (vectors.T @ (X.T @ y)/values)
 
     eigen_xkx = EigenData.from_aka(XKX, keep_above=1e-10)
-    #!!!cmk why two different ways to talk about chking low rank?
+    # !!!cmk why two different ways to talk about chking low rank?
     XKy_r_s = eigen_xkx.rotate_and_scale(XKy, ignore_low_rank=True)
     beta = eigen_xkx.rotate_back(XKy_r_s, check_low_rank=False)
 
@@ -427,7 +428,7 @@ def _loglikelihood_ml(yKy, XKX, XKy):
     ), "nLL has an imaginary component, possibly due to constant covariates"
     # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
     # where h2*sigma2 is sigma2_g
-    #!!!cmk kludge need to test these
+    # !!!cmk kludge need to test these
     variance_beta = (
         kdi.h2
         * sigma2
@@ -437,7 +438,7 @@ def _loglikelihood_ml(yKy, XKX, XKy):
     return -nLL, beta, variance_beta
 
 
-#!!!cmk rename covar_row_count to individual_count
+# !!!cmk rename covar_row_count to individual_count
 
 # Returns a kdi that is the original Kg + delta I
 # (We pass K0_eigen, but only use metadata such as eigenvalues)
@@ -486,7 +487,7 @@ def _create_dataframe():
     return dataframe
 
 
-#!!!cmk where should this live?
+# !!!cmk where should this live?
 def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
     """!!!cmk documentation"""
     # !!!cmk could offer a low-memory path that uses memmapped files
@@ -511,7 +512,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
         eigen = EigenData(values=sqrt_values * sqrt_values, vectors=vectors, iid=K0.iid)
     else:
         # !!!cmk understand _read_kernel, _read_with_standardizing
-        #!!!cmk test
+        # !!!cmk test
         K0 = K0._read_with_standardizing(
             kernel_standardizer=kernel_standardizer,
             to_kerneldata=True,
@@ -534,7 +535,7 @@ def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
     return eigen
 
 
-#!!!cmk kludge - reorder inputs
+# !!!cmk kludge - reorder inputs
 def _find_per_chrom_list(
     chrom_list, K0_eigen_by_chrom, covar, pheno, GB_goal, cache_folder, runner,
 ):
@@ -614,7 +615,7 @@ def _find_per_chrom_list(
         else:
             covar_r, pheno_r = chrom_later_dict[chrom]
         per_chrom_list.append(
-            {"chrom": int(chrom), "covar_r": covar_r, "pheno_r": pheno_r,}
+            {"chrom": int(chrom), "covar_r": covar_r, "pheno_r": pheno_r}
         )
 
     mark_cache_complete(cache_folder1)
@@ -622,7 +623,7 @@ def _find_per_chrom_list(
     return per_chrom_list
 
 
-#!!!cmk kludge - reorder inputs
+# !!!cmk kludge - reorder inputs
 def _find_per_pheno_per_chrom_list(
     logdet_covarTcovar,
     per_chrom_list,
@@ -766,7 +767,7 @@ def _find_per_pheno_per_chrom_list(
             range(pheno.col_count), mapper=mapper_search, reducer=reducer_search
         )
 
-    #!!!cmk kludge be consistent with if "reducer", "mapper", "eigen" go at front or back of variable
+    # !!!cmk kludge be consistent with if "reducer", "mapper", "eigen" go at front or back of variable
     per_pheno_per_chrom_list = map_reduce(
         per_chrom_list, nested=mapper_find_per_pheno_list, runner=runner,
     )
@@ -782,7 +783,7 @@ def _cc_and_x_sid(covar):
     return cc, x_sid
 
 
-#!!!cmk reorder inputs kludge
+# !!!cmk reorder inputs kludge
 def _test_in_batches(
     covar,
     covarTcovar,
@@ -817,7 +818,7 @@ def _test_in_batches(
         per_chrom = per_chrom_list[chrom_index]
         per_pheno_list = per_pheno_per_chrom_list[chrom_index]
         chrom = per_chrom["chrom"]
-        #!!!cmk similar code elsewhere
+        # !!!cmk similar code elsewhere
         covar_r = per_chrom["covar_r"].read(view_ok=True)
         pheno_r = per_chrom["pheno_r"].read(view_ok=True)
         pheno_count = len(per_pheno_list)
@@ -832,7 +833,7 @@ def _test_in_batches(
         # Create a testsnp reader for this chrom, but don't read yet.
         # =========================
         test_snps_for_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
-        #!!!cmk0 check that GB_goal is right for low-rank Eigen
+        # !!!cmk0 check that GB_goal is right for low-rank Eigen
 
         sid_count = test_snps_for_chrom.sid_count
         iid_count = test_snps_for_chrom.iid_count
@@ -856,7 +857,7 @@ def _test_in_batches(
                 .standardize()
             )
 
-            #!!!cmk could add another level of map_reduce here
+            # !!!cmk could add another level of map_reduce here
             alt_batch_r = K0_eigen.rotate(alt_batch, GB_goal=GB_goal)
 
             # ==================================
@@ -888,7 +889,7 @@ def _test_in_batches(
             df_per_batch["sid_index"] = np.tile(
                 np.arange(sid_start, sid_start + alt_batch.sid_count), pheno_count
             )
-            #!!!cmk0
+            # !!!cmk0
             # df_per_batch["SNP"] = np.repeat(alt_batch.sid, pheno_count)
             # df_per_batch["Chr"] = np.repeat(alt_batch.pos[:, 0], pheno_count)
             # df_per_batch["GenDist"] = np.repeat(alt_batch.pos[:, 1], pheno_count)
@@ -901,13 +902,13 @@ def _test_in_batches(
 
             return df_per_batch
 
-        def reducer2(df_per_batch_sequence):  #!!!cmk kludge rename
+        def reducer2(df_per_batch_sequence):  # !!!cmk kludge rename
             df_per_chrom = pd.concat(df_per_batch_sequence)
             return df_per_chrom
 
         return map_reduce(
             range(0, test_snps_for_chrom.sid_count, sid_step),
-            mapper=mapper,  #!!!cmk kludge rename
+            mapper=mapper,  # !!!cmk kludge rename
             reducer=reducer2,
         )
 
@@ -919,7 +920,7 @@ def _test_in_batches(
 
     dataframe = map_reduce(
         range(len(per_chrom_list)),
-        nested=df_per_chrom_mapper,  #!!!cmk kludge rename
+        nested=df_per_chrom_mapper,  # !!!cmk kludge rename
         reducer=df_per_chrom_reducer,
         runner=runner,
     )
@@ -953,7 +954,7 @@ def cache_is_complete(cache_subfolder):
 
 def mark_cache_complete(cache_folder):
     if cache_folder is not None:
-        (cache_folder / "complete.txt").touch()  #!!!cmk const
+        (cache_folder / "complete.txt").touch()  # !!!cmk const
 
 
 def empty_cache(cache_folder):
@@ -1128,8 +1129,8 @@ def _generate_results(
             "GenDist": alt_batch.pos[i, 1],
             "ChrPos": alt_batch.pos[i, 2],
             "PValue": stats.chi2.sf(2.0 * test_statistic, df=1),
-            "SnpWeight": beta.val[-1, 0],  #!!!cmk
-            "SnpWeightSE": np.NaN  #!!!cmk0 np.sqrt(variance_beta[-1])
+            "SnpWeight": beta.val[-1, 0],  # !!!cmk
+            "SnpWeightSE": np.NaN  # !!!cmk0 np.sqrt(variance_beta[-1])
             if variance_beta is not None
             else None,
             # !!!cmk right name and place?
