@@ -112,7 +112,7 @@ class TestSingleSnpSimple(unittest.TestCase):
             "snps_reader": ["snps_reader1", "snps_reader5"],
         }
 
-        if True:
+        if False:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
@@ -121,7 +121,7 @@ class TestSingleSnpSimple(unittest.TestCase):
             test_runner = LocalMultiProc(6, just_one_process=False)
             runner = Local()
             exception_to_catch = Exception
-            extra_lambda = lambda case_number: case_number ** 0.5
+            extra_lambda = lambda case_number: case_number # ** 0.5
         first_list = [
             {
                 "use_reml": "True",
@@ -136,6 +136,7 @@ class TestSingleSnpSimple(unittest.TestCase):
         def mapper2(index_total_option):
             import numpy as np
             from pysnptools.snpreader import Pheno, SnpData
+            from fastlmm.association.single_snp_eigen import _append_bias
 
             index, total, option = index_total_option
             print(f"============{index} of {total}==================")
