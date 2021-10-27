@@ -176,7 +176,7 @@ class TestSingleSnpSimple(unittest.TestCase):
                     test_snps=test_snps.read().standardize().val,
                     test_snps_ids=test_snps.sid,
                     pheno=pheno.read().val,
-                    K_eigen=Eigen(K_eigen.values, K_eigen.vectors, delta=0),
+                    K_eigen=Eigen(K_eigen.values, K_eigen.vectors),
                     covar=cov1.read().val,
                     log_delta=np.log(delta) if delta is not None else None,
                     _find_delta_via_reml=use_reml,

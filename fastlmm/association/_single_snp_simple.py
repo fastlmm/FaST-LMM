@@ -20,6 +20,10 @@ class AK:
     def eigen(self):
         return self.a_r.eigen
 
+    @property
+    def is_low_rank(self):
+        return self.eigen.is_low_rank
+
 
 class AKB:
     def __init__(self, aK, b_r):
@@ -30,8 +34,20 @@ class AKB:
 
         self.aKb = aK.aK.T @ b_r.rotated
 
-        if aK.eigen.is_low_rank:
+        if aK.is_low_rank:
             self.aKb += aK.a_r.double.T @ b_r.double / aK.eigen_plus_delta.delta
+
+    @property
+    def eigen_plus_delta(self):
+        return self.aK.eigen_plus_delta
+
+    @property
+    def a_sid_count(self):
+        return self.aKb.shape[0]
+
+    @property
+    def eigen(self):
+        return self.aK.eigen
 
 
 class Rotation:
@@ -45,23 +61,48 @@ class Rotation:
 
 
 class Eigen:
-    def __init__(self, values, vectors, delta):
-        self.values = values + delta
+    def __init__(self, values, vectors):
+        self.values = values
         self.vectors = vectors
-        self.delta = delta
-        self.iid_count = self.vectors.shape[0]  # number of individuals
-        self.eid_count = self.vectors.shape[
-            1
-        ]  # number of eigenvalues (and eigenvectors)
-        self.is_low_rank = self.eid_count < self.iid_count
+        # number of indivduals & eigenvalues (and eigenvectors)
 
+    @property
+    def iid_count(self):
+        return self.vectors.shape[0]
+
+    @property
+    def eid_count(self):
+        return self.vectors.shape[1]
+
+    @property
+    def is_low_rank(self):
+        return self.eid_count < self.iid_count
+
+
+class EigenPlusDelta:
+    def __init__(self, eigen, delta):
+        self.eigen = eigen
+        self.delta = delta
+        self.values = eigen.values + delta
         self.logdet = np.log(self.values).sum()
         if self.is_low_rank:
             self.logdet += (self.iid_count - self.eid_count) * np.log(delta)
 
-    def plus(self, delta):
-        assert self.delta == 0, "Only have code for adding delta to zero delta"
-        return Eigen(self.values, self.vectors, delta=delta)
+    @property
+    def iid_count(self):
+        return self.eigen.iid_count
+
+    @property
+    def eid_count(self):
+        return self.eigen.eid_count
+
+    @property
+    def is_low_rank(self):
+        return self.eigen.is_low_rank
+
+    @property
+    def vectors(self):
+        return self.eigen.vectors
 
 
 def single_snp_simple(
@@ -106,7 +147,7 @@ def single_snp_simple(
     else:
         h2, _, delta = _hld(log_delta=log_delta)
 
-    K_eigen_plus_delta = K_eigen.plus(delta)
+    K_eigen_plus_delta = EigenPlusDelta(K_eigen, delta)
 
     covarK = AK(covar_r, K_eigen_plus_delta)
     phenoK = AK(pheno_r, K_eigen_plus_delta)
@@ -203,7 +244,7 @@ def _find_h2(
 
     def f(h2, resmin=resmin, **kwargs):
         _, _, delta = _hld(h2)
-        K_eigen_plus_delta = K_eigen.plus(delta)
+        K_eigen_plus_delta = EigenPlusDelta(K_eigen, delta)
 
         covarK = AK(covar_r, K_eigen_plus_delta)
         phenoK = AK(pheno_r, K_eigen_plus_delta)
@@ -227,8 +268,8 @@ def _find_h2(
 
 def _loglikelihood(XKX, yKy, XKy, use_reml, logdet_xtx):
     assert (
-        XKX.aK.eigen_plus_delta is yKy.aK.eigen_plus_delta
-        and yKy.aK.eigen_plus_delta is XKy.aK.eigen_plus_delta
+        XKX.eigen_plus_delta is yKy.eigen_plus_delta
+        and yKy.eigen_plus_delta is XKy.eigen_plus_delta
     ), "Expect XKX, yKy, and XKY to have the same eigen_plus_delta"
 
     if use_reml:  # !!!cmk don't trust the REML path
@@ -240,20 +281,20 @@ def _loglikelihood(XKX, yKy, XKy, use_reml, logdet_xtx):
 
 # Note we have both XKX with XTX
 def _loglikelihood_reml(XKX, yKy, XKy, logdet_xtx):
-    logdet = XKX.aK.eigen_plus_delta.logdet
-    iid_count = XKX.aK.eigen_plus_delta.iid_count
+    logdet = XKX.eigen_plus_delta.logdet
+    iid_count = XKX.eigen_plus_delta.iid_count
 
     (xkx_eigenvalues, _), beta, rss = _find_beta(yKy, XKX, XKy)
     logdet_xkx = np.log(xkx_eigenvalues).sum()
 
-    X_row_less_col = iid_count - XKX.aKb.shape[0]
+    X_iid_less_sid = iid_count - XKX.a_sid_count
 
-    sigma2 = rss / X_row_less_col
+    sigma2 = rss / X_iid_less_sid
     nLL = 0.5 * (
         logdet
         + logdet_xkx
         - logdet_xtx
-        + X_row_less_col * (np.log(2.0 * np.pi * sigma2) + 1)
+        + X_iid_less_sid * (np.log(2.0 * np.pi * sigma2) + 1)
     )
 
     assert np.isreal(
@@ -264,8 +305,8 @@ def _loglikelihood_reml(XKX, yKy, XKy, logdet_xtx):
 
 
 def _loglikelihood_ml(XKX, yKy, XKy):
-    logdet = XKX.aK.eigen_plus_delta.logdet
-    eigen_plus_delta = XKX.aK.eigen_plus_delta
+    logdet = XKX.eigen_plus_delta.logdet
+    eigen_plus_delta = XKX.eigen_plus_delta
     h2, _, _ = _hld(delta=eigen_plus_delta.delta)
     iid_count = eigen_plus_delta.iid_count
 
