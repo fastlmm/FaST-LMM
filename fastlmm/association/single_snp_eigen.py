@@ -274,7 +274,7 @@ class AKB(PstData):
 
         val = aK.T @ b_r.val
 
-        if kdi.is_low_rank:
+        if kdi.is_low_rank:  # !!!cmklr
             val += a_r.double.val.T @ b_r.double.val / kdi.delta
 
         result = AKB(val=val, row=a_r.col, col=b_r.col, kdi=kdi)
