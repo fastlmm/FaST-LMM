@@ -140,7 +140,7 @@ def single_snp_simple(
         if _test_via_reml:
             XTX = X.T @ X
             eigenvalues_XTX, _ = np.linalg.eigh(XTX)
-            logdet_xtx = np.log(eigenvalues_XTX.sum())
+            logdet_xtx = np.log(eigenvalues_XTX).sum()
         else:
             XTX = None
             logdet_xtx = None
@@ -255,12 +255,13 @@ def _loglikelihood(XKX, yKy, XKy, use_reml, logdet_xtx):
 def _loglikelihood_reml(
     XKX, yKy, XKy, logdet_xtx
 ):
-    logdet = np.log(K_eigen_plus_delta).sum()
+    logdet = XKX.aK.eigen_plus_delta.logdet
+    iid_count = XKX.aK.eigen_plus_delta.eigen.iid_count
 
     (xkx_eigenvalues, _), beta, rss = _find_beta(yKy, XKX, XKy)
-    logdet_xkx = np.log(xkx_eigenvalues.sum())
+    logdet_xkx = np.log(xkx_eigenvalues).sum()
 
-    X_row_less_col = X_row_count - XKX.shape[0]
+    X_row_less_col = iid_count - XKX.aKb.shape[0]
 
     sigma2 = rss / X_row_less_col
     nLL = 0.5 * (

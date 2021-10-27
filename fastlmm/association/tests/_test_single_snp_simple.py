@@ -104,7 +104,7 @@ class TestSingleSnpSimple(unittest.TestCase):
         }
 
         matrix = {
-            "use_reml": ["False"],  # !!!cmk0, "True"],
+            "use_reml": ["False", "True"],
             "train_count": ["50", "750"],
             "cov": ["None", "cov_reader"],
             "delta": ["None", "1.0", "0.20000600000000002"],
@@ -116,22 +116,14 @@ class TestSingleSnpSimple(unittest.TestCase):
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
-            extra_lambda = lambda case_number: case_number # 0  # case_number ** 0.5
+            extra_lambda = lambda case_number: case_number ** 0.5
         else:
             test_runner = LocalMultiProc(6, just_one_process=False)
             runner = Local()
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
         first_list = [
-            {
-                "use_reml": "False",
-                "train_count": "750",
-                "cov": "cov_reader",
-                "delta": "0.20000600000000002",
-                "pheno": "pheno_fn",
-                "snps_reader": "snps_reader5",
-            }
-        ]
+            {'use_reml': 'True', 'train_count': '750', 'cov': 'None', 'delta': 'None', 'pheno': 'pheno_fn', 'snps_reader': 'snps_reader5'}        ]
 
         def mapper2(index_total_option):
             import numpy as np
@@ -151,11 +143,11 @@ class TestSingleSnpSimple(unittest.TestCase):
             pheno = Pheno(pheno)
 
             if cov is None:
-                cov = SnpData(
+                cov1 = SnpData(
                     iid=pheno.iid, sid=["bias"], val=np.full((pheno.iid_count, 1), 1.0)
                 )
             else:
-                cov = _append_bias(cov)
+                cov1 = _append_bias(cov)
 
             try:
                 from pysnptools.kernelstandardizer import Identity as KernelIdentity
@@ -174,7 +166,7 @@ class TestSingleSnpSimple(unittest.TestCase):
                     test_snps_ids=test_snps.sid,
                     pheno=pheno.read().val,
                     K_eigen=Eigen(K_eigen.values, K_eigen.vectors),
-                    covar=cov.read().val,
+                    covar=cov1.read().val,
                     log_delta=np.log(delta) if delta is not None else None,
                     _find_delta_via_reml=use_reml,
                     _test_via_reml=use_reml,
