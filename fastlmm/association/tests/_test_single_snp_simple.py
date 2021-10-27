@@ -105,7 +105,7 @@ class TestSingleSnpSimple(unittest.TestCase):
 
         matrix = {
             "use_reml": ["False"],  # !!!cmk0, "True"],
-            "train_count": ["750"],  # cmk0 ["50", "750"],
+            "train_count": ["50", "750"],
             "cov": ["None", "cov_reader"],
             "delta": ["None", "1.0", "0.20000600000000002"],
             "pheno": ["pheno_fn"],
@@ -116,7 +116,7 @@ class TestSingleSnpSimple(unittest.TestCase):
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
-            extra_lambda = lambda case_number: 0  # case_number ** 0.5
+            extra_lambda = lambda case_number: case_number # 0  # case_number ** 0.5
         else:
             test_runner = LocalMultiProc(6, just_one_process=False)
             runner = Local()
