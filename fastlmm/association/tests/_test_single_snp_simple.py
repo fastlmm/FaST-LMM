@@ -123,7 +123,15 @@ class TestSingleSnpSimple(unittest.TestCase):
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
         first_list = [
-            {'use_reml': 'True', 'train_count': '750', 'cov': 'None', 'delta': 'None', 'pheno': 'pheno_fn', 'snps_reader': 'snps_reader5'}        ]
+            {
+                "use_reml": "True",
+                "train_count": "750",
+                "cov": "None",
+                "delta": "None",
+                "pheno": "pheno_fn",
+                "snps_reader": "snps_reader5",
+            }
+        ]
 
         def mapper2(index_total_option):
             import numpy as np
@@ -152,7 +160,10 @@ class TestSingleSnpSimple(unittest.TestCase):
             try:
                 from pysnptools.kernelstandardizer import Identity as KernelIdentity
                 from pysnptools.util.mapreduce1 import map_reduce
-                from fastlmm.association._single_snp_simple import single_snp_simple, Eigen
+                from fastlmm.association._single_snp_simple import (
+                    single_snp_simple,
+                    Eigen,
+                )
                 from fastlmm.association.single_snp_eigen import eigen_from_kernel
 
                 # !!!cmk why not diag standardize?
@@ -165,7 +176,7 @@ class TestSingleSnpSimple(unittest.TestCase):
                     test_snps=test_snps.read().standardize().val,
                     test_snps_ids=test_snps.sid,
                     pheno=pheno.read().val,
-                    K_eigen=Eigen(K_eigen.values, K_eigen.vectors),
+                    K_eigen=Eigen(K_eigen.values, K_eigen.vectors, delta=0),
                     covar=cov1.read().val,
                     log_delta=np.log(delta) if delta is not None else None,
                     _find_delta_via_reml=use_reml,

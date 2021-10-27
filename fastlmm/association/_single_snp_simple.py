@@ -6,18 +6,12 @@ import pandas as pd
 
 from fastlmm.util.mingrid import minimize1D
 
-class EigenPlusDelta:
-    def __init__(self, eigen, delta):
-        self.eigen = eigen
-        self.delta = delta
-        self.values = eigen.values + delta
-        self.logdet = np.log(self.values).sum()
-        if eigen.is_low_rank:
-            self.logdet += (self.eigen.iid_count-self.eigen.eid_count) * np.log(delta)
 
 class AK:
     def __init__(self, a_r, eigen_plus_delta):
-        assert a_r.eigen is eigen_plus_delta.eigen, "Expect a_r and eigen_plus_delta to use the same Eigen"
+        assert (
+            a_r.eigen.vectors is eigen_plus_delta.vectors
+        ), "Expect a_r and eigen_plus_delta to use the same Eigenvectors"
         self.a_r = a_r
         self.eigen_plus_delta = eigen_plus_delta
         self.aK = a_r.rotated / eigen_plus_delta.values[:, np.newaxis]
@@ -26,15 +20,19 @@ class AK:
     def eigen(self):
         return self.a_r.eigen
 
+
 class AKB:
     def __init__(self, aK, b_r):
-        assert aK.eigen is b_r.eigen, "Expect aK and b_r to be rotated by the same Eigen"
+        assert (
+            aK.eigen is b_r.eigen
+        ), "Expect aK and b_r to be rotated by the same Eigen"
         self.aK = aK
 
         self.aKb = aK.aK.T @ b_r.rotated
 
-        if aK.eigen.is_low_rank: 
+        if aK.eigen.is_low_rank:
             self.aKb += aK.a_r.double.T @ b_r.double / aK.eigen_plus_delta.delta
+
 
 class Rotation:
     def __init__(self, eigen, data):
@@ -45,25 +43,25 @@ class Rotation:
         else:
             self.double = None
 
-    def aKb(self, aK, b_r):
-        val = aK.T @ b_r.val
-
-        if kdi.is_low_rank:  # !!!cmklr
-            val += a_r.double.val.T @ b_r.double.val / kdi.delta
-
-        return val
-
-        return self.rotated / values_plus_delta[:, np.newaxis]
-
 
 class Eigen:
-    def __init__(self, values, vectors):
-        self.values = values
+    def __init__(self, values, vectors, delta):
+        self.values = values + delta
         self.vectors = vectors
+        self.delta = delta
         self.iid_count = self.vectors.shape[0]  # number of individuals
-        self.eid_count = self.vectors.shape[1]  # number of eigenvalues (and eigenvectors)
+        self.eid_count = self.vectors.shape[
+            1
+        ]  # number of eigenvalues (and eigenvectors)
         self.is_low_rank = self.eid_count < self.iid_count
 
+        self.logdet = np.log(self.values).sum()
+        if self.is_low_rank:
+            self.logdet += (self.iid_count - self.eid_count) * np.log(delta)
+
+    def plus(self, delta):
+        assert self.delta == 0, "Only have code for adding delta to zero delta"
+        return Eigen(self.values, self.vectors, delta=delta)
 
 
 def single_snp_simple(
@@ -86,12 +84,9 @@ def single_snp_simple(
 
     if _test_via_reml or _find_delta_via_reml:
         covarTcovar = covar.T @ covar
-        eigenvalues_covarTcovar, eigenvectors_covarTcovar = np.linalg.eigh(
-            covarTcovar
-        )  # !!!cmk assumes full rank
-        logdet_covarTcovar = np.log(
-            eigenvalues_covarTcovar
-        ).sum()  # cmk assumes full rank
+        # !!!cmk assumes full rank
+        eigenvalues_covarTcovar, eigenvectors_covarTcovar = np.linalg.eigh(covarTcovar)
+        logdet_covarTcovar = np.log(eigenvalues_covarTcovar).sum()
     else:
         covarTcovar, logdet_covarTcovar = None, None
 
@@ -111,21 +106,18 @@ def single_snp_simple(
     else:
         h2, _, delta = _hld(log_delta=log_delta)
 
-    K_eigen_plus_delta = EigenPlusDelta(K_eigen, delta)
+    K_eigen_plus_delta = K_eigen.plus(delta)
 
     covarK = AK(covar_r, K_eigen_plus_delta)
     phenoK = AK(pheno_r, K_eigen_plus_delta)
 
     covarKcovar = AKB(covarK, covar_r)
     phenoKpheno = AKB(phenoK, pheno_r)
-    covarKpheno = AKB(covarK,  pheno_r)
+    covarKpheno = AKB(covarK, pheno_r)
 
     ll_null, _, _ = _loglikelihood(
-        covarKcovar,
-        phenoKpheno,
-        covarKpheno,
-        _test_via_reml,
-        logdet_covarTcovar)
+        covarKcovar, phenoKpheno, covarKpheno, _test_via_reml, logdet_covarTcovar
+    )
 
     result_list = []
     for test_snp_index in range(test_snps.shape[1]):
@@ -151,11 +143,8 @@ def single_snp_simple(
         # Find likelihood with test SNP and score.
         # ==================================
         ll_alt, beta, variance_beta = _loglikelihood(
-            XKX,
-            phenoKpheno,
-            XKpheno,
-            _test_via_reml,
-            logdet_xtx)
+            XKX, phenoKpheno, XKpheno, _test_via_reml, logdet_xtx
+        )
 
         test_statistic = ll_alt - ll_null
 
@@ -214,7 +203,7 @@ def _find_h2(
 
     def f(h2, resmin=resmin, **kwargs):
         _, _, delta = _hld(h2)
-        K_eigen_plus_delta = EigenPlusDelta(K_eigen, delta)
+        K_eigen_plus_delta = K_eigen.plus(delta)
 
         covarK = AK(covar_r, K_eigen_plus_delta)
         phenoK = AK(pheno_r, K_eigen_plus_delta)
@@ -224,11 +213,8 @@ def _find_h2(
         covarKpheno = AKB(covarK, pheno_r)
 
         nLL, _, _ = _loglikelihood(
-            covarKcovar,
-            phenoKpheno,
-            covarKpheno,
-            use_reml,
-            logdet_covarTcovar)
+            covarKcovar, phenoKpheno, covarKpheno, use_reml, logdet_covarTcovar
+        )
         nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
             resmin[0] = {"nLL": nLL, "h2": h2}
@@ -240,23 +226,22 @@ def _find_h2(
 
 
 def _loglikelihood(XKX, yKy, XKy, use_reml, logdet_xtx):
-    assert XKX.aK.eigen_plus_delta is yKy.aK.eigen_plus_delta and yKy.aK.eigen_plus_delta is XKy.aK.eigen_plus_delta, "Expect XKX, yKy, and XKY to have the same eigen_plus_delta"
+    assert (
+        XKX.aK.eigen_plus_delta is yKy.aK.eigen_plus_delta
+        and yKy.aK.eigen_plus_delta is XKy.aK.eigen_plus_delta
+    ), "Expect XKX, yKy, and XKY to have the same eigen_plus_delta"
 
     if use_reml:  # !!!cmk don't trust the REML path
-        nLL, beta = _loglikelihood_reml(
-            XKX, yKy, XKy, logdet_xtx
-        )
+        nLL, beta = _loglikelihood_reml(XKX, yKy, XKy, logdet_xtx)
         return nLL, beta, None
     else:
         return _loglikelihood_ml(XKX, yKy, XKy)
 
 
 # Note we have both XKX with XTX
-def _loglikelihood_reml(
-    XKX, yKy, XKy, logdet_xtx
-):
+def _loglikelihood_reml(XKX, yKy, XKy, logdet_xtx):
     logdet = XKX.aK.eigen_plus_delta.logdet
-    iid_count = XKX.aK.eigen_plus_delta.eigen.iid_count
+    iid_count = XKX.aK.eigen_plus_delta.iid_count
 
     (xkx_eigenvalues, _), beta, rss = _find_beta(yKy, XKX, XKy)
     logdet_xkx = np.log(xkx_eigenvalues).sum()
@@ -282,7 +267,7 @@ def _loglikelihood_ml(XKX, yKy, XKy):
     logdet = XKX.aK.eigen_plus_delta.logdet
     eigen_plus_delta = XKX.aK.eigen_plus_delta
     h2, _, _ = _hld(delta=eigen_plus_delta.delta)
-    iid_count = eigen_plus_delta.eigen.iid_count
+    iid_count = eigen_plus_delta.iid_count
 
     (eigen_xkx_values, eigen_xkx_vectors), beta, rss = _find_beta(yKy, XKX, XKy)
 
