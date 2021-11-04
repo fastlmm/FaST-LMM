@@ -479,7 +479,13 @@ class LMM(object):
         i_pos = SxKx>1E-10
         beta = UxKx[:,i_pos].dot(UxKx[:,i_pos].T.dot(XKy)/SxKx[i_pos])
 
-        r2 = yKy-XKy.dot(beta)
+        if not REML:
+            r2 = yKy-XKy.dot(beta)
+        else:
+            r2 = 0
+            for i in range(len(Sd)):
+                r2 += (self.Uy[i] - self.UX[i] @ beta)**2/Sd[i]
+
 
         if dof is None:#Use the Multivariate Gaussian
             if REML:

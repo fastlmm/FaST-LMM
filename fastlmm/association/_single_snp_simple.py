@@ -156,6 +156,7 @@ def single_snp_simple(
     phenoKpheno = AKB(phenoK, pheno_r)
     covarKpheno = AKB(covarK, pheno_r)
 
+
     ll_null, _, _ = _loglikelihood(
         covarKcovar, phenoKpheno, covarKpheno, _test_via_reml, logdet_covarTcovar
     )
@@ -183,6 +184,12 @@ def single_snp_simple(
         # ==================================
         # Find likelihood with test SNP and score.
         # ==================================
+        # !!!cmk0
+        K = K_eigen.vectors.T / K_eigen.values @ K_eigen.vectors
+        ll_alt_slow, beta_slow, _ = _loglikelihood_ml_slow(
+            XKX, phenoKpheno, XKpheno, K, delta, X, pheno
+        )
+
         ll_alt, beta, variance_beta = _loglikelihood(
             XKX, phenoKpheno, XKpheno, _test_via_reml, logdet_xtx
         )
@@ -284,12 +291,27 @@ def _loglikelihood_reml(XKX, yKy, XKy, logdet_xtx):
     logdet = XKX.eigen_plus_delta.logdet
     iid_count = XKX.eigen_plus_delta.iid_count
 
-    (xkx_eigenvalues, _), beta, rss = _find_beta(yKy, XKX, XKy)
+    (xkx_eigenvalues, _), beta, rss_ignore = _find_beta(yKy, XKX, XKy)
     logdet_xkx = np.log(xkx_eigenvalues).sum()
 
     X_iid_less_sid = iid_count - XKX.a_sid_count
 
-    sigma2 = rss / X_iid_less_sid
+    #!!!cmk0 what if eigen_plus_delta is short (low rank)
+    #!!!cmk0
+    rss = 0
+    for i in range(iid_count):
+        rss += (yKy.aK.a_r.rotated[i,:] - XKX.aK.a_r.rotated[i,:] @ beta)**2/XKX.eigen_plus_delta.values[i]
+    sigma2 = float(rss / X_iid_less_sid)
+
+    #nLL_ML = _loglikelihood_ml(XKX, yKy, XKy)[0]
+    #LL = -nLL_ML + .5*(
+    #    XKX.a_sid_count * np.log(2.0*np.pi*sigma2)
+    #    + logdet_xtx
+    #    - logdet_xkx
+    #    )
+
+    #nLL = -LL
+
     nLL = 0.5 * (
         logdet
         + logdet_xkx
@@ -302,6 +324,27 @@ def _loglikelihood_reml(XKX, yKy, XKy, logdet_xtx):
     ), "nLL has an imaginary component, possibly due to constant covariates"
     # !!!cmk which is negative loglikelihood and which is LL?
     return -nLL, beta
+
+
+def _loglikelihood_ml_slow(XKX, yKy, XKy, K, delta, X, y):
+    eigen_plus_delta = XKX.eigen_plus_delta
+    iid_count = eigen_plus_delta.iid_count
+    (eigen_xkx_values, eigen_xkx_vectors), beta, rss = _find_beta(yKy, XKX, XKy)
+    iid_count = X.shape[0]
+    sigma2 = rss / iid_count
+    kdi = K.copy()
+    np.fill_diagonal(kdi, kdi.diagonal() + delta)
+    logdet = np.log(np.linalg.det(kdi))
+    error = y - X @ beta
+    nLL = 0.5 * (
+        iid_count * (np.log(2.0 * np.pi * sigma2))
+        + logdet
+        + 1 / sigma2 * (error.T @ np.linalg.inv(kdi) @ error)
+    )
+    assert np.isreal(
+        nLL
+    ), "nLL has an imaginary component, possibly due to constant covariates"
+    return -nLL, beta, np.nan
 
 
 def _loglikelihood_ml(XKX, yKy, XKy):

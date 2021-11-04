@@ -48,7 +48,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def test_compare_with_single_snp(self):
+    def cmk0test_compare_with_single_snp(self):
         from pysnptools.snpreader import Bed
         import numpy as np
         from fastlmm.association import single_snp
@@ -161,7 +161,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         print("!!!cmk0")
 
 
-    def cmk0test_same_as_old_code(self):  #!!!cmk too slow???
+    def test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
@@ -243,7 +243,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             "stop_early": ["None", "0", "1", "2", "3"],
         }
 
-        if True:
+        if False:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
@@ -253,7 +253,9 @@ class TestSingleSnpEigen(unittest.TestCase):
             runner = Local()
             exception_to_catch = Exception
             extra_lambda = lambda case_number: case_number ** 0.5
-        first_list = [{"use_reml": "True"},
+
+
+        first_list = [{'use_reml': 'True', 'train_count': '50', 'cov': 'None', 'delta': '0.20000600000000002', 'pheno': 'pheno_fn', 'snps_reader': 'snps_reader1'},
             ] + add_for_coverage
 
         def mapper2(index_total_option):

@@ -14,7 +14,7 @@ from pysnptools.snpreader import SnpData
 from pysnptools.pstreader import PstData
 from pysnptools.snpreader import _MergeSIDs
 from pysnptools.eigenreader import EigenData
-from pysnptools.eigenreader.eigenreader import RotationMemMap
+from pysnptools.eigenreader.eigenreader import RotationMemMap, RotationData
 from pysnptools.util.mapreduce1 import map_reduce
 from fastlmm.inference.fastlmm_predictor import (
     _pheno_fixup,
@@ -329,7 +329,9 @@ def _find_h2(
         XKpheno, _ = AKB.from_rotations(X_r, kdi, pheno_r, aK=XK)
 
         nLL, _, _ = _loglikelihood(
-            logdet_xtx, X_row_count, phenoKpheno, XKX, XKpheno, use_reml=use_reml
+            logdet_xtx, X_row_count, phenoKpheno, XKX, XKpheno, use_reml=use_reml,
+            X_r = X_r,
+            y_r = pheno_r
         )
         nLL = -nLL  # !!!cmk
         if (resmin[0] is None) or (nLL < resmin[0]["nLL"]):
@@ -384,22 +386,29 @@ def _find_beta(yKy, XKX, XKy):
     return eigen_xkx, beta, rss
 
 
-def _loglikelihood(logdet_xtx, X_row_count, yKy, XKX, XKy, use_reml):
+def _loglikelihood(logdet_xtx, X_row_count, yKy, XKX, XKy, use_reml, X_r, y_r):
     if use_reml:
-        nLL, beta = _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy)
+        nLL, beta = _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy, X_r, y_r)
         return nLL, beta, None
     else:
         return _loglikelihood_ml(yKy, XKX, XKy)
 
 
 # Note we have both XKX with XTX
-def _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy):
+def _loglikelihood_reml(logdet_xtx, X_row_count, yKy, XKX, XKy, X_r, y_r):
     kdi = yKy.kdi
 
-    eigen_xkx, beta, rss = _find_beta(yKy, XKX, XKy)
+    eigen_xkx, beta, rss_ignore = _find_beta(yKy, XKX, XKy)
     logdet_xkx, _ = eigen_xkx.logdet()
 
     X_row_less_col = X_row_count - XKX.shape[0]
+
+    #!!!cmk0
+    #!!!cmk0 should this loop over eid_count not iid_count? (same for full rank)
+    rss = 0
+    for i in range(y_r.val.shape[0]):
+        rss += float(((y_r.val[i,:] - X_r.val[i,:] @ beta.val.reshape(-1))**2/yKy.kdi.Sd[i]))
+
 
     sigma2 = rss / X_row_less_col
     nLL = 0.5 * (
@@ -732,6 +741,8 @@ def _find_per_pheno_per_chrom_list(
                 covarKcovar,
                 covarKpheno,
                 use_reml=test_via_reml,
+                X_r = covar_r,
+                y_r = pheno_r_i
             )
 
             # ==================================
@@ -1106,8 +1117,10 @@ def _generate_results(
             XTX.val[cc:, cc:] = alt_val.T @ alt_val
             eigen_xtx = EigenData.from_aka(XTX)
             logdet_xtx, _ = eigen_xtx.logdet()
+            X_r = RotationData(rotated=PstData(val=np.c_[covar_r.val, alt_r.val],row=covar_r.row,col=np.r_[covar_r.rotated.col,alt_r.rotated.col]),double=None)
         else:
             logdet_xtx = None
+            X_r = None
 
         # ==================================
         # Find likelihood with test SNP and score.
@@ -1119,6 +1132,8 @@ def _generate_results(
             per_pheno_data.XKX,
             per_pheno_data.XKpheno,
             use_reml=test_via_reml,
+            X_r = X_r,
+            y_r = pheno_r_i
         )
 
         test_statistic = ll_alt - per_pheno_data.ll_null

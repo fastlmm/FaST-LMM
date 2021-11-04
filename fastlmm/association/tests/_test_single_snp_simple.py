@@ -42,6 +42,51 @@ class TestSingleSnpSimple(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
+    def cmk0test_match_fast_and_slow(self):
+        # based on "understanding akb.ipynb"
+
+        from fastlmm.association._single_snp_simple import _loglikelihood_ml, Eigen, EigenPlusDelta, Rotation, AK, AKB
+
+        def lin_reg_data(seed, iid_count, sid_count, cov_count):
+            rng = np.random.RandomState(seed)
+            cov = (rng.rand(iid_count, cov_count)-.5)
+            cov = cov*rng.rand(cov_count)[None,:]*100+rng.rand(cov_count)[None,:]*50
+            pheno = (rng.rand(iid_count)-.5)
+            pheno = pheno*rng.rand(1)*100+rng.rand(1)*50
+            snps = (rng.rand(iid_count, sid_count)-.5)
+            snps = snps*rng.rand(sid_count)[None,:]*100+rng.rand(sid_count)[None,:]*50
+            return snps, cov, pheno
+
+        snps, cov, pheno = lin_reg_data(22,iid_count=50,sid_count=70,cov_count=3)
+        #snps.mean(axis=0), cov.mean(axis=0), pheno.mean()
+
+        snps0 = (snps-snps.mean(axis=0))/snps.std(axis=0)
+        K = snps0 @ snps0.T
+        K = K/K.diagonal().mean()
+
+        K_eigen=Eigen(*np.linalg.eigh(K))
+        delta = 10
+        covar_r = Rotation(K_eigen, cov)
+        pheno_r = Rotation(K_eigen, pheno[:,None])
+
+
+        K_eigen_plus_delta = EigenPlusDelta(K_eigen, delta)
+
+        covarK = AK(covar_r, K_eigen_plus_delta)
+        phenoK = AK(pheno_r, K_eigen_plus_delta)
+
+        covarKcovar = AKB(covarK, covar_r)
+        #print(covarKcovar.aKb)
+        phenoKpheno = AKB(phenoK, pheno_r)
+        covarKpheno = AKB(covarK, pheno_r)
+
+        #print(covarKcovar.aKb.shape, phenoKpheno.aKb.shape, covarKpheno.aKb.shape)
+
+
+        ll_fast, beta_fast, _ = _loglikelihood_ml(covarKcovar, phenoKpheno, covarKpheno)
+        ll_fast, beta_fast
+
+
     def test_same_as_old_code(self):  # !!!cmk too slow???
         test_count = 750
 
@@ -112,7 +157,7 @@ class TestSingleSnpSimple(unittest.TestCase):
             "snps_reader": ["snps_reader1", "snps_reader5"],
         }
 
-        if False:
+        if True:
             test_runner = None  # LocalMultiProc(6, just_one_process=True)
             runner = None  # LocalMultiProc(6, just_one_process=True)
             exception_to_catch = TimeoutError  # Exception #
@@ -167,7 +212,7 @@ class TestSingleSnpSimple(unittest.TestCase):
                 )
                 from fastlmm.association.single_snp_eigen import eigen_from_kernel
 
-                # !!!cmk why not diag standardize?
+                # !!!cmk0 why not diag standardize?
                 K_eigen = eigen_from_kernel(
                     snps_reader[:, :train_count], kernel_standardizer=KernelIdentity(),
                 )
