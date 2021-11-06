@@ -86,8 +86,67 @@ class TestSingleSnpSimple(unittest.TestCase):
         ll_fast, beta_fast, _ = _loglikelihood_ml(covarKcovar, phenoKpheno, covarKpheno)
         ll_fast, beta_fast
 
+    def test_same_h2(self):
+        # Show all methods getting the same h2 and sigma2g with REML, starting with lmm_cov and lmm
 
-    def test_same_as_old_code(self):  # !!!cmk too slow???
+        # import the algorithm
+        import numpy as np
+        from fastlmm.association import single_snp
+        from fastlmm.util import example_file # Download and return local file name
+        from fastlmm.inference.lmm_cov import LMM as LMM_COV
+        from fastlmm.association.single_snp_eigen import eigen_from_kernel
+        from pysnptools.kernelstandardizer import Identity as KernelIdentity
+        from fastlmm.association import single_snp_eigen
+
+        # set up data
+        ##############################
+        from fastlmm.util import example_file # Download and return local file name
+        bed_fn = example_file('tests/datasets/synth/all.*','*.bed')
+        pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
+        cov_fn = example_file("tests/datasets/synth/cov.txt")
+       
+        bed = Bed(bed_fn, count_A1=False)
+        bed5 = bed[:,bed.pos[:,0]==5]
+        bednot5 = bed[:,bed.pos[:,0]!=5]
+        bed5_52 = bed5[:,52]
+
+        K0_eigen_by_chrom = {}
+        K0_eigen_by_chrom[5] = eigen_from_kernel(bednot5, KernelIdentity())
+        K0_eigen_by_chrom[5].vectors /= np.diag(K0_eigen_by_chrom[5].vectors).mean()
+
+
+        #### single_snp ###############################################################
+        ss_df = single_snp(bed5_52, pheno_fn, covar=cov_fn, K0=bednot5, count_A1=False)
+        print(ss_df.iloc[0])
+        #SNP                snp495_m0_.01m1_.04
+        #Chr                                5.0
+        #GenDist                         4052.0
+        #ChrPos                          4052.0
+        #PValue                             0.0
+        #SnpWeight                     0.418653
+        #SnpWeightSE                   0.040052
+        #SnpFractVarExpl               0.424521
+        #Mixing                               0
+        #Nullh2                        0.451117
+        #### single_snp_eigen ###############################################################
+        sse_df = single_snp_eigen(bed5_52, pheno_fn, covar=cov_fn, K0_eigen_by_chrom=K0_eigen_by_chrom, runner=Local())
+        print(sse_df.iloc[0])
+        #Search  0.00020922980117441106  4336.0411359557
+        #SNP                snp495_m0_.01m1_.04
+        #Chr                                5.0
+        #GenDist                         4052.0
+        #ChrPos                          4052.0
+        #PValue                             0.0
+        #SnpWeight                     0.418645
+        #SnpWeightSE                        NaN
+        #SnpFractVarExpl                    NaN
+        #Mixing                             NaN
+        #Nullh2                        0.000206
+        print("cmk")
+
+
+
+    def cmk0test_same_as_old_code(self):  # !!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(

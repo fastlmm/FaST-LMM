@@ -48,7 +48,7 @@ class TestSingleSnpEigen(unittest.TestCase):
             os.remove(temp_fn)
         return temp_fn
 
-    def cmk0test_compare_with_single_snp(self):
+    def test_compare_with_single_snp(self):
         from pysnptools.snpreader import Bed
         import numpy as np
         from fastlmm.association import single_snp
@@ -80,18 +80,18 @@ class TestSingleSnpEigen(unittest.TestCase):
         print(K0_eigen_by_chrom)
 
 
-        use_reml = True
-        df_sse5 = single_snp_eigen(log_delta=log_delta, K0_eigen_by_chrom=K0_eigen_by_chrom, test_snps=bed_chrom5, pheno=pheno3, covar=cov_fn, count_A1=False, runner=Local(),
-            _find_delta_via_reml=use_reml,
-            _test_via_reml=use_reml,
-        )
-        print(df_sse5[:4])
-
-        #df_sse5_52 = single_snp_eigen(K0_eigen_by_chrom=K0_eigen_by_chrom, test_snps=bed_chrom5_52, pheno=pheno3, covar=cov_fn, count_A1=False, runner=Local(),
+        use_reml = False
+        #df_sse5 = single_snp_eigen(log_delta=log_delta, K0_eigen_by_chrom=K0_eigen_by_chrom, test_snps=bed_chrom5, pheno=pheno3, covar=cov_fn, count_A1=False, runner=Local(),
         #    _find_delta_via_reml=use_reml,
         #    _test_via_reml=use_reml,
         #)
-        #print(df_sse5_52)
+        #print(df_sse5[:4])
+
+        df_sse5_52 = single_snp_eigen(log_delta=log_delta, K0_eigen_by_chrom=K0_eigen_by_chrom, test_snps=bed_chrom5_52, pheno=pheno3, covar=cov_fn, count_A1=False, runner=Local(),
+            _find_delta_via_reml=use_reml,
+            _test_via_reml=use_reml,
+        )
+        print(df_sse5_52)
         print("!!!cmk")
 
 
@@ -161,7 +161,7 @@ class TestSingleSnpEigen(unittest.TestCase):
         print("!!!cmk0")
 
 
-    def test_same_as_old_code(self):  #!!!cmk too slow???
+    def cmk0test_same_as_old_code(self):  #!!!cmk too slow???
         test_count = 750
 
         bed_fn = example_file(
