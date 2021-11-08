@@ -87,7 +87,7 @@ class LMM(object):
         """
         N = self.K.shape[0]
         D = self.linreg.D
-        self.K.flat[::N+1]+=1.0
+        self.K.flat[::N+1]+=1.0 # Add one to the diag
         K_ = self.linreg.regress(Y=self.K)
         K_ = self.linreg.regress(Y=K_.T)
         [self.S,self.U] = self._xp.linalg.eigh(K_)
@@ -431,7 +431,7 @@ class LMM(object):
                     if (resmin[i] is None) or (res['nLL'][i] < resmin[i]['nLL']):
                         resmin[i] = res.copy()
                         resmin[i]['nLL'] = res['nLL'][i]
-                #logging.info("search\t{0}\t{1}".format(x,res['nLL']))
+                logging.info("search\t{0}\t{1}".format(x,res['nLL']))
                 return res['nLL']
             (evalgrid,resultgrid) = evalgrid1D(f, evalgrid = None, nGrid=nGridH2, minval=minH2, maxval = maxH2, dimF=self.Y.shape[1])
             #import ipdb;ipdb.set_trace()
@@ -439,7 +439,7 @@ class LMM(object):
         elif estimate_Bayes:
             def f(x):
                 res = self.nLLeval(h2=x,**kwargs)
-                #logging.info("search\t{0}\t{1}".format(x,res['nLL']))
+                logging.info("search\t{0}\t{1}".format(x,res['nLL'])) #!!!cmk0
                 return res['nLL']
             (evalgrid,resultgrid) = evalgrid1D(f, evalgrid = None, nGrid=nGridH2, minval=minH2, maxval = maxH2, dimF=self.Y.shape[1])
             lik = np.exp(-resultgrid)
@@ -453,6 +453,7 @@ class LMM(object):
                 res = self.nLLeval(h2=x,**kwargs)
                 if (resmin[0] is None) or (res['nLL'] < resmin[0]['nLL']):
                     resmin[0] = res
+                logging.info("search\t{0}\t{1}".format(x,res['nLL'][0])) #!!!cmk0
                 return res['nLL'][0]   
             min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
             return resmin[0]
