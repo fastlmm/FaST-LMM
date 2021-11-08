@@ -95,7 +95,7 @@ class TestSingleSnpSimple(unittest.TestCase):
         from fastlmm.util import example_file # Download and return local file name
         from fastlmm.inference.lmm_cov import LMM as LMM_COV
         from fastlmm.association.single_snp_eigen import eigen_from_kernel
-        from pysnptools.kernelstandardizer import Identity as KernelIdentity
+        from pysnptools.kernelstandardizer import DiagKtoN
         from fastlmm.association import single_snp_eigen
 
         # set up data
@@ -111,8 +111,8 @@ class TestSingleSnpSimple(unittest.TestCase):
         bed5_52 = bed5[:,52]
 
         K0_eigen_by_chrom = {}
-        K0_eigen_by_chrom[5] = eigen_from_kernel(bednot5, KernelIdentity())
-        K0_eigen_by_chrom[5].vectors /= np.diag(K0_eigen_by_chrom[5].vectors).mean()
+        allow_svd = False
+        K0_eigen_by_chrom[5] = eigen_from_kernel(bednot5, DiagKtoN(), allow_svd=allow_svd)
 
 
         #### single_snp ###############################################################
@@ -131,7 +131,7 @@ class TestSingleSnpSimple(unittest.TestCase):
         #### single_snp_eigen ###############################################################
         sse_df = single_snp_eigen(bed5_52, pheno_fn, covar=cov_fn, K0_eigen_by_chrom=K0_eigen_by_chrom, runner=Local())
         print(sse_df.iloc[0])
-        #Search  0.00020922980117441106  4336.0411359557
+        #search  0.0002092298011737116   702.3474395588762
         #SNP                snp495_m0_.01m1_.04
         #Chr                                5.0
         #GenDist                         4052.0
@@ -142,6 +142,7 @@ class TestSingleSnpSimple(unittest.TestCase):
         #SnpFractVarExpl                    NaN
         #Mixing                             NaN
         #Nullh2                        0.000206
+        #Pheno                           pheno0
         print("cmk")
 
 
@@ -263,7 +264,7 @@ class TestSingleSnpSimple(unittest.TestCase):
                 cov1 = _append_bias(cov)
 
             try:
-                from pysnptools.kernelstandardizer import Identity as KernelIdentity
+                from pysnptools.kernelstandardizer import DiagKtoN
                 from pysnptools.util.mapreduce1 import map_reduce
                 from fastlmm.association._single_snp_simple import (
                     single_snp_simple,
@@ -273,7 +274,7 @@ class TestSingleSnpSimple(unittest.TestCase):
 
                 # !!!cmk0 why not diag standardize?
                 K_eigen = eigen_from_kernel(
-                    snps_reader[:, :train_count], kernel_standardizer=KernelIdentity(),
+                    snps_reader[:, :train_count], kernel_standardizer=DiagKtoN(),
                 )
                 test_snps = snps_reader[:, train_count : train_count + test_count]
 
