@@ -497,21 +497,20 @@ def _create_dataframe():
 
 
 # !!!cmk where should this live?
-def eigen_from_kernel(K0, kernel_standardizer, count_A1=None):
+def eigen_from_kernel(K0, kernel_standardizer, allow_svd, count_A1=None):
     """!!!cmk documentation"""
     # !!!cmk could offer a low-memory path that uses memmapped files
     from pysnptools.kernelreader import SnpKernel
-    from pysnptools.kernelstandardizer import Identity as KS_Identity
+    from pysnptools.kernelstandardizer import DiagKtoN
 
     assert K0 is not None
     K0 = _kernel_fixup(K0, iid_if_none=None, standardizer=Unit(), count_A1=count_A1)
     assert K0.iid0 is K0.iid1, "Expect K0 to be square"
 
-    if isinstance(
-        K0, SnpKernel
-    ):  # !!!make eigen creation a method on all kernel readers
+    # !!!make eigen creation a method on all kernel readers
+    if isinstance(K0, SnpKernel) and allow_svd:
         assert isinstance(
-            kernel_standardizer, KS_Identity
+            kernel_standardizer, DiagKtoN
         ), "cmk need code for other kernel standardizers"
         vectors, sqrt_values, _ = np.linalg.svd(
             K0.snpreader.read().standardize(K0.standardizer).val, full_matrices=False,
