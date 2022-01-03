@@ -277,8 +277,9 @@ class TestFeatureSelection(unittest.TestCase):
                 delimiter = "," if outfile.lower().endswith(".csv") else "\t"
                 tmpOutfile=os.path.join(output_dir,outfile)
                 out,msg=ut.compare_mixed_files(tmpOutfile, referenceOutfile, self.tolerance,delimiter=delimiter)
-                #if not out:
-                #    print "False" #import pdb; pdb.set_trace() #This will mess up LocalMultiProc runs
+                if not out:
+                    from pathlib import Path
+                    msg = f"{msg}: tempOutfile={Path(tmpOutfile).read_text()} referenceOutfile={Path(referenceOutfile).read_text()}"
                 self.assertTrue(out, "msg='{0}', ref='{1}', tmp='{2}'".format(msg, referenceOutfile, tmpOutfile))
       
      
