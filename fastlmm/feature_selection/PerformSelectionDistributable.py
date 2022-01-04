@@ -223,7 +223,9 @@ class PerformSelectionDistributable(object):  # implements IDistributable
             report = "k_grid: " + str([k for k in self.k_values]) + "\n"
             ln_delta_grid = np.array([sp.log(x) for x in self.delta_values])
             report += (
-                "ln_delta_grid: " + str([np.round(v, 6) for v in ln_delta_grid]) + "\n"
+                "ln_delta_grid: ["
+                + ", ".join([f"{v:.1f}" for v in ln_delta_grid])
+                + "]\n"
             )
             report += "best k=%i\nbest ln_delta=%.1e\nbest objective=%.2f" % (
                 best_k,
