@@ -142,7 +142,7 @@ class TestSnpSet(unittest.TestCase):
             return windows_fn 
 
 
-    def test_doctest(self):
+    def test_doctest_two(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         result = doctest.testmod(sys.modules['fastlmm.association.snp_set'])
