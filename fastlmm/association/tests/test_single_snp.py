@@ -606,11 +606,15 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                                       )
             frame1 = frame[frame['Pheno']=='pheno1']
             del frame1['Pheno']
+            frame1_ef = frame1.copy()
             self.compare_files(frame1,"two_looc")
+            self.compare_files_effect_size(frame1_ef,"two_looc")
 
             frame2 = frame[frame['Pheno']=='pheno2']
             del frame2['Pheno']
+            frame2_ef = frame2.copy()
             self.compare_files(frame2,"multipheno2")
+            self.compare_files_effect_size(frame2_ef,"multipheno2")
 
 
         if True:
@@ -904,6 +908,24 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         if len(bad) > 0:
             raise Exception("snps differ too much from file '{0}' at these snps {1}".format(name,bad))
 
+    def compare_files_effect_size(self,frame,ref_base):
+        reffile = TestFeatureSelection.reference_file("single_snp/"+ref_base+".txt")
+        reference=pd.read_csv(reffile,delimiter='\s',comment=None,engine='python')
+        self.compare_df_effect_size(frame, reference, reffile)
+
+    def compare_df_effect_size(self,frame,reference,name):
+        assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(name)
+        if 'Pheno' not in frame.columns or 'Pheno' not in reference.columns:
+            frame.set_index('SNP',inplace=True)
+            reference.set_index('SNP',inplace=True)
+        else:
+            frame.set_index(['Pheno','SNP'],inplace=True)
+            reference.set_index(['Pheno','SNP'],inplace=True)
+
+        diff = (frame.EffectSize-reference.EffectSize)
+        bad = diff[np.abs(diff)>1e-5]
+        if len(bad) > 0:
+            raise Exception("EffectSize of snps differ too much from file '{0}' at these snps {1}".format(name,bad))
 
 def getTestSuite():
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnp)
