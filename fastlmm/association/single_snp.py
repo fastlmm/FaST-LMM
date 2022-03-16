@@ -598,7 +598,7 @@ def _internal_determine_block_size(K0, K1, mixing, force_full_rank, force_low_ra
 def _create_dataframe(pvalue_count):
     dataframe = pd.DataFrame(
         index=np.arange(pvalue_count),
-        columns=('sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue', 'SnpWeight', 'SnpWeightSE','SnpFractVarExpl','Mixing', 'Nullh2')
+        columns=('sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue', 'SnpWeight', 'SnpWeightSE','EffectSize','Mixing', 'Nullh2')
         )
     #!!Is this the only way to set types in a dataframe?
     dataframe['sid_index'] = dataframe['sid_index'].astype(np.float)
@@ -608,7 +608,7 @@ def _create_dataframe(pvalue_count):
     dataframe['PValue'] = dataframe['PValue'].astype(np.float)
     dataframe['SnpWeight'] = dataframe['SnpWeight'].astype(np.float)
     dataframe['SnpWeightSE'] = dataframe['SnpWeightSE'].astype(np.float)
-    dataframe['SnpFractVarExpl'] = dataframe['SnpFractVarExpl'].astype(np.float)
+    dataframe['EffectSize'] = dataframe['EffectSize'].astype(np.float)
     dataframe['Mixing'] = dataframe['Mixing'].astype(np.float)
     dataframe['Nullh2'] = dataframe['Nullh2'].astype(np.float)
 
@@ -834,7 +834,8 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
         start = debatch_closure(work_index)
         end = debatch_closure(work_index+1)
 
-        snps_read = test_snps[:,start:end].read()
+        raw_snps = test_snps[:,start:end]
+        snps_read = raw_snps.read()
         if xp is np:
             snps_read.standardize()
             val = xp.asarray(snps_read.val)
@@ -856,9 +857,9 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
         df = _multi_compute_stats(
             res['beta'],
             res['variance_beta'],
-            res['fraction_variance_explained_beta'],
             start,
             end,
+            raw_snps,
             snps_read,
             pheno.sid,
             mixing,
@@ -894,11 +895,15 @@ def _snp_tester(test_snps, interact, pheno, lmm, block_size, output_file_name, r
                         runner=runner)
     return frame
 
-def _multi_compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_explained_beta,
-                  start,end,snps_read,pheno_sid,
+def _multi_compute_stats(multi_beta,multi_variance_beta,
+                  start,end,raw_snps,snps_read,pheno_sid,
                   mixing, h2, lmm, pvalue_threshold, random_threshold, random_seed, pvalue_count, xp):
     assert len(multi_beta.reshape(-1))==(end-start)*len(pheno_sid), "Expect multi_beta to be (end-start)x phenos"
-    assert multi_variance_beta.shape == multi_beta.shape and multi_beta.shape==multi_fraction_variance_explained_beta.shape, "expect beta, variance_beta, and fraction_variance_explained_beta to agree on shape"
+    assert multi_variance_beta.shape == multi_beta.shape, "expect beta and variance_beta to agree on shape"
+
+    g_var = np.nanvar(raw_snps.read().val,axis=0)
+    p_var = lmm.Y.var(axis=0)
+    effect_size = multi_beta**2 * g_var[...,None] / p_var[None,...]
 
     chi2stats = pstutil.asnumpy(multi_beta*multi_beta/multi_variance_beta)
     p_values = stats.f.sf(chi2stats,1,lmm.U.shape[0]-(lmm.linreg.D+1))
@@ -934,7 +939,7 @@ def _multi_compute_stats(multi_beta,multi_variance_beta,multi_fraction_variance_
     dataframe['PValue'] = p_values[keep_index]
     dataframe['SnpWeight'] = pstutil.asnumpy(multi_beta.T.reshape(-1))[keep_index]
     dataframe['SnpWeightSE'] = pstutil.asnumpy(xp.sqrt(multi_variance_beta.T.reshape(-1)))[keep_index]
-    dataframe['SnpFractVarExpl'] = pstutil.asnumpy(xp.sqrt(multi_fraction_variance_explained_beta.T.reshape(-1)))[keep_index]
+    dataframe['EffectSize'] = effect_size.T.reshape(-1)[keep_index]
     dataframe['Mixing'] = np.repeat(mixing, snps_read.sid_count)[keep_index]
     dataframe['Nullh2'] = np.repeat(h2, snps_read.sid_count)[keep_index]
 
@@ -1025,6 +1030,39 @@ def _mix_from_Ks(K, K0_val, K1_val, mixing):
 
 
 if __name__ == "__main__":
+    if True:
+        logging.basicConfig(level=logging.WARN)
+
+
+        import numpy as np
+        from pysnptools.snpreader import Pheno, SnpData
+        from fastlmm.util import example_file # Download and return local file name
+
+        # For example, create multiple phenotype in memory
+        ##############################
+        pheno1 = Pheno(example_file("tests/datasets/synth/pheno_10_causals.txt")).read()
+        pheno3 = SnpData(iid=pheno1.iid,
+                         sid=["original","sqrt","square"],
+                         val= np.c_[pheno1.val,pheno1.val**2,pheno1.val**3]
+        )
+
+        # import the algorithm
+        import numpy as np
+        from fastlmm.association import single_snp
+        from fastlmm.util import example_file # Download and return local file name
+
+        # set up data
+        ##############################
+        from fastlmm.util import example_file # Download and return local file name
+        bed_fn = example_file('tests/datasets/synth/all.*','*.bed')
+        cov_fn = example_file("tests/datasets/synth/cov.txt")
+
+        # run gwas with pheno3
+        ###################################################################
+        results_df = single_snp(bed_fn, pheno3, covar=cov_fn, count_A1=False)
+        print(results_df)
+
+
     if False:
         logging.basicConfig(level=logging.WARN)
 
