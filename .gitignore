@@ -464,3 +464,4 @@ runs/2020-10-19_23_37_58_6104741484993268/distributable.p
 /tmp_extract.txt
 /out.txt
 /fastlmm/.vs
+fastlmm/inference/tests/tempout/

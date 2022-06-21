@@ -1,4 +1,4 @@
-import numpy as SP
+import numpy as np
 import subprocess, sys, os.path
 from itertools import *
 from fastlmm.pyplink.snpset import *
@@ -66,11 +66,11 @@ class Bed(object):
         bimfile = self.basefilename+'.bim'
 
         logging.info("Loading fam file {0}".format(famfile))
-        self._original_iids = SP.loadtxt(famfile,dtype = 'str',usecols=(0,1),comments=None)
+        self._original_iids = np.loadtxt(famfile,dtype = 'str',usecols=(0,1),comments=None)
         logging.info("Loading bim file {0}".format(bimfile))
 
         self.bimfields = pd.read_csv(bimfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
-        self.rs = SP.array(self.bimfields[1].tolist(),dtype='str')
+        self.rs = np.array(self.bimfields[1].tolist(),dtype='str')
         self.pos = self.bimfields[[0,2,3]].values
         self._snp_to_index = {}
         logging.info("indexing snps");
@@ -104,7 +104,7 @@ class Bed(object):
         self.run_once()
         return len(self.bimfields);
 
-    def read(self,snp_set = AllSnps(), order="F", dtype=SP.float64, force_python_only=False):
+    def read(self,snp_set = AllSnps(), order="F", dtype=np.float64, force_python_only=False):
         '''
         Input: a snp_set. Choices include
             AllSnps() [the default],
@@ -193,7 +193,7 @@ class Bed(object):
 
 
     @staticmethod
-    def read_with_specification(snpset_withbbed, order="F", dtype=SP.float64, force_python_only=False):
+    def read_with_specification(snpset_withbbed, order="F", dtype=np.float64, force_python_only=False):
         # doesn't need to self.run_once() because it is static
         decide_once_on_plink_reader()
         global WRAPPED_PLINK_PARSER_PRESENT
@@ -202,31 +202,25 @@ class Bed(object):
         iid_count_in, iid_count_out, iid_index_out, snp_count_in, snp_count_out, snp_index_out = bed.counts_and_indexes(snpset_withbbed)
 
         if WRAPPED_PLINK_PARSER_PRESENT and not force_python_only:
-            from bed_reader import read_f32, read_f64
-            SNPs = SP.zeros((iid_count_out, snp_count_out), order=order, dtype=dtype)
+            from bed_reader import open_bed
             bed_fn = bed.basefilename + ".bed"
             count_A1 = False
 
-            if dtype == SP.float64:
-                reader = read_f64
-            elif dtype == SP.float32:
-                    reader = read_f32
+            if dtype == np.float64:
+                dtype = 'float64'
+            elif dtype == np.float32:
+                    dtype = 'float32'
             else:
                 raise ValueError(
                     f"dtype '{val.dtype}' not known, only "
                     + "'int8', 'float32', and 'float64' are allowed."
                 )
 
-            reader(
-                bed_fn,
-                iid_count=iid_count_in,
-                sid_count=snp_count_in,
-                count_a1=count_A1,
-                iid_index=SP.array(iid_index_out,dtype=SP.uint64),
-                sid_index=SP.array(snp_index_out,dtype=SP.uint64),
-                val=SNPs,
-                num_threads=0
-            )
+            with open_bed(bed_fn,
+                          iid_count=iid_count_in,
+                          sid_count=snp_count_in,
+                          count_A1=count_A1) as bed2:
+                SNPs = bed2.read(np.s_[iid_index_out,snp_index_out],dtype = dtype)
 
         else:
 
@@ -234,27 +228,27 @@ class Bed(object):
             # to add that ability back to the code. 
             # Also, note that reading with python will often result in non-contiguous memory, so the python standardizers will automatically be used, too.       
             logging.warn("using pure python plink parser (might be much slower!!)")
-            SNPs = SP.zeros(((int(SP.ceil(0.25*iid_count_in))*4),snp_count_out),order=order, dtype=dtype) #allocate it a little big
+            SNPs = np.zeros(((int(np.ceil(0.25*iid_count_in))*4),snp_count_out),order=order, dtype=dtype) #allocate it a little big
             for SNPsIndex, bimIndex in enumerate(snpset_withbbed):
 
-                startbit = int(SP.ceil(0.25*iid_count_in)*bimIndex+3)
+                startbit = int(np.ceil(0.25*iid_count_in)*bimIndex+3)
                 bed._filepointer.seek(startbit)
-                nbyte = int(SP.ceil(0.25*iid_count_in))
-                bytes = SP.array(bytearray(bed._filepointer.read(nbyte))).reshape((int(SP.ceil(0.25*iid_count_in)),1),order='F')
+                nbyte = int(np.ceil(0.25*iid_count_in))
+                bytes = np.array(bytearray(bed._filepointer.read(nbyte))).reshape((int(np.ceil(0.25*iid_count_in)),1),order='F')
 
-                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=64]=SP.nan
+                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=64]=np.nan
                 SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=128]=1
                 SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=192]=2
-                bytes=SP.mod(bytes,64)
-                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=16]=SP.nan
+                bytes=np.mod(bytes,64)
+                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=16]=np.nan
                 SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=32]=1
                 SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=48]=2
-                bytes=SP.mod(bytes,16)
-                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=4]=SP.nan
+                bytes=np.mod(bytes,16)
+                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=4]=np.nan
                 SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=8]=1
                 SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=12]=2
-                bytes=SP.mod(bytes,4)
-                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=1]=SP.nan
+                bytes=np.mod(bytes,4)
+                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=1]=np.nan
                 SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=2]=1
                 SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=3]=2
             SNPs = SNPs[iid_index_out,:] #reorder or trim any extra allocation
