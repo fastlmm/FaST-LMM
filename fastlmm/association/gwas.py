@@ -174,7 +174,7 @@ class GWAS(object):
             ('PValue', p_values),
             ('SnpWeight', beta[:,0]),
             ('SnpWeightSE', np.sqrt(res['variance_beta'][:,0])),
-            ('SnpFractVarExpl', np.sqrt(res['fraction_variance_explained_beta'][:,0])),
+            # no longer calculated ('SnpFractVarExpl', np.sqrt(res['fraction_variance_explained_beta'][:,0])),
             ('Nullh2', np.zeros((snps.sid_count)) + h2)
         ]
         return pd.DataFrame.from_items(items)

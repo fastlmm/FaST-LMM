@@ -311,7 +311,7 @@ def read_bed_cache(data_folder, file_index_end):
 def _create_dataframe(row_count):
     dataframe = pd.DataFrame(
         index=np.arange(row_count),
-        columns=('sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue', 'SnpWeight', 'SnpWeightSE','SnpFractVarExpl','Mixing', 'Nullh2')
+        columns=('sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue', 'SnpWeight', 'SnpWeightSE','Mixing', 'Nullh2')
         )
     #!!Is this the only way to set types in a dataframe?
     dataframe['sid_index'] = dataframe['sid_index'].astype(np.float)
@@ -321,7 +321,7 @@ def _create_dataframe(row_count):
     dataframe['PValue'] = dataframe['PValue'].astype(np.float)
     dataframe['SnpWeight'] = dataframe['SnpWeight'].astype(np.float)
     dataframe['SnpWeightSE'] = dataframe['SnpWeightSE'].astype(np.float)
-    dataframe['SnpFractVarExpl'] = dataframe['SnpFractVarExpl'].astype(np.float)
+    # Not currently calculated: dataframe['EffectSize'] = dataframe['EffectSize'].astype(np.float)
     dataframe['Mixing'] = dataframe['Mixing'].astype(np.float)
     dataframe['Nullh2'] = dataframe['Nullh2'].astype(np.float)
 
@@ -343,7 +343,6 @@ def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, s
     variance_explained_beta = (snpsKY * beta)
     r2 = YKY[np.newaxis,:] - variance_explained_beta 
     variance_beta = r2 / (N - 1) / snpsKsnps
-    fraction_variance_explained_beta = variance_explained_beta / YKY[np.newaxis,:] # variance explained by beta over total variance
     sigma2 = r2 / N
     nLL = 0.5 * (logdetK + N * (np.log(2.0 * np.pi * sigma2) + 1))
     chi2stats = beta*beta/variance_beta
@@ -360,7 +359,7 @@ def compute_stats(start, stop, snpsKY, snpsKsnps, YKY, N, logdetK,  iid_count, s
     dataframe['PValue'] = p_values
     dataframe['SnpWeight'] = beta[:,0]
     dataframe['SnpWeightSE'] = np.sqrt(variance_beta[:,0])
-    dataframe['SnpFractVarExpl'] = np.sqrt(fraction_variance_explained_beta[:,0])
+    # Not currently calculated: dataframe['EffectSize'] = None
     dataframe['Mixing'] = np.zeros((len(sid))) + 0
     dataframe['Nullh2'] = np.zeros((len(sid))) + h2
     return dataframe

@@ -831,15 +831,12 @@ class LMM(object):
                 #variance estimate is conservative, due to N-1 for penalty case
                 variance_explained_beta *= (snpsKsnps/(snpsKsnps+penalty_)) * (snpsKsnps/(snpsKsnps + penalty_))
             else:
-                variance_beta = r2 / (N - 1.0) / snpsKsnps
-                fraction_variance_explained_beta = variance_explained_beta / YKY[np.newaxis,:] # variance explained by beta over total variance
-        
+                variance_beta = r2 / (N - 1.0) / snpsKsnps        
         else:
             r2 = YKY
             beta = None
             variance_beta = None
             variance_explained_beta = None
-            fraction_variance_explained_beta = None
 
         if dof is None:#Use the Multivariate Gaussian
             sigma2 = r2 / N
@@ -853,7 +850,6 @@ class LMM(object):
                         'beta':beta,
                         'variance_beta':variance_beta,
                         'variance_explained_beta':variance_explained_beta,
-                        'fraction_variance_explained_beta':fraction_variance_explained_beta,
                         'scale':scale
                 }
 

@@ -10,7 +10,7 @@ import sys
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
 # Version number
-version = '0.6.0'
+version = '0.6.1'
 
 def readme():
     with open("README.md") as f:

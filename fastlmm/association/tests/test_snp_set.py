@@ -118,8 +118,12 @@ class TestSnpSet(unittest.TestCase):
         self.assertTrue(out, "msg='{0}', ref='{1}', tmp='{2}'".format(msg, referenceOutfile, tmpOutfile))
 
     def test_doctest(self):
+        old_dir = os.getcwd()
+        os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
         result = doctest.testmod(sys.modules['fastlmm.association.snp_set'])
+        os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
+
 
     def _referenceOutfile(self,_infile):
         import platform;
@@ -141,13 +145,6 @@ class TestSnpSet(unittest.TestCase):
                 logging.warning("comparing to Windows output even though found: %s" % os_string)
             return windows_fn 
 
-
-    def test_doctest(self):
-        old_dir = os.getcwd()
-        os.chdir(os.path.dirname(os.path.realpath(__file__))+"/..")
-        result = doctest.testmod(sys.modules['fastlmm.association.snp_set'])
-        os.chdir(old_dir)
-        assert result.failed == 0, "failed doc test: " + __file__
 
 def getTestSuite():
     
