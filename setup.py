@@ -7,14 +7,17 @@ import numpy
 # Work around https://github.com/pypa/pip/issues/7953
 import site
 import sys
+
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
 # Version number
-version = '0.6.1'
+version = "0.6.2"
+
 
 def readme():
     with open("README.md") as f:
         return f.read()
+
 
 # python setup.py sdist bdist_wininst upload
 setup(
@@ -88,10 +91,11 @@ setup(
         "pandas>=1.1.1",
         "matplotlib>=1.5.1",
         "scikit-learn>=0.19.1",
+        "cbgen==1.0.1",
         "pysnptools>=0.5.3",
         "dill>=0.2.9",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
-        "fastlmmclib>=0.0.1"
+        "fastlmmclib>=0.0.1",
     ],
 )
