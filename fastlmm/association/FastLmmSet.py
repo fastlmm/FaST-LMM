@@ -19,6 +19,7 @@ from .PairResult import *
 from fastlmm.association.tests import *
 import fastlmm.util.genphen as gp
 import scipy as sp
+import numpy as np
 from itertools import *
 from fastlmm.pyplink.snpreader.Bed import *
 import logging
@@ -233,7 +234,7 @@ class FastLmmSet: # implements IDistributable
                             #always have the same background signal                                                
                             if self.genphen["varBackNullFileGen"] is not None and y_back is None:                                                      
                                 nSnp=self.__SNPs0['data']['snps'].shape[1]
-                                y_back=sp.sqrt(self.genphen["varBack"]/nSnp)*self.__varBackNullSnpsGen['snps'].dot(sp.random.randn(self.__varBackNullSnpsGen['snps'].shape[1],1))/sp.sqrt(self.__varBackNullSnpsGen['snps'].shape[1]) 
+                                y_back=sp.sqrt(self.genphen["varBack"]/nSnp)*self.__varBackNullSnpsGen['snps'].dot(np.random.randn(self.__varBackNullSnpsGen['snps'].shape[1],1))/sp.sqrt(self.__varBackNullSnpsGen['snps'].shape[1]) 
                                 #self.printPhenToFile(nInd, SNPsalt, y_back);
                             elif "varBackNullPhenGen" in self.genphen and self.genphen["varBackNullPhenGen"] is not None and y_back is None:
                                 y_back=loadPhen(filename = self.genphen["varBackNullPhenGen"])['vals']                            

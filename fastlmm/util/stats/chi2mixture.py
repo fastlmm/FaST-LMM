@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import scipy as sp
+import numpy as np
 import scipy.stats as st
 import scipy.special
 import fastlmm.util.mingrid as mingrid
@@ -7,17 +8,47 @@ import pdb
 import logging
 from six.moves import range
 
-class chi2mixture(object):
-    '''
-    mixture here denotes the weight on the non-zero dof compnent
-    '''
-    __slots__ = ['scale','dof','mixture','imax','lrt','scalemin','scalemax',
-                 'dofmin','dofmax', 'qmax', 'tol', 'isortlrt','qnulllrtsort',
-                 'lrtsort','alteqnull','abserr','fitdof']
 
-    def __init__(self, lrt, tol = 0.0, scalemin = 0.1, scalemax = 5.0,
-                 dofmin = 0.1, dofmax = 5.0, qmax = None, alteqnull = None,abserr=None,fitdof=None,dof=None):
-        '''
+class chi2mixture(object):
+    """
+    mixture here denotes the weight on the non-zero dof compnent
+    """
+
+    __slots__ = [
+        "scale",
+        "dof",
+        "mixture",
+        "imax",
+        "lrt",
+        "scalemin",
+        "scalemax",
+        "dofmin",
+        "dofmax",
+        "qmax",
+        "tol",
+        "isortlrt",
+        "qnulllrtsort",
+        "lrtsort",
+        "alteqnull",
+        "abserr",
+        "fitdof",
+    ]
+
+    def __init__(
+        self,
+        lrt,
+        tol=0.0,
+        scalemin=0.1,
+        scalemax=5.0,
+        dofmin=0.1,
+        dofmax=5.0,
+        qmax=None,
+        alteqnull=None,
+        abserr=None,
+        fitdof=None,
+        dof=None,
+    ):
+        """
         Input:
         lrt             [Ntests] vector of test statistics
         a2 (optional)   [Ntests] vector of model variance parameters
@@ -27,8 +58,8 @@ class chi2mixture(object):
         dofmin (0.1)    minimum value used for fitting the dof parameter
         dofmax (5.0)    maximum value used for fitting dof parameter
         qmax (None)      only the top qmax quantile is used for the fit
-        '''
-        self.lrt = lrt        
+        """
+        self.lrt = lrt
         self.alteqnull = alteqnull
         self.scale = None
         self.dof = dof
@@ -41,112 +72,126 @@ class chi2mixture(object):
         self.tol = tol
         self.__fit_mixture()
         self.isortlrt = None
-        self.abserr=abserr
-        self.fitdof=fitdof
-        #self.qlrt = self.lrt.argsort()
+        self.abserr = abserr
+        self.fitdof = fitdof
+        # self.qlrt = self.lrt.argsort()
 
     def __fit_mixture(self):
-        '''
+        """
         fit the mixture component
-        '''
-        if self.tol<0.0:
-            logging.info('tol has to be larger or equal than zero.')
+        """
+        if self.tol < 0.0:
+            logging.info("tol has to be larger or equal than zero.")
         if self.alteqnull is None:
-            self.alteqnull=self.lrt==0
+            self.alteqnull = self.lrt == 0
             logging.info("WARNING: alteqnull not provided, so using alteqnull=(lrt==0)")
         if self.mixture is None:
-            self.mixture = 1.0-(sp.array(self.alteqnull).sum()*1.0)/(sp.array(self.alteqnull).shape[0]*1.0)
+            self.mixture = 1.0 - (sp.array(self.alteqnull).sum() * 1.0) / (
+                sp.array(self.alteqnull).shape[0] * 1.0
+            )
         return self.alteqnull, self.mixture
-     
 
     def fit_params_Qreg(self):
-        '''
+        """
         Fit the scale and dof parameters of the model by minimizing the squared error between
         the model log quantiles and the log P-values obtained on the lrt values.
 
         Only the top qmax quantile is being used for the fit (self.qmax is used in fit_scale_logP).
-        '''
-        #imin= sp.argsort(self.lrt[~self.i0])
-        #ntests = self.lrt.shape[0]  
+        """
+        # imin= sp.argsort(self.lrt[~self.i0])
+        # ntests = self.lrt.shape[0]
         if self.isortlrt is None:
-            self.isortlrt = self.lrt.argsort()[::-1]            
-            self.qnulllrtsort = (0.5+sp.arange(self.mixture*self.isortlrt.shape[0]))/(self.mixture*self.isortlrt.shape[0])   
-            self.lrtsort = self.lrt[self.isortlrt]      
-        resmin=[None] #CL says it had to be a list or wouldn't work, even though doesn't make sense
-        if self.fitdof: #fit both scale and dof
+            self.isortlrt = self.lrt.argsort()[::-1]
+            self.qnulllrtsort = (
+                0.5 + sp.arange(self.mixture * self.isortlrt.shape[0])
+            ) / (self.mixture * self.isortlrt.shape[0])
+            self.lrtsort = self.lrt[self.isortlrt]
+        resmin = [
+            None
+        ]  # CL says it had to be a list or wouldn't work, even though doesn't make sense
+        if self.fitdof:  # fit both scale and dof
+
             def f(x):
                 res = self.fit_scale_logP(dof=x)
-                if (resmin[0] is None) or (res['mse']<resmin[0]['mse']):
-                    resmin[0]=res
-                return res['mse']                   
-        else:
-            def f(x): #fit only scale                
-                scale = x                        
-                mse,imax=self.scale_dof_obj(scale,self.dof)
-                if (resmin[0] is None) or (resmin[0]['mse']>mse):
-                    resmin[0] = { #bookeeping for CL's mingrid.minimize1D
-                        'mse':mse,
-                        'dof':self.dof,
-                        'scale':scale,
-                        'imax':imax,
-                    }                
-                return mse 
-        min = mingrid.minimize1D(f=f, nGrid=10, minval=self.dofmin, maxval=self.dofmax )
-        self.dof = resmin[0]['dof']
-        self.scale = resmin[0]['scale']
-        self.imax=resmin[0]['imax']
-        return resmin[0]       
+                if (resmin[0] is None) or (res["mse"] < resmin[0]["mse"]):
+                    resmin[0] = res
+                return res["mse"]
 
-    def fit_scale_logP(self, dof = None):        
-        '''
-        Extracts the top qmax lrt values to do the fit.        
-        '''              
-      
+        else:
+
+            def f(x):  # fit only scale
+                scale = x
+                mse, imax = self.scale_dof_obj(scale, self.dof)
+                if (resmin[0] is None) or (resmin[0]["mse"] > mse):
+                    resmin[0] = {  # bookeeping for CL's mingrid.minimize1D
+                        "mse": mse,
+                        "dof": self.dof,
+                        "scale": scale,
+                        "imax": imax,
+                    }
+                return mse
+
+        min = mingrid.minimize1D(f=f, nGrid=10, minval=self.dofmin, maxval=self.dofmax)
+        self.dof = resmin[0]["dof"]
+        self.scale = resmin[0]["scale"]
+        self.imax = resmin[0]["imax"]
+        return resmin[0]
+
+    def fit_scale_logP(self, dof=None):
+        """
+        Extracts the top qmax lrt values to do the fit.
+        """
+
         if dof is None:
-            dof =  self.dof
-        resmin = [None]                       
-       
-        def f(x):            
-            scale = x 
-            err,imax=self.scale_dof_obj(scale,dof)
-            if (resmin[0] is None) or (resmin[0]['mse']>err):
-                resmin[0] = { #bookeeping for CL's mingrid.minimize1D
-                    'mse':err,
-                    'dof':dof,
-                    'scale':scale,
-                    'imax':imax,
+            dof = self.dof
+        resmin = [None]
+
+        def f(x):
+            scale = x
+            err, imax = self.scale_dof_obj(scale, dof)
+            if (resmin[0] is None) or (resmin[0]["mse"] > err):
+                resmin[0] = {  # bookeeping for CL's mingrid.minimize1D
+                    "mse": err,
+                    "dof": dof,
+                    "scale": scale,
+                    "imax": imax,
                 }
             return err
-        min = mingrid.minimize1D(f=f, nGrid=10, minval=self.scalemin, maxval=self.scalemax )        
+
+        min = mingrid.minimize1D(
+            f=f, nGrid=10, minval=self.scalemin, maxval=self.scalemax
+        )
         return resmin[0]
-        
-    def scale_dof_obj(self,scale,dof):            
-        base=sp.exp(1) #fitted params are invariant to this logarithm base (i.e.10, or e)
-        
-        nfalse=(len(self.alteqnull)-sp.sum(self.alteqnull))
 
-        imax = int(sp.ceil(self.qmax*nfalse))  #of only non zer dof component
-        p = st.chi2.sf(self.lrtsort[0:imax]/scale, dof)            
-        logp = sp.logn(base,p)
-        r = sp.logn(base,self.qnulllrtsort[0:imax])-logp
+    def scale_dof_obj(self, scale, dof):
+        base = sp.exp(
+            1
+        )  # fitted params are invariant to this logarithm base (i.e.10, or e)
+
+        nfalse = len(self.alteqnull) - sp.sum(self.alteqnull)
+
+        imax = int(sp.ceil(self.qmax * nfalse))  # of only non zer dof component
+        p = st.chi2.sf(self.lrtsort[0:imax] / scale, dof)
+        logp = sp.logn(base, p)
+        r = sp.logn(base, self.qnulllrtsort[0:imax]) - logp
         if self.abserr:
-            err=sp.absolute(r).sum()            
-        else:#mean square error
-            err = (r*r).mean()              
-        return err,imax
+            err = sp.absolute(r).sum()
+        else:  # mean square error
+            err = (r * r).mean()
+        return err, imax
 
-    def mse_qreg(self, scale,dof,lrt,base):                        
-        '''
+    def mse_qreg(self, scale, dof, lrt, base):
+        """
         For debugging: returns mse for particular scale and dof, given pre-filtered lrt
-        '''        
-        p = st.chi2.sf(lrt/scale, dof)            
-        logp = sp.logn(base,p)
-        r = sp.logn(base,self.qnulllrtsort[0:len(lrt)])-logp
-        mse = (r*r).mean()                
+        """
+        p = st.chi2.sf(lrt / scale, dof)
+        logp = sp.logn(base, p)
+        r = sp.logn(base, self.qnulllrtsort[0 : len(lrt)]) - logp
+        mse = (r * r).mean()
         return mse
 
-    def sf(self, lrt = None, alteqnull=None):
-        '''
+    def sf(self, lrt=None, alteqnull=None):
+        """
         compute the survival function of the mixture of scaled chi-square_0 and scaled chi-square_dof
         ---------------------------------------------------------------------------
         Input:
@@ -156,20 +201,22 @@ class chi2mixture(object):
         Output:
         pv                 P-values
         ---------------------------------------------------------------------------
-        '''        
+        """
         if lrt is None:
             lrt = self.lrt
-            alteqnull=self.alteqnull
+            alteqnull = self.alteqnull
         else:
-            assert alteqnull is not None, "alteqnull is none, but lrt is not (seems unexpected, JL)"
-        
-        pv = st.chi2.sf(lrt/self.scale,self.dof)*self.mixture                        
-        pv[sp.array(alteqnull)]=1.0
+            assert (
+                alteqnull is not None
+            ), "alteqnull is none, but lrt is not (seems unexpected, JL)"
+
+        pv = st.chi2.sf(lrt / self.scale, self.dof) * self.mixture
+        pv[sp.array(alteqnull)] = 1.0
         return pv
 
-    #OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
-    def computePVmixtureChi2(lrt,a2=None, tol= 0.0, mixture=0.5, scale = 1.0, dof = 1.0):
-        '''
+    # OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
+    def computePVmixtureChi2(lrt, a2=None, tol=0.0, mixture=0.5, scale=1.0, dof=1.0):
+        """
         OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
 
         computes P-values for a mixture of a scaled Chi^2_dof and Chi^2_0 distributions.
@@ -198,45 +245,62 @@ class chi2mixture(object):
         dof       : degrees of freedom of the scaled Chi^2_dof distribution
         i0        : indicator for Chi^2_0 P-values
         --------------------------------------------------------------------------
-        '''
-        raise Exception("made changes to use alteqnull and did not modify this code as it looks obsolete")
+        """
+        raise Exception(
+            "made changes to use alteqnull and did not modify this code as it looks obsolete"
+        )
         loc = None
         chi2mix = chi2mixture()
-        chi2mix.lrt=lrt
+        chi2mix.lrt = lrt
         if mixture is None:
             i0, mixture = chi2mix.fit_mixture(a2=a2, tol=tol)
         else:
             chi2mix.mixture = mixture
             if a2 is None:
-                i0 = (lrt<=(0.0+tol))
+                i0 = lrt <= (0.0 + tol)
             else:
-                i0 = (a2<=(0.0+tol))
+                i0 = a2 <= (0.0 + tol)
 
-        N=(~i0).sum()
+        N = (~i0).sum()
         sumX = (lrt[~i0]).sum()
         logsumX = (sp.log(lrt[~i0])).sum()
         if (dof is None) and (scale is None):
-        #f is the Gamma likelihood with the scale parameter maximized analytically as a funtion of 0.5 * the degrees of freedom
-            f = lambda k: -1.0*(-N*sp.special.gammaln(k)-k*N*(sp.log(sumX)-sp.log(k)-sp.log(N)) + (k-1.0)*logsumX-k*N)
-            #f_ = lambda(x): 1-N*N/(2.0*x*sumX)
-            res = minimize1D(f, evalgrid = None, nGrid=10, minval=0.1, maxval = 3.0)
-            dof = 2.0*res[0]
+            # f is the Gamma likelihood with the scale parameter maximized analytically as a function of 0.5 * the degrees of freedom
+            f = lambda k: -1.0 * (
+                -N * sp.special.gammaln(k)
+                - k * N * (sp.log(sumX) - sp.log(k) - sp.log(N))
+                + (k - 1.0) * logsumX
+                - k * N
+            )
+            # f_ = lambda(x): 1-N*N/(2.0*x*sumX)
+            res = minimize1D(f, evalgrid=None, nGrid=10, minval=0.1, maxval=3.0)
+            dof = 2.0 * res[0]
         elif dof is None:
-            f = lambda k : -1.0*(-N*sp.special.gammaln(k)-k*N*sp.log(2.0*scale)+(k-1.0)*logsumX-sumX/(2.0*scale))
-            res = minimize1D(f, evalgrid = None, nGrid=10, minval=0.1, maxval = 3.0)
-            dof = 2.0*res[0]
+            f = lambda k: -1.0 * (
+                -N * sp.special.gammaln(k)
+                - k * N * sp.log(2.0 * scale)
+                + (k - 1.0) * logsumX
+                - sumX / (2.0 * scale)
+            )
+            res = minimize1D(f, evalgrid=None, nGrid=10, minval=0.1, maxval=3.0)
+            dof = 2.0 * res[0]
         if scale is None:
-            #compute condition for ML
-            if (1.0-(N*N*dof)/(4.0*sumX)>0):
-                logging.warning('Warning: positive second derivative: No maximum likelihood solution can be found for the scale. returning scale=1.0 and dof=1.0')
+            # compute condition for ML
+            if 1.0 - (N * N * dof) / (4.0 * sumX) > 0:
+                logging.warning(
+                    "Warning: positive second derivative: No maximum likelihood solution can be found for the scale. returning scale=1.0 and dof=1.0"
+                )
                 scale = 1.0
                 dof = 1.0
 
             else:
-                scale = sumX/(N*dof)
-        pv = mixture*(st.chi2.sf(lrt/scale,dof)) # Can use the Chi^2 CDF/SF to evaluate the scaled Chi^2 by rescaling the input.
-        pv[i0]=1.0
-        return (pv,mixture,scale,dof,i0)
+                scale = sumX / (N * dof)
+        pv = mixture * (
+            st.chi2.sf(lrt / scale, dof)
+        )  # Can use the Chi^2 CDF/SF to evaluate the scaled Chi^2 by rescaling the input.
+        pv[i0] = 1.0
+        return (pv, mixture, scale, dof, i0)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -248,31 +312,39 @@ if __name__ == "__main__":
     lrt = sp.zeros((ntests))
     lrttest = sp.zeros((ntests))
     for i in range(dof):
-        x = sp.randn(ntests)
+        x = np.randn(ntests)
         xtest = sp.randn(ntests)
-        lrt += scale * (x*x)
-        lrttest += scale * (xtest*xtest)
+        lrt += scale * (x * x)
+        lrttest += scale * (xtest * xtest)
 
-    lrt[sp.random.permutation(ntests)[0:sp.ceil(ntests*mixture)]] = 0.0
-    lrttest[sp.random.permutation(ntests)[0:sp.ceil(ntests*mixture)]] = 0.0
+    lrt[np.random.permutation(ntests)[0 : sp.ceil(ntests * mixture)]] = 0.0
+    lrttest[np.random.permutation(ntests)[0 : sp.ceil(ntests * mixture)]] = 0.0
 
     qmax = 0.2
     logging.info(("create the distribution object, with qmax = %.4f" % qmax))
-    mix = chi2mixture( lrt = lrt, a2 = None , qmax = 0.2) #object constructor
+    mix = chi2mixture(lrt=lrt, a2=None, qmax=0.2)  # object constructor
 
     logging.info("fit the parameter of the object by log-Pvalue quantile regression")
     import time
-    t0 = time.time()
-    res = mix.fit_params_Qreg() # paramter fitting
-    t1 = time.time()
-    logging.info(("done after %.4f seconds." % (t1-t0)))
-    logging.info("the true scale is %.4f, the fitted scale is %.4f." % (scale,mix.scale))
-    logging.info("the true dof is %.4f, the fitted dof is %.4f." % (dof,mix.dof))
-    logging.info("the true mixture is %.4f, the fitted mixture is %.4f." % (mixture,mix.mixture))
 
-    logging.info("evaluating the survival function to get P-values of the training lrt (variable pv)")
+    t0 = time.time()
+    res = mix.fit_params_Qreg()  # paramter fitting
+    t1 = time.time()
+    logging.info(("done after %.4f seconds." % (t1 - t0)))
+    logging.info(
+        "the true scale is %.4f, the fitted scale is %.4f." % (scale, mix.scale)
+    )
+    logging.info("the true dof is %.4f, the fitted dof is %.4f." % (dof, mix.dof))
+    logging.info(
+        "the true mixture is %.4f, the fitted mixture is %.4f." % (mixture, mix.mixture)
+    )
+
+    logging.info(
+        "evaluating the survival function to get P-values of the training lrt (variable pv)"
+    )
     pv = mix.sf()
-    logging.info("evaluating the survival function to get P-values of the testing lrt (variable pvtest)")
+    logging.info(
+        "evaluating the survival function to get P-values of the testing lrt (variable pvtest)"
+    )
     pvtest = mix.sf(lrt=lrttest)
     pass
-
