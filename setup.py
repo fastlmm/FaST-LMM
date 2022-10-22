@@ -11,7 +11,7 @@ import sys
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
 # Version number
-version = "0.6.2"
+version = "0.6.3"
 
 
 def readme():
@@ -40,6 +40,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python",
     ],
@@ -91,8 +92,7 @@ setup(
         "pandas>=1.1.1",
         "matplotlib>=1.5.1",
         "scikit-learn>=0.19.1",
-        "cbgen==1.0.1",
-        "pysnptools>=0.5.3",
+        "pysnptools>=0.5.6",
         "dill>=0.2.9",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
