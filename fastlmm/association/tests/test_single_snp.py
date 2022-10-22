@@ -1396,7 +1396,7 @@ def getTestSuite():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)  # cmk
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
 
     # this import is needed for the runner
@@ -1407,36 +1407,18 @@ if __name__ == "__main__":
 
     suites = unittest.TestSuite([getTestSuite()])
 
-    if True:  # Standard test run
+    if True:  # Standard test run cmk
         r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else:  # Cluster test run
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.WARN)  # cmk
 
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
-        remote_python_parent = (
-            r"\\GCR\Scratch\RR1\escience\carlk\data\carlk\pythonpath06292016"
-        )
-        runner = HPC(
-            2,
-            "GCR",
-            r"\\GCR\Scratch\RR1\escience",
-            remote_python_parent=remote_python_parent,
-            unit="node",  # core, socket, node
-            update_remote_python_parent=True,
-            template="Preemptable",
-            priority="Lowest",
-            nodegroups="Preemptable",
-            # excluded_nodes=['gcrcn0231'],
-            runtime="0:11:0",  # day:hour:min
-            max=10,
-        )
         # runner = Local()
-        # runner = LocalMultiProc(taskcount=2,mkl_num_threads=5,just_one_process=False)
+        runner = LocalMultiProc(taskcount=2, mkl_num_threads=5, just_one_process=False)
         # runner = LocalInParts(0,2,mkl_num_threads=1) # For debugging the cluster runs
-        # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
         distributable_test = DistributableTest(suites, "temp_test")
         print(runner.run(distributable_test))
 

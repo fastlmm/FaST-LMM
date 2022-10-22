@@ -24,12 +24,27 @@ from pysnptools.kernelreader import KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util import create_directory_if_necessary
 from pysnptools.util.intrangeset import IntRangeSet
-from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup, _SnpTrainTest
+from fastlmm.inference.fastlmm_predictor import (
+    _snps_fixup,
+    _pheno_fixup,
+    _kernel_fixup,
+    _SnpTrainTest,
+)
 import fastlmm.inference.linear_regression as lin_reg
 from fastlmm.association.single_snp import _set_block_size
 from unittest.mock import patch
 
-def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_file_name=None, GB_goal=None, runner=None, count_A1=None):
+
+def single_snp_linreg(
+    test_snps,
+    pheno,
+    covar=None,
+    max_output_len=None,
+    output_file_name=None,
+    GB_goal=None,
+    runner=None,
+    count_A1=None,
+):
     """
     Function performing single SNP GWAS using linear regression. Will reorder and intersect IIDs as needed.
 
@@ -51,7 +66,7 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
 
     :param max_output_len: Maximum number of Pvalues to return. Default to None, which means 'Return all'.
     :type max_output_len: number
-    
+
     :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
     :type output_file_name: file name
 
@@ -86,46 +101,53 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
 
 
     """
-    with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+    with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
 
         assert test_snps is not None, "test_snps must be given as input"
-        test_snps = _snps_fixup(test_snps,count_A1=count_A1)
-        pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
+        test_snps = _snps_fixup(test_snps, count_A1=count_A1)
+        pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
         assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-        pheno = pheno[(pheno.val==pheno.val)[:,0],:]
+        pheno = pheno[(pheno.val == pheno.val)[:, 0], :]
         covar = _pheno_fixup(covar, iid_if_none=pheno.iid)
-        test_snps, pheno, covar  = pstutil.intersect_apply([test_snps, pheno, covar])
+        test_snps, pheno, covar = pstutil.intersect_apply([test_snps, pheno, covar])
         logging.debug("# of iids now {0}".format(test_snps.iid_count))
 
         if GB_goal is not None:
-            bytes_per_sid = test_snps.iid_count * 8 
-            sid_per_GB_goal = 1024.0**3*GB_goal/bytes_per_sid
-            block_size = max(1,int(sid_per_GB_goal+.5))
+            bytes_per_sid = test_snps.iid_count * 8
+            sid_per_GB_goal = 1024.0**3 * GB_goal / bytes_per_sid
+            block_size = max(1, int(sid_per_GB_goal + 0.5))
             block_count = test_snps.sid_count / block_size
         else:
             block_count = 1
             block_size = test_snps.sid_count
-        logging.debug("block_count={0}, block_size={1}".format(block_count,block_size))
-
+        logging.debug("block_count={0}, block_size={1}".format(block_count, block_size))
 
         #!!!what about missing data in covar, in test_snps, in y
-        covar = np.c_[covar.read(view_ok=True,order='A').val,np.ones((test_snps.iid_count, 1))]  #view_ok because np.c_ will allocation new memory
-        y =  pheno.read(view_ok=True,order='A').val #view_ok because this code already did a fresh read to look for any missing values
+        covar = np.c_[
+            covar.read(view_ok=True, order="A").val, np.ones((test_snps.iid_count, 1))
+        ]  # view_ok because np.c_ will allocation new memory
+        y = pheno.read(
+            view_ok=True, order="A"
+        ).val  # view_ok because this code already did a fresh read to look for any missing values
 
         def mapper(start):
-            logging.info("single_snp_linereg reading start={0},block_size={1}".format(start,block_size))
-            snp_index = np.arange(start,min(start+block_size,test_snps.sid_count))
-            x = test_snps[:,start:start+block_size].read().standardize().val
+            logging.info(
+                "single_snp_linereg reading start={0},block_size={1}".format(
+                    start, block_size
+                )
+            )
+            snp_index = np.arange(start, min(start + block_size, test_snps.sid_count))
+            x = test_snps[:, start : start + block_size].read().standardize().val
             logging.info("single_snp_linereg linreg")
-            _,pval_in = lin_reg.f_regression_cov_alt(x,y,covar)
+            _, pval_in = lin_reg.f_regression_cov_alt(x, y, covar)
             logging.info("single_snp_linereg done")
             pval_in = pval_in.reshape(-1)
 
             if max_output_len is None:
-                return pval_in,snp_index
-            else: #We only need to return the top max_output_len results
+                return pval_in, snp_index
+            else:  # We only need to return the top max_output_len results
                 sort_index = np.argsort(pval_in)[:max_output_len]
-                return pval_in[sort_index],snp_index[sort_index]
+                return pval_in[sort_index], snp_index[sort_index]
 
         def reducer(pval_and_snp_index_sequence):
             pval_list = []
@@ -142,41 +164,46 @@ def single_snp_linreg(test_snps, pheno, covar=None, max_output_len=None, output_
 
             dataframe = pd.DataFrame(
                 index=np.arange(len(index)),
-                columns=('sid_index', 'SNP', 'Chr', 'GenDist', 'ChrPos', 'PValue')
-                )
+                columns=("sid_index", "SNP", "Chr", "GenDist", "ChrPos", "PValue"),
+            )
             #!!Is this the only way to set types in a dataframe?
-            dataframe['sid_index'] = dataframe['sid_index'].astype(np.float)
-            dataframe['Chr'] = dataframe['Chr'].astype(np.float)
-            dataframe['GenDist'] = dataframe['GenDist'].astype(np.float)
-            dataframe['ChrPos'] = dataframe['ChrPos'].astype(np.float)
-            dataframe['PValue'] = dataframe['PValue'].astype(np.float)
+            dataframe["sid_index"] = dataframe["sid_index"].astype(float)
+            dataframe["Chr"] = dataframe["Chr"].astype(float)
+            dataframe["GenDist"] = dataframe["GenDist"].astype(float)
+            dataframe["ChrPos"] = dataframe["ChrPos"].astype(float)
+            dataframe["PValue"] = dataframe["PValue"].astype(float)
 
-            dataframe['sid_index'] = index
-            dataframe['SNP'] = np.array(test_snps.sid[index],dtype='str') #This will be ascii on Python2 and unicode on Python3
-            dataframe['Chr'] = test_snps.pos[index,0]
-            dataframe['GenDist'] = test_snps.pos[index,1]
-            dataframe['ChrPos'] = test_snps.pos[index,2]
-            dataframe['PValue'] = pval[sort_index]
+            dataframe["sid_index"] = index
+            dataframe["SNP"] = np.array(
+                test_snps.sid[index], dtype="str"
+            )  # This will be ascii on Python2 and unicode on Python3
+            dataframe["Chr"] = test_snps.pos[index, 0]
+            dataframe["GenDist"] = test_snps.pos[index, 1]
+            dataframe["ChrPos"] = test_snps.pos[index, 2]
+            dataframe["PValue"] = pval[sort_index]
 
             if output_file_name is not None:
                 dataframe.to_csv(output_file_name, sep="\t", index=False)
 
             return dataframe
 
-        dataframe = map_reduce(range(0,test_snps.sid_count,block_size),
-                               mapper=mapper,
-                               reducer=reducer,
-                               input_files=[test_snps,pheno,covar],
-                               output_files=[output_file_name],
-                               name = "single_snp_linreg",
-                               runner=runner)
+        dataframe = map_reduce(
+            range(0, test_snps.sid_count, block_size),
+            mapper=mapper,
+            reducer=reducer,
+            input_files=[test_snps, pheno, covar],
+            output_files=[output_file_name],
+            name="single_snp_linreg",
+            runner=runner,
+        )
         return dataframe
+
 
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
     import doctest
-    doctest.testmod()
-    print('done')
 
+    doctest.testmod()
+    print("done")

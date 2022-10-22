@@ -833,16 +833,16 @@ def _create_dataframe(pvalue_count):
         ),
     )
     #!!Is this the only way to set types in a dataframe?
-    dataframe["sid_index"] = dataframe["sid_index"].astype(np.float)
-    dataframe["Chr"] = dataframe["Chr"].astype(np.float)
-    dataframe["GenDist"] = dataframe["GenDist"].astype(np.float)
-    dataframe["ChrPos"] = dataframe["ChrPos"].astype(np.float)
-    dataframe["PValue"] = dataframe["PValue"].astype(np.float)
-    dataframe["SnpWeight"] = dataframe["SnpWeight"].astype(np.float)
-    dataframe["SnpWeightSE"] = dataframe["SnpWeightSE"].astype(np.float)
-    dataframe["EffectSize"] = dataframe["EffectSize"].astype(np.float)
-    dataframe["Mixing"] = dataframe["Mixing"].astype(np.float)
-    dataframe["Nullh2"] = dataframe["Nullh2"].astype(np.float)
+    dataframe["sid_index"] = dataframe["sid_index"].astype(float)
+    dataframe["Chr"] = dataframe["Chr"].astype(float)
+    dataframe["GenDist"] = dataframe["GenDist"].astype(float)
+    dataframe["ChrPos"] = dataframe["ChrPos"].astype(float)
+    dataframe["PValue"] = dataframe["PValue"].astype(float)
+    dataframe["SnpWeight"] = dataframe["SnpWeight"].astype(float)
+    dataframe["SnpWeightSE"] = dataframe["SnpWeightSE"].astype(float)
+    dataframe["EffectSize"] = dataframe["EffectSize"].astype(float)
+    dataframe["Mixing"] = dataframe["Mixing"].astype(float)
+    dataframe["Nullh2"] = dataframe["Nullh2"].astype(float)
 
     return dataframe
 

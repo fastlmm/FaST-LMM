@@ -986,8 +986,8 @@ class TestFastLMM(unittest.TestCase):
         iid_train = [[str(x), str(x)] for x in range(10)]
         iid_test = [[str(x), str(x)] for x in range(10, 20)]
         sid = ['a{0}'.format(str(x)) for x in range(20)]
-        val_train = (np.random.random((10, 20)) > 0.5).astype(np.float)
-        val_test = (np.random.random((10, 20)) > 0.5).astype(np.float)
+        val_train = (np.random.random((10, 20)) > 0.5).astype(float)
+        val_test = (np.random.random((10, 20)) > 0.5).astype(float)
 
         y = SnpData(iid=iid_train, sid=['label'],val=np.random.random((10, 1)))
         K0_train = SnpData(iid=iid_train,sid=sid,val=val_train)
