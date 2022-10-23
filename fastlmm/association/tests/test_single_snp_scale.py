@@ -216,7 +216,21 @@ class TestSingleSnpScale(unittest.TestCase):
         )
         self.compare_files(results_df, "old")
 
-    def test_mapreduce1_runner(self):
+    def test_fast_mapreduce1_runner(self):
+        logging.info("test_mapreduce1_runner")
+
+        output_file = self.file_name("mapreduce1_runner")
+        runner = LocalMultiProc(taskcount=4, just_one_process=True)
+        results_df = single_snp_scale(
+            test_snps=self.bed[:, ::10],
+            pheno=self.phen_fn,
+            covar=self.cov_fn,
+            output_file_name=output_file,
+            runner=runner,
+        )
+        self.compare_files(results_df, "old")
+
+    def cmk_test_mapreduce1_runner(self):
         logging.info("test_mapreduce1_runner")
 
         output_file = self.file_name("mapreduce1_runner")
