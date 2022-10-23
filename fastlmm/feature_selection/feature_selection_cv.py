@@ -721,7 +721,7 @@ class FeatureSelectionStrategy(object):
         """
 
         _pval_feat_idx, sid_feat_idx = lingreg_results
-        sorted_pval = _pval_feat_idx.iloc[0:best_k]
+        sorted_pval = _pval_feat_idx[0:best_k]
         sorted_sid = sid_feat_idx.iloc[0:best_k]
         return sorted_sid, sorted_pval
 

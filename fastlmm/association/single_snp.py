@@ -1662,7 +1662,7 @@ if __name__ == "__main__":
 
             logging.getLogger().setLevel(logging.WARN)
             print(logging.getLogger().level)
-            # logging.getLogger("dill").setLevel(logging.INFO)
+            # logging.getLogger("cloudpickle").setLevel(logging.INFO)
 
             array_module_name_list = ["numpy"]  # ,'cupy']
             print(array_module_name_list)
@@ -1677,7 +1677,7 @@ if __name__ == "__main__":
                     # test_snps = DistributedBed(test_snps_cache)
                     # K0 = test_snps[:,::every] # re-creating this as a way to close it after K0.sid_count
                     for array_module_name in array_module_name_list:  #
-                        # with patch.dict('os.environ', { #is this the generator that pickle/dill don't like?
+                        # with patch.dict('os.environ', { #is this the generator that pickle/dill/cloudpickle don't like?
                         #    'ARRAY_MODULE': array_module_name,
                         #    }
                         #                ) as patched_environ:

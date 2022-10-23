@@ -93,7 +93,7 @@ setup(
         "matplotlib>=1.5.1",
         "scikit-learn>=0.19.1",
         "pysnptools>=0.5.6",
-        "dill>=0.2.9",
+        "cloudpickle>=2.2.0",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
         "fastlmmclib>=0.0.2",
