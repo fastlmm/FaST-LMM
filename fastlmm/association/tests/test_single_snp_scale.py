@@ -23,7 +23,7 @@ from pysnptools.util.mapreduce1.runner import LocalMultiProc
 
 class TestSingleSnpScale(unittest.TestCase):
     @classmethod
-    def cmk_test_snpgen(self):
+    def test_snpgen(self):
         seed = 0
         snpgen = SnpGen(seed=seed, iid_count=1000, sid_count=5000, block_size=100)
         snpdata = snpgen[:, [0, 1, 200, 2200, 10]].read()
@@ -46,7 +46,7 @@ class TestSingleSnpScale(unittest.TestCase):
         snpdata3 = snpgen[::10, [0, 1, 200, 2200, 10]].read()
         np.testing.assert_equal(snpdata3.val, snpdata2.val[::10, :])
 
-    def cmk_test_snpgen_cache(self):
+    def test_snpgen_cache(self):
         cache_file = tempfile.gettempdir() + "/test_snpgen_cache.snpgen.npz"
         if os.path.exists(cache_file):
             os.remove(cache_file)
@@ -100,7 +100,7 @@ class TestSingleSnpScale(unittest.TestCase):
 
     tempout_dir = "tempout/single_snp_scale"
 
-    def cmk_test_old(self):
+    def test_old(self):
         logging.info("test_old")
 
         output_file = self.file_name("old")
@@ -121,7 +121,7 @@ class TestSingleSnpScale(unittest.TestCase):
         cache_dict = {chrom: storage for chrom in range(23)}
         return cache_dict
 
-    def cmk_test_low(self):
+    def test_low(self):
         logging.info("test_low")
 
         output_file = self.file_name("low")
@@ -139,7 +139,7 @@ class TestSingleSnpScale(unittest.TestCase):
             )
             self.compare_files(results_df, "old")
 
-    def cmk_test_multipheno(self):
+    def test_multipheno(self):
         logging.info("test_multipheno")
 
         random_state = RandomState(29921)
@@ -181,7 +181,7 @@ class TestSingleSnpScale(unittest.TestCase):
                     abs(pvalue_frame - pvalue_reference) < 1e-5
                 ).all, "pair {0} differs too much from reference".format(sid)
 
-    def cmk_test_local_distribute(self):
+    def test_local_distribute(self):
         logging.info("test_local_distribute")
         force_python_only = False
 
@@ -217,20 +217,20 @@ class TestSingleSnpScale(unittest.TestCase):
         self.compare_files(results_df, "old")
 
     def test_fast_mapreduce1_runner(self):
-        logging.info("test_mapreduce1_runner")
+        logging.info("test_fast_mapreduce1_runner")
 
         output_file = self.file_name("mapreduce1_runner")
         runner = LocalMultiProc(taskcount=4, just_one_process=True)
-        results_df = single_snp_scale(
-            test_snps=self.bed[:, ::10],
+        single_snp_scale(
+            test_snps=self.bed[:, ::100],
             pheno=self.phen_fn,
             covar=self.cov_fn,
             output_file_name=output_file,
+            memory_factor=100,
             runner=runner,
         )
-        self.compare_files(results_df, "old")
 
-    def cmk_test_mapreduce1_runner(self):
+    def test_mapreduce1_runner(self):
         logging.info("test_mapreduce1_runner")
 
         output_file = self.file_name("mapreduce1_runner")
@@ -244,7 +244,7 @@ class TestSingleSnpScale(unittest.TestCase):
         )
         self.compare_files(results_df, "old")
 
-    def cmk_test_old_one(self):
+    def test_old_one(self):
         logging.info("test_old_one")
 
         output_file = self.file_name("old_one")
@@ -260,7 +260,7 @@ class TestSingleSnpScale(unittest.TestCase):
         )
         self.compare_files(results_df, "old_one")
 
-    def cmk_test_one_fast(self):
+    def test_one_fast(self):
         logging.info("test_one_fast")
 
         output_file = self.file_name("one_fast")
@@ -282,7 +282,7 @@ class TestSingleSnpScale(unittest.TestCase):
         )
         self.compare_files(results_df, "old_one")
 
-    def cmk_test_one_chrom(self):
+    def test_one_chrom(self):
         logging.info("test_one_chrom")
 
         output_file = self.file_name("one_chrom")
@@ -405,7 +405,7 @@ class TestSingleSnpScale(unittest.TestCase):
                 )
             return windows_fn
 
-    def cmk_test_doctest(self):  # Can't get doc test to work so marked out.
+    def test_doctest(self):  # Can't get doc test to work so marked out.
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)) + "/..")
         doctest.ELLIPSIS_MARKER = "-etc-"
@@ -431,7 +431,7 @@ def getTestSuite():
 
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.INFO)
-    logging.getLogger().setLevel(logging.WARN)
+    logging.getLogger().setLevel(logging.INFO)
     suites = getTestSuite()
 
     if True:

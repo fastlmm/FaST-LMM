@@ -1396,7 +1396,7 @@ def getTestSuite():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)  # cmk
+    logging.basicConfig(level=logging.INFO)
     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
 
     # this import is needed for the runner
@@ -1407,12 +1407,12 @@ if __name__ == "__main__":
 
     suites = unittest.TestSuite([getTestSuite()])
 
-    if True:  # Standard test run cmk
+    if True:  # Standard test run
         r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else:  # Cluster test run
-        logging.basicConfig(level=logging.WARN)  # cmk
+        logging.basicConfig(level=logging.INFO)
 
         from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
