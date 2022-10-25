@@ -4,6 +4,6 @@ scikit-learn>=0.19.1
 cloudpickle>=2.2.0
 statsmodels>=0.10.1
 psutil>=5.6.7
-cbgen==1.0.1
+cbgen>=1.0.1
 pysnptools>=0.5.7
 fastlmmclib>=0.0.2
