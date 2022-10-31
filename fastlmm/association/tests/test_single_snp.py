@@ -1,3 +1,5 @@
+# flake8: noqa: E501
+
 import sys
 import numpy as np
 import logging
@@ -22,7 +24,7 @@ from unittest.mock import patch
 
 class TestSingleSnp(unittest.TestCase):
 
-    #!!created a Expect Durbin, too
+    # !!! created a Expect Durbin, too
 
     @classmethod
     def setUpClass(self):
@@ -245,6 +247,28 @@ class TestSingleSnp(unittest.TestCase):
         )
 
         self.compare_files(frame, "one")
+
+    def test_snp_fract_var_exp(self):
+        from fastlmm.util import example_file  # Download and return local file name
+
+        logging.info("TestSingleSnp test_snp_fract_var_exp")
+        bed_fn = example_file("tests/datasets/synth/all.*", "*.bed")
+        pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
+        cov_fn = example_file("tests/datasets/synth/cov.txt")
+
+        output_file = self.file_name("snp_fract_var_exp")
+        frame = single_snp(
+            bed_fn,
+            pheno_fn,
+            covar=cov_fn,
+            show_snp_fract_var_exp=True,
+            output_file_name=output_file,
+            count_A1=False,
+        )
+
+        self.compare_files(
+            frame, "snp_fract_var_exp", columns=["PValue", "EffectSize", "SnpFractVarExpl"]
+        )
 
     def test_zero_pheno(self):
         logging.info("TestSingleSnp test_zero_pheno")
@@ -762,7 +786,7 @@ class TestSingleSnp(unittest.TestCase):
 
         self.compare_files(frame, "one")
 
-    def compare_files(self, frame, ref_base):
+    def compare_files(self, frame, ref_base, columns=["PValue"]):
         reffile = TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
 
         # sid_list,pvalue_list = frame['SNP'].values,frame['Pvalue'].values
@@ -777,13 +801,14 @@ class TestSingleSnp(unittest.TestCase):
         ), "# of pairs differs from file '{0}'".format(reffile)
         for _, row in reference.iterrows():
             sid = row.SNP
-            pvalue = frame[frame["SNP"] == sid].iloc[0].PValue
-            diff = abs(row.PValue - pvalue)
-            if diff > 1e-5 or np.isnan(diff):
-                raise Exception(
-                    "pair {0} differs too much from file '{1}'".format(sid, reffile)
-                )
-            assert abs(row.PValue - pvalue) < 1e-5, "wrong"
+            for column in columns:
+                value = frame[frame["SNP"] == sid].iloc[0][column]
+                diff = abs(row[column] - value)
+                if diff > 1e-5 or np.isnan(diff):
+                    raise Exception(
+                        f"pair {sid} differs too much on {column} from file '{reffile}'"
+                    )
+                assert abs(row[column] - value) < 1e-5, "wrong"
 
     def test_doctest(self):
         old_dir = os.getcwd()
@@ -1045,9 +1070,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                     force_low_rank=force_low_rank,
                 )
 
-                assert len(frame) == len(
-                    reference
-                ), "# of pairs differs from file '{0}'".format(reffile)
+                assert len(frame) == len(reference), "# of pairs differs"
                 for sid in sorted(
                     set(reference.SNP)
                 ):  # This ignores which pheno produces which pvalue

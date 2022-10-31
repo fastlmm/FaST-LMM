@@ -1,3 +1,5 @@
+# flake8: noqa: E501
+
 import logging
 import os
 import time
@@ -41,6 +43,7 @@ def single_snp(
     output_file_name=None,
     h2=None,
     log_delta=None,
+    show_snp_fract_var_exp=False,
     cache_file=None,
     GB_goal=None,
     interact_with_snp=None,
@@ -119,6 +122,17 @@ def single_snp(
 
     :param log_delta: a re-parameterization of h2 provided for backwards compatibility. h2 is 1./(exp(log_delta)+1)
     :type log_delta: number
+
+    :param show_snp_fract_var_exp: The output will always show 'EffectSize'. If show_snp_fract_var_exp is True, then the output will also show 'SnpFractVarExp'.
+            EffectSize and SnpFractVarExp are different measures of fraction of variance explained.
+            The first uses all variance of the phenotype in the denominator, whereas the second uses variance of the phenotype after
+            removing the effects of population structure and family relatedness. Specifically,
+            EffectSize is
+            `SNPWeight^2 * "raw" test SNP variance / phenotype variance`, where:
+            SNPWeight is the beta for the “standardized test SNP” (where "standardized" means made to have mean 0, stdev 1).
+            And where "raw" means the original test SNP values of “0,1,2” (the count of allele 1 or 2 [it doesn’t matter]).
+            And where the phenotype’s original values are used (so, they are not, for example, changed by regressing out the covariates).
+    :type show_snp_fract_var_exp: boolean
 
     :param cache_file: Name of  file to read or write cached precomputation values to, optional.
                 If not given, no cache file will be used.
@@ -259,6 +273,7 @@ def single_snp(
                 mixing=mixing,
                 h2=h2,
                 log_delta=log_delta,
+                show_snp_fract_var_exp=show_snp_fract_var_exp,
                 cache_file=cache_file,
                 force_full_rank=force_full_rank,
                 force_low_rank=force_low_rank,
@@ -333,6 +348,7 @@ def single_snp(
                     mixing=mixing,
                     h2=h2,
                     log_delta=log_delta,
+                    show_snp_fract_var_exp=show_snp_fract_var_exp,
                     cache_file=cache_file_chrom,
                     force_full_rank=force_full_rank,
                     force_low_rank=force_low_rank,
@@ -815,22 +831,26 @@ def _internal_determine_block_size(K0, K1, mixing, force_full_rank, force_low_ra
     return K0.iid_count
 
 
-def _create_dataframe(pvalue_count):
+def _create_dataframe(pvalue_count, show_snp_fract_var_exp):
+    columns = [
+        "sid_index",
+        "SNP",
+        "Chr",
+        "GenDist",
+        "ChrPos",
+        "PValue",
+        "SnpWeight",
+        "SnpWeightSE",
+        "EffectSize",
+        "Mixing",
+        "Nullh2",
+    ]
+    if show_snp_fract_var_exp:
+        columns.insert(9, "SnpFractVarExpl")
+
     dataframe = pd.DataFrame(
         index=np.arange(pvalue_count),
-        columns=(
-            "sid_index",
-            "SNP",
-            "Chr",
-            "GenDist",
-            "ChrPos",
-            "PValue",
-            "SnpWeight",
-            "SnpWeightSE",
-            "EffectSize",
-            "Mixing",
-            "Nullh2",
-        ),
+        columns=columns,
     )
     #!!Is this the only way to set types in a dataframe?
     dataframe["sid_index"] = dataframe["sid_index"].astype(float)
@@ -841,6 +861,8 @@ def _create_dataframe(pvalue_count):
     dataframe["SnpWeight"] = dataframe["SnpWeight"].astype(float)
     dataframe["SnpWeightSE"] = dataframe["SnpWeightSE"].astype(float)
     dataframe["EffectSize"] = dataframe["EffectSize"].astype(float)
+    if show_snp_fract_var_exp:
+        dataframe["SnpFractVarExpl"] = dataframe["SnpFractVarExpl"].astype(float)
     dataframe["Mixing"] = dataframe["Mixing"].astype(float)
     dataframe["Nullh2"] = dataframe["Nullh2"].astype(float)
 
@@ -856,6 +878,7 @@ def _internal_single(
     mixing,
     h2,
     log_delta,
+    show_snp_fract_var_exp,
     cache_file,
     force_full_rank,
     force_low_rank,
@@ -929,6 +952,7 @@ def _internal_single(
         pvalue_threshold,
         random_threshold,
         random_seed,
+        show_snp_fract_var_exp,
     )
 
     return frame
@@ -1249,6 +1273,7 @@ def _snp_tester(
     pvalue_threshold,
     random_threshold,
     random_seed,
+    show_snp_fract_var_exp,
 ):
 
     work_count = -(
@@ -1314,6 +1339,7 @@ def _snp_tester(
         df = _multi_compute_stats(
             res["beta"],
             res["variance_beta"],
+            res["fraction_variance_explained_beta"] if show_snp_fract_var_exp else None,
             start,
             end,
             raw_snps,
@@ -1360,6 +1386,7 @@ def _snp_tester(
 def _multi_compute_stats(
     multi_beta,
     multi_variance_beta,
+    multi_fraction_variance_explained_beta_or_none,
     start,
     end,
     raw_snps,
@@ -1380,6 +1407,10 @@ def _multi_compute_stats(
     assert (
         multi_variance_beta.shape == multi_beta.shape
     ), "expect beta and variance_beta to agree on shape"
+    assert (
+        multi_fraction_variance_explained_beta_or_none is None
+        or multi_beta.shape == multi_fraction_variance_explained_beta_or_none.shape
+    ), "expect beta, and fraction_variance_explained_beta to agree on shape"
 
     g_var = np.nanvar(raw_snps.read().val, axis=0)
     p_var = lmm.Y.var(axis=0)
@@ -1396,7 +1427,11 @@ def _multi_compute_stats(
         keep_index = random_keep_index + pvalue_keep_index
     else:
         keep_index = pvalue_keep_index
-    dataframe = _create_dataframe(keep_index.sum())
+    dataframe = _create_dataframe(
+        keep_index.sum(),
+        show_snp_fract_var_exp=multi_fraction_variance_explained_beta_or_none
+        is not None,
+    )
 
     if len(pheno_sid) > 1:
         dataframe["Pheno"] = np.repeat(pheno_sid, snps_read.sid_count)[keep_index]
@@ -1422,6 +1457,10 @@ def _multi_compute_stats(
         xp.sqrt(multi_variance_beta.T.reshape(-1))
     )[keep_index]
     dataframe["EffectSize"] = effect_size.T.reshape(-1)[keep_index]
+    if multi_fraction_variance_explained_beta_or_none is not None:
+        dataframe["SnpFractVarExpl"] = pstutil.asnumpy(
+            xp.sqrt(multi_fraction_variance_explained_beta_or_none.T.reshape(-1))
+        )[keep_index]
     dataframe["Mixing"] = np.repeat(mixing, snps_read.sid_count)[keep_index]
     dataframe["Nullh2"] = np.repeat(h2, snps_read.sid_count)[keep_index]
 
