@@ -26,7 +26,6 @@ import pandas as pd
 # sklearn
 from sklearn.linear_model import RidgeCV, Ridge
 from sklearn.model_selection import KFold, LeaveOneOut, ShuffleSplit
-from sklearn.datasets import load_boston, load_diabetes
 from sklearn.metrics import mean_squared_error
 from sklearn.feature_selection import f_regression
 from sklearn import model_selection
