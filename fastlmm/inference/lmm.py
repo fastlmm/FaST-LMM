@@ -1,5 +1,6 @@
 import scipy as SP
 import numpy as NP
+import numpy as np
 import scipy.linalg as LA
 import scipy.optimize as opt
 import scipy.stats as ST
@@ -139,7 +140,7 @@ class LMM(object):
                 self.G = G1
                 logging.info("a2=1.0, only using G1")
             else:
-                self.G = SP.concatenate((SP.sqrt(1.0-a2) * G0, SP.sqrt(a2) * G1),1)
+                self.G = np.concatenate((np.sqrt(1.0-a2) * G0, np.sqrt(a2) * G1),1)
             
         else:
             self.G=None
@@ -168,7 +169,7 @@ class LMM(object):
                     S_nonz=(S_>0)
                     self.S = S_[S_nonz]
                     self.S*=(N/self.S.sum())
-                    self.U=self.G.dot(V_[:,S_nonz]/SP.sqrt(self.S))
+                    self.U=self.G.dot(V_[:,S_nonz]/np.sqrt(self.S))
             else:
                 if K0 is None:
                     K0=self.G0.dot(self.G0.T);
@@ -386,7 +387,7 @@ class LMM(object):
         #    raise NotImplementedError("REML in lmm object not supported, please use lmm_cov.py instead")
 
         if logdelta is not None:
-            delta = SP.exp(logdelta)
+            delta = np.exp(logdelta)
 
         if delta is not None:
             Sd = (self.S+delta)*scale
@@ -400,7 +401,7 @@ class LMM(object):
         XKy = UXS.T.dot(self.Uy)
         yKy = UyS.T.dot(self.Uy)
 
-        logdetK = SP.log(Sd).sum()
+        logdetK = np.log(Sd).sum()
                 
         if (k<N):#low rank part
         
@@ -413,7 +414,7 @@ class LMM(object):
             XKX += self.UUX.T.dot(self.UUX)/(denom)
             XKy += self.UUX.T.dot(self.UUy)/(denom)
             yKy += self.UUy.T.dot(self.UUy)/(denom)      
-            logdetK+=(N-k) * SP.log(denom)
+            logdetK+=(N-k) * np.log(denom)
  
         # proximal contamination (see Supplement Note 2: An Efficient Algorithm for Avoiding Proximal Contamination)
         # available at: http://www.nature.com/nmeth/journal/v9/n6/extref/nmeth.2037-S1.pdf
@@ -460,7 +461,7 @@ class LMM(object):
             # compute S_WW^{-1} * UWy
             Wy = UWy / S_WW
             # determinant update
-            logdetK += SP.log(S_WW).sum()
+            logdetK += np.log(S_WW).sum()
             assert WX.shape == (num_exclude, D)
             assert Wy.shape == (num_exclude,)
             
@@ -485,14 +486,14 @@ class LMM(object):
             if REML:
                 XX = self.X.T.dot(self.X)
                 [Sxx,Uxx]= LA.eigh(XX)
-                logdetXX  = SP.log(Sxx).sum()
-                logdetXKX = SP.log(SxKx).sum()
+                logdetXX  = np.log(Sxx).sum()
+                logdetXKX = np.log(SxKx).sum()
                 sigma2 = r2 / (N - D)
-                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (N-D) * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (N-D) * ( np.log(2.0*SP.pi*sigma2) + 1 ) )
                 variance_beta = None
             else:
                 sigma2 = r2 / (N)
-                nLL =  0.5 * ( logdetK + N * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                nLL =  0.5 * ( logdetK + N * ( np.log(2.0*SP.pi*sigma2) + 1 ) )
                 if delta is not None:
                     h2 = 1.0/(delta+1)
                 # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
@@ -512,14 +513,14 @@ class LMM(object):
             if REML:
                 XX = self.X.T.dot(self.X)
                 [Sxx,Uxx]= LA.eigh(XX)
-                logdetXX  = SP.log(Sxx).sum()
-                logdetXKX = SP.log(SxKx).sum()
+                logdetXX  = np.log(Sxx).sum()
+                logdetXKX = np.log(SxKx).sum()
 
-                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (dof + (N-D)) * SP.log(1.0+r2/dof) )
-                nLL += 0.5 * (N-D)*SP.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + (N-D) ))
+                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (dof + (N-D)) * np.log(1.0+r2/dof) )
+                nLL += 0.5 * (N-D)*np.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + (N-D) ))
             else:
-                nLL =   0.5 * ( logdetK + (dof + N) * SP.log(1.0+r2/dof) )
-                nLL +=  0.5 * N*SP.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + N ))
+                nLL =   0.5 * ( logdetK + (dof + N) * np.log(1.0+r2/dof) )
+                nLL +=  0.5 * N*np.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + N ))
             result = {
                   'nLL':nLL,
                   'dof':dof,
@@ -530,7 +531,7 @@ class LMM(object):
                   'a2':self.a2,
                   'scale':scale
                   }      
-        assert SP.all(SP.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
+        assert np.all(np.isreal(nLL)), "nLL has an imaginary component, possibly due to constant covariates"
         if result['variance_beta'] is None:
             del result['variance_beta']
         return result
@@ -559,16 +560,16 @@ class LMM(object):
         N=self.y.shape[0]
 
         if logdelta is not None:
-            delta = SP.exp(logdelta)
+            delta = np.exp(logdelta)
         if delta is not None:
             Sd = (self.S+delta)*scale
         else:
             Sd = (h2*self.S + (1.0-h2))*scale
 
-        yres = self.y - SP.dot(self.X,beta)
-        Uyres = SP.dot(self.U.T,yres)
-        UG = SP.dot(self.U.T, self.G)
-        weights = SP.dot(UG.T , Uyres/Sd)
+        yres = self.y - np.dot(self.X,beta)
+        Uyres = np.dot(self.U.T,yres)
+        UG = np.dot(self.U.T, self.G)
+        weights = np.dot(UG.T , Uyres/Sd)
 
         if k < N: # low-rank part
             # determine normalization factor
@@ -577,8 +578,8 @@ class LMM(object):
             else:
                 denom = ((1.0-h2)*scale)
                   
-            UUG = self.G - SP.dot(self.U, UG)
-            UUyres = yres - SP.dot(self.U,Uyres)
+            UUG = self.G - np.dot(self.U, UG)
+            UUyres = yres - np.dot(self.U,Uyres)
             weights += UUG.T.dot(UUyres)/(denom)
 
         return weights
@@ -610,7 +611,7 @@ class LMM(object):
                 self.Gstar = G1star
                 logging.info("a2=1.0, only using G1")
             else:
-                self.Gstar=SP.concatenate((SP.sqrt(1.0-self.a2) * G0star, SP.sqrt(self.a2) * G1star),1)
+                self.Gstar=np.concatenate((np.sqrt(1.0-self.a2) * G0star, np.sqrt(self.a2) * G1star),1)
    
         if K0star is not None:
             if K1star is None:
@@ -618,16 +619,16 @@ class LMM(object):
             else:
                 self.Kstar = (1.0-self.a2)*K0star + self.a2*K1star
         else:
-            self.Kstar = SP.dot(self.Gstar,self.G.T)
+            self.Kstar = np.dot(self.Gstar,self.G.T)
 
-        self.UKstar = SP.dot(self.U.T,self.Kstar.T)
+        self.UKstar = np.dot(self.U.T,self.Kstar.T)
 
         if self.G is not None:
             k = self.G.shape[1]
             N = self.G.shape[0]
             if k<N:
                 # see e.g. Equation 3.17 in Supplement of FaST LMM paper
-                self.UUKstar = self.Kstar.T - SP.dot(self.U, self.UKstar)
+                self.UUKstar = self.Kstar.T - np.dot(self.U, self.UKstar)
    
     def setTestData2(self,Xstar,K0star=None,K1star=None):
         '''
@@ -673,7 +674,7 @@ class LMM(object):
         #D=self.UX.shape[1]
        
         if logdelta is not None:
-            delta = SP.exp(logdelta)
+            delta = np.exp(logdelta)
 
         #delta = (1-h2) / h2
         if delta is not None:
@@ -688,18 +689,18 @@ class LMM(object):
             # consider only excluded SNPs
             Gstar_exclude = self.Gstar[:,self.exclude_idx]
             #G_exclude = self.G[:,self.exclude_idx]
-            UKstar = self.UKstar - SP.dot(self.UW,Gstar_exclude.T)
+            UKstar = self.UKstar - np.dot(self.UW,Gstar_exclude.T)
             if k<N:
-                UUKstar = self.UUKstar - SP.dot(self.UUW,Gstar_exclude.T)
+                UUKstar = self.UUKstar - np.dot(self.UUW,Gstar_exclude.T)
         else:
             UKstar = self.UKstar 
             UUKstar = self.UUKstar 
 
-        yfixed = SP.dot(self.Xstar,beta)
-        yres = self.y - SP.dot(self.X,beta)
-        Uyres = self.Uy - SP.dot(self.UX,beta)
+        yfixed = np.dot(self.Xstar,beta)
+        yres = self.y - np.dot(self.X,beta)
+        Uyres = self.Uy - np.dot(self.UX,beta)
         Sdi = 1./Sd
-        yrandom = SP.dot(Sdi*UKstar.T,Uyres)
+        yrandom = np.dot(Sdi*UKstar.T,Uyres)
         
         if k < N: # low-rank part
             # determine normalization factor
@@ -707,8 +708,8 @@ class LMM(object):
                 denom = (delta*scale)
             else:
                 denom = ((1.0-h2)*scale)
-            UUyres = yres - SP.dot(self.U,Uyres)
-            yrandom += SP.dot(UUKstar.T,UUyres)/denom
+            UUyres = yres - np.dot(self.U,Uyres)
+            yrandom += np.dot(UUKstar.T,UUyres)/denom
 
         # proximal contamination (see Supplement Note 2: An Efficient Algorithm for Avoiding Proximal Contamination)
         # available at: http://www.nature.com/nmeth/journal/v9/n6/extref/nmeth.2037-S1.pdf
@@ -764,7 +765,7 @@ class LMM(object):
 
         a = np.dot(varg * lmm.Kstar, Vinv)
 
-        y_star = np.dot(lmm.Xstar,beta) + np.dot(a, lmm.y-SP.dot(lmm.X,beta)) #!!!later shouldn't the 2nd dot be precomputed?
+        y_star = np.dot(lmm.Xstar,beta) + np.dot(a, lmm.y-np.dot(lmm.X,beta)) #!!!later shouldn't the 2nd dot be precomputed?
         y_star = y_star.reshape(-1,1) #Make 2-d
 
         var_star = (varg * Kstar_star + 
@@ -813,7 +814,7 @@ class LMM(object):
         #print "k, N, D", k, N, D
 
         if logdelta is not None:
-            delta = SP.exp(logdelta)
+            delta = np.exp(logdelta)
 
         if delta is not None:
             #Sd = (self.S+delta)*sigma2
@@ -832,7 +833,7 @@ class LMM(object):
 
         if Kstar_star is None:
             N_test = self.Gstar.shape[0]
-            Kstar_star = SP.dot(self.Gstar, self.Gstar.T)
+            Kstar_star = np.dot(self.Gstar, self.Gstar.T)
         else:
             Kstar_star = Kstar_star.copy()
 
@@ -848,10 +849,10 @@ class LMM(object):
         
         # part 2 from c-code
         # (U1^T a)^T (S_1 + delta*I)^{-1} (U1^T a)
-        SUKstarTUkStar = SP.dot(Sdi*self.UKstar.T, self.UKstar)
+        SUKstarTUkStar = np.dot(Sdi*self.UKstar.T, self.UKstar)
         
         #UXS = self.UKstar / NP.lib.stride_tricks.as_strided(Sd, (Sd.size,self.UKstar.shape[1]), (Sd.itemsize,0))
-        #NP.testing.assert_array_almost_equal(SUKstarTUkStar, SP.dot(UXS.T, self.UKstar), decimal=4)
+        #NP.testing.assert_array_almost_equal(SUKstarTUkStar, np.dot(UXS.T, self.UKstar), decimal=4)
 
         SUKstarTUkStar *= sigma2
 
@@ -869,7 +870,7 @@ class LMM(object):
        
             # see Equation 3.17 in Supplement of FaST LMM paper:
             # 1 / delta * (((I_n - U1U1^T)a)^T (I_n - U1U1^T)a), a=K(XS,X)
-            SUKstarTUkStar += SP.dot(self.UUKstar.T, self.UUKstar)/denom
+            SUKstarTUkStar += np.dot(self.UUKstar.T, self.UUKstar)/denom
         
         # see Carl Rasmussen's book on GPs, Equation 2.24
         # or Equation 5 in Lasso-LMM paper
@@ -918,7 +919,7 @@ class LMM(object):
         Sdi = 1 / S
 
         res_sig = res.T.dot(Sdi * U).dot(U.T)
-        logdetK = SP.log(S).sum()
+        logdetK = np.log(S).sum()
 
         # some sanity checks
         if False:
@@ -927,8 +928,8 @@ class LMM(object):
 
         # see Carl Rasmussen's book on GPs, equation 5.10, or 
         term1 = -0.5 * logdetK
-        term2 = -0.5 * SP.dot(res_sig.reshape(-1).T, res.reshape(-1)) #Change the inputs to the functions so that these are vectors, not 1xn,nx1
-        term3 = -0.5 * len(res) * SP.log(2 * SP.pi)
+        term2 = -0.5 * np.dot(res_sig.reshape(-1).T, res.reshape(-1)) #Change the inputs to the functions so that these are vectors, not 1xn,nx1
+        term3 = -0.5 * len(res) * np.log(2 * SP.pi)
 
         if term2 < -10000:
             logging.warning("looks like nLLeval_test is running into numerical difficulties")

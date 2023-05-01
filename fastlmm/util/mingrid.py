@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import scipy as SP
+import numpy as np
 import scipy.optimize as opt
 from six.moves import range
 
@@ -96,9 +97,9 @@ def evalgrid1D(f, evalgrid = None, nGrid=10, minval=0.0, maxval = 0.99999, dimF=
 
         is_real=False
         try:
-            is_real = SP.isreal(fevalgrid).all()
+            is_real = np.isreal(fevalgrid).all()
         except:
-            is_real = SP.isreal(fevalgrid)
+            is_real = np.isreal(fevalgrid)
         assert is_real,"function returned imaginary value"
 
         resultgrid[i] = fevalgrid

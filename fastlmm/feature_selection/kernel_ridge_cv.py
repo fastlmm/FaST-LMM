@@ -5,6 +5,7 @@ import os
 import sys
 
 import scipy as SP
+import numpy as np
 import sklearn.metrics as SKM
 
 import sklearn.feature_selection as SKFS
@@ -176,7 +177,7 @@ class KernelRidgeCV(): # implements IDistributable
         print("done.")
         print("precomputing kernel... ")
         nSnps = G.shape[1]
-        self.K = 1./nSnps * SP.dot(G,G.T)
+        self.K = 1./nSnps * np.dot(G,G.T)
         print("done.")
         del G
    

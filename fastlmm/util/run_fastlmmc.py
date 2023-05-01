@@ -102,7 +102,7 @@ def run(bfile=None,pheno=None,bfileSim=None,sim=None,linreg=None,covar=None,out=
     for more information, we refer to the user-manual of fast-lmm
     '''
     os.environ["FastLmmUseAnyMklLib"] = "1"
-    logging.info('Run FAST-LMM')   
+    logging.info('Run FAST-LMM')
 
     osname = sys.platform
     if (osname.find("win") >= 0):    #         was loaded, if it was loaded from a file
@@ -184,10 +184,9 @@ def run(bfile=None,pheno=None,bfileSim=None,sim=None,linreg=None,covar=None,out=
     
     output = ""
     try:
-        output = subprocess.check_output(cmd,shell=True,stderr=subprocess.STDOUT)
+        output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
     except Exception as e:
         print(e)
     print(output)
-    #LG.info(output)
-    #return output
-
+    # LG.info(output)
+    # return output

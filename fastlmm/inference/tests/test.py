@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import numpy as NP
+import numpy as np
 import scipy as SP
 import scipy.io as SIO
 import scipy.linalg as LA
@@ -24,7 +25,7 @@ class TestLmmKernel(unittest.TestCase):
         self._k1 = 10
         self._a2 = 0.4
         self._logdelta = +1
-        self._beta = SP.array([1.2])
+        self._beta = np.array([1.2])
 
         from numpy.random import RandomState
 
@@ -47,12 +48,12 @@ class TestLmmKernel(unittest.TestCase):
         # logdelta space
         model.setTestData(Xstar=self._Xstar, G0star=self._G0star, G1star=self._G1star)
         ystar = model.predictMean(self._beta, logdelta=self._logdelta)
-        Gstar = SP.concatenate(
-            (SP.sqrt(1.0 - self._a2) * self._G0star, SP.sqrt(self._a2) * self._G1star),
+        Gstar = np.concatenate(
+            (np.sqrt(1.0 - self._a2) * self._G0star, np.sqrt(self._a2) * self._G1star),
             1,
         )
         weights = model.getPosteriorWeights(beta=self._beta, logdelta=self._logdelta)
-        ystar2 = SP.dot(self._Xstar, self._beta) + SP.dot(Gstar, weights)
+        ystar2 = np.dot(self._Xstar, self._beta) + np.dot(Gstar, weights)
         self.assertAlmostEqual(ystar[0], ystar2[0])
         self.assertAlmostEqual(ystar[1], ystar2[1])
 
@@ -61,7 +62,7 @@ class TestLmmKernel(unittest.TestCase):
         # h2 = 0.5
         # ystar = model.predictMean(self._beta,h2=h2)
         # weights = model.getPosteriorWeights(beta=self._beta,h2=h2)
-        # ystar2 = SP.dot(self._Xstar,self._beta) + SP.dot(Gstar,weights)
+        # ystar2 = np.dot(self._Xstar,self._beta) + np.dot(Gstar,weights)
         # self.assertAlmostEqual(ystar[0],ystar2[0])
         # self.assertAlmostEqual(ystar[1],ystar2[1])
 

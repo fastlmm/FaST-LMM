@@ -47,7 +47,7 @@ def ddot(d, mtx, left=True):
 def check_definite_positiveness(A):
     B = np.empty_like(A)
     B[:] = A
-    B[np.diag_indices_from(B)] += np.sqrt(np.finfo(np.float).eps)
+    B[np.diag_indices_from(B)] += np.sqrt(np.finfo(float).eps)
     try:
         np.linalg.cholesky(B)
     except np.linalg.LinAlgError:
@@ -55,7 +55,7 @@ def check_definite_positiveness(A):
     return True
 
 def check_symmetry(A):
-    return abs(A-A.T).max() < np.sqrt(np.finfo(np.float).eps)
+    return abs(A-A.T).max() < np.sqrt(np.finfo(float).eps)
 
 def kl_divergence(p,q):
     return np.sum(np.log(p/q)*p)

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import scipy as SP
 import numpy as NP
+import numpy as np
 import scipy.linalg as LA
 import scipy.optimize as opt
 import scipy.stats as ST
@@ -436,7 +437,7 @@ class lmm2k(object):
         XKy = UXS.T.dot(self.Uy)
         yKy = UyS.T.dot(self.Uy)
 
-        logdetK = SP.log(Sd).sum()
+        logdetK = np.log(Sd).sum()
 
 
         if (k<N):#low rank part
@@ -448,7 +449,7 @@ class lmm2k(object):
             XKX += self.UUX.T.dot(self.UUX)/(denom)
             XKy += self.UUX.T.dot(self.UUy)/(denom)
             yKy += self.UUy.T.dot(self.UUy)/(denom)      
-            logdetK+=(N-k) * SP.log(denom)
+            logdetK+=(N-k) * np.log(denom)
  
         # proximal contamination (see Supplement Note 2: An Efficient Algorithm for Avoiding Proximal Contamination)
         # available at: http://www.nature.com/nmeth/journal/v9/n6/extref/nmeth.2037-S1.pdf
@@ -496,7 +497,7 @@ class lmm2k(object):
             # compute S_WW^{-1} * UWy
             Wy = UWy / S_WW
             # determinant update
-            logdetK += SP.log(S_WW).sum()
+            logdetK += np.log(S_WW).sum()
             assert WX.shape == (num_exclude, D)
             assert Wy.shape == (num_exclude,)
             
@@ -510,7 +511,7 @@ class lmm2k(object):
 
         [SxKx,UxKx]= LA.eigh(XKX)
         i_pos = SxKx>1E-10
-        beta = SP.dot(UxKx[:,i_pos],(SP.dot(UxKx[:,i_pos].T,XKy)/SxKx[i_pos]))
+        beta = np.dot(UxKx[:,i_pos],(np.dot(UxKx[:,i_pos].T,XKy)/SxKx[i_pos]))
 
         r2 = yKy-XKy.dot(beta)
 
@@ -518,13 +519,13 @@ class lmm2k(object):
             if REML:
                 XX = self.X.T.dot(self.X)
                 [Sxx,Uxx]= LA.eigh(XX)
-                logdetXX  = SP.log(Sxx).sum()
-                logdetXKX = SP.log(SxKx).sum()
+                logdetXX  = np.log(Sxx).sum()
+                logdetXKX = np.log(SxKx).sum()
                 sigma2 = r2 / (N - D)
-                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (N-D) * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (N-D) * ( np.log(2.0*SP.pi*sigma2) + 1 ) )
             else:
                 sigma2 = r2 / (N)
-                nLL =  0.5 * ( logdetK + N * ( SP.log(2.0*SP.pi*sigma2) + 1 ) )
+                nLL =  0.5 * ( logdetK + N * ( np.log(2.0*SP.pi*sigma2) + 1 ) )
             result = {
                   'nLL':nLL,
                   'sigma2':sigma2,
@@ -539,14 +540,14 @@ class lmm2k(object):
             if REML:
                 XX = self.X.T.dot(self.X)
                 [Sxx,Uxx]= LA.eigh(XX)
-                logdetXX  = SP.log(Sxx).sum()
-                logdetXKX = SP.log(SxKx).sum()
+                logdetXX  = np.log(Sxx).sum()
+                logdetXKX = np.log(SxKx).sum()
 
-                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (dof + (N-D)) * SP.log(1.0+r2/dof) )
-                nLL += 0.5 * (N-D)*SP.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + (N-D) ))
+                nLL =  0.5 * ( logdetK + logdetXKX - logdetXX + (dof + (N-D)) * np.log(1.0+r2/dof) )
+                nLL += 0.5 * (N-D)*np.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + (N-D) ))
             else:
-                nLL =   0.5 * ( logdetK + (dof + N) * SP.log(1.0+r2/dof) )
-                nLL +=  0.5 * N*SP.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + N ))
+                nLL =   0.5 * ( logdetK + (dof + N) * np.log(1.0+r2/dof) )
+                nLL +=  0.5 * N*np.log( dof*SP.pi ) + SS.gammaln( 0.5*dof ) - SS.gammaln( 0.5* (dof + N ))
             result = {
                   'nLL':nLL,
                   'dof':dof,
