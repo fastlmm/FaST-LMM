@@ -32,7 +32,7 @@ def estimate_lambda(pv):
 
 def cut_snps_close_to_causals(p_values, pos, causal_idx, mindist, plot=False):
 
-    i_causal_all = np.zeros(len(p_values), dtype=np.bool)
+    i_causal_all = np.zeros(len(p_values), dtype=bool)
     i_causal_all[causal_idx] = True
         
     # cut out snps in LD to causal snps
@@ -435,7 +435,7 @@ def merge_results(results_dir, fn_filter_list, mindist):
 if __name__ == "__main__":
     num = 700000 * 500
     pv = X = np.random.random((num))
-    i_causal = X = np.ones((num), dtype=np.bool)
+    i_causal = X = np.ones((num), dtype=bool)
     
     t0 = time.time()
     compute_power_data(pv, i_causal)

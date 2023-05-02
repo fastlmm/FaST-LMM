@@ -208,8 +208,8 @@ class FeatureSelectionInSample(object):
                     W = G_fs_train.copy()
                     UGup,UUGup = lmm.rotate(W)
                 
-                    i_up = np.zeros((G_fs_train.shape[1]), dtype=np.bool)
-                    i_G1 = np.ones((G_fs_train.shape[1]), dtype=np.bool)
+                    i_up = np.zeros((G_fs_train.shape[1]), dtype=bool)
+                    i_G1 = np.ones((G_fs_train.shape[1]), dtype=bool)
                     t0 = time.time()
                     res = lmm.findH2_2K(nGridH2=10, minH2=0.0, maxH2=0.99999, i_up=i_up, i_G1=i_G1, UW=UGup, UUW=UUGup)
                     logging.info("time taken for k=%i: %s" % (max_k, str(time.time()-t0)))
