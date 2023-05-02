@@ -148,39 +148,34 @@ if __name__ == '__main__':
     import fastlmm.inference.tests.test
     import fastlmm.util.test
     import fastlmm.pyplink.test
-    
-    suites = unittest.TestSuite([
-                                    #getDebugTestSuite(),
 
-                                    # cmk
-                                    # getTestSuiteX(),
-                                    # fastlmm.inference.tests.test_linear_regression.getTestSuite(), 
-                                    # fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
-                                    # fastlmm.pyplink.test.getTestSuite(),
-                                    # fastlmm.feature_selection.test.getTestSuite(),
-                                    # fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-                                    # fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
+    suites = unittest.TestSuite([   # getDebugTestSuite(),
+
+                                    getTestSuiteX(),
+                                    fastlmm.inference.tests.test_linear_regression.getTestSuite(), 
+                                    fastlmm.association.tests.test_single_snp_scale.getTestSuite(), 
+                                    fastlmm.pyplink.test.getTestSuite(),
+                                    fastlmm.feature_selection.test.getTestSuite(),
+                                    fastlmm.association.tests.test_single_snp_select.getTestSuite(),
+                                    fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
                                     fastlmm.association.tests.test_gwas.getTestSuite(),
-
-                                    # cmk done
-                                    # fastlmm.association.tests.test_snp_set.getTestSuite(),
-                                    # fastlmm.inference.tests.test.getTestSuite(),
-                                    # fastlmm.association.tests.testepistasis.getTestSuite(),
-                                    # fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
-                                    # fastlmm.util.test.getTestSuite(),
-                                    # fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
-                                    # fastlmm.inference.tests.test.getTestSuite(),
-                                    # fastlmm.association.tests.test_single_snp.getTestSuite(),
-                                    # fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
+                                    fastlmm.association.tests.test_snp_set.getTestSuite(),
+                                    fastlmm.inference.tests.test.getTestSuite(),
+                                    fastlmm.association.tests.testepistasis.getTestSuite(),
+                                    fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
+                                    fastlmm.util.test.getTestSuite(),
+                                    fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
+                                    fastlmm.inference.tests.test.getTestSuite(),
+                                    fastlmm.association.tests.test_single_snp.getTestSuite(),
+                                    fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
                                     ])
 
-    
-    if True: #Standard test run #cmk
+    if True:  # Standard test run
         r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
-    else: #Cluster test run
-        #Because both pysnsptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first in the PYTHONPATH
+    else:  # Cluster test run
+        # Because both pysnsptools and fastlmm contain a tests folder, to run on cluster must have fastlmm listed first in the PYTHONPATH
 
         runner = Local()
         runner = LocalMultiProc(taskcount=12, mkl_num_threads=5, just_one_process=False)
