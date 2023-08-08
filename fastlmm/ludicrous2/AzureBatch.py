@@ -665,7 +665,6 @@ cd %AZ_BATCH_TASK_WORKING_DIR%\..\..\output{14}
     def _process_result(
         self, distributable, inputOutputCopier, output_blobfn, run_dir_rel
     ):
-
         inputOutputCopier.output(
             distributable
         )  # Copy (update) any output files from the blob

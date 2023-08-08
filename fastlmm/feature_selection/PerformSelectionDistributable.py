@@ -64,7 +64,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
         copier.input(self.feature_selection_strategy)
 
     def copyoutputs(self, copier):
-        if self.output_prefix != None:
+        if self.output_prefix is not None:
             if self.feature_selection_strategy.num_pcs > 0:
                 copier.output(
                     self.feature_selection_strategy.pcs_filename(self.output_prefix)
@@ -93,7 +93,6 @@ class PerformSelectionDistributable(object):  # implements IDistributable
         )  # the +1 is for the linreg on the entire dataset
 
     def work_sequence(self):
-
         for fold_idx in range(self.feature_selection_strategy.num_folds):
             yield lambda fold_idx=fold_idx: self.dowork(
                 fold_idx
@@ -129,7 +128,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
             if (
                 len(result) == 2
             ):  # the lingreg_results look different than the regular results because they are length two
-                if lingreg_results != None:
+                if lingreg_results is not None:
                     raise Exception("assert")
                 lingreg_results = result
                 continue
@@ -217,8 +216,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
         )
 
         # write report file
-        if self.output_prefix != None:
-
+        if self.output_prefix is not None:
             report = "k_grid: " + str([k for k in self.k_values]) + "\n"
             ln_delta_grid = np.array([sp.log(x) for x in self.delta_values])
             report += (
@@ -381,7 +379,6 @@ class PerformSelectionDistributable(object):  # implements IDistributable
             model.setX(fold_data["X_train"])
 
             if self.strategy == "lmm_full_cv":
-
                 for delta_idx, delta_act in enumerate(self.delta_values):
                     if k:
                         delta = delta_act * k
@@ -404,7 +401,6 @@ class PerformSelectionDistributable(object):  # implements IDistributable
                     )
 
             elif self.strategy == "insample_cv":
-
                 best_res = None
                 best_delta = None
                 best_nLL = float("inf")
@@ -483,7 +479,7 @@ def build_kernel_blocked(
     K = sp.zeros([N, N])
     num_snps = alt_snpreader.snp_count
 
-    if snp_idx != None:
+    if snp_idx is not None:
         snp_names = alt_snpreader.rs[snp_idx]
         current_size = len(snp_names)
         logging.info(

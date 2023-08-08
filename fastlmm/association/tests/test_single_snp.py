@@ -23,7 +23,6 @@ from unittest.mock import patch
 
 
 class TestSingleSnp(unittest.TestCase):
-
     # !!! created a Expect Durbin, too
 
     @classmethod
@@ -267,7 +266,9 @@ class TestSingleSnp(unittest.TestCase):
         )
 
         self.compare_files(
-            frame, "snp_fract_var_exp", columns=["PValue", "EffectSize", "SnpFractVarExpl"]
+            frame,
+            "snp_fract_var_exp",
+            columns=["PValue", "EffectSize", "SnpFractVarExpl"],
         )
 
     def test_zero_pheno(self):
@@ -1061,7 +1062,6 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                 (False, True),
                 (False, False),
             ]:
-
                 frame = single_snp(
                     test_snps=bed,
                     pheno=pheno_multi,
@@ -1129,7 +1129,6 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                         k0 = SnpKernel(k0, standardizer=Unit())
 
                     for leave_out_one_chrom in [False, True]:
-
                         logging.info(
                             [
                                 covar,
@@ -1174,7 +1173,6 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                             )
 
     def test_multipheno_expected_exceptions(self):
-
         from pysnptools.kernelreader import SnpKernel
         from fastlmm.util import example_file  # Download and return local file name
         from pysnptools.standardizer import Standardizer, Unit

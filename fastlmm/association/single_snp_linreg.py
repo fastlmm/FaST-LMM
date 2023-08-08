@@ -102,7 +102,6 @@ def single_snp_linreg(
 
     """
     with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
-
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
@@ -200,7 +199,6 @@ def single_snp_linreg(
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(level=logging.INFO)
 
     import doctest

@@ -63,7 +63,6 @@ class FeatureSelectionStrategy(object):
         standardizer=Unit(),
         count_A1=None,
     ):
-
         """Set up Feature selection strategy
         ----------
 
@@ -151,7 +150,6 @@ class FeatureSelectionStrategy(object):
 
     def run_once(self):
         with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
-
             if self._ran_once:
                 return
             self._ran_once = True
@@ -187,7 +185,6 @@ class FeatureSelectionStrategy(object):
     def load_data(self):
         """load data"""
         with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
-
             tt0 = time.time()
             logging.info("loading data...")
 
@@ -312,7 +309,7 @@ class FeatureSelectionStrategy(object):
         ).split(list(range(len(self.y))))
 
         fold_idx = start - 1
-        for (train_idx, test_idx) in islice(kf, start, stop):
+        for train_idx, test_idx in islice(kf, start, stop):
             fold_idx += 1
 
             logging.info("processing split {0}".format(fold_idx))
@@ -417,7 +414,6 @@ class FeatureSelectionStrategy(object):
 
         """
         with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
-
             self.biggest_k = max(k_values)
 
             if (strategy != "lmm_full_cv") and (strategy != "insample_cv"):
@@ -474,7 +470,7 @@ class FeatureSelectionStrategy(object):
         # reconstruct results
         if strategy == "lmm_full_cv":
             # save cv scores
-            if output_prefix != None:
+            if output_prefix is not None:
                 split_idx = ["mean"] * len(k_values)
                 for idx in range(len(loss_cv)):
                     split_idx.extend([idx] * loss_cv[idx].shape[0])
@@ -538,14 +534,14 @@ class FeatureSelectionStrategy(object):
                         "(select by %s): best ln_delta for all k is at the boundary (idx=%i) of search grid, please consider a larger grid"
                         % (label, best_delta_idx)
                     )
-                    # if output_prefix != None:
+                    # if output_prefix is not None:
                     # create a size-zero file so that the cluster will aways have something to copy
                     # plot_fn=output_prefix+"_parabola.pdf"
                     # pstutil.create_directory_if_necessary(plot_fn)
                     # open(plot_fn, "w").close()
 
             # save cv scores
-            if create_pdf and (output_prefix != None):
+            if create_pdf and (output_prefix is not None):
                 # visualize results
                 import pylab
 
@@ -613,7 +609,7 @@ class FeatureSelectionStrategy(object):
 
             best_str = "best k=%i, best delta=%.2f" % (best_k, best_delta)
             logging.info(best_str)
-            if output_prefix != None:
+            if output_prefix is not None:
                 split_idx = ["mean"] * len(k_values)
                 for idx in range(len(loss_cv)):
                     split_idx.extend([idx] * loss_cv[idx].shape[0])
@@ -633,7 +629,7 @@ class FeatureSelectionStrategy(object):
                 )
                 pstutil.create_directory_if_necessary(out_fn)
                 df.to_csv(out_fn)
-            if create_pdf and (output_prefix != None):
+            if create_pdf and (output_prefix is not None):
                 # visualize results
                 import pylab
 
@@ -778,7 +774,7 @@ def f_regression_block_load(
     # This needs testing
     # if blocksize==None:
     #    X = snpreader.read().standardize(standardizer).val
-    #    if ind_idx is not None:
+    #    if ind_idx  is not None:
     #        X = X[ind_idx,:]
     #    return fun(X,y,**args)
 
@@ -1024,7 +1020,7 @@ def main():
         return
 
     # covariates not supported for Ridge Regression-based implementations yet
-    if args.strategy in ["full_cv", "loo_cv"] and args.cov_fn != None:
+    if args.strategy in ["full_cv", "loo_cv"] and args.cov_fn is not None:
         logging.critical(
             "Covariates only supported for the following strategies (strategy '%s' was used): {'lmm_full_cv', 'insample_cv'}"
             % (args.strategy)

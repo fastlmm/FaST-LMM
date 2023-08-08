@@ -3,27 +3,36 @@ import pandas as pd
 import logging
 import six
 
-class NearBronze:
 
+class NearBronze:
     @staticmethod
     def Parse():
         import argparse
-        parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-        
+
+        parser = argparse.ArgumentParser(
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+
         # required arguments
-        parser.add_argument('bim_filename', help='Input Bim file', type=str)
-        parser.add_argument('bronzelist_filename', help='List of bronze snps', type=str)
-        parser.add_argument('output_filename', help='Output Bim', type=str)
-        
+        parser.add_argument("bim_filename", help="Input Bim file", type=str)
+        parser.add_argument("bronzelist_filename", help="List of bronze snps", type=str)
+        parser.add_argument("output_filename", help="Output Bim", type=str)
+
         # required optional arguments
-        parser.add_argument('-distance', help='distance', type=float, default=None)
-        parser.add_argument('-position', help='position', type=int, default=None)
-        parser.add_argument('-log', help='flag to control verbosity of logging', type=str, default="INFO")
-        
+        parser.add_argument("-distance", help="distance", type=float, default=None)
+        parser.add_argument("-position", help="position", type=int, default=None)
+        parser.add_argument(
+            "-log",
+            help="flag to control verbosity of logging",
+            type=str,
+            default="INFO",
+        )
+
         # parse arguments
         args = parser.parse_args()
 
-        if bool(args.distance == None) == bool(args.position == None) : raise Exception("Should give 'distance' or 'position', but not both")
+        if bool(args.distance == None) == bool(args.position == None):
+            raise Exception("Should give 'distance' or 'position', but not both")
 
         return args
 
@@ -31,17 +40,17 @@ class NearBronze:
     def Set_Up_Logging(args):
         numeric_level = getattr(logging, args.log.upper(), None)
         if not isinstance(numeric_level, int):
-            raise ValueError('Invalid log level: %s' % args.log)
+            raise ValueError("Invalid log level: %s" % args.log)
         logging.basicConfig(level=numeric_level)
 
-    #@staticmethod
-    #def Bronze_Rows(bronzefields, snp, bim_chrom, bim_value):
+    # @staticmethod
+    # def Bronze_Rows(bronzefields, snp, bim_chrom, bim_value):
     #    try:
     #        item_or_list = bronzefields.loc[snp] #return either the row or list of rows with this snp
     #        return item_or_list, "1"
     #    except KeyError:
     #        item_or_list = None
-        
+
     #    #Find the closest snp
     #    bestsnp=None
     #    bestdiff = float("inf")
@@ -57,22 +66,21 @@ class NearBronze:
     #                    bestsnp = bronze_snp
     #                    bestitem_or_list = item_or_list
 
-
     #    return bestitem_or_list, "0"
 
-    #@staticmethod
-    #def IsSingleton(bronze_chrom):
+    # @staticmethod
+    # def IsSingleton(bronze_chrom):
     #    try:
     #        length = len(bronze_chrom)
     #        return True
     #    except:
     #        return False
 
-    #@staticmethod
-    #def ExtraFromBronzeRow(bronze_rows, snp):
+    # @staticmethod
+    # def ExtraFromBronzeRow(bronze_rows, snp):
     #    bronze_chrom = bronze_rows['chr']
     #    bronze_value_pair = bronze_rows.values[1]
-        
+
     #    if NearBronze.IsSingleton(bronze_chrom):
     #        if len(bronze_chrom) != 2 : raise Exception("Expect at most two end points (snp={0})".format(snp))
     #        if bronze_chrom[0] != bronze_chrom[1] : raise Exception("Expect both end points to be on same chrom (snp={0})".format(snp))
@@ -80,26 +88,25 @@ class NearBronze:
     #        bronze_chrom = bronze_chrom[0]
     #    else:
     #        bronze_value_pair = [bronze_value_pair, bronze_value_pair]
-        
-        
+
     #    return bronze_chrom, bronze_value_pair
 
     #    return allowed_diff, bim_value
 
-
     @staticmethod
     def Extract_Distance(args):
         if args.distance:
-            distance_index = 2 #genetic_distance
-            allowed_diff  = args.distance
+            distance_index = 2  # genetic_distance
+            allowed_diff = args.distance
         else:
             distance_index = 3
-            allowed_diff  = args.position
+            allowed_diff = args.position
         return allowed_diff, distance_index
 
-    @staticmethod #same as in fastlmm utils
-    def create_directory_if_necessary(name, isfile=True):    
+    @staticmethod  # same as in fastlmm utils
+    def create_directory_if_necessary(name, isfile=True):
         import os
+
         if isfile:
             directory_name = os.path.dirname(name)
         else:
@@ -112,50 +119,57 @@ class NearBronze:
                 if not os.path.isdir(directory_name):
                     raise Exception("not valid path: " + directory_name)
 
-
     @staticmethod
     def CreateBronzeChromToSortedValueAndSnpList(args, chromToSnpToValue):
         bronzeChromToSortedValueAndSnpList = {}
         with open(args.bronzelist_filename) as file:
-            header = next(file,None)
-            if header is None or len(header.split("\t")) != 3 : raise Exception("Expect bronze file to have three-column header line")
+            header = next(file, None)
+            if header is None or len(header.split("\t")) != 3:
+                raise Exception("Expect bronze file to have three-column header line")
             for line in file:
                 row = line.strip().split("\t")  # e.g. ['rs6684865', '1', '2553624']
                 snp = row[0]
                 chrom = row[1]
-                value = chromToSnpToValue.get(chrom,{}).get(snp,None)
+                value = chromToSnpToValue.get(chrom, {}).get(snp, None)
                 if value is None:
-                    logging.warning("snp {0} appears in the bronze list, but not the bim file".format(snp))
+                    logging.warning(
+                        "snp {0} appears in the bronze list, but not the bim file".format(
+                            snp
+                        )
+                    )
                 else:
-                    valueAndSnpList = bronzeChromToSortedValueAndSnpList.setdefault(chrom,[])
+                    valueAndSnpList = bronzeChromToSortedValueAndSnpList.setdefault(
+                        chrom, []
+                    )
                     valueAndSnpList.append((value, snp))
         chromToSortedValuesAndSnps = {}
         for chrom, valueAndSnpList in bronzeChromToSortedValueAndSnpList.items():
-            sortedList = sorted(valueAndSnpList,key=lambda valueAndSnp: valueAndSnp[0])
+            sortedList = sorted(valueAndSnpList, key=lambda valueAndSnp: valueAndSnp[0])
             sortedValues = [valueAndSnp[0] for valueAndSnp in sortedList]
             sortedSnps = [valueAndSnp[1] for valueAndSnp in sortedList]
             chromToSortedValuesAndSnps[chrom] = (sortedValues, sortedSnps)
-        
+
         return chromToSortedValuesAndSnps
 
     @staticmethod
     def CreateChromToSnpToValue(args, distance_index):
         chromToSnpToValue = {}
-        with open(args.bim_filename,) as bim_file:
+        with open(
+            args.bim_filename,
+        ) as bim_file:
             for bimindex, line in enumerate(bim_file):
-                if bimindex % 10000 == 0 :
+                if bimindex % 10000 == 0:
                     logging.info("First time reading bim line {0}".format(bimindex))
                 linestriped = line.strip()
-                row = linestriped.split()  # e.g. ['1', 'rs3094315', '0.830874', '752566', '2', '1']
+                row = (
+                    linestriped.split()
+                )  # e.g. ['1', 'rs3094315', '0.830874', '752566', '2', '1']
                 chrom = row[0]
                 snp = row[1]
                 value = float(row[distance_index])
-                snpToValue = chromToSnpToValue.setdefault(chrom,{})
+                snpToValue = chromToSnpToValue.setdefault(chrom, {})
                 snpToValue[snp] = value
-        
-        
-        
-        
+
         return chromToSnpToValue
 
     @staticmethod
@@ -168,32 +182,39 @@ class NearBronze:
 
         chromToSnpToValue = NearBronze.CreateChromToSnpToValue(args, distance_index)
 
-
-
-        bronzeChromToSortedValueAndSnpLists = NearBronze.CreateBronzeChromToSortedValueAndSnpList(args, chromToSnpToValue)
-
+        bronzeChromToSortedValueAndSnpLists = (
+            NearBronze.CreateBronzeChromToSortedValueAndSnpList(args, chromToSnpToValue)
+        )
 
         NearBronze.create_directory_if_necessary(args.output_filename)
-        with open(args.bim_filename,) as bim_file:
-            with open(args.output_filename, mode='w') as output_file:
+        with open(
+            args.bim_filename,
+        ) as bim_file:
+            with open(args.output_filename, mode="w") as output_file:
                 for bimindex, line in enumerate(bim_file):
-                    if bimindex % 10000 == 0 :
+                    if bimindex % 10000 == 0:
                         logging.info("Writing bim line {0}".format(bimindex))
                     linestriped = line.strip()
-                    row = linestriped.split()  # e.g. ['1', 'rs3094315', '0.830874', '752566', '2', '1']
+                    row = (
+                        linestriped.split()
+                    )  # e.g. ['1', 'rs3094315', '0.830874', '752566', '2', '1']
                     chrom = row[0]
                     snp = row[1]
                     value = float(row[distance_index])
 
-                    sortedValues, sortedSnps = bronzeChromToSortedValueAndSnpLists.get(chrom,([],[]))
+                    sortedValues, sortedSnps = bronzeChromToSortedValueAndSnpLists.get(
+                        chrom, ([], [])
+                    )
                     import bisect
+
                     hiIndex = bisect.bisect_right(sortedValues, value)
                     loIndex = hiIndex - 1
-                    if loIndex < 0 :
+                    if loIndex < 0:
                         loValue = float("-inf")
                         loSnp = None
                     else:
-                        if len(sortedValues) == 0 : raise Exception("assert")
+                        if len(sortedValues) == 0:
+                            raise Exception("assert")
                         loValue = sortedValues[loIndex]
                         loSnp = sortedSnps[loIndex]
 
@@ -201,16 +222,18 @@ class NearBronze:
                         hiValue = float("inf")
                         hiSnp = None
                     else:
-                        if len(sortedValues) == 0 : raise Exception("assert")
+                        if len(sortedValues) == 0:
+                            raise Exception("assert")
                         hiValue = sortedValues[hiIndex]
                         hiSnp = sortedSnps[hiIndex]
 
-                    if value < loValue or value > hiValue : raise Exception("assert")
+                    if value < loValue or value > hiValue:
+                        raise Exception("assert")
 
-                    if loSnp is not None and loSnp == hiSnp: #we are in a snp range
+                    if loSnp is not None and loSnp == hiSnp:  # we are in a snp range
                         isClose = True
                         bronzeSnp = loSnp
-                    else: # not in a range
+                    else:  # not in a range
                         if abs(value - loValue) < abs(value - hiValue):
                             isClose = abs(value - loValue) < allowed_diff
                             bronzeSnp = loSnp
@@ -218,13 +241,13 @@ class NearBronze:
                             isClose = abs(value - hiValue) < allowed_diff
                             bronzeSnp = hiSnp
 
-                    outline ="{0}\t{1}\t{2}\n".format(linestriped, (0,1)[bronzeSnp == snp], (0,1)[isClose])
+                    outline = "{0}\t{1}\t{2}\n".format(
+                        linestriped, (0, 1)[bronzeSnp == snp], (0, 1)[isClose]
+                    )
                     output_file.write(outline)
-                
 
-
-    #@staticmethod
-    #def main():
+    # @staticmethod
+    # def main():
     #    args = NearBronze.Parse()
 
     #    NearBronze.Set_Up_Logging(args)
@@ -263,9 +286,9 @@ class NearBronze:
     #                    else:
     #                        f.write("\t0\n") # not in range
 
-
     #    if bronze_snps_not_seen:
     #        logging.warning("These snps appear in the bronze list but were not seen in the bim file: {0}".format(", ".join(bronze_snps_not_seen)))
+
 
 if __name__ == "__main__":
     NearBronze.main()

@@ -18,11 +18,13 @@ from scipy.special import gammaln
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_random_state, as_float_array, check_array
-#from sklearn.utils import atleast2d_or_csr
+
+# from sklearn.utils import atleast2d_or_csr
 from sklearn.utils import deprecated
-from sklearn.utils.extmath import (fast_logdet, safe_sparse_dot, randomized_svd)#,
+from sklearn.utils.extmath import fast_logdet, safe_sparse_dot, randomized_svd  # ,
 from six.moves import range
-                             #fast_dot)
+
+# fast_dot)
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -53,36 +55,35 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
     """
     if rank > len(spectrum):
-        raise ValueError("The tested rank cannot exceed the rank of the"
-                         " dataset")
+        raise ValueError("The tested rank cannot exceed the rank of the" " dataset")
 
-    pu = -rank * log(2.)
+    pu = -rank * log(2.0)
     for i in range(rank):
-        pu += (gammaln((n_features - i) / 2.)
-               - log(np.pi) * (n_features - i) / 2.)
+        pu += gammaln((n_features - i) / 2.0) - log(np.pi) * (n_features - i) / 2.0
 
     pl = np.sum(np.log(spectrum[:rank]))
-    pl = -pl * n_samples / 2.
+    pl = -pl * n_samples / 2.0
 
     if rank == n_features:
         pv = 0
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
-        pv = -np.log(v) * n_samples * (n_features - rank) / 2.
+        pv = -np.log(v) * n_samples * (n_features - rank) / 2.0
 
-    m = n_features * rank - rank * (rank + 1.) / 2.
-    pp = log(2. * np.pi) * (m + rank + 1.) / 2.
+    m = n_features * rank - rank * (rank + 1.0) / 2.0
+    pp = log(2.0 * np.pi) * (m + rank + 1.0) / 2.0
 
-    pa = 0.
+    pa = 0.0
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
         for j in range(i + 1, len(spectrum)):
-            pa += log((spectrum[i] - spectrum[j]) *
-                      (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)
+            pa += log(
+                (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
+            ) + log(n_samples)
 
-    ll = pu + pl + pv + pp - pa / 2. - rank * log(n_samples) / 2.
+    ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
     return ll
 
@@ -201,6 +202,7 @@ class PCA(BaseEstimator, TransformerMixin):
     SparsePCA
     TruncatedSVD
     """
+
     def __init__(self, n_components=None, copy=True, whiten=False):
         self.n_components = n_components
         self.copy = copy
@@ -238,19 +240,19 @@ class PCA(BaseEstimator, TransformerMixin):
 
         """
         U, S, V = self._fit(X)
-        U = U[:, :self.n_components_]
+        U = U[:, : self.n_components_]
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
             U *= sqrt(X.shape[0])
         else:
             # X_new = X * V = U * S * V^T * V = U * S
-            U *= S[:self.n_components_]
+            U *= S[: self.n_components_]
 
         return U
 
     def _fit(self, X, U=None, S=None, V=None, mean=None):
-        """ Fit the model on X
+        """Fit the model on X
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
@@ -275,9 +277,8 @@ class PCA(BaseEstimator, TransformerMixin):
             assert S is not None and V is not None and U is not None
             self.mean_ = mean
 
-        explained_variance_ = (S ** 2) / n_samples
-        explained_variance_ratio_ = (explained_variance_ /
-                                     explained_variance_.sum())
+        explained_variance_ = (S**2) / n_samples
+        explained_variance_ratio_ = explained_variance_ / explained_variance_.sum()
 
         if self.whiten:
             components_ = V / (S[:, np.newaxis] / sqrt(n_samples))
@@ -287,13 +288,13 @@ class PCA(BaseEstimator, TransformerMixin):
         n_components = self.n_components
         if n_components is None:
             n_components = n_features
-        elif n_components == 'mle':
+        elif n_components == "mle":
             if n_samples < n_features:
-                raise ValueError("n_components='mle' is only supported "
-                                 "if n_samples >= n_features")
+                raise ValueError(
+                    "n_components='mle' is only supported " "if n_samples >= n_features"
+                )
 
-            n_components = _infer_dimension_(explained_variance_,
-                                             n_samples, n_features)
+            n_components = _infer_dimension_(explained_variance_, n_samples, n_features)
 
         if 0 < n_components < 1.0:
             # number of components for which the cumulated explained variance
@@ -306,7 +307,7 @@ class PCA(BaseEstimator, TransformerMixin):
         if n_components < n_features:
             self.noise_variance_ = explained_variance_[n_components:].mean()
         else:
-            self.noise_variance_ = 0.
+            self.noise_variance_ = 0.0
 
         # store n_samples to revert whitening when getting covariance
         self.n_samples_ = n_samples
@@ -334,12 +335,12 @@ class PCA(BaseEstimator, TransformerMixin):
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
         cov = np.dot(components_.T * exp_var_diff, components_)
-        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        cov.flat[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
-    def dot_precision(self,X,logdet=False):
+    def dot_precision(self, X, logdet=False):
         """Compute the dot product of a matrix X by the data
         precision matrix with the generative model.
 
@@ -352,13 +353,14 @@ class PCA(BaseEstimator, TransformerMixin):
 
         # handle corner cases first
         if self.n_components_ == 0:
-
             if logdet:
-                #import pdb;pdb.set_trace()
+                # import pdb;pdb.set_trace()
                 if np.isscalar(self.noise_variance_):
-                    logdet_cov = np.log(self.noise_variance_)*X.shape[1]
+                    logdet_cov = np.log(self.noise_variance_) * X.shape[1]
                 else:
-                    assert self.noise_variance_.shape[0] == X.shape[1], "self.noise_variance_.shape[0] == X.shape[1]"
+                    assert (
+                        self.noise_variance_.shape[0] == X.shape[1]
+                    ), "self.noise_variance_.shape[0] == X.shape[1]"
                     logdet_cov = np.log(self.noise_variance_).sum()
                 return X / self.noise_variance_, logdet_cov
             else:
@@ -374,30 +376,33 @@ class PCA(BaseEstimator, TransformerMixin):
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
         Xprecision = (1.0 / exp_var_diff) + (1.0 / self.noise_variance_)
         if logdet:
-            #import pdb;pdb.set_trace()
+            # import pdb;pdb.set_trace()
             if np.isscalar(self.noise_variance_):
-                logdet_cov = np.log(self.noise_variance_)*X.shape[1]
+                logdet_cov = np.log(self.noise_variance_) * X.shape[1]
             else:
-                assert self.noise_variance_.shape[0] == X.shape[1], "self.noise_variance_.shape[0] == X.shape[1]"
+                assert (
+                    self.noise_variance_.shape[0] == X.shape[1]
+                ), "self.noise_variance_.shape[0] == X.shape[1]"
                 logdet_cov = np.log(self.noise_variance_).sum()
-            logdet_cov += np.log(((1.0 / exp_var_diff) + (1.0 / self.noise_variance_))).sum()
+            logdet_cov += np.log(
+                ((1.0 / exp_var_diff) + (1.0 / self.noise_variance_))
+            ).sum()
             logdet_cov += np.log(exp_var_diff).sum()
 
-        Xprecision *= (self.noise_variance_ * self.noise_variance_)
-        Xprecision = (X.dot(components_.T/(-Xprecision))).dot(components_)
-        Xprecision += X/self.noise_variance_
-        #cprecision=((1.0 / exp_var_diff) + (1.0 / self.noise_variance_))*(-self.noise_variance_ * self.noise_variance_)
-        #cprecision = (components_.T/cprecision).dot(components_)
-        #cprecision.flat[::len(cprecision) + 1] += 1. / self.noise_variance_
-        #Xcprecision = X.dot(cprecision)
+        Xprecision *= self.noise_variance_ * self.noise_variance_
+        Xprecision = (X.dot(components_.T / (-Xprecision))).dot(components_)
+        Xprecision += X / self.noise_variance_
+        # cprecision=((1.0 / exp_var_diff) + (1.0 / self.noise_variance_))*(-self.noise_variance_ * self.noise_variance_)
+        # cprecision = (components_.T/cprecision).dot(components_)
+        # cprecision.flat[::len(cprecision) + 1] += 1. / self.noise_variance_
+        # Xcprecision = X.dot(cprecision)
         if logdet:
             return Xprecision, logdet_cov
         else:
             return Xprecision
-
 
     def get_precision(self):
         """Compute data precision matrix with the generative model.
@@ -423,19 +428,21 @@ class PCA(BaseEstimator, TransformerMixin):
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
-        cprecision=((1.0 / exp_var_diff) + (1.0 / self.noise_variance_))*(-self.noise_variance_ * self.noise_variance_)
-        cprecision = (components_.T/cprecision).dot(components_)
-        cprecision.flat[::len(cprecision) + 1] += 1. / self.noise_variance_
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
+        cprecision = ((1.0 / exp_var_diff) + (1.0 / self.noise_variance_)) * (
+            -self.noise_variance_ * self.noise_variance_
+        )
+        cprecision = (components_.T / cprecision).dot(components_)
+        cprecision.flat[:: len(cprecision) + 1] += 1.0 / self.noise_variance_
         return cprecision
-        #old:
-        #precision = np.dot(components_, components_.T) / self.noise_variance_
-        #precision.flat[::len(precision) + 1] += 1. / exp_var_diff
-        #precision = np.dot(components_.T,
+        # old:
+        # precision = np.dot(components_, components_.T) / self.noise_variance_
+        # precision.flat[::len(precision) + 1] += 1. / exp_var_diff
+        # precision = np.dot(components_.T,
         #                np.dot(linalg.inv(precision), components_))
-        #precision /= -(self.noise_variance_ ** 2)
-        #precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
-        #return precision
+        # precision /= -(self.noise_variance_ ** 2)
+        # precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        # return precision
 
     def transform(self, X):
         """Apply the dimensionality reduction on X.
@@ -454,7 +461,7 @@ class PCA(BaseEstimator, TransformerMixin):
         X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
-        #X_transformed = fast_dot(X, self.components_.T)
+        # X_transformed = fast_dot(X, self.components_.T)
         X_transformed = np.dot(X, self.components_.T)
         return X_transformed
 
@@ -477,7 +484,7 @@ class PCA(BaseEstimator, TransformerMixin):
         If whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
-        #Xtrans = fast_dot(X, self.components_)
+        # Xtrans = fast_dot(X, self.components_)
         Xtrans = np.dot(X, self.components_)
         return Xtrans + self.mean_
 
@@ -501,14 +508,13 @@ class PCA(BaseEstimator, TransformerMixin):
         Xr = X - self.mean_
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
-        #precision = self.get_precision()
-        #print "get rid of me"
-        #log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        XrP,ldet = self.dot_precision(X=Xr,logdet=True)
-        log_like = -.5 * (Xr * XrP).sum(axis=1)
-        log_like -= .5 * (n_features * log(2. * np.pi)
-                          +ldet)
-                          #- fast_logdet(precision))
+        # precision = self.get_precision()
+        # print "get rid of me"
+        # log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
+        XrP, ldet = self.dot_precision(X=Xr, logdet=True)
+        log_like = -0.5 * (Xr * XrP).sum(axis=1)
+        log_like -= 0.5 * (n_features * log(2.0 * np.pi) + ldet)
+        # - fast_logdet(precision))
         return log_like
 
     def score(self, X, y=None):
@@ -531,13 +537,16 @@ class PCA(BaseEstimator, TransformerMixin):
         return np.mean(self.score_samples(X))
 
 
-@deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: the covariance"
-            " estimation was previously incorrect, your output might be different "
-            " than under the previous versions. Use PCA that implements score"
-            " and score_samples. To work with homoscedastic=False, you should use"
-            " FactorAnalysis.")
+@deprecated(
+    "ProbabilisticPCA will be removed in 0.16. WARNING: the covariance"
+    " estimation was previously incorrect, your output might be different "
+    " than under the previous versions. Use PCA that implements score"
+    " and score_samples. To work with homoscedastic=False, you should use"
+    " FactorAnalysis."
+)
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that adds a probabilistic evaluation"""
+
     __doc__ += PCA.__doc__
 
     def fit(self, X, y=None, homoscedastic=True, compute_cov=False):
@@ -564,21 +573,22 @@ class ProbabilisticPCA(PCA):
             explained_variance -= self.noise_variance_
 
         if n_features == n_components:
-            delta = 0.
+            delta = 0.0
         elif homoscedastic:
             delta = self.noise_variance_
         else:
             Xr = X - self.mean_
             Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
-            delta = (Xr ** 2).mean(axis=0) / (n_features - n_components)
+            delta = (Xr**2).mean(axis=0) / (n_features - n_components)
 
         if compute_cov or (~homoscedastic):
             # Make the low rank part of the estimated covariance
-            self.covariance_ = np.dot(self.components_[:n_components].T *
-                                  explained_variance,
-                                  self.components_[:n_components])
+            self.covariance_ = np.dot(
+                self.components_[:n_components].T * explained_variance,
+                self.components_[:n_components],
+            )
             # Add delta to the diagonal without extra allocation
-            self.covariance_.flat[::n_features + 1] += delta
+            self.covariance_.flat[:: n_features + 1] += delta
 
         return self
 
@@ -599,7 +609,7 @@ class ProbabilisticPCA(PCA):
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
         if (self.precision_ is None) and (self.covariance_ is None):
-            XrP,ldet = self.dot_precision(X=Xr, logdet=True )
+            XrP, ldet = self.dot_precision(X=Xr, logdet=True)
 
         else:
             if self.precision_ is None:
@@ -607,9 +617,8 @@ class ProbabilisticPCA(PCA):
             XrP = np.dot(Xr, self.precision_)
             ldet = fast_logdet(self.covariance_)
 
-        log_like = -.5 * (Xr * XrP).sum(axis=1)
-        log_like -= .5 * (ldet
-                          + n_features * log(2. * np.pi))
+        log_like = -0.5 * (Xr * XrP).sum(axis=1)
+        log_like -= 0.5 * (ldet + n_features * log(2.0 * np.pi))
         return log_like
 
 
@@ -695,8 +704,14 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, copy=True, iterated_power=3,
-                 whiten=False, random_state=None):
+    def __init__(
+        self,
+        n_components=None,
+        copy=True,
+        iterated_power=3,
+        whiten=False,
+        random_state=None,
+    ):
         self.n_components = n_components
         self.copy = copy
         self.iterated_power = iterated_power
@@ -736,18 +751,20 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             The input data, copied, centered and whitened when requested.
         """
         random_state = check_random_state(self.random_state)
-        if hasattr(X, 'todense'):
-            warnings.warn("Sparse matrix support is deprecated"
-                          " and will be dropped in 0.16."
-                          " Use TruncatedSVD instead.",
-                          DeprecationWarning)
+        if hasattr(X, "todense"):
+            warnings.warn(
+                "Sparse matrix support is deprecated"
+                " and will be dropped in 0.16."
+                " Use TruncatedSVD instead.",
+                DeprecationWarning,
+            )
         else:
             # not a sparse matrix, ensure this is a 2D array
             X = np.atleast_2d(as_float_array(X, copy=self.copy))
 
         n_samples = X.shape[0]
 
-        if not hasattr(X, 'todense'):
+        if not hasattr(X, "todense"):
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
@@ -756,11 +773,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         else:
             n_components = self.n_components
 
-        U, S, V = randomized_svd(X, n_components,
-                                 n_iter=self.iterated_power,
-                                 random_state=random_state)
+        U, S, V = randomized_svd(
+            X, n_components, n_iter=self.iterated_power, random_state=random_state
+        )
 
-        self.explained_variance_ = exp_var = (S ** 2) / n_samples
+        self.explained_variance_ = exp_var = (S**2) / n_samples
         self.explained_variance_ratio_ = exp_var / exp_var.sum()
 
         if self.whiten:

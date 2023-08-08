@@ -50,8 +50,8 @@ def one_experiment(
     gpu_weight=1,
     gpu_count=1,
     test_case="?",
-    force = None,
-    two_ks = False,
+    force=None,
+    two_ks=False,
 ):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
@@ -103,7 +103,7 @@ def one_experiment(
 
     results_dataframe = single_snp(
         K0=K0,
-        K1 = test_snps if two_ks else None,
+        K1=test_snps if two_ks else None,
         test_snps=test_snps,
         pheno=pheno,
         covar=covar,
@@ -362,9 +362,6 @@ def testX_exp_4x(K0_goal=500):
     pd_write(short_output_pattern, pref_list)
 
 
-
-
-
 def test_std():
     from pysnptools.standardizer.standardizer import Standardizer
 
@@ -401,9 +398,9 @@ def test_exp_4(
     num_threads=None,
     leave_out_one_chrom=True,
     just_one_process=False,
-    force = None,
-    two_ks = False,
-    use_distributed = False,
+    force=None,
+    two_ks=False,
+    use_distributed=False,
 ):
     short_output_pattern = f"exp4/exp_4_{'{0}'}.tsv"
 
@@ -420,7 +417,9 @@ def test_exp_4(
 
     # Tune these
 
-    test_snps, pheno, covar = snpsA(seed, iid_count, sid_count,use_distributed=use_distributed)
+    test_snps, pheno, covar = snpsA(
+        seed, iid_count, sid_count, use_distributed=use_distributed
+    )
 
     proc_gpu_list = []
     if proc_count_only_cpu > 0:
@@ -446,8 +445,8 @@ def test_exp_4(
                 cpu_weight=cpu_weight,
                 gpu_weight=gpu_weight,
                 gpu_count=gpu_count,
-                force = force,
-                two_ks = two_ks,
+                force=force,
+                two_ks=two_ks,
             )
         )
         pd_write(short_output_pattern + ".temp", pref_list)
@@ -490,7 +489,7 @@ def test_svd(size, which_list, threads=None):
     if threads is not None:
         os.environ["MKL_NUM_THREADS"] = str(threads)
     import numpy as np
-    
+
     short_output_pattern = f"svd/svd_{'{0}'}.tsv"
     which_list = which_list or [
         "np.linalg.svd",
@@ -503,9 +502,7 @@ def test_svd(size, which_list, threads=None):
     for which in which_list:
         logging.info("generating {0}x{1}".format(m_row, n_col))
         np.random.seed(0)
-        a = np.random.randn(m_row, n_col).astype(
-            np.float
-        )  # what's the "float about?"
+        a = np.random.randn(m_row, n_col).astype(np.float)  # what's the "float about?"
         if which == "np.linalg.svd":
             xp = np
             logging.info(f"Doing large np.linalg.svd ({m_row}x{n_col})")
@@ -553,22 +550,23 @@ def test_svd(size, which_list, threads=None):
         pd_write(short_output_pattern + ".temp", perf_list)
     pd_write(short_output_pattern, perf_list)
 
+
 def benchmark1():
-    #based on https://towardsdatascience.com/heres-how-to-use-cupy-to-make-numpy-700x-faster-4b920dda1f56
+    # based on https://towardsdatascience.com/heres-how-to-use-cupy-to-make-numpy-700x-faster-4b920dda1f56
     import numpy as np
     import cupy as cp
     import time
 
     ### Numpy and CPU
     s = time.time()
-    x_cpu = np.ones((500,1000,1000))
+    x_cpu = np.ones((500, 1000, 1000))
     e = time.time()
     print(e - s)
 
     ### CuPy and GPU
     s = time.time()
-    x_gpu = cp.ones((500,1000,1000))
-    #cp.cuda.Stream.null.synchronize()
+    x_gpu = cp.ones((500, 1000, 1000))
+    # cp.cuda.Stream.null.synchronize()
     e = time.time()
     print(e - s)
 
@@ -586,45 +584,46 @@ def benchmark1():
 
     print("done")
 
-def benchmark2():
-    #Based on http://learningsys.org/nips17/assets/papers/paper_16.pdf
-    import time, numpy
-    #import cupy
 
-    def test1(xp,size,repeat):
+def benchmark2():
+    # Based on http://learningsys.org/nips17/assets/papers/paper_16.pdf
+    import time, numpy
+
+    # import cupy
+
+    def test1(xp, size, repeat):
         a = xp.arange(size).reshape(1000, -1)
-        #cupy.cuda.runtime.deviceSynchronize()
+        # cupy.cuda.runtime.deviceSynchronize()
         t1 = time.time()
         for index in range(repeat):
             a = a.T * 2
-        #cupy.cuda.runtime.deviceSynchronize()
+        # cupy.cuda.runtime.deviceSynchronize()
         t2 = time.time()
-        diff = t2-t1
+        diff = t2 - t1
         print(f"{repeat}x{size:,} {xp.__name__} {diff}")
-        return max(t2-t1,1e-16)
+        return max(t2 - t1, 1e-16)
 
-    def test(xp,size,repeat):
+    def test(xp, size, repeat):
         a = xp.arange(size).reshape(1000, -1)
         b = xp.arange(size).reshape(-1, 1000)
-        #cupy.cuda.runtime.deviceSynchronize()
+        # cupy.cuda.runtime.deviceSynchronize()
         t1 = time.time()
         for index in range(repeat):
-            a = xp.dot(b,a)
-        #cupy.cuda.runtime.deviceSynchronize()
+            a = xp.dot(b, a)
+        # cupy.cuda.runtime.deviceSynchronize()
         t2 = time.time()
-        diff = t2-t1
+        diff = t2 - t1
         print(f"{repeat}x{size:,} {xp.__name__} {diff}")
-        return max(t2-t1,1e-16)
-
+        return max(t2 - t1, 1e-16)
 
     repeat = 50
-    for exp in range(6,9):
-        size = 10 ** exp
+    for exp in range(6, 9):
+        size = 10**exp
         t_dict = {}
         for xp in [numpy]:
-             t_dict[xp.__name__+"1st"] = test(xp,size,1) # Avoid first call overhead
-             t_dict[xp.__name__+"2nd"] = test(xp,size,1)
-        #print(f"{repeat}x{size:,} 1st:{t_dict['numpy1st']/t_dict['cupy1st']} 2nd:{t_dict['numpy2nd']/t_dict['cupy2nd']}")
+            t_dict[xp.__name__ + "1st"] = test(xp, size, 1)  # Avoid first call overhead
+            t_dict[xp.__name__ + "2nd"] = test(xp, size, 1)
+        # print(f"{repeat}x{size:,} 1st:{t_dict['numpy1st']/t_dict['cupy1st']} 2nd:{t_dict['numpy2nd']/t_dict['cupy2nd']}")
     # (’numpy’, 0.5105748176574707)
     # (’cupy’, 0.08418107032775879)
 
@@ -636,7 +635,7 @@ if __name__ == "__main__":
         test_case, iid_count, sid_count, K0_goal = test_case_def("d")
 
         for two_ks in [False]:
-            for force in ["full_rank","low_rank"]:
+            for force in ["full_rank", "low_rank"]:
                 test_exp_4(
                     GB_goal=4,
                     iid_count=iid_count,
@@ -649,12 +648,11 @@ if __name__ == "__main__":
                     num_threads=None,
                     leave_out_one_chrom=True,
                     just_one_process=False,
-                    force = force,
-                    two_ks = two_ks,
-                    use_distributed=True
-            )
+                    force=force,
+                    two_ks=two_ks,
+                    use_distributed=True,
+                )
 
-    #benchmark2()
+    # benchmark2()
 
-    #test_svd(3_000, which_list=None)
-
+    # test_svd(3_000, which_list=None)

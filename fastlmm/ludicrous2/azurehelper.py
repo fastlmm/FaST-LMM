@@ -32,14 +32,14 @@ import azure.storage.blob as azureblob
 import azure.batch.models as batchmodels
 
 
-_STANDARD_OUT_FILE_NAME = 'stdout.txt'
-_STANDARD_ERROR_FILE_NAME = 'stderr.txt'
-_SAMPLES_CONFIG_FILE_NAME = 'configuration.cfg'
+_STANDARD_OUT_FILE_NAME = "stdout.txt"
+_STANDARD_ERROR_FILE_NAME = "stderr.txt"
+_SAMPLES_CONFIG_FILE_NAME = "configuration.cfg"
 
 
 class TimeoutError(Exception):
-    """An error which can occur if a timeout has expired.
-    """
+    """An error which can occur if a timeout has expired."""
+
     def __init__(self, message):
         self.message = message
 
@@ -56,14 +56,15 @@ def decode_string(string, encoding=None):
     if isinstance(string, str):
         return string
     if encoding is None:
-        encoding = 'utf-8'
+        encoding = "utf-8"
     if isinstance(string, bytes):
         return string.decode(encoding)
-    raise ValueError('invalid string type: {}'.format(type(string)))
+    raise ValueError("invalid string type: {}".format(type(string)))
 
 
 def select_latest_verified_vm_image_with_node_agent_sku(
-        batch_client, publisher, offer, sku_starts_with):
+    batch_client, publisher, offer, sku_starts_with
+):
     """Select the latest verified image that Azure Batch supports given
     a publisher, offer and sku (starts with filter).
 
@@ -79,11 +80,14 @@ def select_latest_verified_vm_image_with_node_agent_sku(
     node_agent_skus = batch_client.account.list_node_agent_skus()
     # pick the latest supported sku
     skus_to_use = [
-        (sku, image_ref) for sku in node_agent_skus for image_ref in sorted(
-            sku.verified_image_references, key=lambda item: item.sku)
-        if image_ref.publisher.lower() == publisher.lower() and
-        image_ref.offer.lower() == offer.lower() and
-        image_ref.sku.startswith(sku_starts_with)
+        (sku, image_ref)
+        for sku in node_agent_skus
+        for image_ref in sorted(
+            sku.verified_image_references, key=lambda item: item.sku
+        )
+        if image_ref.publisher.lower() == publisher.lower()
+        and image_ref.offer.lower() == offer.lower()
+        and image_ref.sku.startswith(sku_starts_with)
     ]
     sku_to_use, image_ref_to_use = skus_to_use[-1]
     return (sku_to_use.id, image_ref_to_use)
@@ -104,8 +108,9 @@ def wait_for_tasks_to_complete(batch_client, job_id, timeout):
         print("Checking if all tasks are complete...")
         tasks = batch_client.task.list(job_id)
 
-        incomplete_tasks = [task for task in tasks if
-                            task.state != batchmodels.TaskState.completed]
+        incomplete_tasks = [
+            task for task in tasks if task.state != batchmodels.TaskState.completed
+        ]
         if not incomplete_tasks:
             return
         time.sleep(5)
@@ -125,25 +130,15 @@ def print_task_output(batch_client, job_id, task_ids, encoding=None):
     """
     for task_id in task_ids:
         file_text = read_task_file_as_string(
-            batch_client,
-            job_id,
-            task_id,
-            _STANDARD_OUT_FILE_NAME,
-            encoding)
-        print("{} content for task {}: ".format(
-            _STANDARD_OUT_FILE_NAME,
-            task_id))
+            batch_client, job_id, task_id, _STANDARD_OUT_FILE_NAME, encoding
+        )
+        print("{} content for task {}: ".format(_STANDARD_OUT_FILE_NAME, task_id))
         print(file_text)
 
         file_text = read_task_file_as_string(
-            batch_client,
-            job_id,
-            task_id,
-            _STANDARD_ERROR_FILE_NAME,
-            encoding)
-        print("{} content for task {}: ".format(
-            _STANDARD_ERROR_FILE_NAME,
-            task_id))
+            batch_client, job_id, task_id, _STANDARD_ERROR_FILE_NAME, encoding
+        )
+        print("{} content for task {}: ".format(_STANDARD_ERROR_FILE_NAME, task_id))
         print(file_text)
 
 
@@ -153,8 +148,9 @@ def print_configuration(config):
     :param config: The configuration.
     :type config: `configparser.ConfigParser`
     """
-    configuration_dict = {s: dict(config.items(s)) for s in
-                          config.sections() + ['DEFAULT']}
+    configuration_dict = {
+        s: dict(config.items(s)) for s in config.sections() + ["DEFAULT"]
+    }
 
     print("Configuration is:")
     print(configuration_dict)
@@ -173,15 +169,14 @@ def _read_stream_as_string(stream, encoding):
         for data in stream:
             output.write(data)
         if encoding is None:
-            encoding = 'utf-8'
+            encoding = "utf-8"
         return output.getvalue().decode(encoding)
     finally:
         output.close()
-    raise RuntimeError('could not write data to stream or decode bytes')
+    raise RuntimeError("could not write data to stream or decode bytes")
 
 
-def read_task_file_as_string(
-        batch_client, job_id, task_id, file_name, encoding=None):
+def read_task_file_as_string(batch_client, job_id, task_id, file_name, encoding=None):
     """Reads the specified file as a string.
 
     :param batch_client: The batch client to use.
@@ -198,7 +193,8 @@ def read_task_file_as_string(
 
 
 def read_compute_node_file_as_string(
-        batch_client, pool_id, node_id, file_name, encoding=None):
+    batch_client, pool_id, node_id, file_name, encoding=None
+):
     """Reads the specified file as a string.
 
     :param batch_client: The batch client to use.
@@ -210,8 +206,7 @@ def read_compute_node_file_as_string(
     :return: The file content.
     :rtype: str
     """
-    stream = batch_client.file.get_from_compute_node(
-        pool_id, node_id, file_name)
+    stream = batch_client.file.get_from_compute_node(pool_id, node_id, file_name)
     return _read_stream_as_string(stream, encoding)
 
 
@@ -245,29 +240,39 @@ def wait_for_all_nodes_state(batch_client, pool, node_state):
     :rtype: list
     :return: list of `batchserviceclient.models.ComputeNode`
     """
-    print('waiting for all nodes in pool {} to reach one of: {!r}'.format(
-        pool.id, node_state))
+    print(
+        "waiting for all nodes in pool {} to reach one of: {!r}".format(
+            pool.id, node_state
+        )
+    )
     i = 0
     while True:
         # refresh pool to ensure that there is no resize error
         pool = batch_client.pool.get(pool.id)
         if pool.resize_error is not None:
             raise RuntimeError(
-                'resize error encountered for pool {}: {!r}'.format(
-                    pool.id, pool.resize_error))
+                "resize error encountered for pool {}: {!r}".format(
+                    pool.id, pool.resize_error
+                )
+            )
         nodes = list(batch_client.compute_node.list(pool.id))
-        if (len(nodes) >= pool.target_dedicated and
-                all(node.state in node_state for node in nodes)):
+        if len(nodes) >= pool.target_dedicated and all(
+            node.state in node_state for node in nodes
+        ):
             return nodes
         i += 1
         if i % 3 == 0:
-            print('waiting for {} nodes to reach desired state...'.format(
-                pool.target_dedicated))
+            print(
+                "waiting for {} nodes to reach desired state...".format(
+                    pool.target_dedicated
+                )
+            )
         time.sleep(10)
 
 
 def create_container_and_create_sas(
-        block_blob_client, container_name, permission, expiry=None):
+    block_blob_client, container_name, permission, expiry=None
+):
     """Create a blob sas token
 
     :param block_blob_client: The storage block blob client to use.
@@ -281,16 +286,16 @@ def create_container_and_create_sas(
     if expiry is None:
         expiry = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
 
-    block_blob_client.create_container(
-        container_name,
-        fail_on_exist=False)
+    block_blob_client.create_container(container_name, fail_on_exist=False)
 
     return block_blob_client.generate_container_shared_access_signature(
-        container_name=container_name, permission=permission, expiry=expiry)
+        container_name=container_name, permission=permission, expiry=expiry
+    )
 
 
 def create_sas_token(
-        block_blob_client, container_name, blob_name, permission, expiry=None):
+    block_blob_client, container_name, blob_name, permission, expiry=None
+):
     """Create a blob sas token
 
     :param block_blob_client: The storage block blob client to use.
@@ -305,11 +310,13 @@ def create_sas_token(
     if expiry is None:
         expiry = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
     return block_blob_client.generate_blob_shared_access_signature(
-        container_name, blob_name, permission=permission, expiry=expiry)
+        container_name, blob_name, permission=permission, expiry=expiry
+    )
 
 
 def upload_blob_and_create_sas(
-        block_blob_client, container_name, blob_name, file_name, expiry):
+    block_blob_client, container_name, blob_name, file_name, expiry
+):
     """Uploads a file from local disk to Azure Storage and creates
     a SAS for it.
 
@@ -323,26 +330,21 @@ def upload_blob_and_create_sas(
     :return: A SAS URL to the blob with the specified expiry time.
     :rtype: str
     """
-    block_blob_client.create_container(
-        container_name,
-        fail_on_exist=False)
+    block_blob_client.create_container(container_name, fail_on_exist=False)
 
-    block_blob_client.create_blob_from_path(
-        container_name,
-        blob_name,
-        file_name)
+    block_blob_client.create_blob_from_path(container_name, blob_name, file_name)
 
     sas_token = create_sas_token(
         block_blob_client,
         container_name,
         blob_name,
         permission=azureblob.BlobPermissions.READ,
-        expiry=expiry)
+        expiry=expiry,
+    )
 
     sas_url = block_blob_client.make_blob_url(
-        container_name,
-        blob_name,
-        sas_token=sas_token)
+        container_name, blob_name, sas_token=sas_token
+    )
 
     return sas_url
 
@@ -355,8 +357,7 @@ def generate_unique_resource_name(resource_prefix):
     :return: A string with the format "resource_prefix-<time>".
     :rtype: str
     """
-    return resource_prefix + "-" + \
-        datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    return resource_prefix + "-" + datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
 
 def wrap_commands_in_shell(ostype, commands):
@@ -367,11 +368,11 @@ def wrap_commands_in_shell(ostype, commands):
     :rtype: str
     :return: a shell wrapping commands
     """
-    if ostype.lower() == 'linux':
-        return '/bin/bash -c \'set -e; set -o pipefail; {}; wait\''.format(
-            ';'.join(commands))
-    elif ostype.lower() == 'windows':
-        return 'cmd.exe /c "{}"'.format('&'.join(commands))
+    if ostype.lower() == "linux":
+        return "/bin/bash -c 'set -e; set -o pipefail; {}; wait'".format(
+            ";".join(commands)
+        )
+    elif ostype.lower() == "windows":
+        return 'cmd.exe /c "{}"'.format("&".join(commands))
     else:
-        raise ValueError('unknown ostype: {}'.format(ostype))
-
+        raise ValueError("unknown ostype: {}".format(ostype))

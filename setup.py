@@ -96,6 +96,6 @@ setup(
         "cloudpickle>=2.2.0",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
-        "fastlmmclib>=0.0.2",
+        "fastlmmclib>=0.0.3",
     ],
 )

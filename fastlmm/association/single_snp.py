@@ -227,7 +227,6 @@ def single_snp(
 
     xp = pstutil.array_module(xp)
     with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__}) as _:
-
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
@@ -891,7 +890,6 @@ def _internal_single(
     random_seed,
     xp,
 ):
-
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
     assert block_size is not None, "real assert"
@@ -1053,7 +1051,6 @@ def _find_h2_s_u(
     cache_file,
     runner,
 ):
-
     assert multi_pheno.sid_count >= 1, "Expect at least one phenotype"
     assert (
         isinstance(K1, KernelIdentity) or multi_pheno.sid_count == 1
@@ -1190,7 +1187,6 @@ def _find_h2_s_u_for_one_pheno(
     U,
     xp,
 ):
-
     if S is None:
         K, h2, mixer = _Mixer.combine_the_best_way(
             K0,
@@ -1275,7 +1271,6 @@ def _snp_tester(
     random_seed,
     show_snp_fract_var_exp,
 ):
-
     work_count = -(
         test_snps.sid_count // -block_size
     )  # Find the work count based on batch size (rounding up)
@@ -1504,7 +1499,6 @@ def _find_mixing_from_Gs(G, covar, G0_standardized_val, G1_standardized_val, h2,
         y=y,
         **kwargs,
     ):
-
         if not isinstance(mixing, (int, int, float, complex)):
             assert mixing.ndim == 1 and mixing.shape[0] == 1
             mixing = mixing[0]
@@ -1543,7 +1537,6 @@ def _find_mixing_from_Ks(K, covar, K0_val, K1_val, h2, y, xp):
     resmin = [None]
 
     def f(mixing, K0_val=K0_val, K1_val=K1_val, covar=covar, y=y, **kwargs):
-
         if not isinstance(mixing, (int, int, float, complex)):
             assert mixing.ndim == 1 and mixing.shape[0] == 1
             mixing = mixing[0]
@@ -1762,7 +1755,6 @@ if __name__ == "__main__":
         )
 
     if False:
-
         logging.basicConfig(level=logging.INFO)
         import doctest
         from unittest.mock import patch

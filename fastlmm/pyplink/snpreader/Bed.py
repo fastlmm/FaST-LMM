@@ -9,39 +9,42 @@ import warnings
 
 WRAPPED_PLINK_PARSER_PRESENT = None
 
+
 def decide_once_on_plink_reader():
-    #This is now done in a method, instead of at the top of the file, so that messages can be re-directed to the appropriate stream.
-    #(Usually messages go to stdout, but when the code is run on Hadoop, they are sent to stderr)
+    # This is now done in a method, instead of at the top of the file, so that messages can be re-directed to the appropriate stream.
+    # (Usually messages go to stdout, but when the code is run on Hadoop, they are sent to stderr)
 
     global WRAPPED_PLINK_PARSER_PRESENT
     if WRAPPED_PLINK_PARSER_PRESENT == None:
         # attempt to import wrapped plink parser
         try:
             from bed_reader import read_f32, read_f64
-            WRAPPED_PLINK_PARSER_PRESENT = True #!!!does the standardizer work without c++
+
+            WRAPPED_PLINK_PARSER_PRESENT = (
+                True  #!!!does the standardizer work without c++
+            )
             logging.info("using Rust-based plink parser")
         except Exception as detail:
             logging.warn(detail)
             WRAPPED_PLINK_PARSER_PRESENT = False
 
 
-
-
 class Bed(object):
-    '''
+    """
     This is an obsolete class that does random-access reads of a BED file. For examples of its use see its 'read' method.
-    '''
+    """
 
-
-    def __init__(self,basefilename):
-        '''
+    def __init__(self, basefilename):
+        """
         basefilename    : string of the basename of [basename].bed, [basename].bim,
                           and [basename].fam
-        '''
-        warnings.warn("This old Bed reader is deprecated"
-                        " Use PySnpTools or bed-reader"
-                        " instead.",
-                        DeprecationWarning)
+        """
+        warnings.warn(
+            "This old Bed reader is deprecated"
+            " Use PySnpTools or bed-reader"
+            " instead.",
+            DeprecationWarning,
+        )
 
         self._ran_once = False
         self._filepointer = None
@@ -49,8 +52,8 @@ class Bed(object):
         self.basefilename = basefilename
 
     #!! similar code in fastlmm
-    def __repr__(self): 
-        return "{0}('{1}')".format(self.__class__.__name__,self.basefilename)
+    def __repr__(self):
+        return "{0}('{1}')".format(self.__class__.__name__, self.basefilename)
 
     @property
     def snp_to_index(self):
@@ -58,38 +61,54 @@ class Bed(object):
         return self._snp_to_index
 
     def run_once(self):
-        if (self._ran_once):
+        if self._ran_once:
             return
         self._ran_once = True
 
-        famfile = self.basefilename+ '.fam'
-        bimfile = self.basefilename+'.bim'
+        famfile = self.basefilename + ".fam"
+        bimfile = self.basefilename + ".bim"
 
         logging.info("Loading fam file {0}".format(famfile))
-        self._original_iids = np.loadtxt(famfile,dtype = 'str',usecols=(0,1),comments=None)
+        self._original_iids = np.loadtxt(
+            famfile, dtype="str", usecols=(0, 1), comments=None
+        )
         logging.info("Loading bim file {0}".format(bimfile))
 
-        self.bimfields = pd.read_csv(bimfile,delimiter = '\s',usecols = (0,1,2,3),header=None,index_col=False,engine='python')
-        self.rs = np.array(self.bimfields[1].tolist(),dtype='str')
-        self.pos = self.bimfields[[0,2,3]].values
+        self.bimfields = pd.read_csv(
+            bimfile,
+            delimiter="\s",
+            usecols=(0, 1, 2, 3),
+            header=None,
+            index_col=False,
+            engine="python",
+        )
+        self.rs = np.array(self.bimfields[1].tolist(), dtype="str")
+        self.pos = self.bimfields[[0, 2, 3]].values
         self._snp_to_index = {}
-        logging.info("indexing snps");
+        logging.info("indexing snps")
         for i in range(self.snp_count):
             snp = self.rs[i]
-            if snp in self._snp_to_index : raise Exception("Expect snp to appear in bim file only once. ({0})".format(snp))
-            self._snp_to_index[snp]=i
+            if snp in self._snp_to_index:
+                raise Exception(
+                    "Expect snp to appear in bim file only once. ({0})".format(snp)
+                )
+            self._snp_to_index[snp] = i
 
-        bedfile = self.basefilename+ '.bed'
+        bedfile = self.basefilename + ".bed"
         self._filepointer = open(bedfile, "rb")
         mode = self._filepointer.read(2)
-        if mode != b'l\x1b': raise Exception('No valid binary BED file')
-        mode = self._filepointer.read(1) #\x01 = SNP major \x00 = individual major
-        if mode != b'\x01': raise Exception('only SNP-major is implemented')
+        if mode != b"l\x1b":
+            raise Exception("No valid binary BED file")
+        mode = self._filepointer.read(1)  # \x01 = SNP major \x00 = individual major
+        if mode != b"\x01":
+            raise Exception("only SNP-major is implemented")
         logging.info("bed file is open {0}".format(bedfile))
         return self
 
     def __del__(self):
-        if self._filepointer != None:  # we need to test this because Python doesn't guarantee that __init__ was fully run
+        if (
+            self._filepointer is not None
+        ):  # we need to test this because Python doesn't guarantee that __init__ was fully run
             self._filepointer.close()
 
     def copyinputs(self, copier):
@@ -98,14 +117,15 @@ class Bed(object):
         copier.input(self.basefilename + ".bim")
         copier.input(self.basefilename + ".fam")
 
-
     @property
     def snp_count(self):
         self.run_once()
-        return len(self.bimfields);
+        return len(self.bimfields)
 
-    def read(self,snp_set = AllSnps(), order="F", dtype=np.float64, force_python_only=False):
-        '''
+    def read(
+        self, snp_set=AllSnps(), order="F", dtype=np.float64, force_python_only=False
+    ):
+        """
         Input: a snp_set. Choices include
             AllSnps() [the default],
             PositionRange(snpIndex,nSNPs)
@@ -153,10 +173,15 @@ class Bed(object):
         >>> ",".join(ret['rs'])
         '5_12,5_28,5_32,5_5,5_11,5_1,5_9,5_3,5_19,5_7,5_21,5_15,5_23'
 
-        '''
+        """
         self.run_once()
         snpset_withbed = snp_set.addbed(self)
-        return self.read_with_specification(snpset_withbed, order=order, dtype=dtype, force_python_only=force_python_only)
+        return self.read_with_specification(
+            snpset_withbed,
+            order=order,
+            dtype=dtype,
+            force_python_only=force_python_only,
+        )
 
     ##!! This property is ugly
     @property
@@ -166,10 +191,10 @@ class Bed(object):
 
     @ind_used.setter
     def ind_used(self, value):
-        '''
+        """
         Tell the Bed reader to return data for only a subset (perhaps proper) of the individuals in a particular order
         e.g. 2,10,0 says to return data for three users: the user at index position 2, the user at index position 10, and the user at index position 0.
-        '''
+        """
         # doesn't need to self.run_once() because only uses original inputs
         self._ind_used = value
 
@@ -181,105 +206,131 @@ class Bed(object):
     def counts_and_indexes(self, snpset_withbbed):
         iid_count_in = len(self.original_iids)
         snp_count_in = self.snp_count
-        if hasattr(self,'_ind_used'):
+        if hasattr(self, "_ind_used"):
             iid_count_out = len(self.ind_used)
             iid_index_out = self.ind_used
         else:
             iid_count_out = iid_count_in
-            iid_index_out = list(range(0,iid_count_in))
+            iid_index_out = list(range(0, iid_count_in))
         snp_count_out = len(snpset_withbbed)
-        snp_index_out = list(snpset_withbbed)  #make a copy, in case it's in some strange format, such as HDF5
-        return iid_count_in, iid_count_out, iid_index_out, snp_count_in, snp_count_out, snp_index_out
-
+        snp_index_out = list(
+            snpset_withbbed
+        )  # make a copy, in case it's in some strange format, such as HDF5
+        return (
+            iid_count_in,
+            iid_count_out,
+            iid_index_out,
+            snp_count_in,
+            snp_count_out,
+            snp_index_out,
+        )
 
     @staticmethod
-    def read_with_specification(snpset_withbbed, order="F", dtype=np.float64, force_python_only=False):
+    def read_with_specification(
+        snpset_withbbed, order="F", dtype=np.float64, force_python_only=False
+    ):
         # doesn't need to self.run_once() because it is static
         decide_once_on_plink_reader()
         global WRAPPED_PLINK_PARSER_PRESENT
 
         bed = snpset_withbbed.bed
-        iid_count_in, iid_count_out, iid_index_out, snp_count_in, snp_count_out, snp_index_out = bed.counts_and_indexes(snpset_withbbed)
+        (
+            iid_count_in,
+            iid_count_out,
+            iid_index_out,
+            snp_count_in,
+            snp_count_out,
+            snp_index_out,
+        ) = bed.counts_and_indexes(snpset_withbbed)
 
         if WRAPPED_PLINK_PARSER_PRESENT and not force_python_only:
             from bed_reader import open_bed
+
             bed_fn = bed.basefilename + ".bed"
             count_A1 = False
 
             if dtype == np.float64:
-                dtype = 'float64'
+                dtype = "float64"
             elif dtype == np.float32:
-                    dtype = 'float32'
+                dtype = "float32"
             else:
                 raise ValueError(
                     f"dtype '{val.dtype}' not known, only "
                     + "'int8', 'float32', and 'float64' are allowed."
                 )
 
-            with open_bed(bed_fn,
-                          iid_count=iid_count_in,
-                          sid_count=snp_count_in,
-                          count_A1=count_A1) as bed2:
-                SNPs = bed2.read(np.s_[iid_index_out,snp_index_out],dtype = dtype)
+            with open_bed(
+                bed_fn,
+                iid_count=iid_count_in,
+                sid_count=snp_count_in,
+                count_A1=count_A1,
+            ) as bed2:
+                SNPs = bed2.read(np.s_[iid_index_out, snp_index_out], dtype=dtype)
 
         else:
-
             # An earlier version of this code had a way to read consecutive SNPs of code in one read. May want
-            # to add that ability back to the code. 
-            # Also, note that reading with python will often result in non-contiguous memory, so the python standardizers will automatically be used, too.       
+            # to add that ability back to the code.
+            # Also, note that reading with python will often result in non-contiguous memory, so the python standardizers will automatically be used, too.
             logging.warn("using pure python plink parser (might be much slower!!)")
-            SNPs = np.zeros(((int(np.ceil(0.25*iid_count_in))*4),snp_count_out),order=order, dtype=dtype) #allocate it a little big
+            SNPs = np.zeros(
+                ((int(np.ceil(0.25 * iid_count_in)) * 4), snp_count_out),
+                order=order,
+                dtype=dtype,
+            )  # allocate it a little big
             for SNPsIndex, bimIndex in enumerate(snpset_withbbed):
-
-                startbit = int(np.ceil(0.25*iid_count_in)*bimIndex+3)
+                startbit = int(np.ceil(0.25 * iid_count_in) * bimIndex + 3)
                 bed._filepointer.seek(startbit)
-                nbyte = int(np.ceil(0.25*iid_count_in))
-                bytes = np.array(bytearray(bed._filepointer.read(nbyte))).reshape((int(np.ceil(0.25*iid_count_in)),1),order='F')
+                nbyte = int(np.ceil(0.25 * iid_count_in))
+                bytes = np.array(bytearray(bed._filepointer.read(nbyte))).reshape(
+                    (int(np.ceil(0.25 * iid_count_in)), 1), order="F"
+                )
 
-                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=64]=np.nan
-                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=128]=1
-                SNPs[3::4,SNPsIndex:SNPsIndex+1][bytes>=192]=2
-                bytes=np.mod(bytes,64)
-                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=16]=np.nan
-                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=32]=1
-                SNPs[2::4,SNPsIndex:SNPsIndex+1][bytes>=48]=2
-                bytes=np.mod(bytes,16)
-                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=4]=np.nan
-                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=8]=1
-                SNPs[1::4,SNPsIndex:SNPsIndex+1][bytes>=12]=2
-                bytes=np.mod(bytes,4)
-                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=1]=np.nan
-                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=2]=1
-                SNPs[0::4,SNPsIndex:SNPsIndex+1][bytes>=3]=2
-            SNPs = SNPs[iid_index_out,:] #reorder or trim any extra allocation
+                SNPs[3::4, SNPsIndex : SNPsIndex + 1][bytes >= 64] = np.nan
+                SNPs[3::4, SNPsIndex : SNPsIndex + 1][bytes >= 128] = 1
+                SNPs[3::4, SNPsIndex : SNPsIndex + 1][bytes >= 192] = 2
+                bytes = np.mod(bytes, 64)
+                SNPs[2::4, SNPsIndex : SNPsIndex + 1][bytes >= 16] = np.nan
+                SNPs[2::4, SNPsIndex : SNPsIndex + 1][bytes >= 32] = 1
+                SNPs[2::4, SNPsIndex : SNPsIndex + 1][bytes >= 48] = 2
+                bytes = np.mod(bytes, 16)
+                SNPs[1::4, SNPsIndex : SNPsIndex + 1][bytes >= 4] = np.nan
+                SNPs[1::4, SNPsIndex : SNPsIndex + 1][bytes >= 8] = 1
+                SNPs[1::4, SNPsIndex : SNPsIndex + 1][bytes >= 12] = 2
+                bytes = np.mod(bytes, 4)
+                SNPs[0::4, SNPsIndex : SNPsIndex + 1][bytes >= 1] = np.nan
+                SNPs[0::4, SNPsIndex : SNPsIndex + 1][bytes >= 2] = 1
+                SNPs[0::4, SNPsIndex : SNPsIndex + 1][bytes >= 3] = 2
+            SNPs = SNPs[iid_index_out, :]  # reorder or trim any extra allocation
 
         ret = {
-                'rs'     :bed.rs[snp_index_out],
-                'pos'    :bed.pos[snp_index_out,:],
-                'snps'   :SNPs,
-                'iid'    :bed.original_iids[iid_index_out,:]
-                }
+            "rs": bed.rs[snp_index_out],
+            "pos": bed.pos[snp_index_out, :],
+            "snps": SNPs,
+            "iid": bed.original_iids[iid_index_out, :],
+        }
         return ret
+
 
 if __name__ == "__main__":
     if False:
-        from fastlmm.util import example_file # Download and return local file name
-        bed_file = example_file('tests/datasets/all_chr.maf0.001.N300.*','*.bed')
+        from fastlmm.util import example_file  # Download and return local file name
+
+        bed_file = example_file("tests/datasets/all_chr.maf0.001.N300.*", "*.bed")
         bed = Bed(bed_file)
         ret = bed.read()
-        len(ret['rs'])
-        #1015
+        len(ret["rs"])
+        # 1015
         ret = bed.read(AllSnps())
-        len(ret['rs'])
-        #1015
-        ret = bed.read(SnpAndSetName('someset',['23_9','23_2']))
-        ",".join(ret['rs'])
+        len(ret["rs"])
+        # 1015
+        ret = bed.read(SnpAndSetName("someset", ["23_9", "23_2"]))
+        ",".join(ret["rs"])
         #'23_9,23_2'
-        ret = bed.read(PositionRange(0,10))
-        ",".join(ret['rs'])
+        ret = bed.read(PositionRange(0, 10))
+        ",".join(ret["rs"])
         #'1_12,1_34,1_10,1_35,1_28,1_25,1_36,1_39,1_4,1_13'
-
 
     logging.basicConfig(level=logging.WARNING)
     import doctest
+
     doctest.testmod()

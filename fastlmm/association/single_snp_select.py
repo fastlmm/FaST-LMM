@@ -24,22 +24,34 @@ from fastlmm.association import single_snp_linreg
 from fastlmm.association.single_snp_all_plus_select import _kfold
 
 
-def _fixup(test_snps, G, pheno, covar,count_A1=None):
-    test_snps = _snps_fixup(test_snps,count_A1=count_A1)
-    G = _snps_fixup(G or test_snps,count_A1=count_A1)
-    pheno = _pheno_fixup(pheno,count_A1=count_A1).read()
+def _fixup(test_snps, G, pheno, covar, count_A1=None):
+    test_snps = _snps_fixup(test_snps, count_A1=count_A1)
+    G = _snps_fixup(G or test_snps, count_A1=count_A1)
+    pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
     assert pheno.sid_count == 1, "Expect pheno to be just one variable"
-    pheno = pheno[(pheno.val==pheno.val)[:,0],:]
-    covar = _pheno_fixup(covar, iid_if_none=pheno.iid,count_A1=count_A1)
-    G, test_snps, pheno, covar  = pstutil.intersect_apply([G, test_snps, pheno, covar])
+    pheno = pheno[(pheno.val == pheno.val)[:, 0], :]
+    covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
+    G, test_snps, pheno, covar = pstutil.intersect_apply([G, test_snps, pheno, covar])
     return test_snps, G, pheno, covar
 
-def single_snp_select(test_snps, pheno, G=None, covar=None,
-                 k_list = None,
-                 n_folds=10, #1 is special and means test on train
-                 just_return_selected_snps=False,
-                 seed = 0, output_file_name = None,
-                 GB_goal=None, force_full_rank=False, force_low_rank=False, h2=None, runner=None, count_A1=None):
+
+def single_snp_select(
+    test_snps,
+    pheno,
+    G=None,
+    covar=None,
+    k_list=None,
+    n_folds=10,  # 1 is special and means test on train
+    just_return_selected_snps=False,
+    seed=0,
+    output_file_name=None,
+    GB_goal=None,
+    force_full_rank=False,
+    force_low_rank=False,
+    h2=None,
+    runner=None,
+    count_A1=None,
+):
     """
     Function performing single SNP GWAS based on covariates (often PCs) and a similarity matrix constructed of the top *k* SNPs where
     SNPs are ordered via the PValue from :meth:`.single_snp_linreg` and *k* is determined via out-of-sample prediction. Will reorder and intersect IIDs as needed.
@@ -68,7 +80,7 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
 
     :param n_folds: Number of folds of cross validation to use for out-of-sample evaluation of various values of *k*. Default to 10.
     :type n_folds: number
-    
+
     :param just_return_selected_snps: Instead of returning the results of GWAS, return the top *k* SNPs selected.
     :type just_return_selected_snps: list of strings
 
@@ -120,7 +132,7 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
     snp495_m0_.01m1_.04 0.0 5000
 
     """
-    with patch.dict('os.environ', {'ARRAY_MODULE': 'numpy'}) as _:
+    with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
         #!!!code similar to single_snp and feature_selection
         if force_full_rank and force_low_rank:
             raise Exception("Can't force both full rank and low rank")
@@ -130,62 +142,111 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
         if k_list is None:
             k_list = np.logspace(start=0, stop=13, num=14, base=2)
 
-        test_snps, G, pheno, covar = _fixup(test_snps, G, pheno, covar, count_A1=count_A1)
+        test_snps, G, pheno, covar = _fixup(
+            test_snps, G, pheno, covar, count_A1=count_A1
+        )
         common_input_files = [test_snps, G, pheno, covar]
 
         k_list_in = [0] + [int(k) for k in k_list if 0 < k <= G.sid_count]
 
         def top_snps_for_each_fold_nested(kfold_item):
             fold_index, (train_idx, test_idx) = kfold_item
-            _, G_in, pheno_in, covar_in = _fixup(test_snps, G, pheno, covar,count_A1=count_A1)
-            nested = single_snp_linreg(G_in[train_idx,:],pheno_in[train_idx,:],covar_in[train_idx,:],GB_goal=GB_goal,max_output_len=max(k_list_in),count_A1=count_A1)
+            _, G_in, pheno_in, covar_in = _fixup(
+                test_snps, G, pheno, covar, count_A1=count_A1
+            )
+            nested = single_snp_linreg(
+                G_in[train_idx, :],
+                pheno_in[train_idx, :],
+                covar_in[train_idx, :],
+                GB_goal=GB_goal,
+                max_output_len=max(k_list_in),
+                count_A1=count_A1,
+            )
             return nested
+
         def top_snps_for_each_fold_reducer(dataframe_list):
-            result = [list(dataframe['SNP']) for dataframe in dataframe_list]
+            result = [list(dataframe["SNP"]) for dataframe in dataframe_list]
             return result
 
+        # Find top snps for each fold
+        fold_index_to_top_snps = map_reduce(
+            _kfold(
+                G.iid_count,
+                n_folds,
+                seed,
+                end_with_all=True,
+                iid_to_index=G.iid_to_index,
+            ),
+            nested=top_snps_for_each_fold_nested,
+            reducer=top_snps_for_each_fold_reducer,
+            name="top_snps_for_each_fold",
+            input_files=common_input_files,
+            runner=runner,
+        )
 
-        #Find top snps for each fold        
-        fold_index_to_top_snps = map_reduce(_kfold(G.iid_count, n_folds, seed, end_with_all=True,iid_to_index=G.iid_to_index),
-                                             nested=top_snps_for_each_fold_nested,
-                                             reducer=top_snps_for_each_fold_reducer,
-                                             name = "top_snps_for_each_fold",
-                                             input_files = common_input_files,
-                                             runner=runner)
-
-        #=================================================
+        # =================================================
         # Start of definition of inner functions
-        #=================================================
+        # =================================================
         def k_index_to_nLL_mapper(k):
-            _, G_in, pheno_in, covar_in = _fixup(test_snps, G, pheno, covar,count_A1=count_A1)
-            nll_sum=0
+            _, G_in, pheno_in, covar_in = _fixup(
+                test_snps, G, pheno, covar, count_A1=count_A1
+            )
+            nll_sum = 0
             mse_sum = 0
             n_folds_in = 0
-            for fold_index, (train_idx, test_idx) in _kfold(G.iid_count, n_folds, seed, end_with_all=False,iid_to_index=G.iid_to_index):
+            for fold_index, (train_idx, test_idx) in _kfold(
+                G.iid_count,
+                n_folds,
+                seed,
+                end_with_all=False,
+                iid_to_index=G.iid_to_index,
+            ):
                 assert set(train_idx).isdisjoint(set(test_idx)), "real assert"
                 top_snps_in_fold = fold_index_to_top_snps[fold_index][:k]
                 sid_idx_in_fold = G_in.sid_to_index(top_snps_in_fold)
-                G_train = G_in[train_idx,sid_idx_in_fold] if k > 0 else None
-                fastlmm = FastLMM(force_full_rank=force_full_rank, force_low_rank=force_low_rank,GB_goal=GB_goal)
-                fastlmm.fit(K0_train=G_train, X=covar_in[train_idx,:], y=pheno_in[train_idx,:], h2raw=h2) #iid intersection means when can give the whole covariate and pheno
-                G_test = G_in[test_idx,sid_idx_in_fold] if k > 0 else KernelIdentity(G_in.iid,G_in.iid[test_idx]) #!!! instead of this, which blows up when # of iids is large, should switch to linear regression model with k is 0
-                nll,mse = fastlmm.score(K0_whole_test=G_test,X=covar_in[test_idx,:],y=pheno_in[test_idx,:],return_mse_too=True) #iid intersection means when can give the whole covariate and pheno
+                G_train = G_in[train_idx, sid_idx_in_fold] if k > 0 else None
+                fastlmm = FastLMM(
+                    force_full_rank=force_full_rank,
+                    force_low_rank=force_low_rank,
+                    GB_goal=GB_goal,
+                )
+                fastlmm.fit(
+                    K0_train=G_train,
+                    X=covar_in[train_idx, :],
+                    y=pheno_in[train_idx, :],
+                    h2raw=h2,
+                )  # iid intersection means when can give the whole covariate and pheno
+                G_test = (
+                    G_in[test_idx, sid_idx_in_fold]
+                    if k > 0
+                    else KernelIdentity(G_in.iid, G_in.iid[test_idx])
+                )  #!!! instead of this, which blows up when # of iids is large, should switch to linear regression model with k is 0
+                nll, mse = fastlmm.score(
+                    K0_whole_test=G_test,
+                    X=covar_in[test_idx, :],
+                    y=pheno_in[test_idx, :],
+                    return_mse_too=True,
+                )  # iid intersection means when can give the whole covariate and pheno
                 nll_sum += nll
                 mse_sum += mse
                 n_folds_in += 1
-            logging.info("k={0},nLL={1},average mse={2}".format(k,nll_sum,mse_sum / n_folds_in))
+            logging.info(
+                "k={0},nLL={1},average mse={2}".format(k, nll_sum, mse_sum / n_folds_in)
+            )
             return nll_sum
-        #=================================================
+
+        # =================================================
         # End of definition of inner functions
-        #=================================================
+        # =================================================
 
-
-        #find best # of top SNPs
-        k_index_to_nLL = map_reduce(k_list_in,
-                                    mapper = k_index_to_nLL_mapper,
-                                    input_files = common_input_files,
-                                    name = "k_index_to_nLL",
-                                    runner=runner)
+        # find best # of top SNPs
+        k_index_to_nLL = map_reduce(
+            k_list_in,
+            mapper=k_index_to_nLL_mapper,
+            input_files=common_input_files,
+            name="k_index_to_nLL",
+            runner=runner,
+        )
         best_k = k_list_in[np.argmin(k_index_to_nLL)]
 
         top_snps = fold_index_to_top_snps[-1][:best_k]
@@ -193,21 +254,32 @@ def single_snp_select(test_snps, pheno, G=None, covar=None,
             return top_snps
 
         sid_idx = G.sid_to_index(top_snps)
-        G_top = G[:,sid_idx]
+        G_top = G[:, sid_idx]
 
         # Run GWAS with leave-one-chrom out
-        single_snp_result = single_snp(test_snps=test_snps, K0=G_top, pheno=pheno,
-                                    covar=covar, leave_out_one_chrom=True,
-                                    GB_goal=GB_goal,  force_full_rank=force_full_rank, force_low_rank=force_low_rank, h2=h2,
-                                    output_file_name=output_file_name,runner=runner,count_A1=count_A1)
+        single_snp_result = single_snp(
+            test_snps=test_snps,
+            K0=G_top,
+            pheno=pheno,
+            covar=covar,
+            leave_out_one_chrom=True,
+            GB_goal=GB_goal,
+            force_full_rank=force_full_rank,
+            force_low_rank=force_low_rank,
+            h2=h2,
+            output_file_name=output_file_name,
+            runner=runner,
+            count_A1=count_A1,
+        )
 
         return single_snp_result
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     logging.basicConfig(level=logging.WARN)
 
     import doctest
+
     doctest.testmod()
 
-    print('done')
+    print("done")

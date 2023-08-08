@@ -315,7 +315,7 @@ class LMM(object):
             print("not implemented")
             raise NotImplementedError("only single pheno case implemented")
 
-        # if self.K0 is not None:
+        # if self.K0  is not None:
         #    self.setK(K0 = self.K0, K1 = self.K1, a2 = a2)
         # else:
         #    self.setG(G0 = self.G0, G1 = self.G1, a2 = a2)
@@ -487,6 +487,7 @@ class LMM(object):
         """
         # f = lambda x : (self.nLLeval(h2=x,**kwargs)['nLL'])
         resmin = [None]
+
         # logging.info("starting log_delta search")
         def f(x, resmin=resmin, **kwargs):
             h2 = 1.0 / (
@@ -709,7 +710,6 @@ class LMM(object):
 
         Usnps, UUsnps = None, None
         if snps is not None:
-
             if snps.shape[0] != self.Y.shape[0]:
                 print("shape mismatch between snps and Y")
             Usnps, UUsnps = self.rotate(A=snps)
@@ -1037,7 +1037,11 @@ class LMM(object):
             penalty_ = penalty or 0.0
             assert penalty_ >= 0.0, "penalty has to be non-negative"
             with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in divide')
+                warnings.filterwarnings(
+                    "ignore",
+                    category=RuntimeWarning,
+                    message="invalid value encountered in divide",
+                )
                 beta = snpsKY / (snpsKsnps + penalty_)
             if np.isnan(beta.min()):
                 logging.debug(
@@ -1058,7 +1062,11 @@ class LMM(object):
                 )
             else:
                 with warnings.catch_warnings():
-                    warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in divide')
+                    warnings.filterwarnings(
+                        "ignore",
+                        category=RuntimeWarning,
+                        message="divide by zero encountered in divide",
+                    )
                     variance_beta = r2 / (N - 1.0) / snpsKsnps
                 fraction_variance_explained_beta = (
                     variance_explained_beta / YKY[np.newaxis, :]
@@ -1265,7 +1273,6 @@ if __name__ == "__main__":
     if 0:
         # TODO: wrap up results using pandas
         for train_snp_idx, test_snp_idx in loco:
-
             print(len(train_snp_idx), len(test_snp_idx))
 
             int_snp_idx = argintersect_left(snp_pos[train_snp_idx], selected_snp_pos)
@@ -1296,7 +1303,6 @@ if __name__ == "__main__":
             gwas.run_gwas()
 
     if 1:
-
         i_min = np.array(
             [
                 [576],

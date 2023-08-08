@@ -163,7 +163,7 @@ class FastLmmSet:  # implements IDistributable
     # =================================================================
 
     def hasNonNoneAttr(self, attr):
-        return hasattr(self, attr) and getattr(self, attr) != None
+        return hasattr(self, attr) and getattr(self, attr) is not None
 
     # required by IDistributable
     @property
@@ -204,7 +204,6 @@ class FastLmmSet:  # implements IDistributable
         Each work item is a lambda expression (i.e. function pointer) that calls 'run_test', returning a list of Results (often just one)
         """
         with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
-
             self.run_once()  # load files, etc. -- stuff we only want to do once per task (e.g. on the cluster)
             # no matter how many times we call 'run_test' (and then 'reduce' which of course
             # only gets run one time, and calls this too, but doesn't actually do the work).
@@ -237,7 +236,7 @@ class FastLmmSet:  # implements IDistributable
                             ), "Error: using permute with genphen--there should be no need, use genphen['seed'] instead"
                             self.__y = None
 
-                            # if (self.__G0 is not None) and y_G0 is None:  #cache so only do it once
+                            # if (self.__G0  is not None) and y_G0 is None:  #cache so only do it once
                             if (
                                 self.__SNPs0 is not None
                             ) and y_G0 is None:  # cache so only do it once
@@ -522,7 +521,6 @@ class FastLmmSet:  # implements IDistributable
     #    return y_randG
 
     def TESTBEFOREUSINGKfromAltSnps(self, N, SNPsalt=None):
-
         print("constructing K from all SNPs")
         t0 = time.time()
 
@@ -1220,7 +1218,8 @@ class FastLmmSet:  # implements IDistributable
 
     def run_once(self):
         """
-        Loading datasets (but not SNPs for alternative), etc. that we want to do only once no mater how many times we call 'run_test' and then perhaps 'reduce'."""
+        Loading datasets (but not SNPs for alternative), etc. that we want to do only once no mater how many times we call 'run_test' and then perhaps 'reduce'.
+        """
 
         if self.calseed is not None:
             self._seed = utilx.combineseeds(self.calseed, self.mainseed)
@@ -1357,7 +1356,7 @@ class FastLmmSet:  # implements IDistributable
         else:
             nPhen = 1
         logging.info("Found " + str(nPhen) + " phenotypes")
-        if self.filenull != None:
+        if self.filenull is not None:
             logging.info("Running test " + str(self.test) + " with 1 background kernel")
         else:
             logging.info(
@@ -1401,7 +1400,7 @@ class FastLmmSet:  # implements IDistributable
         # cache whatever is needed for each case (sometimes likelihood, sometimes rotated items, sometimes nothing)
         t0 = time.time()
 
-        # if self.filenull is not None: #aka two-kernel
+        # if self.filenull  is not None: #aka two-kernel
         #    self.__G0 = self.__SNPs0['data']['snps']/sp.sqrt(self.__SNPs0['data']['snps'].shape[1])
         # else:
         #    self.__G0=None
@@ -1413,7 +1412,7 @@ class FastLmmSet:  # implements IDistributable
         ):  # or self.genphen['once']: THIS CAUSES REAL DATA TO GET USED
             # self.__varcomp_test=self.varcomp_test_setup(self.__y,self.__G0)
             self.__varcomp_test = self.varcomp_test_setup(self.__y, self.__SNPs0)
-        # elif self.genphen is not None and self.__G0 is not None:
+        # elif self.genphen  is not None and self.__G0  is not None:
         elif self.genphen is not None and self.__SNPs0 is not None:
             raise Exception(
                 "this will run if you comment out this line, but I think will be inefficient because it's not caching null info across each gene-set specific phenotypes even when G0 remains constant across these"
@@ -1539,7 +1538,7 @@ class FastLmmSet:  # implements IDistributable
         returns: altset_list, altsetlist_filtbysnps
         'altset_list' is the raw set defintion read in from file
         'altsetlist_filtbysnps' is the result of filtering altset_list by SNPsin the specified altsetbed SNP file
-        Additionally, only allows sets specified by sets are allowed (if this is not None)
+        Additionally, only allows sets specified by sets are allowed (if this  is not None)
         """
         if isinstance(altset_list, str):
             altset_list = SnpAndSetNameCollection(altset_list)

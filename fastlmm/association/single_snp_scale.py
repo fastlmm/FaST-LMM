@@ -181,7 +181,6 @@ def single_snp_scale(
     All stages cache intermediate results. If the results for stage are found in the cache, that stage will be skipped.
     """
     with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
-
         # Fill in with the default runner and default min_work_count
         gtg_runner = gtg_runner or runner
         gtg_min_work_count = gtg_min_work_count or min_work_count
@@ -436,6 +435,7 @@ def read_bed_cache(data_folder, file_index_end):
 #        [a,b,c] = la.svd(x,False,True) #!!!use big_svd?
 #        diff = time.time()-t
 #        print iid_count,sid_count,diff#0,diff
+
 
 #!!! exactly the same as in single_snp.py
 def _create_dataframe(row_count):
@@ -854,7 +854,6 @@ def find_h2(k, N, UUYUUYsum0, UYUY, S, chrom):
 
 
 def find_h2_inner(k, N, UUYUUYsum0, UYUY, S, chrom):
-
     resmin = [None]
 
     def f(x, resmin=resmin):
@@ -1097,7 +1096,6 @@ def postsvd(
         work_count = max(work_count, min_work_count)
 
         def mapper_closure_inner(work_index):
-
             SVinv_etc_fn = "2_SVD/SVinv_etc{0}.npz".format(chrom)
             with cache_dict[0].open_read(SVinv_etc_fn) as handle_local:
                 with np.load(handle_local) as data:
@@ -1476,7 +1474,6 @@ def do_test_snps(
         logging.info("work_count = {0}".format(work_count))
 
         def mapper_closure(work_index):
-
             done_file = "chrom{0}/done.{1}of{2}.txt".format(
                 chrom, work_index, work_count
             )
