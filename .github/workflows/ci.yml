@@ -10,13 +10,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        python-version: [3.7, 3.8, 3.9, "3.10"]        
+        python-version: [3.8, 3.9, "3.10", "3.11"]
     runs-on: ${{ matrix.os }}
 
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       
     - name: Set up Miniconda ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
@@ -42,7 +42,7 @@ jobs:
 
     - name: Save SDist
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: sdist
         path: dist/*.tar.gz
