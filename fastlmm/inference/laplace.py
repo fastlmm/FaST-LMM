@@ -55,14 +55,17 @@ class LaplaceGLMM(object):
 
     def _lineSearch(self, a, aprev, m):
         da = a - aprev
+        print("cmk start line search")
 
         def fobj(alpha):
             a = aprev + alpha * da
             f = self._rdotK(a) + m
-            return -(self._likelihood.log(f, self._y) - (f - m).dot(a) / 2.0)
+            cmk_out = -(self._likelihood.log(f, self._y) - (f - m).dot(a) / 2.0)
+            print(f"alpha\tcmk_out\t{alpha}\t{cmk_out}")
+            return cmk_out
 
-        (alpha, obj, iter, funcalls) = sp.optimize.brent(
-            fobj, brack=(0.0, 1.0), full_output=True, tol=1e-4, maxiter=10
+        (alpha, obj, iter, funcalls) = sp.optimize.fminbound(  # cmk was brent
+            fobj, 0.0, 1.0, full_output=True, xtol=1e-4, maxfun=10
         )
         obj = -obj
         a = aprev + alpha * da
