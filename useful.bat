@@ -70,3 +70,5 @@ python test.py
 while python test.py; do
     :
 done
+
+twine upload --repository-url https://test.pypi.org/legacy/ fastlmm-0.6.7*
