@@ -18,7 +18,6 @@ from fastlmm.inference.glmm import GLMM_N1K3, GLMM_N3K1
 from fastlmm.inference.likelihood import LogitLikelihood, ProbitLikelihood
 from fastlmm import Pr
 import sys
-from six.moves import range
 
 """
     Important! Always run test.py in the current folder for unit testing after
@@ -55,17 +54,14 @@ class LaplaceGLMM(object):
 
     def _lineSearch(self, a, aprev, m):
         da = a - aprev
-        print("cmk start line search")
 
         def fobj(alpha):
             a = aprev + alpha * da
             f = self._rdotK(a) + m
-            cmk_out = -(self._likelihood.log(f, self._y) - (f - m).dot(a) / 2.0)
-            print(f"alpha\tcmk_out\t{alpha}\t{cmk_out}")
-            return cmk_out
+            return -(self._likelihood.log(f, self._y) - (f - m).dot(a) / 2.0)
 
-        (alpha, obj, iter, funcalls) = sp.optimize.fminbound(  # cmk was brent
-            fobj, 0.0, 1.0, full_output=True, xtol=1e-4, maxfun=10
+        (alpha, obj, iter, funcalls) = sp.optimize.fminbound(
+            fobj, 0.0, 1.0, full_output=True, xtol=1e-4, maxfun=25
         )
         obj = -obj
         a = aprev + alpha * da
