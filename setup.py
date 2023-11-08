@@ -64,12 +64,6 @@ setup(
         "fastlmm/util/stats",
     ],
     package_data={
-        "fastlmm/association": [
-            "Fastlmm_autoselect/FastLmmC.exe",
-            "Fastlmm_autoselect/libiomp5md.dll",
-            "Fastlmm_autoselect/fastlmmc",
-            "Fastlmm_autoselect/FastLmmC.Manual.pdf",
-        ],
         "fastlmm/feature_selection": [
             "examples/bronze.txt",
             "examples/ScanISP.Toydata.config.py",

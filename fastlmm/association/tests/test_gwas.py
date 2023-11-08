@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 import numpy as np
-import scipy as sp
 import logging
 from scipy import stats
 from fastlmm.pyplink.snpreader.Bed import Bed
@@ -8,13 +6,11 @@ from fastlmm.pyplink.snpreader.Bed import Bed
 # from fastlmm.association.gwas import LeaveOneChromosomeOut, LocoGwas, FastGwas, load_intersect
 from fastlmm.association.LeaveOneChromosomeOut import LeaveOneChromosomeOut
 from fastlmm.association.PrecomputeLocoPcs import load_intersect
-from fastlmm.association.LocoGwas import FastGwas, LocoGwas
+from fastlmm.association.LocoGwas import FastGwas
 from fastlmm.util import run_fastlmmc
 from fastlmm.inference import LMM
 import unittest
 import os.path
-import time
-from six.moves import range
 import platform
 
 currentFolder = os.path.dirname(os.path.realpath(__file__))
@@ -89,7 +85,7 @@ class TestGwas(unittest.TestCase):
 
     #    sorted_snps = snp_pos_test[gwas.p_idx]
 
-    ## make sure we get p-values right
+    # # make sure we get p-values right
     # np.testing.assert_array_almost_equal(gwas.p_values, gwas_c.p_values, decimal=3)
     # np.testing.assert_array_almost_equal(gwas.p_values, gwas_f.p_values, decimal=3)
 
@@ -152,12 +148,12 @@ class TestGwas(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             np.log(gwas.p_values), np.log(gwas_c_reml.p_values), decimal=3
         )
-        if False:
-            import pylab
+        # if False:
+        #     import pylab
 
-            pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas_f.p_values_F), "x")
-            pylab.plot(list(range(-66, 0, 1)), list(range(-66, 0, 1)))
-            pylab.show()
+        #     pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas_f.p_values_F), "x")
+        #     pylab.plot(list(range(-66, 0, 1)), list(range(-66, 0, 1)))
+        #     pylab.show()
 
         # we compare lmm_cov.py to fastlmmc with REML=False
         gwas_c = GwasTest(bed_fn, pheno_fn, snp_pos_sim, snp_pos_test, delta, REML=True)
@@ -183,7 +179,7 @@ class TestGwas(unittest.TestCase):
             leave_out_one_chrom=False,
             count_A1=False,
         )
-        sid_list, pvalue_list = frame["SNP"].values, frame["PValue"].values
+        _, pvalue_list = frame["SNP"].values, frame["PValue"].values
         np.testing.assert_allclose(gwas_f.sorted_p_values_F, pvalue_list, rtol=1e-10)
 
         p_vals_by_genomic_pos = frame.sort_values(["Chr", "ChrPos"])["PValue"].tolist()
@@ -327,8 +323,8 @@ class GwasPrototype(object):
 
         si = idx + self.n_cov
 
-        self.lmm.X = np.hstack((self.X[:, 0 : self.n_cov], self.X[:, si : si + 1]))
-        self.lmm.UX = np.hstack((self.UX[:, 0 : self.n_cov], self.UX[:, si : si + 1]))
+        self.lmm.X = np.hstack((self.X[:, : self.n_cov], self.X[:, si : si + 1]))
+        self.lmm.UX = np.hstack((self.UX[:, : self.n_cov], self.UX[:, si : si + 1]))
         if self.k < self.N:
             self.lmm.UUX = np.hstack(
                 (self.UUX[:, 0 : self.n_cov], self.UUX[:, si : si + 1])
