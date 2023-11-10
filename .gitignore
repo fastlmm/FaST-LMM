@@ -467,3 +467,5 @@ runs/2020-10-19_23_37_58_6104741484993268/distributable.p
 fastlmm/inference/tests/tempout/
 fastlmm/association/tests/temp_test/
 fastlmm/association/tests/pcs_cov.txt
+fastlmm/association/tests/test_gwas.py
+ignore.bat
