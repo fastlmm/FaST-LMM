@@ -1,0 +1,2 @@
+rem "O:\programs\old\oldJan2020\fastlmm\external\fastlmmc\FastLmmC.exe" -simLearnType Once -bfile fastlmm\feature_selection\examples\toydata.5chrom -pheno fastlmm\feature_selection\examples\toydata.phe -ML -out out.txt -brentMinLogVal -0.0010 -brentMaxLogVal 0.0010 -brentStarts 1 -brentMaxIter 1 -extract tmp_extract.txt -extractSim tmp_extract_sim.txt -bfileSim fastlmm\feature_selection\examples\toydata.5chrom
+echo %ERRORLEVEL%
