@@ -718,7 +718,7 @@ class TestBin2Kernel(unittest.TestCase):
 
         self.assertAlmostEqual(-6.75677866924, model._regular_marginal_loglikelihood())
 
-        # cmk
+        # switch out brent
         # model = EPGLMM_N1K3("erf")
         # model.setG(self._G0, self._G1)
         # model.setX(self._X)

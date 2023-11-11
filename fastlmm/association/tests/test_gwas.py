@@ -28,7 +28,7 @@ class TestGwas(unittest.TestCase):
 
         self.meh = True
 
-    def cmk_test_loco(self):
+    def test_loco(self):
         """
         test leave one chromosome out iterator
         """
