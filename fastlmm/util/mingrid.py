@@ -129,6 +129,7 @@ def evalgrid1D(f, evalgrid=None, nGrid=10, minval=0.0, maxval=0.99999, dimF=0):
     """
     if evalgrid is None:
         step = (maxval - minval) / (nGrid)
+        # cmk replace SP.arange with np.arange
         evalgrid = SP.arange(minval, maxval + step, step)
     if dimF:
         resultgrid = SP.ones((evalgrid.shape[0], dimF)) * 9999999999999.0
