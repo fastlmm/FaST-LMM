@@ -169,6 +169,7 @@ if __name__ == "__main__":
             fastlmm.feature_selection.test.getTestSuite(),
             # cmkok fastlmm.association.tests.test_single_snp_select.getTestSuite(),
             # cmkok fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
+            #
             fastlmm.association.tests.test_gwas.getTestSuite(),
             # cmkok fastlmm.association.tests.test_snp_set.getTestSuite(),
             # cmkok fastlmm.inference.tests.test.getTestSuite(),
