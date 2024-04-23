@@ -19,7 +19,6 @@ import logging
 from unittest.mock import patch
 
 # common modules
-import scipy as sp
 import numpy as np
 import pandas as pd
 
@@ -177,9 +176,9 @@ class FeatureSelectionStrategy(object):
             X = cov["vals"]
             cov_iid = cov["iid"]
             # add bias column if not present - #!! LATER -- Bug? should this test be done after intersection in case removing an iid makes it constant?
-            if self.offset and sp.all(X.std(0) != 0):
-                offset = sp.ones((len(X), 1))
-                self.X = sp.hstack((X, offset))
+            if self.offset and np.all(X.std(0) != 0):
+                offset = np.ones((len(X), 1))
+                self.X = np.hstack((X, offset))
         return X, cov_iid
 
     def load_data(self):
@@ -285,7 +284,7 @@ class FeatureSelectionStrategy(object):
             self.pcs = u[:, 0 : self.num_pcs]
         assert self.pcs.shape[1] == self.num_pcs
 
-        self.X = sp.hstack((self.X, self.pcs))
+        self.X = np.hstack((self.X, self.pcs))
 
         logging.info("...done. PCA time %.2f s" % (float(time.time() - tt0)))
 
@@ -524,7 +523,7 @@ class FeatureSelectionStrategy(object):
                     best_ln_delta_interp, best_obj_interp = self.fit_parabola(
                         log_deltas, error_3pt, output_prefix=None
                     )
-                    best_delta_interp = sp.exp(best_ln_delta_interp)
+                    best_delta_interp = np.exp(best_ln_delta_interp)
                     best_str += ", ln_d_interp=%.2f" % (best_ln_delta_interp)
                     logging.info(
                         "best interpolated ln_delta {0}".format(best_ln_delta_interp)
@@ -549,7 +548,7 @@ class FeatureSelectionStrategy(object):
                 ax = pylab.subplot(111)
                 try:
                     for delta_idx, delta in enumerate(delta_values):
-                        ln_delta = sp.log(delta)
+                        ln_delta = np.log(delta)
                         ax.semilogx(
                             k_values,
                             average_loss[:, delta_idx],
@@ -851,9 +850,9 @@ def load_snp_data(
     G = G.read(order="C", view_ok=True)
 
     # add bias column if not present
-    if offset and sp.all(X.std(0) != 0):
-        offset = sp.ones((len(indarr), 1))
-        X = sp.hstack((X, offset))
+    if offset and np.all(X.std(0) != 0):
+        offset = np.ones((len(indarr), 1))
+        X = np.hstack((X, offset))
 
     return G, X, y
 

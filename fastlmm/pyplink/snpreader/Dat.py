@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-import numpy as SP
+import numpy as np
 import subprocess, sys, os.path
 from itertools import *
 from fastlmm.pyplink.snpset import *
 from fastlmm.pyplink.altset_list import *
 import pandas as pd
 import logging
-from six.moves import range
 
 
 class Dat(object):
@@ -50,7 +48,7 @@ class Dat(object):
 
         #!!similar code in BED reader
         logging.info("Loading fam file {0}".format(famfile))
-        self._original_iids = SP.loadtxt(
+        self._original_iids = np.loadtxt(
             famfile, dtype="str", usecols=(0, 1), comments=None
         )
 
@@ -64,7 +62,7 @@ class Dat(object):
             index_col=False,
             engine="python",
         )
-        self.rs = SP.array(self.bimfields[1].tolist(), dtype="str")
+        self.rs = np.array(self.bimfields[1].tolist(), dtype="str")
         self.pos = self.bimfields[[0, 2, 3]].values
         self._snp_to_index = {}
         logging.info("indexing snps")
@@ -80,7 +78,7 @@ class Dat(object):
         datfields = pd.read_csv(
             self.dat_filename, delimiter="\s", header=None, index_col=False
         )
-        if not sp.array_equal(sp.array(datfields[0], dtype="string"), self.rs):
+        if not np.array_equal(np.array(datfields[0], dtype="string"), self.rs):
             raise Exception(
                 "Expect snp list in map file to exactly match snp list in dat file"
             )
@@ -108,7 +106,7 @@ class Dat(object):
         return len(self.bimfields)
 
     def read(
-        self, snp_set=AllSnps(), order="F", dtype=SP.float64, force_python_only=False
+        self, snp_set=AllSnps(), order="F", dtype=np.float64, force_python_only=False
     ):
         """
         Input: a snp_set. Choices include
@@ -176,7 +174,7 @@ class Dat(object):
 
     @staticmethod
     def read_with_specification(
-        snpset_withdat, order="F", dtype=SP.float64, force_python_only=False
+        snpset_withdat, order="F", dtype=np.float64, force_python_only=False
     ):
         dat = snpset_withdat.bed  #!!bed is a misnomer
         (
@@ -188,9 +186,9 @@ class Dat(object):
             snp_index_out,
         ) = dat.counts_and_indexes(snpset_withdat)
 
-        SNPs = SP.zeros((iid_count_out, snp_count_out), order=order, dtype=dtype)
+        SNPs = np.zeros((iid_count_out, snp_count_out), order=order, dtype=dtype)
         for SNPsIndex, bimIndex in enumerate(snp_index_out):
-            row = sp.array(dat.datfields[bimIndex])[dat.start_column :,]
+            row = np.array(dat.datfields[bimIndex])[dat.start_column :,]
             SNPs[:, SNPsIndex] = row[iid_index_out]
 
         ret = {

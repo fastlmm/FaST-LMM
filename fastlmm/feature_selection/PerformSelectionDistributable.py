@@ -1,5 +1,4 @@
 # std modules
-from __future__ import absolute_import
 from collections import defaultdict
 import gzip
 import bz2
@@ -11,8 +10,6 @@ import logging
 import io
 
 # common modules
-from six.moves import range
-import scipy as sp
 import numpy as np
 import pandas as pd
 import sys
@@ -218,7 +215,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
         # write report file
         if self.output_prefix is not None:
             report = "k_grid: " + str([k for k in self.k_values]) + "\n"
-            ln_delta_grid = np.array([sp.log(x) for x in self.delta_values])
+            ln_delta_grid = np.array([np.log(x) for x in self.delta_values])
             report += (
                 "ln_delta_grid: ["
                 + ", ".join([f"{v:.1f}" for v in ln_delta_grid])
@@ -226,7 +223,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
             )
             report += "best k=%i\nbest ln_delta=%.1e\nbest objective=%.2f" % (
                 best_k,
-                sp.log(best_delta),
+                np.log(best_delta),
                 best_obj,
             )
             if (
@@ -234,7 +231,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
                 and best_delta_interp is not None
             ):
                 report += "\nbest ln_delta_interp=%.1e\nbest objective_interp=%.2f" % (
-                    sp.log(best_delta_interp),
+                    np.log(best_delta_interp),
                     best_obj_interp,
                 )
 
@@ -476,7 +473,7 @@ def build_kernel_blocked(
 
     t0 = time.time()
 
-    K = sp.zeros([N, N])
+    K = np.zeros([N, N])
     num_snps = alt_snpreader.snp_count
 
     if snp_idx is not None:
@@ -516,9 +513,9 @@ def build_kernel_blocked(
             logging.info("read %s SNPs in %.2f seconds" % (ct, time.time() - ts))
 
     # normalize kernel
-    # K = K/sp.sqrt(alt_snpreader.snp_count)
+    # K = K/np.sqrt(alt_snpreader.snp_count)
 
-    # K = K + 1e-5*sp.eye(N,N)
+    # K = K + 1e-5*np.eye(N,N)
     t1 = time.time()
     logging.info("%.2f seconds elapsed" % (t1 - t0))
 

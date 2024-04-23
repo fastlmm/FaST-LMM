@@ -16,8 +16,6 @@
 
 # modified 2015 by Christoph Lippert
 
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 import numpy.linalg as la
 import scipy.optimize as opt
@@ -39,7 +37,6 @@ import pysnptools.util.pheno
 import time
 import fastlmm.inference.lmm_cov as lmm_cov
 import glob
-from six.moves import range
 
 
 def create_dir(filename, is_dir=True):

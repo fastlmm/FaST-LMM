@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 import random
 import os
@@ -13,7 +11,7 @@ import time
 from onemil.file_cache import DibLib
 from contextlib import contextmanager
 import threading
-from six.moves import range
+
 
 try:
     import azure.batch.models as batchmodels

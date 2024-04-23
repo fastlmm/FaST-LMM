@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-import scipy as SP
 import numpy as NP
 import numpy as np
 import scipy.linalg as LA
@@ -10,7 +7,6 @@ import scipy.special as SS
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
 import time
-import pdb
 
 from bin2kernel import Bin2Kernel
 from bin2kernel import makeBin2KernelAsEstimator
@@ -376,7 +372,7 @@ class lmm2k(object):
                     [S_, V_] = LA.eigh(self.G1rot.T.dot(self.G1rot))
                     S_nonz = S_ > 0.0
                     S1 = S_[S_nonz]
-                    U1 = self.G1rot.dot(V_[:, S_nonz] / SP.sqrt(S1))
+                    U1 = self.G1rot.dot(V_[:, S_nonz] / np.sqrt(S1))
                     self.eig1 = [S1, U1]
         return self.eig1
 
@@ -398,7 +394,7 @@ class lmm2k(object):
                     [S_, V_] = LA.eigh(self.G0.T.dot(self.G0))
                     S_nonz = S_ > 0.0
                     S0 = S_[S_nonz]
-                    U0 = self.G0.dot(V_[:, S_nonz] / SP.sqrt(S0))
+                    U0 = self.G0.dot(V_[:, S_nonz] / np.sqrt(S0))
                     self.eig0 = [S0, U0]
         return self.eig1
 
@@ -641,11 +637,11 @@ class lmm2k(object):
                     logdetK
                     + logdetXKX
                     - logdetXX
-                    + (N - D) * (np.log(2.0 * SP.pi * sigma2) + 1)
+                    + (N - D) * (np.log(2.0 * np.pi * sigma2) + 1)
                 )
             else:
                 sigma2 = r2 / (N)
-                nLL = 0.5 * (logdetK + N * (np.log(2.0 * SP.pi * sigma2) + 1))
+                nLL = 0.5 * (logdetK + N * (np.log(2.0 * np.pi * sigma2) + 1))
             result = {
                 "nLL": nLL,
                 "sigma2": sigma2,
@@ -670,14 +666,14 @@ class lmm2k(object):
                     + (dof + (N - D)) * np.log(1.0 + r2 / dof)
                 )
                 nLL += (
-                    0.5 * (N - D) * np.log(dof * SP.pi)
+                    0.5 * (N - D) * np.log(dof * np.pi)
                     + SS.gammaln(0.5 * dof)
                     - SS.gammaln(0.5 * (dof + (N - D)))
                 )
             else:
                 nLL = 0.5 * (logdetK + (dof + N) * np.log(1.0 + r2 / dof))
                 nLL += (
-                    0.5 * N * np.log(dof * SP.pi)
+                    0.5 * N * np.log(dof * np.pi)
                     + SS.gammaln(0.5 * dof)
                     - SS.gammaln(0.5 * (dof + N))
                 )

@@ -1,10 +1,8 @@
-from __future__ import absolute_import
 import fastlmm.association.lrt as lr
-import scipy as sp
+import numpy as np
 import fastlmm.util.stats.chi2mixture as c2
 
 from . import tests_util as tu
-from six.moves import range
 
 
 class Lrt(object):
@@ -74,12 +72,12 @@ class Lrt(object):
         """
         If local aUD exists, take that, if not, take the raw local.
         """
-        if "pv-local-aUD" in result.test and not sp.isnan(result.test["pv-local-aUD"]):
+        if "pv-local-aUD" in result.test and not np.isnan(result.test["pv-local-aUD"]):
             return result.test["pv-local-aUD"]
         elif "pv-local" in result.test:
             return result.test["pv-local"]
         else:
-            return sp.nan
+            return np.nan
 
     def pv_adj_and_ind(
         self,

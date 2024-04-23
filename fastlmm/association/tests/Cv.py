@@ -1,10 +1,8 @@
-from __future__ import absolute_import
 import fastlmm.association.lrt as lr
-import scipy as SP
+import numpy as np
 import fastlmm.util.stats.chi2mixture as c2
 import fastlmm.association.testCV as testCV
 import logging
-from six.moves import range
 
 
 class Cv(object):
@@ -34,7 +32,7 @@ class Cv(object):
         greater_is_better=None,
     ):
         return testCV.testCV(
-            Y=Y[:, SP.newaxis],
+            Y=Y[:, np.newaxis],
             X=X,
             G0=G0,
             nullModel=nullModel,
@@ -58,7 +56,7 @@ class Cv(object):
         return 1  # returns 1 type of p-value
 
     def w2(self, G0, result):
-        return SP.nan
+        return np.nan
 
     def lrt_method(self, result):
         return result.test[
@@ -66,7 +64,7 @@ class Cv(object):
         ]  # iset is the index of the test (irrespective of permutation)
 
     def pv_adj_from_result(self, result):
-        return SP.nan
+        return np.nan
 
     def write(self, fp, ind, result_dict, pv_adj, detailed_table):
         fp.write(
@@ -110,7 +108,7 @@ class Cv(object):
     def pv_etc(
         self, filenull, G0_to_use, G1, y, x, null_model, varcomp_test, forcefullrank
     ):
-        return [SP.nan, SP.nan, SP.nan]
+        return [np.nan, np.nan, np.nan]
 
     #!! could these three methods be move to __init__.py?
     @staticmethod

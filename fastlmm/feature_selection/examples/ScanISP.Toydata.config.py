@@ -1,6 +1,6 @@
 exactUpdate = False
 topKbyLinReg = 16
-logdelta = SP.log(16)
+logdelta = np.log(16)
 
 if topKbyLinReg is not None:
     outFile = "examples/ScanISP.exact%d.nSnps%d.logdelta%.2f.out.txt" % (

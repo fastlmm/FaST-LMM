@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 import scipy.stats as st
 import scipy.interpolate
 import scipy.linalg as la
@@ -25,7 +24,7 @@ def excludefiles():
 
 
 def threshlist():
-    return sp.array([1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
+    return np.array([1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
 
 
 def getfiles(dirin, filepattern):
@@ -115,14 +114,14 @@ def _qqplot_bar(M=1000000, alphalevel=0.05, distr="log10"):
 
     # assumes 'log10'
 
-    mRange = 10 ** (sp.arange(sp.log10(0.5), sp.log10(M - 0.5) + 0.1, 0.1))
+    mRange = 10 ** (np.arange(np.log10(0.5), np.log10(M - 0.5) + 0.1, 0.1))
     # should be exp or 10**?
     numPts = len(mRange)
-    betaalphaLevel = sp.zeros(numPts)
+    betaalphaLevel = np.zeros(numPts)
     # down in the plot
-    betaOneMinusalphaLevel = sp.zeros(numPts)
+    betaOneMinusalphaLevel = np.zeros(numPts)
     # up in the plot
-    betaInvHalf = sp.zeros(numPts)
+    betaInvHalf = np.zeros(numPts)
     for n in range(numPts):
         m = mRange[n]
         # numplessThanThresh=m;
@@ -163,7 +162,7 @@ def pairedpvalsin_onefile(
                 keep = False
         if keep:
             myfiles.append(f)
-    indrange = sp.arange(0, len(myfiles))
+    indrange = np.arange(0, len(myfiles))
     pv0 = {}
     pv1 = {}
     rowids = {}
@@ -173,14 +172,14 @@ def pairedpvalsin_onefile(
             myfiles[j], [pnames[0]], rownames, sort=True
         )
         if logspace:
-            pv0[j] = -sp.log10(pv0[j])
+            pv0[j] = -np.log10(pv0[j])
         label[j] = os.path.basename(myfiles[j])
 
         pv1[j], rowids[j], garb1, garb2 = extractpvals(
             myfiles[j], [pnames[1]], rownames, sort=True
         )
         if logspace:
-            pv1[j] = -sp.log10(pv1[j])
+            pv1[j] = -np.log10(pv1[j])
 
     import pylab as pl
 
@@ -231,7 +230,7 @@ def pairedpvalsplot(
             print("keeping: " + f)
         else:
             print("not including: " + f)
-    indrange = sp.arange(0, len(myfiles))
+    indrange = np.arange(0, len(myfiles))
     if len(myfiles) == 0:
         raise Exception("no files found")
     pv = {}
@@ -245,7 +244,7 @@ def pairedpvalsplot(
         )
         pvorig[j] = pv[j]
         lambdas[j] = lambda_gc = estimate_lambda(pv[j])
-        # pv[j]=-sp.log10(pv[j])
+        # pv[j]=-np.log10(pv[j])
         # pv[j][pv[j]<minpval]=minpval
         label[j] = os.path.basename(myfiles[j]) + ", $\lambda$=%1.3f" % lambdas[j]
         if j == 0:
@@ -258,9 +257,9 @@ def pairedpvalsplot(
 
     pl.ion()
     # these loops are to find out which are "notokany"
-    notokany = sp.zeros_like(pv[0], dtype=bool)
+    notokany = np.zeros_like(pv[0], dtype=bool)
     for j1 in indrange:
-        for j2 in sp.arange(j1 + 1, len(myfiles)):
+        for j2 in np.arange(j1 + 1, len(myfiles)):
             assert len(pv[j1]) == len(pv[j2]), "different # of pvals in each file"
             imag = (pv[j1] <= 0.0) | (pv[j2] <= 0.0)
             one = (pv[j1] > 1.0) | (pv[j2] > 1.0)
@@ -269,7 +268,7 @@ def pairedpvalsplot(
 
     # these are the standard plotting loops
     for j1 in indrange:
-        for j2 in sp.arange(j1 + 1, len(myfiles)):
+        for j2 in np.arange(j1 + 1, len(myfiles)):
             if fliporder:
                 tmp = j1
                 j1 = j2
@@ -288,32 +287,32 @@ def pairedpvalsplot(
             iok = (~imag) & (~one)
 
             if not heatmap:
-                tmpj1 = sp.copy(pv[j1])
-                tmpj2 = sp.copy(pv[j2])
+                tmpj1 = np.copy(pv[j1])
+                tmpj2 = np.copy(pv[j2])
                 minpval1 = min(tmpj1[~imag1])
                 minpval2 = min(tmpj2[~imag2])
                 tmpj1[imag1] = minpval1
                 tmpj2[imag2] = minpval2
 
                 pl.plot(
-                    -sp.log10(tmpj1[iok]), -sp.log10(tmpj2[iok]), ".k", markersize=ms
+                    -np.log10(tmpj1[iok]), -np.log10(tmpj2[iok]), ".k", markersize=ms
                 )
-                # pl.plot(-sp.log10(tmpj1[notokany]),-sp.log10(tmpj2[notokany]),'b.',markersize=ms)
+                # pl.plot(-np.log10(tmpj1[notokany]),-np.log10(tmpj2[notokany]),'b.',markersize=ms)
                 # maxval=max(pl.xlim()[1],pl.ylim()[1])
                 pl.plot(
-                    -sp.log10(tmpj1[imag1]),
-                    -sp.log10(tmpj2[imag1]),
+                    -np.log10(tmpj1[imag1]),
+                    -np.log10(tmpj2[imag1]),
                     "g.",
                     markersize=ms,
                 )
                 pl.plot(
-                    -sp.log10(tmpj1[imag2]),
-                    -sp.log10(tmpj2[imag2]),
+                    -np.log10(tmpj1[imag2]),
+                    -np.log10(tmpj2[imag2]),
                     "r.",
                     markersize=ms,
                 )
 
-                # pl.plot(-sp.log10(pv[j1][~iok]),-sp.log10(pv[j2][~iok]),'g.')
+                # pl.plot(-np.log10(pv[j1][~iok]),-np.log10(pv[j2][~iok]),'g.')
                 maxval = max(pl.xlim()[1], pl.ylim()[1])
                 pl.plot([0, maxval + 1], [0, maxval + 1], "b--", linewidth=1)
                 # fix_axes()
@@ -323,7 +322,7 @@ def pairedpvalsplot(
                 pl.ylabel(label[j2], fontsize=fs)
             else:
                 heatmap, xedges, yedges = np.histogram2d(
-                    -sp.log10(pv[j1]), -sp.log10(pv[j2]), bins=100
+                    -np.log10(pv[j1]), -np.log10(pv[j2]), bins=100
                 )
                 if extent is None:
                     extent = [
@@ -332,7 +331,7 @@ def pairedpvalsplot(
                         yedges[0],
                         yedges[-1],
                     ]  # heatmap=heatmap[-1:heatmap.shape[0]:-1,:]
-                pl.imshow(sp.log(heatmap + 1), extent=extent, cmap=pl.cm.Greys)
+                pl.imshow(np.log(heatmap + 1), extent=extent, cmap=pl.cm.Greys)
                 pl.colorbar()
     return pvorig
 
@@ -360,10 +359,10 @@ def type1errdir_agg(
     assert dopower, "need to add in clause if false"
     S = len(filepattern)
     obs_count = [None for i in range(S)]
-    obs_count_tot = sp.zeros([len(threshlist())])
+    obs_count_tot = np.zeros([len(threshlist())])
     N_tot = 0
     Norig = None
-    for s in sp.arange(0, S):
+    for s in np.arange(0, S):
         if filepattern[s] is not None:
             (
                 thresh,
@@ -409,7 +408,7 @@ def type1errdir_agg(
 
     print("Threshold".ljust(padl, " ") + "\t" + "Obs. Count".ljust(padl, " "))
     print("--------------------------------------------------------")
-    for t in sp.arange(0, len(thresh)):
+    for t in np.arange(0, len(thresh)):
         print(
             str(strfm % thresh[t]).ljust(padl, " ")
             + "\t"
@@ -473,10 +472,10 @@ def type1errdir(
     # put all p-values in to one qqplot, and also report the type 1 errors
     # for 1e-1 through to smallest order of magnitude
     pv = []
-    obs_count = -1 * sp.zeros([len(thresh)])
-    obs_error = -1 * sp.zeros([len(thresh)])
-    p_onet = sp.NaN * sp.zeros([len(thresh)])
-    p_twot = sp.NaN * sp.zeros([len(thresh)])
+    obs_count = -1 * np.zeros([len(thresh)])
+    obs_error = -1 * np.zeros([len(thresh)])
+    p_onet = np.NaN * np.zeros([len(thresh)])
+    p_twot = np.NaN * np.zeros([len(thresh)])
     ii = 0
     for f in myfiles:
         if "info.txt" not in f:
@@ -518,11 +517,11 @@ def type1errdir(
                 ii = ii + 1
     N = len(pv)
 
-    for t in sp.arange(0, len(thresh)):
-        p_onet[t] = 1 - sp.stats.binom.sf(
+    for t in np.arange(0, len(thresh)):
+        p_onet[t] = 1 - np.stats.binom.sf(
             obs_count[t] - 1, N, thresh[t]
         )  # -1 is there to include 51 as well ;-) (one-tailed test)
-        p_twot[t] = sp.stats.binom_test(obs_count[t], N, thresh[t])  # (two-tailed test)
+        p_twot[t] = np.stats.binom_test(obs_count[t], N, thresh[t])  # (two-tailed test)
 
     nfiles = ii
     missingind = []
@@ -585,7 +584,7 @@ def type1errdir(
             )  # + "\t" + "one-tail P".ljust(padl," ")
             print("--------------------------------------------------------")
             strfm = "%1.2e"
-            for t in sp.arange(0, len(thresh)):
+            for t in np.arange(0, len(thresh)):
                 print(
                     str(strfm % thresh[t]).ljust(padl, " ")
                     + "\t"
@@ -599,7 +598,7 @@ def type1errdir(
             print("Threshold".ljust(padl, " ") + "\t" + "Obs. Count".ljust(padl, " "))
             print("--------------------------------------------------------")
             strfm = "%1.2e"
-            for t in sp.arange(0, len(thresh)):
+            for t in np.arange(0, len(thresh)):
                 print(
                     str(strfm % thresh[t]).ljust(padl, " ")
                     + "\t"
@@ -689,7 +688,7 @@ def qqplotdir(
     if aggregate:
         title = "agg over " + filepatternorig + " (" + str(len(allp)) + " p-values)"
         qqplotp(
-            sp.array(allp),
+            np.array(allp),
             fileout=None,
             pnames=pnames,
             rownames=rownames,
@@ -851,13 +850,12 @@ def pvalhist(pv, numbins=50, linewidth=3.0, linespec="--r"):
 
 
 def tmp():
-    import scipy as sp
     import fastlmm.util.stats.plotp as pt
 
     pall = []
-    for j in sp.arange(0, 100):
-        p = sp.rand(1, 1000)
-        p100 = sp.repeat(p, 100)
+    for j in np.arange(0, 100):
+        p = np.rand(1, 1000)
+        p100 = np.repeat(p, 100)
         pall.append(p100)
     qqplotavg(pall)
 
@@ -876,12 +874,12 @@ def qqplotavg(
     """
     L = len(pvallist)
     qemp = None
-    for i in sp.arange(0, L):
+    for i in np.arange(0, L):
         pval = pvallist[i].flatten()
         M = pval.shape[0]
-        pnull = (0.5 + sp.arange(M)) / M
-        qnull = -sp.log10(pnull)
-        qemptmp = -sp.log10(sp.sort(pval))
+        pnull = (0.5 + np.arange(M)) / M
+        qnull = -np.log10(pnull)
+        qemptmp = -np.log10(np.sort(pval))
         if qemp is None:
             qemp = qemptmp
         else:
@@ -923,13 +921,13 @@ def addqqplotinfo(
             betaUp, betaDown, theoreticalPvals = _qqplot_bar(
                 M=M, alphalevel=alphalevel, distr=distr
             )
-            lower = -sp.log10(theoreticalPvals - betaDown)
-            upper = -sp.log10(theoreticalPvals + betaUp)
+            lower = -np.log10(theoreticalPvals - betaDown)
+            upper = -np.log10(theoreticalPvals + betaUp)
             pl.fill_between(
-                -sp.log10(theoreticalPvals), lower, upper, color="grey", alpha=0.5
+                -np.log10(theoreticalPvals), lower, upper, color="grey", alpha=0.5
             )
-            # pl.plot(-sp.log10(theoreticalPvals),lower,'g-.')
-            # pl.plot(-sp.log10(theoreticalPvals),upper,'g-.')
+            # pl.plot(-np.log10(theoreticalPvals),lower,'g-.')
+            # pl.plot(-np.log10(theoreticalPvals),upper,'g-.')
     if legendlist is not None:
         leg = pl.legend(legendlist, loc=4, numpoints=1)
         # set the markersize for the legend
@@ -997,7 +995,7 @@ def qqplot(
     for i in range(len(pvallist)):
         pval = pvallist[i].flatten()
         M = pval.shape[0]
-        pnull = (0.5 + sp.arange(M)) / M
+        pnull = (0.5 + np.arange(M)) / M
         # pnull = np.sort(np.random.uniform(size = tests))
 
         pval[pval < minpval] = minpval
@@ -1005,16 +1003,16 @@ def qqplot(
 
         if distr == "chi2":
             qnull = st.chi2.isf(pnull, 1)
-            qemp = st.chi2.isf(sp.sort(pval), 1)
+            qemp = st.chi2.isf(np.sort(pval), 1)
             xl = "LOD scores"
             yl = "$\chi^2$ quantiles"
 
         if distr == "log10":
-            qnull = -sp.log10(pnull)
-            qemp = -sp.log10(sp.sort(pval))  # sorts the object, returns nothing
+            qnull = -np.log10(pnull)
+            qemp = -np.log10(np.sort(pval))  # sorts the object, returns nothing
             xl = "-log10(P) observed"
             yl = "-log10(P) expected"
-        if not (sp.isreal(qemp)).all():
+        if not (np.isreal(qemp)).all():
             raise Exception("imaginary qemp found")
         if qnull.max() > maxval:
             maxval = qnull.max()
@@ -1064,6 +1062,6 @@ def estimate_lambda(pv):
     L           lambda value
     ------------------------------------------------------------------
     """
-    LOD2 = sp.median(st.chi2.isf(pv, 1))
+    LOD2 = np.median(st.chi2.isf(pv, 1))
     L = LOD2 / 0.456
     return L

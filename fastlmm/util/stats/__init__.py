@@ -1,14 +1,10 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
-import scipy as sp
 import scipy.stats as st
 import scipy.interpolate
 import scipy.linalg as la
 import fastlmm.util.preprocess as util
 import scipy.stats as st
 import time
-from six.moves import range
 
 # import ipdb
 
@@ -54,12 +50,12 @@ def TESTBEFOREUSING_pca_covariates(bedfile, npc, outfile=None):
 
     # not needed, and in practice, makes no difference
     # mean center the individuals
-    # meanval=sp.mean(snps,axis=0)
+    # meanval=np.mean(snps,axis=0)
     # snps=snps-meanval
 
     print("computing kernel...")
     t0 = time.time()
-    K = sp.dot(snps, snps.T)
+    K = np.dot(snps, snps.T)
     t1 = time.time()
     print(("Elapsed time %.2f seconds" % (t1 - t0)))
     snps = None
@@ -70,9 +66,9 @@ def TESTBEFOREUSING_pca_covariates(bedfile, npc, outfile=None):
     t1 = time.time()
     print(("Elapsed time %.2f seconds" % (t1 - t0)))
 
-    S = sp.sqrt(S)
-    # UShalf=sp.dot(U,sp.diag(S)) #expensive
-    UShalf = sp.multiply(
+    S = np.sqrt(S)
+    # UShalf=np.dot(U,np.diag(S)) #expensive
+    UShalf = np.multiply(
         U, np.tile(S, (N, 1))
     )  # faster, but not as fast as as_strided which I can't get to work
     pccov = UShalf[:, 0:npc]
@@ -165,11 +161,11 @@ def linreg(X, y, REML=True, **kwargs):
 
     if not (REML):
         sigma2 = r2 / (N)
-        nLL = N * 0.5 * sp.log(2 * sp.pi * sigma2) + N * 0.5
+        nLL = N * 0.5 * np.log(2 * np.pi * sigma2) + N * 0.5
     else:
         sigma2 = r2 / (N - D)
-        nLL = N * 0.5 * sp.log(2 * sp.pi * sigma2) + 0.5 / sigma2 * r2
-        nLL -= 0.5 * D * sp.log(2 * sp.pi * sigma2)
+        nLL = N * 0.5 * np.log(2 * np.pi * sigma2) + 0.5 / sigma2 * r2
+        nLL -= 0.5 * D * np.log(2 * np.pi * sigma2)
         # REML term
 
     result = {"nLL": nLL, "sigma2": sigma2, "beta": beta, "REML": REML}

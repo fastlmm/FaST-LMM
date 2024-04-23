@@ -1,8 +1,8 @@
-#import os
-#import subprocess, sys, os.path
-#import numpy as SP
+# import os
+# import subprocess, sys, os.path
+# import numpy as np
 
-#def should_output(bigrow, littlefields):
+# def should_output(bigrow, littlefields):
 #    bigrs = bigrow[1]
 #    bigchr = bigrow[0]
 #    bigdist = float(bigrow[2])
@@ -18,19 +18,17 @@
 #    return True
 
 
-
-
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 #    assert len(sys.argv) == 4, "expect 3 arguments"
 #    bigfile = sys.argv[1]
 #    littlefile = sys.argv[2]
 #    outfile = sys.argv[3]
 
 #    logging.info("Loading bim file {0}\n".format(bigfile))
-#    bigfields = SP.loadtxt(bigfile,delimiter = '\t',dtype = 'str',usecols = (0,1,2,3),comments=None)
+#    bigfields = np.loadtxt(bigfile,delimiter = '\t',dtype = 'str',usecols = (0,1,2,3),comments=None)
 
 #    logging.info("Loading bim file {0}\n".format(littlefile))
-#    littlefields = SP.loadtxt(littlefile,delimiter = '\t',dtype = 'str',usecols = (0,1,2,3),comments=None)
+#    littlefields = np.loadtxt(littlefile,delimiter = '\t',dtype = 'str',usecols = (0,1,2,3),comments=None)
 
 #    logging.info("comparing\n")
 #    import fastlmm.util.util as ut
@@ -39,6 +37,3 @@
 #        for bigrow in bigfields:
 #            if should_output(bigrow,littlefields):
 #                out_fp.write(bigrow[1] + "\n")
-
-
-

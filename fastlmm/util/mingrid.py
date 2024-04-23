@@ -1,9 +1,5 @@
-from __future__ import absolute_import
-from __future__ import print_function
-import scipy as SP
 import numpy as np
 import scipy.optimize as opt
-from six.moves import range
 
 
 def minimize1D(
@@ -117,7 +113,7 @@ def evalgrid1D(f, evalgrid=None, nGrid=10, minval=0.0, maxval=0.99999, dimF=0):
     --------------------------------------------------------------------------
     Input:
     f(x)    : callable target function
-    evalgrid: 1-D array prespecified grid of x-values
+    evalgrid: 1-D array pre-specified grid of x-values
     nGrid   : number of x-grid points to evaluate f(x)
     minval  : minimum x-value for optimization of f(x)
     maxval  : maximum x-value for optimization of f(x)
@@ -129,12 +125,11 @@ def evalgrid1D(f, evalgrid=None, nGrid=10, minval=0.0, maxval=0.99999, dimF=0):
     """
     if evalgrid is None:
         step = (maxval - minval) / (nGrid)
-        # cmk replace SP.arange with np.arange
-        evalgrid = SP.arange(minval, maxval + step, step)
+        evalgrid = np.arange(minval, maxval + step, step)
     if dimF:
-        resultgrid = SP.ones((evalgrid.shape[0], dimF)) * 9999999999999.0
+        resultgrid = np.ones((evalgrid.shape[0], dimF)) * 9999999999999.0
     else:
-        resultgrid = SP.ones(evalgrid.shape[0]) * 9999999999999.0
+        resultgrid = np.ones(evalgrid.shape[0]) * 9999999999999.0
     for i in range(evalgrid.shape[0]):
         fevalgrid = f(evalgrid[i])
 

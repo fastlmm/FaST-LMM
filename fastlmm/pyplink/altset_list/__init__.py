@@ -1,4 +1,4 @@
-'''
+"""
 a altset_list is a list of snpsets
 
 
@@ -16,8 +16,8 @@ interface ISnpSetListPlusBed:
     def __iter__(self):
         return # a sequence of ISnpSetPlusBed's
 
-'''
-from __future__ import absolute_import
+"""
+
 from fastlmm.pyplink.snpset import *
 from .SnpAndSetNameCollection import *
 from .Subset import *

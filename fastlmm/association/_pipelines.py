@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import fastlmm.util.preprocess as util
 
 
@@ -49,10 +47,10 @@ def TESTBEFOREUSING_score_testfilesFromDir(
     """
     pheno = pstpheno.loadPhen(filename=phenofile, missing="-9", pheno=None)
     if covarfile is None:
-        X = SP.ones((pheno["vals"].shape[0], 1))
+        X = np.ones((pheno["vals"].shape[0], 1))
     else:
         covar = pstpheno.loadPhen(filename=covarfile, missing="-9", pheno=None)
-        X = SP.hstack((SP.ones((pheno["vals"].shape[0], 1)), covar["vals"]))
+        X = np.hstack((np.ones((pheno["vals"].shape[0], 1)), covar["vals"]))
     if filetype == "PED":
         SNPs0 = plink.readPED(
             basefilename=base0, delimiter=" ", missing="0", standardize=True, pheno=None
@@ -62,21 +60,21 @@ def TESTBEFOREUSING_score_testfilesFromDir(
         SNPs0["snps"] = util.standardize(SNPs0["snps"])
 
     y = pheno["vals"][:, ipheno]
-    G0 = SNPs0["snps"] / SP.sqrt(SNPs0["snps"].shape[1])
+    G0 = SNPs0["snps"] / np.sqrt(SNPs0["snps"].shape[1])
 
     # build the null model
-    test2K = scoretest(Y=y[:, SP.newaxis], X=X, K=None, G=G0)
+    test2K = scoretest(Y=y[:, np.newaxis], X=X, K=None, G=G0)
 
-    squaredform = SP.zeros(len(pedfilesalt))
-    expectationsqform = SP.zeros(len(pedfilesalt))
-    varsqform = SP.zeros(len(pedfilesalt))
-    squaredform2K = SP.zeros(len(pedfilesalt))
-    expectationsqform2K = SP.zeros(len(pedfilesalt))
-    varsqform2K = SP.zeros(len(pedfilesalt))
-    nexclude = SP.zeros(len(pedfilesalt))
-    include = SP.zeros(len(pedfilesalt))
-    Pv = SP.zeros(len(pedfilesalt))
-    Pv2K = SP.zeros(len(pedfilesalt))
+    squaredform = np.zeros(len(pedfilesalt))
+    expectationsqform = np.zeros(len(pedfilesalt))
+    varsqform = np.zeros(len(pedfilesalt))
+    squaredform2K = np.zeros(len(pedfilesalt))
+    expectationsqform2K = np.zeros(len(pedfilesalt))
+    varsqform2K = np.zeros(len(pedfilesalt))
+    nexclude = np.zeros(len(pedfilesalt))
+    include = np.zeros(len(pedfilesalt))
+    Pv = np.zeros(len(pedfilesalt))
+    Pv2K = np.zeros(len(pedfilesalt))
 
     for i, base1 in enumerate(pedfilesalt):  # iterate over all ped files
         SNPs1 = plink.readPED(
@@ -89,10 +87,10 @@ def TESTBEFOREUSING_score_testfilesFromDir(
             nexclude[i] = i_exclude.sum()
         else:
             nexclude[i] = 0
-        G1 = SNPs1["snps"] / SP.sqrt(SNPs1["snps"].shape[1])
+        G1 = SNPs1["snps"] / np.sqrt(SNPs1["snps"].shape[1])
 
         if nexclude[i] > 0:
-            test2Ke = scoretest(Y=y[:, SP.newaxis], X=X, K=None, G=G0[:, ~i_exclude])
+            test2Ke = scoretest(Y=y[:, np.newaxis], X=X, K=None, G=G0[:, ~i_exclude])
             squaredform2K[i], expectationsqform2K[i], varsqform2K[i] = test2Ke.score(
                 G=G1
             )
@@ -113,7 +111,7 @@ def TESTBEFOREUSING_score_testfilesFromDir(
         )
 
     ret = {
-        "filenames": SP.array(pedfilesalt, dtype=str),
+        "filenames": np.array(pedfilesalt, dtype=str),
         "squaredform": squaredform,
         "expectationsqform": expectationsqform,
         "varsqform": varsqform,
@@ -127,8 +125,8 @@ def TESTBEFOREUSING_score_testfilesFromDir(
     if outfile is not None:
         # TODO
         print("implement me!")
-        # header = SP.array(['PV_5050','neg_log_lik_0','neg_loglik_alt','n_snps_excluded','filename_alt'])
-        # data = SP.concatenate(())
+        # header = np.array(['PV_5050','neg_log_lik_0','neg_loglik_alt','n_snps_excluded','filename_alt'])
+        # data = np.concatenate(())
     return ret
 
 
@@ -178,10 +176,10 @@ def lrt_testfilesFromDir(
     """
     pheno = pstpheno.loadPhen(filename=phenofile, missing="-9", pheno=None)
     if covarfile is None:
-        X = SP.ones((pheno["vals"].shape[0], 1))
+        X = np.ones((pheno["vals"].shape[0], 1))
     else:
         covar = pstpheno.loadPhen(filename=covarfile, missing="-9", pheno=None)
-        X = SP.hstack((SP.ones((pheno["vals"].shape[0], 1)), covar["vals"]))
+        X = np.hstack((np.ones((pheno["vals"].shape[0], 1)), covar["vals"]))
     if filetype == "PED":
         SNPs0 = plink.readPED(
             basefilename=base0, delimiter=" ", missing="0", standardize=True, pheno=None
@@ -189,7 +187,7 @@ def lrt_testfilesFromDir(
     elif filetype == "BED":
         SNPs0 = plink.readBED()
     y = pheno["vals"][:, ipheno]
-    G0 = SNPs0["snps"] / SP.sqrt(SNPs0["snps"].shape[1])
+    G0 = SNPs0["snps"] / np.sqrt(SNPs0["snps"].shape[1])
 
     # build the null model
     a0 = fastlmm.getLMM()
@@ -199,11 +197,11 @@ def lrt_testfilesFromDir(
     lik0_default = (
         a0.findH2()
     )  # The null model only has a single kernel and only needs to find h2
-    lik0 = SP.zeros(len(pedfilesalt), dtype="object")
-    lik1 = SP.zeros(len(pedfilesalt), dtype="object")
-    lrt = SP.zeros(len(pedfilesalt))
-    pv = SP.zeros(len(pedfilesalt))
-    nexclude = SP.zeros(len(pedfilesalt))
+    lik0 = np.zeros(len(pedfilesalt), dtype="object")
+    lik1 = np.zeros(len(pedfilesalt), dtype="object")
+    lrt = np.zeros(len(pedfilesalt))
+    pv = np.zeros(len(pedfilesalt))
+    nexclude = np.zeros(len(pedfilesalt))
     for i, base1 in enuemrate(pedfilesalt):  # iterate over all ped files
         SNPs1 = plink.readPED(
             basefilename=base1, delimiter=" ", missing="0", standardize=True, pheno=None
@@ -212,9 +210,9 @@ def lrt_testfilesFromDir(
             SNPs0["pos"], SNPs1["pos"], mindist=mindist, idist=idist
         )
         nexclude[i] = i_exclude.sum()
-        G1 = SNPs1["snps"] / SP.sqrt(SNPs1["snps"].shape[1])
+        G1 = SNPs1["snps"] / np.sqrt(SNPs1["snps"].shape[1])
         if nexclude[i]:  # recompute the null likelihood
-            G0_excluded = SNPs0["snps"][:, ~i_exclude] / SP.sqrt(
+            G0_excluded = SNPs0["snps"][:, ~i_exclude] / np.sqrt(
                 SNPs0["snps"][:, ~i_exclude].shape[1]
             )
             [pv[i], lik0[i], lik1[i]] = twokerneltest(
@@ -229,11 +227,11 @@ def lrt_testfilesFromDir(
         "lik0": lik0,
         "lik1": lik1,
         "nexclude": nexclude,
-        "filenames": SP.array(pedfilesalt, dtype=str),
+        "filenames": np.array(pedfilesalt, dtype=str),
     }
     if outfile is not None:
         # TODO
         print("implement me!")
-        # header = SP.array(['PV_5050','neg_log_lik_0','neg_loglik_alt','n_snps_excluded','filename_alt'])
-        # data = SP.concatenate(())
+        # header = np.array(['PV_5050','neg_log_lik_0','neg_loglik_alt','n_snps_excluded','filename_alt'])
+        # data = np.concatenate(())
     return ret

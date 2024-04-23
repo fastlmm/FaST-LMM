@@ -1,9 +1,6 @@
-from __future__ import absolute_import
 import copy
-import pdb
 import scipy.linalg as LA
-import scipy as SP
-import numpy as NP
+import numpy as np
 import logging as LG
 import scipy.optimize as opt
 import scipy.stats as ST
@@ -21,7 +18,6 @@ import fastlmm.association as association
 import statsmodels.api as sm
 
 from sklearn import linear_model
-from six.moves import range
 
 
 class lrt(association.varcomp_test):
@@ -91,18 +87,18 @@ class lrt(association.varcomp_test):
 
         logreg_result = logreg_mod.fit(disp=0)
         self.model0["nLL"] = logreg_result.llf
-        self.model0[
-            "h2"
-        ] = SP.nan  # so that code for both one-kernel and two-kernel prints out
-        self.model0["a2"] = SP.nan
+        self.model0["h2"] = (
+            np.nan
+        )  # so that code for both one-kernel and two-kernel prints out
+        self.model0["a2"] = np.nan
 
     def _nullModelLinReg(self, G0):
         assert G0 is None, "Linear regression cannot handle two kernels."
         self.model0 = {}
         model = ss.linreg(self.X, self.Y)
-        self.model0[
-            "h2"
-        ] = SP.nan  # so that code for both one-kernel and two-kernel prints out
+        self.model0["h2"] = (
+            np.nan
+        )  # so that code for both one-kernel and two-kernel prints out
         self.model0["nLL"] = model["nLL"]
 
     def _nullModelMixedEffectLinear(self, G0=None, K0=None):
@@ -130,7 +126,7 @@ class lrt(association.varcomp_test):
         glmm0.optimize()
         self.model0 = {}
         self.model0["h2"] = 0.0
-        self.model0["a2"] = NP.nan
+        self.model0["a2"] = np.nan
         self.model0["nLL"] = -glmm0.marginal_loglikelihood()
         self.model0["sig02"] = glmm0.sig02
         self.model0["sig12"] = glmm0.sig12
@@ -149,8 +145,8 @@ class lrt(association.varcomp_test):
         glmm0.optimize()
         self.model0 = {}
 
-        if glmm0.sig02 + glmm0.sign2 <= NP.sqrt(NP.finfo(NP.float).eps):
-            h2 = NP.nan
+        if glmm0.sig02 + glmm0.sign2 <= np.sqrt(np.finfo(np.float).eps):
+            h2 = np.nan
         else:
             h2 = glmm0.sig02 / (glmm0.sig02 + glmm0.sign2)
 
@@ -195,7 +191,7 @@ class lrt(association.varcomp_test):
         pvreg = ST.chi2.sf(
             stat, 1.0
         )  # standard way to compute p-value when no boundary conditions
-        if SP.isnan(pvreg) or pvreg > 1.0:
+        if np.isnan(pvreg) or pvreg > 1.0:
             pvreg = 1.0
         pv = 0.5 * pvreg  # conservative 50/50 estimate
         if alteqnull:
@@ -252,7 +248,7 @@ class lrt(association.varcomp_test):
         pvreg = ST.chi2.sf(
             stat, 1.0
         )  # standard way to compute p-value when no boundary conditions
-        if SP.isnan(pvreg) or pvreg > 1.0:
+        if np.isnan(pvreg) or pvreg > 1.0:
             pvreg = 1.0
         pv = 0.5 * pvreg  # conservative 50/50 estimate
         if alteqnull:
@@ -346,12 +342,12 @@ class lrt(association.varcomp_test):
 
         assert glmm1.sig02 >= 0.0 and glmm1.sign2 >= 0
 
-        if glmm1.sig02 + glmm1.sign2 <= NP.sqrt(NP.finfo(NP.float).eps):
-            h2 = NP.nan
+        if glmm1.sig02 + glmm1.sign2 <= np.sqrt(np.finfo(np.float).eps):
+            h2 = np.nan
         else:
             h2 = glmm1.sig02 / (glmm1.sig02 + glmm1.sign2)
 
-        a2 = NP.nan
+        a2 = np.nan
 
         lik1 = {"nLL": -glmm1.marginal_loglikelihood(), "h2": h2, "a2": a2}
 
@@ -381,16 +377,16 @@ class lrt(association.varcomp_test):
 
         assert glmm1.sig02 >= 0.0 and glmm1.sig12 >= 0.0 and glmm1.sign2 >= 0
 
-        if glmm1.sig02 + glmm1.sig12 + glmm1.sign2 <= NP.sqrt(NP.finfo(NP.float).eps):
+        if glmm1.sig02 + glmm1.sig12 + glmm1.sign2 <= np.sqrt(np.finfo(np.float).eps):
             # in this case we don't have enough precision to calculate the
             # proportion between sig02+sig12 and the total or it does not make sense
             # because the covariance of the posterior tends to zero
-            h2 = NP.nan
+            h2 = np.nan
         else:
             h2 = (glmm1.sig02 + glmm1.sig12) / (glmm1.sig02 + glmm1.sig12 + glmm1.sign2)
 
-        if glmm1.sig02 + glmm1.sig12 <= NP.sqrt(NP.finfo(NP.float).eps):
-            a2 = NP.nan
+        if glmm1.sig02 + glmm1.sig12 <= np.sqrt(np.finfo(np.float).eps):
+            a2 = np.nan
         else:
             a2 = glmm1.sig12 / (glmm1.sig02 + glmm1.sig12)
 

@@ -92,7 +92,7 @@ setup(
         "pandas>=1.1.1",
         "matplotlib>=1.5.1",
         "scikit-learn>=0.19.1",
-        "pysnptools>=0.5.11b",  # cmk
+        "pysnptools>=0.5.11",
         "cloudpickle>=2.2.0",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",

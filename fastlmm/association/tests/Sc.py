@@ -1,12 +1,10 @@
-from __future__ import absolute_import
 import fastlmm.association.lrt as lr
-import scipy as SP
+import numpy as np
 import fastlmm.util.stats.chi2mixture as c2
 import fastlmm.association.score as score
 import scipy.linalg as LA
 import scipy.stats as ST
 from . import tests_util as tu
-from six.moves import range
 
 
 class Sc(object):
@@ -55,7 +53,7 @@ class Sc(object):
             i_exclude=i_exclude,
             forcefullrank=forcefullrank,
         )
-        return score.scoretest2K(Y=Y[:, SP.newaxis], X=X, K=K0, G0=G0)
+        return score.scoretest2K(Y=Y[:, np.newaxis], X=X, K=K0, G0=G0)
 
     def construct_no_backgound_kernel(
         self, Y, X, forcefullrank, nullModel, altModel, scoring, greater_is_better
@@ -72,7 +70,7 @@ class Sc(object):
                 "mixed effect and logistic link for alt "
                 "model."
             )
-            return score.scoretest_logit(Y=Y[:, SP.newaxis], X=X)
+            return score.scoretest_logit(Y=Y[:, np.newaxis], X=X)
 
         elif nullModel["link"] == "linear":
             assert (
@@ -86,7 +84,7 @@ class Sc(object):
                 "mixed effect and linear link for alt "
                 "model."
             )
-            return score.scoretest(Y=Y[:, SP.newaxis], X=X)
+            return score.scoretest(Y=Y[:, np.newaxis], X=X)
         else:
             raise Exception("Invalid link for score null model: " + link)
 
@@ -200,9 +198,9 @@ class Sc(object):
                 appendbias=False,
                 test2K=null_model,
             )
-            return pv, SP.nan, SP.nan
+            return pv, np.nan, np.nan
         else:
             pv = score.onekerneltest(
                 G0=G1, y=y, nulldistrib=self, covar=x, appendbias=False
             )
-            return pv, SP.nan, SP.nan
+            return pv, np.nan, np.nan

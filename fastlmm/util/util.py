@@ -5,7 +5,7 @@ import logging
 import sys
 import time
 import pysnptools.util as pstutil
-from six.moves import range
+
 from types import ModuleType
 
 

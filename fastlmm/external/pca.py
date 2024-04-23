@@ -8,7 +8,6 @@
 #
 # License: BSD 3 clause
 
-from __future__ import absolute_import
 from math import log, sqrt
 import warnings
 
@@ -22,7 +21,7 @@ from sklearn.utils import check_random_state, as_float_array, check_array
 # from sklearn.utils import atleast2d_or_csr
 from sklearn.utils import deprecated
 from sklearn.utils.extmath import fast_logdet, safe_sparse_dot, randomized_svd  # ,
-from six.moves import range
+
 
 # fast_dot)
 

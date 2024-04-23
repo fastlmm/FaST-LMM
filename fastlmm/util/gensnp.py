@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-import scipy as sp
 import numpy as np
-import pdb
 import scipy.linalg as la
 
 
@@ -31,7 +28,7 @@ def gendat(
     if TWO_KERNEL:
         psSnps = gensnps(nInd, nSnp, minMaf, maxMaf)
         psK = psSnps.dot(psSnps.T)
-        psK += 1e-5 * sp.eye(nInd)
+        psK += 1e-5 * np.eye(nInd)
         psKchol = la.cholesky(psK)
     else:
         psSnps = None
@@ -44,10 +41,10 @@ def gendat(
 
     ##generate the phenotype using the background kernel and covariates
     if TWO_KERNEL:
-        y_pop = sp.sqrt(sigG2) * psKchol.dot(sp.randn(nInd, 1))
+        y_pop = np.sqrt(sigG2) * psKchol.dot(np.randn(nInd, 1))
     else:
         y_pop = 0
-    y_noise = sp.randn(nInd, 1) * sp.sqrt(sigE2)
+    y_noise = np.randn(nInd, 1) * np.sqrt(sigE2)
     y = (covDat.dot(covWeights) + y_pop + y_noise).squeeze()
     return covDat, y, psSnps
 
@@ -67,9 +64,9 @@ def gensnps(numSnp, nInd, minMaf=0.05, maxMaf=0.4, standardize=False):
     maf = np.random.uniform(low=minMaf, high=maxMaf, size=(numSnp, 1))
 
     numChrm = 2
-    snpDat = sp.zeros((numSnp, nInd))
-    for ch in sp.arange(0, numChrm):
-        mafRep = sp.tile(maf, (1, nInd))
+    snpDat = np.zeros((numSnp, nInd))
+    for ch in np.arange(0, numChrm):
+        mafRep = np.tile(maf, (1, nInd))
         snpDat += np.random.uniform(size=(numSnp, nInd)) < mafRep
 
     if standardize:

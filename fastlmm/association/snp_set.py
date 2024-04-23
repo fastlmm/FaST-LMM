@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import fastlmm.pyplink.plink as plink
@@ -10,27 +8,28 @@ from fastlmm.util.pickle_io import load, save
 import time
 import pandas as pd
 
+
 def snp_set(
-        test_snps,
-        set_list,
-        pheno,
-        covar = None,
-        output_file_name = None,
-        G0 = None,
-        test="lrt",
-        write_lrtperm = False,
-        nperm = 10,
-        npermabs = None,
-        mpheno=1,
-        G0_fit="qq",
-        qmax=0.1,
-        seed =   None,
-        minsetsize = None,
-        maxsetsize = None,
-        mindist=0,
-        idist=1,
-        show_pvalue_5050 = False
-    ):
+    test_snps,
+    set_list,
+    pheno,
+    covar=None,
+    output_file_name=None,
+    G0=None,
+    test="lrt",
+    write_lrtperm=False,
+    nperm=10,
+    npermabs=None,
+    mpheno=1,
+    G0_fit="qq",
+    qmax=0.1,
+    seed=None,
+    minsetsize=None,
+    maxsetsize=None,
+    mindist=0,
+    idist=1,
+    show_pvalue_5050=False,
+):
     """
     Function performing GWAS on sets of snps
 
@@ -113,28 +112,30 @@ def snp_set(
 
     """
 
-    assert test=="lrt" or test=="sc_davies", "Expect test to be 'lrt' or 'sc_davies'"
+    assert (
+        test == "lrt" or test == "sc_davies"
+    ), "Expect test to be 'lrt' or 'sc_davies'"
 
     if G0 is None:
-        nullModel={'effect':'fixed', 'link':'linear'}
-        altModel={'effect':'mixed', 'link':'linear'}
+        nullModel = {"effect": "fixed", "link": "linear"}
+        altModel = {"effect": "mixed", "link": "linear"}
     else:
-        nullModel={'effect':'mixed', 'link':'linear'}
-        altModel={'effect':'mixed', 'link':'linear'}
-        if test=="lrt":
-            test="lrt_up"
-
+        nullModel = {"effect": "mixed", "link": "linear"}
+        altModel = {"effect": "mixed", "link": "linear"}
+        if test == "lrt":
+            test = "lrt_up"
 
     if output_file_name is None:
         import tempfile
+
         fileno, output_file_name = tempfile.mkstemp()
-        fptr= os.fdopen(fileno)
+        fptr = os.fdopen(fileno)
         is_temp = True
     else:
         is_temp = False
 
-
     from fastlmm.association.FastLmmSet import FastLmmSet
+
     fast_lmm_set = FastLmmSet(
         outfile=output_file_name,
         phenofile=pheno,
@@ -146,33 +147,35 @@ def snp_set(
         mindist=mindist,
         idist=idist,
         mpheno=mpheno,
-        nullfit = G0_fit,
+        nullfit=G0_fit,
         qmax=qmax,
         test=test,
         autoselect=False,
         nullModel=nullModel,
         altModel=altModel,
-        npermabs = npermabs,
-        calseed = seed,
-        minsetsize = minsetsize,
-        maxsetsize = maxsetsize,
-        write_lrtperm = write_lrtperm,
-        show_pvalue_5050 = show_pvalue_5050,
-        )
+        npermabs=npermabs,
+        calseed=seed,
+        minsetsize=minsetsize,
+        maxsetsize=maxsetsize,
+        write_lrtperm=write_lrtperm,
+        show_pvalue_5050=show_pvalue_5050,
+    )
     result = Local().run(fast_lmm_set)
 
-    dataframe=pd.read_csv(output_file_name,delimiter='\t',comment=None) #Need \t instead of \s because the output has tabs by design and spaces in column names(?)
+    dataframe = pd.read_csv(
+        output_file_name, delimiter="\t", comment=None
+    )  # Need \t instead of \s because the output has tabs by design and spaces in column names(?)
     if is_temp:
         fptr.close()
         os.remove(output_file_name)
 
     return dataframe
-    
+
 
 if __name__ == "__main__":
 
     import doctest
+
     doctest.testmod()
 
     print("done")
-

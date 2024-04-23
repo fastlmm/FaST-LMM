@@ -9,11 +9,9 @@ Created on 2014-03-11
 @summary: Module for performing GWAS
 """
 
-from __future__ import absolute_import
 import logging
 
 import numpy as np
-import scipy as sp
 import pandas as pd
 from scipy import stats
 import pylab
@@ -22,7 +20,7 @@ import time
 
 import fastlmm.inference as fastlmm
 
-import fastlmm.util.util as util 
+import fastlmm.util.util as util
 from fastlmm.util.pickle_io import load, save
 from fastlmm.util.util import argintersect_left
 
@@ -53,7 +51,7 @@ class LeaveOneChromosomeOut(object):
 
     def __init__(self, chr_names, indices=True, random_state=None):
 
-        #random_state = check_random_state(random_state)
+        # random_state = check_random_state(random_state)
 
         self.chr_names = np.array(chr_names)
         self.unique_chr_names = list(set(chr_names))
@@ -65,24 +63,23 @@ class LeaveOneChromosomeOut(object):
         self.indices = indices
         self.idxs = np.arange(self.n)
 
-
     def __iter__(self):
         if self.indices:
             ind = np.arange(self.n)
-        
+
         for chr_name in self.unique_chr_names:
-            
+
             test_index = self.chr_names == chr_name
             train_index = np.logical_not(test_index)
-            
+
             if self.indices:
                 train_index = ind[train_index]
                 test_index = ind[test_index]
-            
+
             yield train_index, test_index
 
     def __repr__(self):
-        return '%s.%s(n=%i, n_folds=%i)' % (
+        return "%s.%s(n=%i, n_folds=%i)" % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.n,

@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 import sys
 import logging
 import time
@@ -148,7 +147,7 @@ def compute_auto_pcs(
                     f.write("\n")
 
         result = {
-            "iid": sp.array(snpreader.iid),
+            "iid": np.array(snpreader.iid),
             "vals": X_fit,
             "header": ["pc_{0}".format(index) for index in range(bestNumPCs)],
         }

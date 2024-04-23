@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from fastlmm.inference.fastlmm_predictor import FastLMM
 from fastlmm.inference.linear_regression import LinearRegression
 

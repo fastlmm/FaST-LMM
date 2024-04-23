@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 import numpy as np
-import scipy as sp
 import logging
 from scipy import stats
 from fastlmm.pyplink.snpreader.Bed import Bed
@@ -14,7 +12,7 @@ from fastlmm.inference import LMM
 import unittest
 import os.path
 import time
-from six.moves import range
+
 import platform
 
 currentFolder = os.path.dirname(os.path.realpath(__file__))

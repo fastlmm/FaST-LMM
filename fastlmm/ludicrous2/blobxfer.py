@@ -40,8 +40,6 @@ TODO list:
 # pylint: disable=R0913,R0914
 
 # stdlib imports
-from __future__ import print_function
-from __future__ import absolute_import
 import argparse
 import base64
 import errno
@@ -54,7 +52,7 @@ import multiprocessing
 import os
 import platform
 import logging
-from six.moves import range
+
 
 # pylint: disable=F0401
 try:
@@ -242,9 +240,9 @@ class EncryptionMetadataJson(object):
             }
         if self.encmode == _ENCRYPTION_MODE_FULLBLOB:
             encjson[_ENCRYPTION_METADATA_CONTENT_IV] = base64encode(self.iv)
-            encjson[_ENCRYPTION_METADATA_INTEGRITY_AUTH][
-                _ENCRYPTION_METADATA_MAC
-            ] = base64encode(self.hmac)
+            encjson[_ENCRYPTION_METADATA_INTEGRITY_AUTH][_ENCRYPTION_METADATA_MAC] = (
+                base64encode(self.hmac)
+            )
         elif self.encmode == _ENCRYPTION_MODE_CHUNKEDBLOB:
             encjson[_ENCRYPTION_METADATA_LAYOUT] = {}
             encjson[_ENCRYPTION_METADATA_LAYOUT][_ENCRYPTION_METADATA_CHUNKOFFSETS] = (
@@ -2890,9 +2888,7 @@ def main_internal(exit_is_ok):
         "         RSA key type: {}".format(
             "private"
             if args.rsaprivatekey is not None
-            else "public"
-            if args.rsapublickey is not None
-            else "disabled"
+            else "public" if args.rsapublickey is not None else "disabled"
         )
     )
     logging.debug("=======================================\n")

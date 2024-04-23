@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-import pdb
 import os
-import numpy as SP
+import numpy as np
 from .snpset import *
 import logging
-from six.moves import range
 
 
 def readPED(basefilename, delimiter=" ", missing="0", standardize=True, pheno=None):
@@ -29,17 +26,17 @@ def readPED(basefilename, delimiter=" ", missing="0", standardize=True, pheno=No
     """
     pedfile = basefilename + ".ped"
     mapfile = basefilename + ".map"
-    map = SP.loadtxt(mapfile, dtype="str", comments=None)
+    map = np.loadtxt(mapfile, dtype="str", comments=None)
 
     rs = map[:, 1]
-    pos = SP.array(map[:, (0, 2, 3)], dtype="float")
+    pos = np.array(map[:, (0, 2, 3)], dtype="float")
     map = None
 
-    ped = SP.loadtxt(pedfile, dtype="str", comments=None)
+    ped = np.loadtxt(pedfile, dtype="str", comments=None)
     iid = ped[:, 0:2]
     snpsstr = ped[:, 6::]
     inan = snpsstr == missing
-    snps = SP.zeros((snpsstr.shape[0], snpsstr.shape[1] // 2))
+    snps = np.zeros((snpsstr.shape[0], snpsstr.shape[1] // 2))
     if standardize:
         for i in range(snpsstr.shape[1] // 2):
             snps[inan[:, 2 * i], i] = 0
@@ -49,7 +46,7 @@ def readPED(basefilename, delimiter=" ", missing="0", standardize=True, pheno=No
             snps[~inan[:, 2 * i], i] /= snps[~inan[:, 2 * i], i].std()
     else:
         for i in range(snpsstr.shape[1] / 2):
-            snps[inan[:, 2 * i], i] = SP.nan
+            snps[inan[:, 2 * i], i] = np.nan
             vals = snpsstr[~inan[:, 2 * i], 2 * i : 2 * (i + 1)]
             snps[~inan[:, 2 * i], i] += (vals == vals[0, 0]).sum(1)
     if pheno is not None:
@@ -81,16 +78,16 @@ def readRAW(basefilename, delimiter=" ", missing="0", standardize=True, pheno=No
     """
     rawfile = basefilename + ".raw"
     # mapfile = basefilename+".map"
-    # map = SP.loadtxt(mapfile,dtype = 'str',comments=None)
+    # map = np.loadtxt(mapfile,dtype = 'str',comments=None)
 
     # rs = map[:,1]
-    # pos = SP.array(map[:,(0,2,3)],dtype = 'float')
+    # pos = np.array(map[:,(0,2,3)],dtype = 'float')
     # map = None
-    raw = SP.loadtxt(rawfile, dtype="str", comments=None)
+    raw = np.loadtxt(rawfile, dtype="str", comments=None)
     iid = raw[:, 0:2]
     snpsstr = raw[:, 6::]
     inan = snpsstr == missing
-    snps = SP.zeros((snpsstr.shape[0], snpsstr.shape[1] / 2))
+    snps = np.zeros((snpsstr.shape[0], snpsstr.shape[1] / 2))
     if standardize:
         for i in range(snpsstr.shape[1] / 2):
             raw[inan[:, 2 * i], i] = 0
@@ -100,7 +97,7 @@ def readRAW(basefilename, delimiter=" ", missing="0", standardize=True, pheno=No
             snps[~inan[:, 2 * i], i] /= snps[~inan[:, 2 * i], i].std()
     else:
         for i in range(snpsstr.shape[1] / 2):
-            snps[inan[:, 2 * i], i] = SP.nan
+            snps[inan[:, 2 * i], i] = np.nan
             vals = snpsstr[~inan[:, 2 * i], 2 * i : 2 * (i + 1)]
             snps[~inan[:, 2 * i], i] += (vals == vals[0, 0]).sum(1)
     if pheno is not None:
@@ -141,7 +138,7 @@ def readBED(basefilename, snp_set=AllSnps(), order="F"):
 
 def nSnpFromBim(basefilename):
     bim = basefilename + ".bim"
-    bimx = SP.loadtxt(bim, dtype="str", usecols=(0, 1, 2, 3), comments=None)
+    bimx = np.loadtxt(bim, dtype="str", usecols=(0, 1, 2, 3), comments=None)
     S = bimx.shape[0]
     return S
 

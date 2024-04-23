@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-import scipy as SP
+import scipy.optimize as opt
 import scipy.stats as ST
 import numpy as NP
 from numpy import dot
@@ -15,7 +14,7 @@ from fastlmm.external.util.math import stl, stu
 from sklearn.base import BaseEstimator
 from fastlmm import Pr
 import sys
-from six.moves import range
+
 
 """
     Important! Always run test.py in the current folder for unit testing after
@@ -424,10 +423,8 @@ class GLMM(object):
         if optBeta:
             bounds += [(-maxbeta, maxbeta)] * self._D
 
-        (xfinal, aa, bb) = SP.optimize.fmin_tnc(
-            func, x, fprime=grad, bounds=bounds, disp=0
-        )
-        #        (xfinal,cost,msgs) = SP.optimize.fmin_l_bfgs_b(func, x, fprime=grad, bounds=bounds,
+        (xfinal, aa, bb) = opt.fmin_tnc(func, x, fprime=grad, bounds=bounds, disp=0)
+        #        (xfinal,cost,msgs) = opt.fmin_l_bfgs_b(func, x, fprime=grad, bounds=bounds,
         #                                                        disp=self._verbose)
         #                                                        disp=False)
         self._unwrap_hyp(xfinal, optSig02, optSig12, optSign2, optBeta)

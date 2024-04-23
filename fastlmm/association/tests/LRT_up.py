@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import fastlmm.inference.lmm_cov as lmm
 import numpy as np
 import fastlmm.util.stats.chi2mixture as c2
 import fastlmm.association as association
 import scipy.stats as st
 from . import tests_util as tu
-from six.moves import range
 
 
 class lrt(association.varcomp_test):

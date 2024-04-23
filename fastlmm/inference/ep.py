@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 import numpy as NP
-import scipy as SP
 from numpy import dot
 import scipy.stats as ST
 from scipy.linalg import cholesky, solve_triangular

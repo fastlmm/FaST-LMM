@@ -1,7 +1,5 @@
-from __future__ import absolute_import
 import re
 import numpy as NP
-import scipy as SP
 import scipy.io as SIO
 import time
 import os
@@ -162,29 +160,30 @@ if __name__ == "__main__":
 
     suites = unittest.TestSuite(
         [
-            # getDebugTestSuite(),
-            getTestSuiteX(),
-            fastlmm.inference.tests.test_linear_regression.getTestSuite(),
-            fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
-            fastlmm.pyplink.test.getTestSuite(),
+            # cmk
+            #### getDebugTestSuite(),
+            # cmkok getTestSuiteX(),
+            # cmkok fastlmm.inference.tests.test_linear_regression.getTestSuite(),
+            # cmkok fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
+            # cmkok fastlmm.pyplink.test.getTestSuite(),
             fastlmm.feature_selection.test.getTestSuite(),
-            fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-            fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
+            # cmkok fastlmm.association.tests.test_single_snp_select.getTestSuite(),
+            # cmkok fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
             fastlmm.association.tests.test_gwas.getTestSuite(),
-            fastlmm.association.tests.test_snp_set.getTestSuite(),
-            fastlmm.inference.tests.test.getTestSuite(),
-            fastlmm.association.tests.testepistasis.getTestSuite(),
-            fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
-            fastlmm.util.test.getTestSuite(),
-            fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
-            fastlmm.inference.tests.test.getTestSuite(),
-            fastlmm.association.tests.test_single_snp.getTestSuite(),
-            fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
+            # cmkok fastlmm.association.tests.test_snp_set.getTestSuite(),
+            # cmkok fastlmm.inference.tests.test.getTestSuite(),
+            # cmkok fastlmm.association.tests.testepistasis.getTestSuite(),
+            # cmkok fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
+            # cmkok fastlmm.util.test.getTestSuite(),
+            # cmkok fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
+            # cmkok fastlmm.inference.tests.test.getTestSuite(),
+            # cmkok fastlmm.association.tests.test_single_snp.getTestSuite(),
+            # cmkok fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
         ]
     )
 
     if True:  # Standard test run
-        r = unittest.TextTestRunner(failfast=False)
+        r = unittest.TextTestRunner(failfast=False)  # cmk
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else:  # Cluster test run

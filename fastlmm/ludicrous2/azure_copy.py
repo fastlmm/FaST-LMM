@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import shutil
 import tempfile
 import logging
 import unittest
-from six.moves import range
+
 
 logging.basicConfig(level=logging.INFO)
 from pysnptools.util.mapreduce1 import map_reduce
@@ -208,11 +206,11 @@ class StorageCredential(object):
             assert (
                 account_name in self._account_name_to_key
             ), "Don't know key for account_name '{0}'".format(account_name)
-            self._account_name_to_block_blob_service[
-                account_name
-            ] = azureblob.BlockBlobService(
-                account_name=account_name,
-                account_key=self._account_name_to_key[account_name],
+            self._account_name_to_block_blob_service[account_name] = (
+                azureblob.BlockBlobService(
+                    account_name=account_name,
+                    account_key=self._account_name_to_key[account_name],
+                )
             )
         block_blob_service = self._account_name_to_block_blob_service[account_name]
         self._create_container(block_blob_service, container_name)

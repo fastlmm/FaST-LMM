@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-import scipy as sp
 import numpy as np
-import pdb
 import scipy.linalg as la
 import fastlmm.util.util as utilx
 import sys
@@ -41,8 +38,8 @@ def genphen(y_G0, G1, covDat, options, nInd, K1=None, fracCausal=None, randseed=
             raise Exception("fraCausal should be between 0.01 and 1")
         nSnp = G1.shape[1]
         if fracCausal != 1.0:
-            nSnpNew = sp.ceil(fracCausal * nSnp)
-            permutationIndex = utilx.generate_permutation(sp.arange(0, nSnp), randseed)[
+            nSnpNew = np.ceil(fracCausal * nSnp)
+            permutationIndex = utilx.generate_permutation(np.arange(0, nSnp), randseed)[
                 0:nSnpNew
             ]
             G1new = G1[:, permutationIndex]
@@ -57,7 +54,7 @@ def genphen(y_G0, G1, covDat, options, nInd, K1=None, fracCausal=None, randseed=
             options["varG"] == 0
         ), "varG is not zero, but neither G1 nor K1 were provided"
 
-    stdG = sp.sqrt(options["varG"])
+    stdG = np.sqrt(options["varG"])
 
     if stdG > 0:
         if G1 is not None:
@@ -71,7 +68,7 @@ def genphen(y_G0, G1, covDat, options, nInd, K1=None, fracCausal=None, randseed=
 
     if covDat is not None:
         nCov = covDat.shape[1]
-        covWeights = np.random.randn(nCov, 1) * sp.sqrt(options["varCov"])
+        covWeights = np.random.randn(nCov, 1) * np.sqrt(options["varCov"])
         y_beta = covDat.dot(covWeights)
     else:
         y_beta = 0.0
@@ -81,12 +78,12 @@ def genphen(y_G0, G1, covDat, options, nInd, K1=None, fracCausal=None, randseed=
     if options["varET"] > 0:
         y_noise_t = np.random.standard_t(
             df=options["varETd"], size=(nInd, 1)
-        ) * sp.sqrt(options["varET"])
+        ) * np.sqrt(options["varET"])
     else:
         y_noise_t = 0
 
     # gaussian noise
-    y_noise = np.random.randn(nInd, 1) * sp.sqrt(options["varE"])
+    y_noise = np.random.randn(nInd, 1) * np.sqrt(options["varE"])
 
     y = y_noise + y_noise_t + y_G0 + y_beta + y_G1
     y = y[:, 0]  # y.flatten()
@@ -96,9 +93,9 @@ def genphen(y_G0, G1, covDat, options, nInd, K1=None, fracCausal=None, randseed=
     elif options["link"] == "logistic":
         if options["casefrac"] is None:
             options["casefrac"] = 0.5
-        ysort = sp.sort(y, axis=None)
-        thresh = ysort[sp.floor(nInd * options["casefrac"])]
-        ybin = sp.array(y > thresh, dtype="float")
+        ysort = np.sort(y, axis=None)
+        thresh = ysort[np.floor(nInd * options["casefrac"])]
+        ybin = np.array(y > thresh, dtype="float")
         return ybin
     else:
         raise Exception("Invald link function for data generation")

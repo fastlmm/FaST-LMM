@@ -18,7 +18,6 @@ from .Result import *
 from .PairResult import *
 from fastlmm.association.tests import *
 import fastlmm.util.genphen as gp
-import scipy as sp
 import numpy as np
 from itertools import *
 from fastlmm.pyplink.snpreader.Bed import *
@@ -188,7 +187,7 @@ class FastLmmSet:  # implements IDistributable
         self._synthphenfile = utilx.appendtofilename(self.outfile, "synthPhenVarBack")
         np.savetxt(self._synthphenfile, y)
         with open(self._synthphenfile, "w") as fp:
-            for n in sp.arange(0, nInd):
+            for n in np.arange(0, nInd):
                 fp.write(
                     SNPsalt["iid"][n][0]
                     + "\t"
@@ -220,12 +219,12 @@ class FastLmmSet:  # implements IDistributable
                     ):  # note that self.nperm is the 'stop', not the 'count'
                         SNPsalt = altset.read()
                         SNPsalt["snps"] = util.standardize(SNPsalt["snps"])
-                        G1 = SNPsalt["snps"] / sp.sqrt(SNPsalt["snps"].shape[1])
+                        G1 = SNPsalt["snps"] / np.sqrt(SNPsalt["snps"].shape[1])
                         ichrm = ",".join(
-                            sp.array(sp.unique(SNPsalt["pos"][:, 0]), dtype=str)
+                            np.array(np.unique(SNPsalt["pos"][:, 0]), dtype=str)
                         )
-                        minpos = str(sp.min(SNPsalt["pos"][:, 2]))
-                        maxpos = str(sp.max(SNPsalt["pos"][:, 2]))
+                        minpos = str(np.min(SNPsalt["pos"][:, 2]))
+                        maxpos = str(np.max(SNPsalt["pos"][:, 2]))
                         iposrange = minpos + "-" + maxpos
 
                         if self.genphen is None:
@@ -247,12 +246,12 @@ class FastLmmSet:  # implements IDistributable
                                 nSnp = self.__SNPs0["data"]["snps"].shape[1]
                                 # good for low rank, other wise, use the dual, as in gp.genphen
                                 raise Exception("Bug below. should be randn, is rand")
-                                y_G0 = sp.sqrt(
+                                y_G0 = np.sqrt(
                                     self.genphen["varBack"] / nSnp
                                 ) * self.__SNPs0["data"]["snps"].dot(
                                     randomstate.rand(nSnp, 1)
                                 )  # TODO: CL This seems to be a bug. Should be randn
-                                # y_G0=sp.sqrt(self.genphen["varBack"])*self.__SNPs0['data']['snps'].dot(randomstate.rand(nSnp,1))    #TODO: CL This seems to be a bug. Should be randn
+                                # y_G0=np.sqrt(self.genphen["varBack"])*self.__SNPs0['data']['snps'].dot(randomstate.rand(nSnp,1))    #TODO: CL This seems to be a bug. Should be randn
                             elif self.__SNPs0 is None:
                                 y_G0 = 0
 
@@ -263,14 +262,14 @@ class FastLmmSet:  # implements IDistributable
                             ):
                                 nSnp = self.__SNPs0["data"]["snps"].shape[1]
                                 y_back = (
-                                    sp.sqrt(self.genphen["varBack"] / nSnp)
+                                    np.sqrt(self.genphen["varBack"] / nSnp)
                                     * self.__varBackNullSnpsGen["snps"].dot(
                                         np.random.randn(
                                             self.__varBackNullSnpsGen["snps"].shape[1],
                                             1,
                                         )
                                     )
-                                    / sp.sqrt(
+                                    / np.sqrt(
                                         self.__varBackNullSnpsGen["snps"].shape[1]
                                     )
                                 )
@@ -415,16 +414,16 @@ class FastLmmSet:  # implements IDistributable
 
             result_dict = {}
 
-            lrt = SP.nan * SP.ones(len(self.altsetlist_filtbysnps))
+            lrt = np.nan * np.ones(len(self.altsetlist_filtbysnps))
             # whether alt and null models give the same margll
             alteqnull = [None] * len(self.altsetlist_filtbysnps)
 
-            lrtperm = SP.nan * SP.ones(len(self.altsetlist_filtbysnps) * self.nperm)
+            lrtperm = np.nan * np.ones(len(self.altsetlist_filtbysnps) * self.nperm)
             alteqnullperm = [None] * len(self.altsetlist_filtbysnps) * self.nperm
-            setsizeperm = SP.nan * SP.ones(len(self.altsetlist_filtbysnps) * self.nperm)
+            setsizeperm = np.nan * np.ones(len(self.altsetlist_filtbysnps) * self.nperm)
 
             npvals = self.test.npvals
-            pv_adj = sp.nan * sp.ones((len(self.altsetlist_filtbysnps)))
+            pv_adj = np.nan * np.ones((len(self.altsetlist_filtbysnps)))
 
             # results can come in any order, so we have to use iperm and iset to put them in the right place
             # there is one result instance for each combination of test and permutation, and here we are just gathering them
@@ -436,9 +435,9 @@ class FastLmmSet:  # implements IDistributable
                         result_dict[result.iset] = result
                         # iset is the index of the test (irrespective of permutation)
                         lrt[result.iset] = self.test.lrt_method(result)
-                        alteqnull[
-                            result.iset
-                        ] = result.alteqnull  # equiv to result["alteqnull"]
+                        alteqnull[result.iset] = (
+                            result.alteqnull
+                        )  # equiv to result["alteqnull"]
                         # pv_adj[result.iset,:] = self.test.pv_adj_from_result(result)
                         pv_adj[result.iset] = self.test.pv_adj_from_result(result)
                     else:
@@ -516,15 +515,15 @@ class FastLmmSet:  # implements IDistributable
     #    #randsnps=self.alt_snpreader.read(RandomSnpSet(nSnp,newseed))     #this appears to be VERY slow
     #    #snps=randsnps['snps']
     #    snps=gp.gensnps(nInd,nSnp)
-    #    randG = snps/sp.sqrt(nSnp) #pre-process for kernel
-    #    y_randG=sp.sqrt(genphen["varBack"])*randG.dot(randomstate.rand(nSnp,1))
+    #    randG = snps/np.sqrt(nSnp) #pre-process for kernel
+    #    y_randG=np.sqrt(genphen["varBack"])*randG.dot(randomstate.rand(nSnp,1))
     #    return y_randG
 
     def TESTBEFOREUSINGKfromAltSnps(self, N, SNPsalt=None):
         print("constructing K from all SNPs")
         t0 = time.time()
 
-        Kall = sp.zeros([N, N])
+        Kall = np.zeros([N, N])
         nSnpTotal = self.alt_snpreader.snp_count
         print("reading in " + str(nSnpTotal) + " SNPs and adding up kernels")
         # altsnps = readBED(self.bedfilealt,standardizeSNPs=True)['snps'] #loads all in to memory
@@ -549,10 +548,10 @@ class FastLmmSet:  # implements IDistributable
                 ts = time.time()
             # if ct==2:
             #    break
-            #    Kall=sp.rand((N,N))
+            #    Kall=np.rand((N,N))
             #    Kall=Kall.dot(Kall.T)
-        Kall = Kall / sp.sqrt(self.alt_snpreader.snp_count)
-        Kall = Kall + 1e-5 * sp.eye(N, N)
+        Kall = Kall / np.sqrt(self.alt_snpreader.snp_count)
+        Kall = Kall + 1e-5 * np.eye(N, N)
         t1 = time.time()
         logging.info("%.2f seconds elapsed" % (t1 - t0))
 
@@ -572,10 +571,10 @@ class FastLmmSet:  # implements IDistributable
         logging.info("writing to file " + outfile + ".")
 
         assert (
-            type(values) == sp.ndarray or type(values) == tuple
-        ), "values can only be sp.ndarray or a tuple of sp.ndarray."
+            type(values) == np.ndarray or type(values) == tuple
+        ), "values can only be np.ndarray or a tuple of np.ndarray."
 
-        if type(values) == sp.ndarray:
+        if type(values) == np.ndarray:
             values = (values,)
 
         values = list(map(list, list(zip(*values))))
@@ -730,7 +729,7 @@ class FastLmmSet:  # implements IDistributable
         for pm in range(self.nlocalperm):
             if pm == checkpoint:
                 logging.info("checkpointing " + str(pm))
-                numbetter = sp.sum(permstatbetter)
+                numbetter = np.sum(permstatbetter)
                 pv = numbetter / float(pm)
                 t1 = time.time()
                 logging.info("Checkpoint time elapsed=%.2f seconds" % (t1 - t0))
@@ -748,7 +747,7 @@ class FastLmmSet:  # implements IDistributable
             alteqnullperm.append(permresult["alteqnull"])
             permstatbetter.append(permresult["stat"] - result.test["stat"] > tol)
 
-        numbetter = sp.maximum(0.99, sp.sum(permstatbetter))
+        numbetter = np.maximum(0.99, np.sum(permstatbetter))
         pv = numbetter / float(pm)
         result.test["pv-local"] = pv
         result.test["pv"] = result.test["pv"]
@@ -759,10 +758,10 @@ class FastLmmSet:  # implements IDistributable
             logging.info("fitting aUD to local with " + str(pm + 1) + " permutations")
             pv_adj, mixture, scale, dof = cv.lrtpvals_qqfit(
                 nperm=self.nlocalperm,
-                lrt=sp.array([result.test["stat"]]),
-                lrtperm=sp.array(allstat),
-                alteqnull=sp.array([result.test["alteqnull"]]),
-                alteqnullperm=sp.array(alteqnullperm),
+                lrt=np.array([result.test["stat"]]),
+                lrtperm=np.array(allstat),
+                alteqnull=np.array([result.test["alteqnull"]]),
+                alteqnullperm=np.array(alteqnullperm),
                 qmax=self.qmax,
             )
             result.test["pv-local-aUD"] = pv_adj[0]
@@ -770,7 +769,7 @@ class FastLmmSet:  # implements IDistributable
             logging.info("dof=" + str(dof))
             logging.info("scale=" + str(scale))
         else:
-            result.test["pv-local-aUD"] = sp.NaN
+            result.test["pv-local-aUD"] = np.NaN
 
         logging.info(
             "    used "
@@ -791,7 +790,7 @@ class FastLmmSet:  # implements IDistributable
             G_exclude = util.standardize(G_exclude)
             # normalize
             pass
-        G_exclude /= sp.sqrt(self.__SNPs0["num_snps"])
+        G_exclude /= np.sqrt(self.__SNPs0["num_snps"])
         return G_exclude
 
     def run_test(
@@ -838,7 +837,7 @@ class FastLmmSet:  # implements IDistributable
                 logging.info("no SNPS in set " + setname)
                 result = None
                 return [result]
-            if sp.isnan(G1.sum()):
+            if np.isnan(G1.sum()):
                 raise Exception(
                     "found missing values in test SNPs that remain after intersection for "
                     + str(altset)
@@ -886,7 +885,7 @@ class FastLmmSet:  # implements IDistributable
 
             # if result.nexclude:
             #    logging.info(" (computing needed null info anew) ")
-            #    G0_to_use = self.__SNPs0#['data']['snps'][:,~i_exclude]/SP.sqrt(self.__SNPs0['data']['snps'][:,~i_exclude].shape[1])
+            #    G0_to_use = self.__SNPs0#['data']['snps'][:,~i_exclude]/np.sqrt(self.__SNPs0['data']['snps'][:,~i_exclude].shape[1])
             # else:
             #    G0_to_use=self.__G0
 
@@ -996,7 +995,7 @@ class FastLmmSet:  # implements IDistributable
         SNPs1 = dict(SNPs1a)
         SNPs1.update(SNPs1b)  # concatenate the SNP dictionaries
 
-        G1 = SNPs1["snps"] / sp.sqrt(SNPs1["snps"].shape[1])
+        G1 = SNPs1["snps"] / np.sqrt(SNPs1["snps"].shape[1])
         if G1.shape[1] == 0:
             raise Exception("no SNPs to test")
         result.setsize = SNPs1["snps"].shape[1]
@@ -1037,7 +1036,7 @@ class FastLmmSet:  # implements IDistributable
         # need to make this caching smarter for when background kernel changes in every test (e.g. interactions)
         if null_model_changed:
             logging.info(" (computing needed null info anew) ")
-            G0_to_use = self.__SNPs0["data"]["snps"][:, ~i_exclude] / SP.sqrt(
+            G0_to_use = self.__SNPs0["data"]["snps"][:, ~i_exclude] / np.sqrt(
                 self.__SNPs0["data"]["snps"][:, ~i_exclude].shape[1]
             )  # excluded SNPs
             null_model = None
@@ -1257,7 +1256,7 @@ class FastLmmSet:  # implements IDistributable
             :, self.mpheno - 1
         ]  # use -1 so compatible with C++ version
         # pheno['header']=pheno['header'][self.mpheno-1] #header is empty
-        goodind = sp.logical_not(sp.isnan(pheno["vals"]))
+        goodind = np.logical_not(np.isnan(pheno["vals"]))
         pheno["vals"] = pheno["vals"][goodind]
         pheno["iid"] = pheno["iid"][goodind, :]
 
@@ -1300,7 +1299,7 @@ class FastLmmSet:  # implements IDistributable
         covar, pheno, indarr = self.intersect_data(covar, pheno)
         N = pheno["vals"].shape[0]
         if self.covarfile == None:
-            self.__X = sp.ones((N, 1))
+            self.__X = np.ones((N, 1))
         else:
             # check for covariates which are constant, as the lmm code crashes on these
             badind = utilx.indof_constfeatures(covar["vals"], axis=0)
@@ -1309,18 +1308,18 @@ class FastLmmSet:  # implements IDistributable
                     "found constant covariates with indexes: %s: please remove, or modify code here to do so"
                     % badind
                 )
-            self.__X = sp.hstack((sp.ones((N, 1)), covar["vals"]))
+            self.__X = np.hstack((np.ones((N, 1)), covar["vals"]))
         self.__y = pheno["vals"]
 
-        if not covar is None and sp.isnan(covar["vals"].sum()):
+        if not covar is None and np.isnan(covar["vals"].sum()):
             raise Exception(
                 "found missing values in covariates file that remain after intersection"
             )
-        if sp.isnan(self.__y.sum()):
+        if np.isnan(self.__y.sum()):
             raise Exception(
                 "found missing values in phenotype file that remain after intersection"
             )
-        # if hasattr(self,'__G0') and not self.__G0 is None and sp.isnan(self.__G0.sum())): raise Exception("found missing values in background SNPs that remain after intersection")
+        # if hasattr(self,'__G0') and not self.__G0 is None and np.isnan(self.__G0.sum())): raise Exception("found missing values in background SNPs that remain after intersection")
 
         # creating sets from set defn files. Looks at bed file to filter down the SNPs to only those present in the bed file
         (
@@ -1337,7 +1336,7 @@ class FastLmmSet:  # implements IDistributable
             assert self.nperm is None, "cannot use both nperm and npermabs"
         if self.npermabs is not None:
             num_tests = len(self.altsetlist_filtbysnps)
-            self.nperm = int(sp.ceil(self.npermabs / num_tests))
+            self.nperm = int(np.ceil(self.npermabs / num_tests))
             logging.info(
                 "using npermabs=%i, found %i tests, so using %i permutations per test"
                 % (self.npermabs, num_tests, self.nperm)
@@ -1401,7 +1400,7 @@ class FastLmmSet:  # implements IDistributable
         t0 = time.time()
 
         # if self.filenull  is not None: #aka two-kernel
-        #    self.__G0 = self.__SNPs0['data']['snps']/sp.sqrt(self.__SNPs0['data']['snps'].shape[1])
+        #    self.__G0 = self.__SNPs0['data']['snps']/np.sqrt(self.__SNPs0['data']['snps'].shape[1])
         # else:
         #    self.__G0=None
 
@@ -1428,28 +1427,28 @@ class FastLmmSet:  # implements IDistributable
     def check_id_order(self, covar, pheno):
         ids_pheno = pheno["iid"]
         ids_SNPs = self.alt_snpreader.original_iids
-        if (len(ids_pheno) != len(ids_SNPs)) or (not sp.all(ids_pheno == ids_SNPs)):
+        if (len(ids_pheno) != len(ids_SNPs)) or (not np.all(ids_pheno == ids_SNPs)):
             return False
         if self.covarfile is not None:
             ids_X = covar["iid"]
-            if (len(ids_pheno) != len(ids_X)) or (not sp.all(ids_pheno == ids_X)):
+            if (len(ids_pheno) != len(ids_X)) or (not np.all(ids_pheno == ids_X)):
                 return False
         if self.filenull is not None:
             ids_nullSNPs = self.__SNPs0["original_iids"]
-            if not sp.all(ids_pheno == ids_nullSNPs):
+            if not np.all(ids_pheno == ids_nullSNPs):
                 return False
         if (
             hasattr(self, "__varBackNullSnpsGen")
             and self.__varBackNullSnpsGen is not None
         ):  # for synthetic data generation
             ids_SNPgen = self.__varBackNullSnpsGen["iid"]
-            if not sp.all(ids_pheno == ids_SNPgen):
+            if not np.all(ids_pheno == ids_SNPgen):
                 return False
         return True
 
     def intersect_data(self, covar, pheno):
         if self.check_id_order(covar, pheno):
-            indarr = SP.arange(pheno["iid"].shape[0])
+            indarr = np.arange(pheno["iid"].shape[0])
             logging.info(str(indarr.shape[0]) + " IDs match up across data sets")
         else:
             logging.info(
@@ -1490,7 +1489,7 @@ class FastLmmSet:  # implements IDistributable
             # sort the indexes so that SNPs ids in their original order (and
             # therefore we have to move things around in memory the least amount)
             # [indarr[:,3] holds the SNP order
-            sortind = sp.argsort(indarr[:, 3])
+            sortind = np.argsort(indarr[:, 3])
             indarr = indarr[sortind]
 
             pheno["iid"] = pheno["iid"][indarr[:, 0]]
@@ -1504,8 +1503,8 @@ class FastLmmSet:  # implements IDistributable
 
             if self.filenull is not None:
                 # copy in memory to make later access faster (presumably?):
-                # self.__SNPs0['iid']=sp.copy(self.__SNPs0['iid'][indarr[:,3]])
-                # self.__SNPs0['snps']=sp.copy(self.__SNPs0['snps'][indarr[:,3]])
+                # self.__SNPs0['iid']=np.copy(self.__SNPs0['iid'][indarr[:,3]])
+                # self.__SNPs0['snps']=np.copy(self.__SNPs0['snps'][indarr[:,3]])
                 # self.__SNPs0['data']['iid']=self.__SNPs0['data']['iid'][indarr[:,3]]
                 if "data" in self.__SNPs0:
                     self.__SNPs0["data"]["iid"] = self.__SNPs0["data"]["iid"][

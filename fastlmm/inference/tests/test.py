@@ -1,7 +1,5 @@
-from __future__ import absolute_import
-import numpy as NP
 import numpy as np
-import scipy as SP
+import scipy.optimize as opt
 from fastlmm.inference.laplace import LaplaceGLMM_N3K1, LaplaceGLMM_N1K3
 from fastlmm.inference.ep import EPGLMM_N3K1, EPGLMM_N1K3
 from fastlmm.inference import getLMM
@@ -78,7 +76,7 @@ class TestLmmKernel(unittest.TestCase):
 
         target_result = {
             "scale": 1.0,
-            "beta": NP.array([0.05863443]),
+            "beta": np.array([0.05863443]),
             "a2": 0.4,
             "REML": False,
             "nLL": 91.92983775736522,
@@ -89,7 +87,7 @@ class TestLmmKernel(unittest.TestCase):
 
         # make sure results are the same
         for key in result.keys():
-            NP.testing.assert_array_almost_equal(result[key], target_result[key])
+            np.testing.assert_array_almost_equal(result[key], target_result[key])
             # self.assertAlmostEqual(result[key], target_result[key])
 
     def test_nLLeval_2(self):
@@ -108,7 +106,7 @@ class TestLmmKernel(unittest.TestCase):
         target_result = {
             "scale": 1.0,
             "h2": 0.0,
-            "beta": NP.array([0.05863443]),
+            "beta": np.array([0.05863443]),
             "a2": 0.4,
             "REML": True,
             "nLL": 90.940636012858121,
@@ -116,7 +114,7 @@ class TestLmmKernel(unittest.TestCase):
         }
         # make sure results are the same
         for key in result.keys():
-            NP.testing.assert_array_almost_equal(result[key], target_result[key])
+            np.testing.assert_array_almost_equal(result[key], target_result[key])
             # self.assertAlmostEqual(result[key], target_result[key])
 
     def test_nLLeval_3(self):
@@ -135,7 +133,7 @@ class TestLmmKernel(unittest.TestCase):
         target_result = {
             "scale": 1.0,
             "h2": 0.5,
-            "beta": NP.array([0.05863443]),
+            "beta": np.array([0.05863443]),
             "a2": 0.4,
             "REML": True,
             "nLL": 90.940636012858121,
@@ -143,7 +141,7 @@ class TestLmmKernel(unittest.TestCase):
         }
         # make sure results are the same
         for key in result.keys():
-            NP.testing.assert_array_almost_equal(result[key], target_result[key])
+            np.testing.assert_array_almost_equal(result[key], target_result[key])
             # self.assertAlmostEqual(result[key], target_result[key])
 
 
@@ -185,10 +183,10 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            np.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
             # self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
 
-        wproj = NP.random.randn(ypred_nocut.shape[0])
+        wproj = np.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj * ypred_nocut).sum(), (wproj * ypred_cut).sum())
 
     def test_one_kernel_lowrank(self):
@@ -225,10 +223,10 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            np.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
             # self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
 
-        wproj = NP.random.randn(ypred_nocut.shape[0])
+        wproj = np.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj * ypred_nocut).sum(), (wproj * ypred_cut).sum())
 
     def test_two_kernels_fullrank(self):
@@ -265,9 +263,9 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            np.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
             # self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
-        wproj = NP.random.randn(ypred_nocut.shape[0])
+        wproj = np.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj * ypred_nocut).sum(), (wproj * ypred_cut).sum())
 
     def test_two_kernels_lowrank(self):
@@ -304,9 +302,9 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            np.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
             # self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
-        wproj = NP.random.randn(ypred_nocut.shape[0])
+        wproj = np.random.randn(ypred_nocut.shape[0])
         self.assertAlmostEqual((wproj * ypred_nocut).sum(), (wproj * ypred_cut).sum())
 
     def test_two_kernels_fullrank_REML(self):
@@ -339,7 +337,7 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            np.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
             # self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
 
     def test_two_kernels_lowrank_REML(self):
@@ -372,7 +370,7 @@ class TestProximalContamination(unittest.TestCase):
 
         # make sure results are the same
         for key in ret_nocut.keys():
-            NP.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
+            np.testing.assert_array_almost_equal(ret_cut[key], ret_nocut[key])
             # self.assertAlmostEqual(ret_cut[key], ret_nocut[key])
 
 
@@ -384,14 +382,14 @@ def generate_random_data(N, d, s_c):
     num_excludes = s_c // 2
     s = s_c  # total number of SNPs to be tested
 
-    X = NP.ones((N, d))
-    y = NP.random.rand(N)
+    X = np.ones((N, d))
+    y = np.random.rand(N)
 
-    G0 = NP.random.rand(N, s_c)
-    G1 = NP.random.rand(N, s)
+    G0 = np.random.rand(N, s_c)
+    G1 = np.random.rand(N, s)
 
     # exclude randomly
-    perm = NP.random.permutation(s_c)
+    perm = np.random.permutation(s_c)
     exclude_idx = perm[:num_excludes]
     include_idx = perm[num_excludes:]
     G0_small = G0[:, include_idx]
@@ -425,7 +423,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
         self.assertAlmostEqual(
             -13.821329282675068, model._regular_marginal_loglikelihood()
@@ -438,7 +436,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
         self.assertAlmostEqual(
             -16.599719862714529, model._regular_marginal_loglikelihood()
@@ -452,7 +450,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         self.assertAlmostEqual(-14.635329282675063, model.marginal_loglikelihood())
 
         model = EPGLMM_N3K1("erf", "l2")
@@ -462,7 +460,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         self.assertAlmostEqual(-17.413719862714526, model.marginal_loglikelihood())
 
     def test_rmargll_after_optimization(self):
@@ -473,7 +471,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         model.optimize()
 
         self.assertAlmostEqual(-6.75677866924, model._regular_marginal_loglikelihood())
@@ -485,7 +483,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         model.optimize()
 
         self.assertAlmostEqual(-6.75424440734, model._regular_marginal_loglikelihood())
@@ -497,7 +495,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         model.optimize()
 
         self.assertAlmostEqual(
@@ -511,7 +509,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         model.optimize()
 
         self.assertAlmostEqual(
@@ -520,25 +518,25 @@ class TestBin2Kernel(unittest.TestCase):
 
     def test_setK_rmargll_after_optimization(self):
         model = LaplaceGLMM_N3K1("logistic")
-        model.setK(NP.dot(self._G0, self._G0.T), NP.dot(self._G1, self._G1.T))
+        model.setK(np.dot(self._G0, self._G0.T), np.dot(self._G1, self._G1.T))
         model.setX(self._X)
         model.sety(self._y)
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         model.optimize()
 
         self.assertAlmostEqual(-6.75677866924, model._regular_marginal_loglikelihood())
 
         model = EPGLMM_N3K1("erf")
-        model.setK(NP.dot(self._G0, self._G0.T), NP.dot(self._G1, self._G1.T))
+        model.setK(np.dot(self._G0, self._G0.T), np.dot(self._G1, self._G1.T))
         model.setX(self._X)
         model.sety(self._y)
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         model.optimize()
 
         self.assertAlmostEqual(-6.75424440734, model._regular_marginal_loglikelihood())
@@ -565,9 +563,7 @@ class TestBin2Kernel(unittest.TestCase):
 
         self.assertAlmostEqual(
             0.0,
-            SP.optimize.check_grad(
-                func, grad, NP.array([1.0, 1.2, 1.5, -3.0, 0.4]), model
-            ),
+            opt.check_grad(func, grad, np.array([1.0, 1.2, 1.5, -3.0, 0.4]), model),
             places=5,
         )
 
@@ -578,9 +574,7 @@ class TestBin2Kernel(unittest.TestCase):
 
         self.assertAlmostEqual(
             0.0,
-            SP.optimize.check_grad(
-                func, grad, NP.array([1.0, 1.2, 1.5, -3.0, 0.4]), model
-            ),
+            opt.check_grad(func, grad, np.array([1.0, 1.2, 1.5, -3.0, 0.4]), model),
             places=5,
         )
 
@@ -605,9 +599,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sety(self._y)
         self.assertAlmostEqual(
             0.0,
-            SP.optimize.check_grad(
-                func, grad, NP.array([1.0, 1.2, 1.5, -3.0, 0.4]), model
-            ),
+            opt.check_grad(func, grad, np.array([1.0, 1.2, 1.5, -3.0, 0.4]), model),
             places=5,
         )
 
@@ -617,9 +609,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sety(self._y)
         self.assertAlmostEqual(
             0.0,
-            SP.optimize.check_grad(
-                func, grad, NP.array([1.0, 1.2, 1.5, -3.0, 0.4]), model
-            ),
+            opt.check_grad(func, grad, np.array([1.0, 1.2, 1.5, -3.0, 0.4]), model),
             places=5,
         )
 
@@ -631,9 +621,9 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
-        ps = NP.array(
+        ps = np.array(
             [
                 0.30481858,
                 0.22520247,
@@ -659,9 +649,9 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
-        ps = NP.array(
+        ps = np.array(
             [
                 0.35487175,
                 0.20959901,
@@ -688,7 +678,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
         self.assertAlmostEqual(
             -13.821329282675068, model._regular_marginal_loglikelihood()
@@ -701,7 +691,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
         self.assertAlmostEqual(-16.5997198627, model._regular_marginal_loglikelihood())
 
@@ -713,7 +703,7 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
         model.optimize()
 
         self.assertAlmostEqual(-6.75677866924, model._regular_marginal_loglikelihood())
@@ -726,7 +716,7 @@ class TestBin2Kernel(unittest.TestCase):
         # model.sig02 = 1.5
         # model.sig12 = 0.5
         # model.sign2 = 0.8
-        # model.beta = NP.array([2.0, -1.0])
+        # model.beta = np.array([2.0, -1.0])
         # model.optimize()
 
         # self.assertAlmostEqual(-6.75424440734, model._regular_marginal_loglikelihood())
@@ -753,9 +743,7 @@ class TestBin2Kernel(unittest.TestCase):
 
         self.assertAlmostEqual(
             0.0,
-            SP.optimize.check_grad(
-                func, grad, NP.array([1.0, 1.2, 1.5, -3.0, 0.4]), model
-            ),
+            opt.check_grad(func, grad, np.array([1.0, 1.2, 1.5, -3.0, 0.4]), model),
             places=5,
         )
 
@@ -766,9 +754,7 @@ class TestBin2Kernel(unittest.TestCase):
 
         self.assertAlmostEqual(
             0.0,
-            SP.optimize.check_grad(
-                func, grad, NP.array([1.0, 1.2, 1.5, -3.0, 0.4]), model
-            ),
+            opt.check_grad(func, grad, np.array([1.0, 1.2, 1.5, -3.0, 0.4]), model),
             places=5,
         )
 
@@ -780,9 +766,9 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
-        ps = NP.array(
+        ps = np.array(
             [
                 0.30483881,
                 0.2252297,
@@ -808,9 +794,9 @@ class TestBin2Kernel(unittest.TestCase):
         model.sig02 = 1.5
         model.sig12 = 0.5
         model.sign2 = 0.8
-        model.beta = NP.array([2.0, -1.0])
+        model.beta = np.array([2.0, -1.0])
 
-        ps = NP.array(
+        ps = np.array(
             [
                 0.35487175,
                 0.20959901,

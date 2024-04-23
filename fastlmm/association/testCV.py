@@ -1,6 +1,5 @@
-from __future__ import absolute_import
 import fastlmm.association as association
-import scipy as sp
+import numpy as np
 from sklearn import linear_model
 from sklearn import model_selection
 from sklearn.model_selection import GridSearchCV
@@ -8,8 +7,6 @@ from sklearn.model_selection import GridSearchCV
 #!! from fastlmm.external.sklearn.metrics.scorer import SCORERS, Scorer
 from fastlmm import inference
 import fastlmm.util.util as util
-import pdb
-from six.moves import range
 
 
 class testCV(association.varcomp_test):
@@ -161,9 +158,9 @@ class testCV(association.varcomp_test):
 
     def _getParamGridFixedEffectModel(self, G0, G1, link):
         if link == "linear":
-            param_grid = dict(alpha=0.5 * sp.logspace(-5, 5, 20))
+            param_grid = dict(alpha=0.5 * np.logspace(-5, 5, 20))
         elif link == "logistic":
-            param_grid = dict(C=sp.logspace(-5, 5, 20))
+            param_grid = dict(C=np.logspace(-5, 5, 20))
         else:
             assert False
 
@@ -171,8 +168,8 @@ class testCV(association.varcomp_test):
 
     def _getParamGridMixedEffectModel(self, G0, G1):
         param_grid = dict(
-            sig02=sp.arange(0.0, 2.1, 0.4),
-            sig12=sp.arange(0.0, 2.1, 0.4),
+            sig02=np.arange(0.0, 2.1, 0.4),
+            sig12=np.arange(0.0, 2.1, 0.4),
             sign2=[None],
             beta=[None],
         )
@@ -222,7 +219,7 @@ class testCV(association.varcomp_test):
             list(range(self.Y.shape[0]))
         )
         i_fold = 0
-        scores = sp.zeros(self.n_folds)
+        scores = np.zeros(self.n_folds)
         params = list()
 
         for train, test in k_fold:
@@ -258,21 +255,21 @@ class testCV(association.varcomp_test):
             if G1 is None and self.G0 is None:
                 data = self.X[self.data_permutation][indices2select]
             elif G1 is None:
-                data = sp.column_stack(
+                data = np.column_stack(
                     (
                         self.G0[self.data_permutation][indices2select],
                         self.X[self.data_permutation][indices2select],
                     )
                 )
             elif self.G0 is None:
-                data = sp.column_stack(
+                data = np.column_stack(
                     (
                         G1[self.data_permutation][indices2select],
                         self.X[self.data_permutation][indices2select],
                     )
                 )
             else:
-                data = sp.column_stack(
+                data = np.column_stack(
                     (
                         self.G0[self.data_permutation][indices2select],
                         G1[self.data_permutation][indices2select],

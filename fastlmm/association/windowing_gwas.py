@@ -5,7 +5,6 @@ Authors: Chris Widmer
 Created: 9/25/2014
 """
 
-from __future__ import absolute_import
 import os
 import numpy as np
 import logging
@@ -15,7 +14,6 @@ from pysnptools.util import intersect_apply
 import pysnptools.util.pheno as pstpheno
 import fastlmm.util.standardizer as stdizer
 from fastlmm.inference import LMM
-from six.moves import range
 
 
 class WindowingGwas(object):

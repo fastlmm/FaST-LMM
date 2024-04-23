@@ -1217,7 +1217,7 @@ if False:
     P_ = Kinv_  # this one does not match with P
 
     X_K_ = linreg.regress(X_K)
-    S_x = linreg.regress(sp.eye(N))
+    S_x = linreg.regress(np.eye(N))
     S_x = linreg.regress(S_x.T)
     K_ = X_K_.dot(X_K_.T) + S_x
     [u, s, v] = la.svd(X_K_)  # Use big_svd

@@ -555,7 +555,7 @@ def heritability_spatial_correction(
                 values=["h2uncorr", "h2corr", "diff", "e2"],
                 index=["phen"],
                 columns=[],
-                aggfunc=np.std,
+                aggfunc="std",
             )
             jk_table_corr["h2uncorr SE"] = jk_table_corr["h2uncorr"] * np.sqrt(
                 jackknife_count_actual - 1
@@ -583,7 +583,7 @@ def heritability_spatial_correction(
                 values=["gxe2"],
                 index=["phen"],
                 columns=[],
-                aggfunc=np.std,
+                aggfunc="std",
             )
             jk_table_gxe2["gxe2 SE"] = jk_table_gxe2["gxe2"] * np.sqrt(
                 jackknife_count_actual - 1
@@ -696,7 +696,7 @@ def heritability_spatial_correction(
         ]  # create a column showing where the perm is better (or as good) as the real
         # Use pivottable to find the fraction of of times when permutation is better
         pivot_table_plus = pd.pivot_table(
-            result, values=["P(e2)"], index=["phen"], columns=[], aggfunc=np.mean
+            result, values=["P(e2)"], index=["phen"], columns=[], aggfunc="mean"
         )
         if cache_folder is not None:
             summary_permplus_table_fn = (
@@ -732,7 +732,7 @@ def heritability_spatial_correction(
                 a2 = float(
                     permplus_table[permplus_table.phen == phen_target][
                         permplus_table.permute_plus_index == -1
-                    ]["a2"]
+                    ]["a2"].iloc[0]
                 )
                 for permute_index in range(-1, permute_times_count):
                     # pheno, G_kernel, spatial_coor, spatial_iid, alpha,          alpha_powerm (permute_index, permute_count, permute_seed),
@@ -796,7 +796,7 @@ def heritability_spatial_correction(
             ]  # create a column showing where the perm is better (or as good) as the real
             # Use pivottable to find the fraction of times when permutation is better
             pivot_table_times = pd.pivot_table(
-                resultx, values=["P(gxe2)"], index=["phen"], columns=[], aggfunc=np.mean
+                resultx, values=["P(gxe2)"], index=["phen"], columns=[], aggfunc="mean"
             )
             if cache_folder is not None:
                 _write_csv(pivot_table_times, True, summary_permtimes_table_fn)

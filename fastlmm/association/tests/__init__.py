@@ -1,4 +1,4 @@
-'''
+"""
 #!! fix comments
 snpset is a named set of snps.  See the Bed class's 'read' method of examples of their use.
 
@@ -18,11 +18,9 @@ interface ISnpSetPlusBed:
 
     def __str__(self):
         return # string of name of this set of snps
-'''
+"""
 
-from __future__ import absolute_import
 from .Lrt import *
 from .Cv import *
 from .Sc import *
 from . import LRT_up as lrt
-

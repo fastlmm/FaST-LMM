@@ -2,8 +2,6 @@
 example of how to use feature selection from python (see also command line interface)
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 import scipy.linalg as LA
 import sys, os

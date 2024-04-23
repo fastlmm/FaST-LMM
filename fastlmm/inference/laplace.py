@@ -1,7 +1,6 @@
-from __future__ import absolute_import
 from fastlmm import Pr
-import scipy as sp
-import numpy as NP
+import scipy.optimize as opt
+import numpy as np
 from numpy import dot
 import scipy.integrate
 from scipy.linalg import cholesky, solve_triangular
@@ -60,7 +59,7 @@ class LaplaceGLMM(object):
             f = self._rdotK(a) + m
             return -(self._likelihood.log(f, self._y) - (f - m).dot(a) / 2.0)
 
-        (alpha, obj, iter, funcalls) = sp.optimize.fminbound(
+        (alpha, obj, iter, funcalls) = opt.fminbound(
             fobj, 0.0, 1.0, full_output=True, xtol=1e-4, maxfun=25
         )
         obj = -obj
@@ -83,7 +82,7 @@ class LaplaceGLMM(object):
         sig12 = [self._debugUACalls[i].sig12 for i in range(len(self._debugUACalls))]
         sign2 = [self._debugUACalls[i].sign2 for i in range(len(self._debugUACalls))]
         gradMeans = [
-            NP.mean(abs(self._debugUACalls[i].lastGrad))
+            np.mean(abs(self._debugUACalls[i].lastGrad))
             for i in range(len(self._debugUACalls))
         ]
 
@@ -92,11 +91,11 @@ class LaplaceGLMM(object):
 
         table = [
             ["", "min", "max", "mean"],
-            ["iters", min(iters), max(iters), NP.mean(iters)],
-            ["|grad|_{mean}", min(gradMeans), max(gradMeans), NP.mean(gradMeans)],
-            ["sig01", min(sig02), max(sig02), NP.mean(sig02)],
-            ["sig11", min(sig12), max(sig12), NP.mean(sig12)],
-            ["sign1", min(sign2), max(sign2), NP.mean(sign2)],
+            ["iters", min(iters), max(iters), np.mean(iters)],
+            ["|grad|_{mean}", min(gradMeans), max(gradMeans), np.mean(gradMeans)],
+            ["sig01", min(sig02), max(sig02), np.mean(sig02)],
+            ["sig11", min(sig12), max(sig12), np.mean(sig12)],
+            ["sign1", min(sign2), max(sign2), np.mean(sign2)],
         ]
         Pr.prin(tabulate(table))
 
@@ -122,7 +121,7 @@ class LaplaceGLMM(object):
         m = self._mean
 
         if self._lasta is None or self._lasta.shape[0] != self._N:
-            aprev = NP.zeros(self._N)
+            aprev = np.zeros(self._N)
         else:
             aprev = self._lasta
 
@@ -135,7 +134,7 @@ class LaplaceGLMM(object):
         failedMsg = ""
         while ii < maxIter:
             grad = self._calculateUAGrad(fprev, aprev)
-            if NP.mean(abs(grad)) < gradEpsStop:
+            if np.mean(abs(grad)) < gradEpsStop:
                 a = aprev
                 f = fprev
                 break
@@ -172,7 +171,7 @@ class LaplaceGLMM(object):
 
         self._lasta = a
 
-        err = NP.mean(abs(grad))
+        err = np.mean(abs(grad))
         if err > gradEpsErr:
             failed = True
             failedMsg = "Gradient not too small in the Laplace update approximation.\n"
@@ -215,11 +214,11 @@ class LaplaceGLMM(object):
         self._updateConstants()
         self._updateApproximation()
 
-        if NP.isscalar(kstarstar):
+        if np.isscalar(kstarstar):
             return self._predict_each(meanstar, kstar, kstarstar, prob)
 
         n = len(kstarstar)
-        ps = NP.zeros(n)
+        ps = np.zeros(n)
 
         for i in range(n):
             ps[i] = self._predict_each(meanstar[i], kstar[i, :], kstarstar[i], prob)
@@ -262,7 +261,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
         self._a = a
 
         self._W = self._calculateW(f)
-        self._Wsq = NP.sqrt(self._W)
+        self._Wsq = np.sqrt(self._W)
 
         self._A = 1.0 + self._W * self._sign2
         self._V = self._W / self._A
@@ -285,10 +284,10 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
         r = (
             loglike
             - dot(f - self._mean, a) / 2.0
-            - sum(NP.log(NP.diag(self._Lk)))
-            - sum(NP.log(self._A)) / 2.0
+            - sum(np.log(np.diag(self._Lk)))
+            - sum(np.log(self._A)) / 2.0
         )
-        assert NP.isfinite(r), "Not finite regular marginal loglikelihood."
+        assert np.isfinite(r), "Not finite regular marginal loglikelihood."
 
         return r
 
@@ -340,7 +339,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
                 dot(a, dF0)
                 - 0.5 * dot(a, dK0a)
                 + dot(f - m, t)
-                + 0.5 * NP.sum(diags * dF0)
+                + 0.5 * np.sum(diags * dF0)
                 + -0.5 * trace2(VG0, G0.T)
                 + 0.5 * trace2(LkG01VG0.T, LkG01VG0)
             )
@@ -359,7 +358,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
                 dot(a, dF1)
                 - 0.5 * dot(a, dK1a)
                 + dot(f - m, t)
-                + 0.5 * NP.sum(diags * dF1)
+                + 0.5 * np.sum(diags * dF1)
                 + -0.5 * trace2(VG1, G1.T)
                 + 0.5 * trace2(LkG01VG1.T, LkG01VG1)
             )
@@ -374,8 +373,8 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
                 dot(a, dFn)
                 - 0.5 * dot(a, a)
                 + dot(f - m, t)
-                + 0.5 * NP.sum(diags * dFn)
-                + -0.5 * NP.sum(V)
+                + 0.5 * np.sum(diags * dFn)
+                + -0.5 * np.sum(V)
                 + 0.5 * trace2(H.T, H)
             )
 
@@ -387,13 +386,13 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
 
             retbeta = dot(a, dFbeta) + dot(f - m, t)
             for i in range(dFbeta.shape[1]):
-                retbeta[i] += 0.5 * NP.sum(diags * dFbeta[:, i])
+                retbeta[i] += 0.5 * np.sum(diags * dFbeta[:, i])
 
             ret.extend(retbeta)
 
-        ret = NP.array(ret)
-        assert NP.all(
-            NP.isfinite(ret)
+        ret = np.array(ret)
+        assert np.all(
+            np.isfinite(ret)
         ), "Not finite regular marginal loglikelihood gradient."
 
         return ret
@@ -440,7 +439,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
         self._link = link
 
     def _updateApproximationBegin(self):
-        self._K = NP.eye(self._N) * self._sign2
+        self._K = np.eye(self._N) * self._sign2
         if self._isK0Set:
             self._K += self._sig02 * (
                 self._K0 if self._K0 is not None else dot(self._G0, self._G0.T)
@@ -451,7 +450,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
             )
 
     def _calculateUAa(self, b, W):
-        Wsq = NP.sqrt(W)
+        Wsq = np.sqrt(W)
         Ln = self._calculateLn(self._K, Wsq)
         a = b - Wsq * stu(Ln.T, stl(Ln, Wsq * dot(self._K, b)))
         return a
@@ -461,7 +460,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
         self._a = a
 
         self._W = self._calculateW(f)
-        self._Wsq = NP.sqrt(self._W)
+        self._Wsq = np.sqrt(self._W)
 
         self._A = 1.0 + self._W * self._sign2
         V = self._W / self._A
@@ -478,8 +477,8 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
 
         loglike = self._likelihood.log(f, self._y)
 
-        r = loglike - dot(f - self._mean, a) / 2.0 - sum(NP.log(NP.diag(self._Ln)))
-        assert NP.isfinite(r), "Not finite regular marginal loglikelihood."
+        r = loglike - dot(f - self._mean, a) / 2.0 - sum(np.log(np.diag(self._Ln)))
+        assert np.isfinite(r), "Not finite regular marginal loglikelihood."
 
         return r
 
@@ -498,7 +497,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
         Ln = self._Ln
         X = self._X
 
-        LnWsq = stl(Ln, NP.diag(Wsq))
+        LnWsq = stl(Ln, np.diag(Wsq))
         LnWsqK = dot(LnWsq, K)
 
         d = self._dKn()
@@ -515,7 +514,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
                 dot(a, dF0)
                 - dot(a, dF0)
                 + 0.5 * dot(a, dK0a)
-                + 0.5 * NP.sum(diags * dF0)
+                + 0.5 * np.sum(diags * dF0)
                 - 0.5 * trace2(LnWsq.T, dot(LnWsq, K0))
             )
 
@@ -529,7 +528,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
                 dot(a, dF1)
                 - dot(a, dF1)
                 + 0.5 * dot(a, dK1a)
-                + 0.5 * NP.sum(diags * dF1)
+                + 0.5 * np.sum(diags * dF1)
                 - 0.5 * trace2(LnWsq.T, dot(LnWsq, K1))
             )
 
@@ -542,7 +541,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
                 dot(a, dFn)
                 - dot(a, dFn)
                 + 0.5 * dot(a, a)
-                + 0.5 * NP.sum(diags * dFn)
+                + 0.5 * np.sum(diags * dFn)
                 - 0.5 * trace2(LnWsq.T, LnWsq)
             )
 
@@ -552,13 +551,13 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
             dFmb = -dot(LnWsqK.T, dot(LnWsq, X))
             dFb = dFmb + X
 
-            r = dot(a, dFb) - dot(a, dFmb) + 0.5 * NP.sum(diags * dFb.T, 1)
+            r = dot(a, dFb) - dot(a, dFmb) + 0.5 * np.sum(diags * dFb.T, 1)
 
             ret += list(r)
 
-        ret = NP.array(ret)
-        assert NP.all(
-            NP.isfinite(ret)
+        ret = np.array(ret)
+        assert np.all(
+            np.isfinite(ret)
         ), "Not finite regular marginal loglikelihood gradient."
 
         return ret

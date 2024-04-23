@@ -1,5 +1,3 @@
-import scipy as SP
-import numpy as NP
 import numpy as np
 import scipy.linalg as LA
 import scipy.optimize as opt
@@ -218,8 +216,8 @@ class LMM(object):
             self.a2 = a2
             pass
         else:  # rank of kernel = 0 (linear regression case)
-            self.S = SP.zeros((0))
-            self.U = SP.zeros_like(self.G)
+            self.S = np.zeros((0))
+            self.U = np.zeros_like(self.G)
 
     def setK(self, K0, K1=None, a2=0.0):
         """
@@ -466,7 +464,7 @@ class LMM(object):
         else:
             Sd = (h2 * self.S + (1.0 - h2)) * scale
 
-        UXS = self.UX / NP.lib.stride_tricks.as_strided(
+        UXS = self.UX / np.lib.stride_tricks.as_strided(
             Sd, (Sd.size, self.UX.shape[1]), (Sd.itemsize, 0)
         )
         UyS = self.Uy / Sd
@@ -500,12 +498,12 @@ class LMM(object):
             G_exclude = self.G[:, self.exclude_idx]
 
             self.UW = self.U.T.dot(G_exclude)  # needed for proximal contamination
-            UWS = self.UW / NP.lib.stride_tricks.as_strided(
+            UWS = self.UW / np.lib.stride_tricks.as_strided(
                 Sd, (Sd.size, num_exclude), (Sd.itemsize, 0)
             )
             assert UWS.shape == (k, num_exclude)
 
-            WW = NP.eye(num_exclude) - UWS.T.dot(self.UW)
+            WW = np.eye(num_exclude) - UWS.T.dot(self.UW)
             WX = UWS.T.dot(self.UX)
             Wy = UWS.T.dot(self.Uy)
             assert WW.shape == (num_exclude, num_exclude)
@@ -529,7 +527,7 @@ class LMM(object):
             assert UWy.shape == (num_exclude,)
 
             # compute S_WW^{-1} * UWX
-            WX = UWX / NP.lib.stride_tricks.as_strided(
+            WX = UWX / np.lib.stride_tricks.as_strided(
                 S_WW, (S_WW.size, UWX.shape[1]), (S_WW.itemsize, 0)
             )
             # compute S_WW^{-1} * UWy
@@ -566,12 +564,12 @@ class LMM(object):
                     logdetK
                     + logdetXKX
                     - logdetXX
-                    + (N - D) * (np.log(2.0 * SP.pi * sigma2) + 1)
+                    + (N - D) * (np.log(2.0 * np.pi * sigma2) + 1)
                 )
                 variance_beta = None
             else:
                 sigma2 = r2 / (N)
-                nLL = 0.5 * (logdetK + N * (np.log(2.0 * SP.pi * sigma2) + 1))
+                nLL = 0.5 * (logdetK + N * (np.log(2.0 * np.pi * sigma2) + 1))
                 if delta is not None:
                     h2 = 1.0 / (delta + 1)
                 # This is a faster version of h2 * sigma2 * np.diag(LA.inv(XKX))
@@ -605,14 +603,14 @@ class LMM(object):
                     + (dof + (N - D)) * np.log(1.0 + r2 / dof)
                 )
                 nLL += (
-                    0.5 * (N - D) * np.log(dof * SP.pi)
+                    0.5 * (N - D) * np.log(dof * np.pi)
                     + SS.gammaln(0.5 * dof)
                     - SS.gammaln(0.5 * (dof + (N - D)))
                 )
             else:
                 nLL = 0.5 * (logdetK + (dof + N) * np.log(1.0 + r2 / dof))
                 nLL += (
-                    0.5 * N * np.log(dof * SP.pi)
+                    0.5 * N * np.log(dof * np.pi)
                     + SS.gammaln(0.5 * dof)
                     - SS.gammaln(0.5 * (dof + N))
                 )
@@ -764,7 +762,7 @@ class LMM(object):
         M = self.Xstar.shape[0]
 
         if (h2 < 0.0) or (h2 >= 1.0):
-            return SP.nan * SP.ones(M)
+            return np.nan * np.ones(M)
 
         k = self.S.shape[0]
         N = self.y.shape[0]
@@ -812,11 +810,11 @@ class LMM(object):
         # available at: http://www.nature.com/nmeth/journal/v9/n6/extref/nmeth.2037-S1.pdf
         # exclude SNPs from the RRM in the likelihood evaluation
         if len(self.exclude_idx) > 0:
-            UWS = self.UW / NP.lib.stride_tricks.as_strided(
+            UWS = self.UW / np.lib.stride_tricks.as_strided(
                 Sd, (Sd.size, num_exclude), (Sd.itemsize, 0)
             )
             assert UWS.shape == (k, num_exclude)
-            WW = NP.eye(num_exclude) - UWS.T.dot(self.UW)
+            WW = np.eye(num_exclude) - UWS.T.dot(self.UW)
             WKstar = UWS.T.dot(UKstar)
             Wyres = UWS.T.dot(Uyres)
             assert WW.shape == (num_exclude, num_exclude)
@@ -838,7 +836,7 @@ class LMM(object):
             assert UWyres.shape == (num_exclude,)
 
             # compute S_WW^{-1} * UWX
-            WKstar = UWKstar / NP.lib.stride_tricks.as_strided(
+            WKstar = UWKstar / np.lib.stride_tricks.as_strided(
                 S_WW, (S_WW.size, UWKstar.shape[1]), (S_WW.itemsize, 0)
             )
             # compute S_WW^{-1} * UWy
@@ -916,7 +914,7 @@ class LMM(object):
         # TODO: REML?
 
         if (h2 < 0.0) or (h2 >= 1.0):
-            return SP.nan * SP.ones(M)
+            return np.nan * np.ones(M)
 
         k = self.S.shape[0]
         N = self.y.shape[0]
@@ -952,7 +950,7 @@ class LMM(object):
         assert N_test == Kstar_star.shape[1]
 
         part1 = Kstar_star
-        part1 += SP.eye(N_test) * delta
+        part1 += np.eye(N_test) * delta
         part1 *= sigma2
 
         # print "part1", part1[0,0]
@@ -962,8 +960,8 @@ class LMM(object):
         # (U1^T a)^T (S_1 + delta*I)^{-1} (U1^T a)
         SUKstarTUkStar = np.dot(Sdi * self.UKstar.T, self.UKstar)
 
-        # UXS = self.UKstar / NP.lib.stride_tricks.as_strided(Sd, (Sd.size,self.UKstar.shape[1]), (Sd.itemsize,0))
-        # NP.testing.assert_array_almost_equal(SUKstarTUkStar, np.dot(UXS.T, self.UKstar), decimal=4)
+        # UXS = self.UKstar / np.lib.stride_tricks.as_strided(Sd, (Sd.size,self.UKstar.shape[1]), (Sd.itemsize,0))
+        # np.testing.assert_array_almost_equal(SUKstarTUkStar, np.dot(UXS.T, self.UKstar), decimal=4)
 
         SUKstarTUkStar *= sigma2
 
@@ -1021,9 +1019,9 @@ class LMM(object):
         # Solve the linear system x = (L L^T)^-1 res
 
         try:
-            L = SP.linalg.cho_factor(sigma)
-            res_sig = SP.linalg.cho_solve(L, res)
-            logdetK = NP.linalg.slogdet(sigma)[1]
+            L = np.linalg.cho_factor(sigma)
+            res_sig = np.linalg.cho_solve(L, res)
+            logdetK = np.linalg.slogdet(sigma)[1]
 
         except Exception, detail:
             print "Cholesky failed, using eigen-value decomposition!"
@@ -1045,15 +1043,15 @@ class LMM(object):
 
         # some sanity checks
         if False:
-            res_sig3 = SP.linalg.pinv(sigma).dot(res)
-            NP.testing.assert_array_almost_equal(res_sig, res_sig3, decimal=2)
+            res_sig3 = np.linalg.pinv(sigma).dot(res)
+            np.testing.assert_array_almost_equal(res_sig, res_sig3, decimal=2)
 
         # see Carl Rasmussen's book on GPs, equation 5.10, or
         term1 = -0.5 * logdetK
         term2 = -0.5 * np.dot(
             res_sig.reshape(-1).T, res.reshape(-1)
         )  # Change the inputs to the functions so that these are vectors, not 1xn,nx1
-        term3 = -0.5 * len(res) * np.log(2 * SP.pi)
+        term3 = -0.5 * len(res) * np.log(2 * np.pi)
 
         if term2 < -10000:
             logging.warning(

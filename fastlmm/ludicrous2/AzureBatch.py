@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import logging
 import datetime
 import os
@@ -13,7 +11,7 @@ import math
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util.mapreduce1.mapreduce import _identity
 import pysnptools.util as pstutil
-from six.moves import range
+
 
 try:
     import cloudpickle as pickle

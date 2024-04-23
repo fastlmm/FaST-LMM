@@ -1,12 +1,8 @@
-from __future__ import absolute_import
-import scipy as sp
 import numpy as np
 import scipy.stats as st
-import scipy.special
+import scipy.special as ss
 import fastlmm.util.mingrid as mingrid
-import pdb
 import logging
-from six.moves import range
 
 
 class chi2mixture(object):
@@ -86,8 +82,8 @@ class chi2mixture(object):
             self.alteqnull = self.lrt == 0
             logging.info("WARNING: alteqnull not provided, so using alteqnull=(lrt==0)")
         if self.mixture is None:
-            self.mixture = 1.0 - (sp.array(self.alteqnull).sum() * 1.0) / (
-                sp.array(self.alteqnull).shape[0] * 1.0
+            self.mixture = 1.0 - (np.array(self.alteqnull).sum() * 1.0) / (
+                np.array(self.alteqnull).shape[0] * 1.0
             )
         return self.alteqnull, self.mixture
 
@@ -98,12 +94,12 @@ class chi2mixture(object):
 
         Only the top qmax quantile is being used for the fit (self.qmax is used in fit_scale_logP).
         """
-        # imin= sp.argsort(self.lrt[~self.i0])
+        # imin= np.argsort(self.lrt[~self.i0])
         # ntests = self.lrt.shape[0]
         if self.isortlrt is None:
             self.isortlrt = self.lrt.argsort()[::-1]
             self.qnulllrtsort = (
-                0.5 + sp.arange(self.mixture * self.isortlrt.shape[0])
+                0.5 + np.arange(self.mixture * self.isortlrt.shape[0])
             ) / (self.mixture * self.isortlrt.shape[0])
             self.lrtsort = self.lrt[self.isortlrt]
         resmin = [
@@ -164,18 +160,18 @@ class chi2mixture(object):
         return resmin[0]
 
     def scale_dof_obj(self, scale, dof):
-        base = sp.exp(
+        base = np.exp(
             1
         )  # fitted params are invariant to this logarithm base (i.e.10, or e)
 
-        nfalse = len(self.alteqnull) - sp.sum(self.alteqnull)
+        nfalse = len(self.alteqnull) - np.sum(self.alteqnull)
 
-        imax = int(sp.ceil(self.qmax * nfalse))  # of only non zer dof component
+        imax = int(np.ceil(self.qmax * nfalse))  # of only non zer dof component
         p = st.chi2.sf(self.lrtsort[0:imax] / scale, dof)
-        logp = sp.logn(base, p)
-        r = sp.logn(base, self.qnulllrtsort[0:imax]) - logp
+        logp = ss.loggamma(base, p)
+        r = ss.loggamma(base, self.qnulllrtsort[0:imax]) - logp
         if self.abserr:
-            err = sp.absolute(r).sum()
+            err = np.absolute(r).sum()
         else:  # mean square error
             err = (r * r).mean()
         return err, imax
@@ -185,8 +181,8 @@ class chi2mixture(object):
         For debugging: returns mse for particular scale and dof, given pre-filtered lrt
         """
         p = st.chi2.sf(lrt / scale, dof)
-        logp = sp.logn(base, p)
-        r = sp.logn(base, self.qnulllrtsort[0 : len(lrt)]) - logp
+        logp = ss.loggamma(base, p)
+        r = ss.loggamma(base, self.qnulllrtsort[0 : len(lrt)]) - logp
         mse = (r * r).mean()
         return mse
 
@@ -211,7 +207,7 @@ class chi2mixture(object):
             ), "alteqnull is none, but lrt is not (seems unexpected, JL)"
 
         pv = st.chi2.sf(lrt / self.scale, self.dof) * self.mixture
-        pv[sp.array(alteqnull)] = 1.0
+        pv[np.array(alteqnull)] = 1.0
         return pv
 
     # OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
@@ -263,12 +259,12 @@ class chi2mixture(object):
 
         N = (~i0).sum()
         sumX = (lrt[~i0]).sum()
-        logsumX = (sp.log(lrt[~i0])).sum()
+        logsumX = (np.log(lrt[~i0])).sum()
         if (dof is None) and (scale is None):
             # f is the Gamma likelihood with the scale parameter maximized analytically as a function of 0.5 * the degrees of freedom
             f = lambda k: -1.0 * (
-                -N * sp.special.gammaln(k)
-                - k * N * (sp.log(sumX) - sp.log(k) - sp.log(N))
+                -N * np.special.gammaln(k)
+                - k * N * (np.log(sumX) - np.log(k) - np.log(N))
                 + (k - 1.0) * logsumX
                 - k * N
             )
@@ -277,8 +273,8 @@ class chi2mixture(object):
             dof = 2.0 * res[0]
         elif dof is None:
             f = lambda k: -1.0 * (
-                -N * sp.special.gammaln(k)
-                - k * N * sp.log(2.0 * scale)
+                -N * np.special.gammaln(k)
+                - k * N * np.log(2.0 * scale)
                 + (k - 1.0) * logsumX
                 - sumX / (2.0 * scale)
             )
@@ -309,16 +305,16 @@ if __name__ == "__main__":
     dof = 2
     mixture = 0.5
     ntests = 10000
-    lrt = sp.zeros((ntests))
-    lrttest = sp.zeros((ntests))
+    lrt = np.zeros((ntests))
+    lrttest = np.zeros((ntests))
     for i in range(dof):
         x = np.randn(ntests)
-        xtest = sp.randn(ntests)
+        xtest = np.randn(ntests)
         lrt += scale * (x * x)
         lrttest += scale * (xtest * xtest)
 
-    lrt[np.random.permutation(ntests)[0 : sp.ceil(ntests * mixture)]] = 0.0
-    lrttest[np.random.permutation(ntests)[0 : sp.ceil(ntests * mixture)]] = 0.0
+    lrt[np.random.permutation(ntests)[0 : np.ceil(ntests * mixture)]] = 0.0
+    lrttest[np.random.permutation(ntests)[0 : np.ceil(ntests * mixture)]] = 0.0
 
     qmax = 0.2
     logging.info(("create the distribution object, with qmax = %.4f" % qmax))

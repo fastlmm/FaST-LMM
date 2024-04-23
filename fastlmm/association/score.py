@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-import numpy as NP
-import scipy as sp
+import numpy as np
 import scipy.linalg as LA
 import numpy.linalg as nla
 import os
 import sys
 import glob
-from six.moves import range
 
 sys.path.append("./../../pyplink")
 from fastlmm.pyplink.plink import *
@@ -85,8 +82,8 @@ class scoretest_logit(scoretest):
 
     def __init__(self, Y, X=None, appendbias=False):
         ## check if is binary
-        uniquey = sp.unique(Y)
-        if not sp.sort(uniquey).tolist() == [0, 1]:
+        uniquey = np.unique(Y)
+        if not np.sort(uniquey).tolist() == [0, 1]:
             raise Exception(
                 "must use binary data in {0,1} for logit tests, found:" + str(Y)
             )
@@ -100,8 +97,8 @@ class scoretest_logit(scoretest):
         self.logreg_mod = sm.Logit(Y[:, 0], X)
         self.logreg_result = self.logreg_mod.fit(disp=0)
         self.pY = self.logreg_result.predict(X)
-        self.stdY = sp.sqrt(self.pY * (1.0 - self.pY))
-        self.VX = self.X * NP.lib.stride_tricks.as_strided(
+        self.stdY = np.sqrt(self.pY * (1.0 - self.pY))
+        self.VX = self.X * np.lib.stride_tricks.as_strided(
             (self.stdY), (self.stdY.size, self.X.shape[1]), (self.stdY.itemsize, 0)
         )
         self.pinvVX = nla.pinv(self.VX)
@@ -132,7 +129,7 @@ class scoretest_logit(scoretest):
         RxY = (
             self.Y.flatten() - self.pY
         )  # residual of y regressed on X, which here, is equivalent to sigma2*Py (P is the projection matrix, which is idempotent)
-        VG = G1 * NP.lib.stride_tricks.as_strided(
+        VG = G1 * np.lib.stride_tricks.as_strided(
             self.stdY, (self.stdY.size, G1.shape[1]), (self.stdY.itemsize, 0)
         )
         GY = G1.T.dot(RxY)
@@ -186,7 +183,7 @@ class scoretest2K(scoretest):
             D = X.shape[1]
         self.Neff = N - D
         if self.K is not None:
-            ar = sp.arange(self.K.shape[0])
+            ar = np.arange(self.K.shape[0])
             self.K[ar, ar] += 1.0
             self.PxKPx, self.Xdagger = linreg(
                 Y=(self.K), X=self.X, Xdagger=self.Xdagger
@@ -201,7 +198,7 @@ class scoretest2K(scoretest):
         elif 0.7 * (self.Neff) <= self.G0.shape[1] or forcefullrank:
             self.K = self.G0.dot(self.G0.T)
             # BR: changed K to self.K (K is not defined)
-            ar = sp.arange(self.K.shape[0])
+            ar = np.arange(self.K.shape[0])
             self.K[ar, ar] += 1.0
             self.PxKPx, self.Xdagger = linreg(
                 Y=(self.K), X=self.X, Xdagger=self.Xdagger
@@ -246,7 +243,7 @@ class scoretest2K(scoretest):
         self.optparams = resmin[0]
 
         # pre-compute model parameters
-        self.expectedinfo = sp.zeros((2, 2))
+        self.expectedinfo = np.zeros((2, 2))
         # tr(PIPI)
         Sd = 1.0 / ((1.0 - self.optparams["h2"]) + self.optparams["h2"] * self.S)
         Sd *= Sd
@@ -298,20 +295,20 @@ class scoretest2K(scoretest):
             P = self.Y.shape[1]
 
         Sd = h2 * self.S + (1.0 - h2)
-        UYS = self.UY / NP.lib.stride_tricks.as_strided(
+        UYS = self.UY / np.lib.stride_tricks.as_strided(
             Sd, (Sd.size, self.UY.shape[1]), (Sd.itemsize, 0)
         )
 
         YKY = (UYS * self.UY).sum()
 
-        logdetK = sp.log(Sd).sum()
+        logdetK = np.log(Sd).sum()
 
         if self.lowrank:  # low rank part
             YKY += self.YUUY / (1.0 - h2)
-            logdetK += sp.log(1.0 - h2) * (self.Neff * P - k)
+            logdetK += np.log(1.0 - h2) * (self.Neff * P - k)
 
         sigma2 = YKY / (self.Neff * P)
-        nLL = 0.5 * (logdetK + self.Neff * P * (sp.log(2.0 * sp.pi * sigma2) + 1))
+        nLL = 0.5 * (logdetK + self.Neff * P * (np.log(2.0 * np.pi * sigma2) + 1))
         result = {"nLL": nLL, "sigma2": sigma2, "h2": h2}
         return result
 
@@ -324,7 +321,7 @@ class scoretest2K(scoretest):
         #    self.K=self.G.dot(self.G.T)
         #    h2 = self.optparams['h2']
         #    sig = self.optparams['sigma2']
-        #    V = h2*self.K + (1-h2)*sp.eye(self.K.shape[0])
+        #    V = h2*self.K + (1-h2)*np.eye(self.K.shape[0])
         #    V*=sig
         #    Vi=LA.inv(V)
         #    P =LA.inv(self.X.T.dot(Vi).dot(self.X))
@@ -340,7 +337,7 @@ class scoretest2K(scoretest):
         if self.lowrank:
             UUG = resG - self.U.dot(UG)
         Sd = 1.0 / (self.S * sigma2g + sigma2e)
-        SUG = UG * NP.lib.stride_tricks.as_strided(
+        SUG = UG * np.lib.stride_tricks.as_strided(
             Sd, (Sd.size, UG.shape[1]), (Sd.itemsize, 0)
         )
         # tr(YPGGPY)
@@ -358,10 +355,10 @@ class scoretest2K(scoretest):
         trPGGPGG = 0.5 * P * (GPG * GPG).sum()
         # tr(PGGPI)
         SUG *= SUG
-        expectedInfoCross = sp.empty(2)
+        expectedInfoCross = np.empty(2)
         expectedInfoCross[0] = 0.5 * P * SUG.sum()
         # tr(PGGPK)
-        SUG *= NP.lib.stride_tricks.as_strided(
+        SUG *= np.lib.stride_tricks.as_strided(
             self.S, (self.S.size, SUG.shape[1]), (self.S.itemsize, 0)
         )
         expectedInfoCross[1] = 0.5 * P * SUG.sum()
@@ -473,11 +470,11 @@ def scoreNoK(Y, X=None, Xdagger=None, G=None, sigma2=None, Bartletcorrection=Tru
         0.5 / (sigma2 * sigma2)
     )  # yPKPy=yPG^T*GPy=(yPG^T)*(yPG^T)^T
     if G.shape[0] > G.shape[1]:
-        GPG = sp.dot(
+        GPG = np.dot(
             RxG.T, RxG
         )  # GPG is always a square matrix in the smaller dimension
     else:
-        GPG = sp.dot(RxG, RxG.T)
+        GPG = np.dot(RxG, RxG.T)
     expectationsqform = (
         P * (GPG.trace()) * (0.5 / sigma2)
     )  # note this is Trace(PKP)=Trace(PPK)=Trace(PK), for P=projection matrix in comment, and in the code P=1=#phen
@@ -489,16 +486,16 @@ def scoreNoK(Y, X=None, Xdagger=None, G=None, sigma2=None, Bartletcorrection=Tru
     )
     # if 1:
     #    XXi=LA.inv(X.T.dot(X))
-    #    Px=(sp.eye(N)-X.dot(XXi).dot(X.T))/sigma2
+    #    Px=(np.eye(N)-X.dot(XXi).dot(X.T))/sigma2
     # pdb.set_trace()
     GPG /= (
         sigma2 * 2.0
     )  # what we will take eigenvalues of for Davies (which is P^1/2*K*P^1/2)
 
     # for debugging, explicitly compute GPG=P^1/2 * K * P^1/2
-    # SigInv=(1/sigma2)*sp.eye(N,N)
+    # SigInv=(1/sigma2)*np.eye(N,N)
     # Phat=X.dot(LA.inv(X.T.dot(SigInv).dot(X))).dot(X.T).dot(SigInv)
-    # PP=SigInv.dot(sp.eye(N,N)-Phat)
+    # PP=SigInv.dot(np.eye(N,N)-Phat)
     # K=G.dot(G.T)
     # PKP=PP.dot(K).dot(PP)
     # ss.stats(PKP-PKP.T)
