@@ -1036,13 +1036,11 @@ class LMM(object):
         if Usnps is not None:
             penalty_ = penalty or 0.0
             assert penalty_ >= 0.0, "penalty has to be non-negative"
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    category=RuntimeWarning,
-                    message="invalid value encountered in divide",
-                )
+            old_settings = np.seterr(divide="ignore")  # turn /0 into NaN
+            try:
                 beta = snpsKY / (snpsKsnps + penalty_)
+            finally:
+                np.seterr(**old_settings)
             if np.isnan(beta.min()):
                 logging.debug(
                     "NaN beta value seen, may be due to an SNC (a constant SNP)"
@@ -1061,13 +1059,11 @@ class LMM(object):
                     snpsKsnps / (snpsKsnps + penalty_)
                 )
             else:
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        "ignore",
-                        category=RuntimeWarning,
-                        message="divide by zero encountered in divide",
-                    )
+                old_settings = np.seterr(divide="ignore")  # turn /0 into NaN
+                try:
                     variance_beta = r2 / (N - 1.0) / snpsKsnps
+                finally:
+                    np.seterr(**old_settings)
                 fraction_variance_explained_beta = (
                     variance_explained_beta / YKY[np.newaxis, :]
                 )  # variance explained by beta over total variance

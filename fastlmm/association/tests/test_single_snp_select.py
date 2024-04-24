@@ -182,7 +182,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         for suffix, logdelta in [("h2IsHalf", 0), ("h2Search", None)]:
             result_file_name = "sel_plus_pc_old_{0}".format(
                 "h2IsHalf" if logdelta == 0 else "h2Search"
-            )  # cmk
+            )
             runLMMSELECT(
                 bed_fn,
                 phen_fn,
