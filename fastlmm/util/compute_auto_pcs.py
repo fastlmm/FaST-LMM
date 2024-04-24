@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import sys
 import logging
@@ -11,6 +12,8 @@ def compute_auto_pcs(
     snpreader, cutoff=0.1, k_values=np.arange(11), output_file_name=None, count_A1=None
 ):
     """
+    DEPRECATED: Runs only on Intel, not AMD. We can't test this function because `compute_auto_pcs` uses the 'fastlmmC' executable which is not available in the test environment.
+
     Function automatically finds the best principle components (PCs)
 
     :param snpreader: SNPs for which to find the best PCs
@@ -42,6 +45,9 @@ def compute_auto_pcs(
     500 0
 
     """
+    warning_text = "This function is deprecated. Runs only on Intel, not AMD. We can't test this function because `compute_auto_pcs` uses the 'fastlmmC' executable which is not available in the test environment."
+    warnings.warn(warning_text, category=DeprecationWarning, stacklevel=2)
+    print(warning_text, file=sys.stderr)
     with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
         #!!could use regression tests beyond the docttest
 
