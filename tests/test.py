@@ -178,8 +178,8 @@ if __name__ == "__main__":
             fastlmm.association.tests.testepistasis.getTestSuite(),  # 9
             fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),  # 10
             fastlmm.util.test.getTestSuite(),  # 11
-            # 12 fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
-            fastlmm.inference.tests.test.getTestSuite(),
+            fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),  # 12
+            # 13 fastlmm.inference.tests.test.getTestSuite(),
             fastlmm.association.tests.test_single_snp.getTestSuite(),  # special
             # fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
         ]
