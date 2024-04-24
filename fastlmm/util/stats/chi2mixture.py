@@ -92,7 +92,7 @@ class chi2mixture(object):
         Fit the scale and dof parameters of the model by minimizing the squared error between
         the model log quantiles and the log P-values obtained on the lrt values.
 
-        Only the top qmax quantile is being used for the fit (self.qmax is used in fit_scale_logP).
+        Only the top qmax quartile is being used for the fit (self.qmax is used in fit_scale_logP).
         """
         # imin= np.argsort(self.lrt[~self.i0])
         # ntests = self.lrt.shape[0]

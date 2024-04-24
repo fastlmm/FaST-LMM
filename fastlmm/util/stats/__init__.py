@@ -92,7 +92,7 @@ def lrtpvals_qqfit_file(filein, qmax=0.1):
     print("found " + str(len(lrtperm)) + "null test stats")
 
     mix = c2.chi2mixture(lrt=lrtperm, qmax=qmax, alteqnull=None)
-    res = mix.fit_params_Qreg()  # paramter fitting
+    res = mix.fit_params_Qreg()  # parameter fitting
     print("mixture (non-zero dof)=" + str(mix.mixture) + "\n")
     print("dof=" + str(res["dof"]) + "\n")
     print("scale=" + str(res["scale"]) + "\n")

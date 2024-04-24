@@ -199,7 +199,7 @@ class Cv(object):
                 dof=dof,
             )
 
-            res = mix.fit_params_Qreg()  # paramter fitting
+            res = mix.fit_params_Qreg()  # parameter fitting
 
             imax = res["imax"]
             mse = res["mse"]
@@ -241,7 +241,7 @@ class Cv(object):
                 dof=dof,
             )
 
-            res = mix.fit_params_Qreg()  # paramter fitting
+            res = mix.fit_params_Qreg()  # parameter fitting
 
             imax = res["imax"]
             mse = res["mse"]
@@ -268,7 +268,7 @@ class Cv(object):
                 fitdof=fitdof,
                 dof=dof,
             )
-            res = mix.fit_params_Qreg()  # paramter fitting
+            res = mix.fit_params_Qreg()  # parameter fitting
             imax = res["imax"]
             logging.info("# of pvals used for nullfit=" + str(imax))
             pv_adj = mix.sf()  # getting p-values
