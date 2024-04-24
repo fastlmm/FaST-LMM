@@ -211,8 +211,8 @@ def single_snp(
 
     For more examples, see:
 
-    * `Main FaST-LMM notebook <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_
-    * `Effect size, multiple phenotypes, and related new features <https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb>`_
+    * `Main FaST-LMM notebook <https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/FaST-LMM.ipynb>`_
+    * `Effect size, multiple phenotypes, and related new features <https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb>`_
     """
     #!!!LATER raise error if covar has NaN
     t0 = time.time()

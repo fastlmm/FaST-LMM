@@ -10,7 +10,7 @@ See `FaST-LMM's README.md <https://github.com/fastlmm/FaST-LMM/blob/master/READM
 :new:
 
 :func:`.single_snp` now supports effect size, multiple phenotypes, and related features (`notebook demonstrating new features
-<https://nbviewer.jupyter.org/github/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb>`_).
+<https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb>`_).
 
 :Code:
 
