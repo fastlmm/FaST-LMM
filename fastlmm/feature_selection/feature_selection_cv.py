@@ -1133,9 +1133,8 @@ class InMemory(GClass):
     @property
     def val(self):
         if self._val is None:
-            self._snpreader = self._snpreader.read(
-                order="C"
-            )  #!!LATER when should this be order='F' and when order='C'?
+            #!!LATER when should this be order='F' and when order='C'?
+            self._snpreader = self._snpreader.read(order="C")
             self._val = self._snpreader.val
             self._val.flags.writeable = False
         return self._val

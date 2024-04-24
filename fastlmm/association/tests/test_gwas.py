@@ -94,6 +94,24 @@ class TestGwas(unittest.TestCase):
     # np.testing.assert_array_almost_equal(gwas.sorted_p_values, gwas_c.sorted_p_values, decimal=3)
     # np.testing.assert_array_almost_equal(gwas.sorted_p_values, gwas_f.sorted_p_values, decimal=3)
 
+    @staticmethod
+    def read_results(filename):
+        import pandas as pd
+
+        out_file = os.path.normpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../Fastlmm_autoselect/bypass",
+                filename,
+            )
+        )
+        table = pd.read_csv(out_file, sep="\t")
+
+        p_values = table.sort_values(["Chromosome", "Position"])["Pvalue"].tolist()
+        sorted_p_values = table["Pvalue"].tolist()
+        sorted_snps = table["SNP"].tolist()
+        return p_values, sorted_p_values, sorted_snps
+
     def test_results_identical_with_fastlmmc(self):
         """
         make sure gwas yields same results as fastlmmC
@@ -141,7 +159,10 @@ class TestGwas(unittest.TestCase):
         gwas_c_reml = GwasTest(
             bed_fn, pheno_fn, snp_pos_sim, snp_pos_test, delta, REML=REML
         )
-        gwas_c_reml.run_gwas()
+        # cmk gwas_c_reml.run_gwas()
+        gwas_c_reml.p_values, gwas_c_reml.sorted_p_values, _ = TestGwas.read_results(
+            "out1.txt"
+        )
 
         gwas = GwasPrototype(G_chr1, G_chr2, y, delta, REML=False)
         gwas.run_gwas()
@@ -159,7 +180,8 @@ class TestGwas(unittest.TestCase):
 
         # we compare lmm_cov.py to fastlmmc with REML=False
         gwas_c = GwasTest(bed_fn, pheno_fn, snp_pos_sim, snp_pos_test, delta, REML=True)
-        gwas_c.run_gwas()
+        # cmk gwas_c.run_gwas()
+        gwas_c.p_values, _, _ = TestGwas.read_results("out2.txt")
         gwas_f = FastGwas(G_chr1, G_chr2, y, delta, findh2=False)
         gwas_f.run_gwas()
         np.testing.assert_array_almost_equal(
@@ -197,7 +219,10 @@ class TestGwas(unittest.TestCase):
         gwas_c_reml_search = GwasTest(
             bed_fn, pheno_fn, snp_pos_sim, snp_pos_test, delta=None, REML=True
         )
-        gwas_c_reml_search.run_gwas()
+        # cmk gwas_c_reml_search.run_gwas()
+        gwas_c_reml_search.p_values, gwas_c_reml_search.sorted_p_values, _ = (
+            TestGwas.read_results("out3.txt")
+        )
 
         frame_search = single_snp(
             test_snps=snpreader[:, idx_test],

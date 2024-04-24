@@ -4,5 +4,6 @@ scikit-learn>=0.19.1
 cloudpickle>=2.2.0
 statsmodels>=0.10.1
 psutil>=5.6.7
+bed-reader>=1.0.4b1
 pysnptools>=0.5.9
 fastlmmclib>=0.0.3
