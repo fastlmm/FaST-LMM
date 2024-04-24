@@ -162,15 +162,16 @@ if __name__ == "__main__":
         [
             # for debugging getDebugTestSuite(),
             # cmk
-            # getTestSuiteX(),
-            # fastlmm.inference.tests.test_linear_regression.getTestSuite(),
-            # fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
-            # fastlmm.pyplink.test.getTestSuite(),
+            getTestSuiteX(),
+            fastlmm.inference.tests.test_linear_regression.getTestSuite(),
+            fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
+            fastlmm.pyplink.test.getTestSuite(),
+            # ok with after this 2
             fastlmm.feature_selection.test.getTestSuite(),
             # this test is deprecated # fastlmm.association.tests.test_single_snp_select.getTestSuite(),
             fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
             fastlmm.association.tests.test_gwas.getTestSuite(),
-            # ok with after this
+            # ok with after this 1
             fastlmm.association.tests.test_snp_set.getTestSuite(),
             fastlmm.inference.tests.test.getTestSuite(),
             fastlmm.association.tests.testepistasis.getTestSuite(),
