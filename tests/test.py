@@ -180,8 +180,8 @@ if __name__ == "__main__":
             fastlmm.util.test.getTestSuite(),  # 11
             fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),  # 12
             fastlmm.inference.tests.test.getTestSuite(),  # 13
-            # 14 fastlmm.association.tests.test_single_snp.getTestSuite(),  # special
-            # fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
+            fastlmm.association.tests.test_single_snp.getTestSuite(),  # special #14
+            fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),  # un 15
         ]
     )
 
