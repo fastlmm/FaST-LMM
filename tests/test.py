@@ -164,8 +164,8 @@ if __name__ == "__main__":
             # cmk
             getTestSuiteX(),
             # failed with these 3
-            # 1 fastlmm.inference.tests.test_linear_regression.getTestSuite(),
-            fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
+            fastlmm.inference.tests.test_linear_regression.getTestSuite(),  # 1
+            # 2 fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
             fastlmm.pyplink.test.getTestSuite(),
             # ok with after this 2
             fastlmm.feature_selection.test.getTestSuite(),
