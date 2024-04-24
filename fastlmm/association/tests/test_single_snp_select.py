@@ -46,27 +46,27 @@ class TestSingleSnpSelect(unittest.TestCase):
         return temp_fn
 
     # Break these tests up into six parts so they can run faster when on cluster.
-    def cmk_test_sel_plus_pc_h2Search(self):  #!!! rather a big test case
+    def test_sel_plus_pc_h2Search(self):  #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2Search")
         self._sel_plus_pc(None, None, None, count_A1=False)
 
-    def cmk_test_sel_plus_pc_h2Search_low(self):  #!!! rather a big test case
+    def test_sel_plus_pc_h2Search_low(self):  #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2Search_low")
         self._sel_plus_pc(None, True, False, count_A1=False)
 
-    def cmk_test_sel_plus_pc_h2Search_full(self):  #!!! rather a big test case
+    def test_sel_plus_pc_h2Search_full(self):  #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2Search_full")
         self._sel_plus_pc(None, False, True, count_A1=False)
 
-    def cmk_test_sel_plus_pc_h2IsHalf(self):  #!!! rather a big test case
+    def test_sel_plus_pc_h2IsHalf(self):  #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2IsHalf")
         self._sel_plus_pc(0.5, None, None, count_A1=False)
 
-    def cmk_test_sel_plus_pc_h2IsHalf_low(self):  #!!! rather a big test case
+    def test_sel_plus_pc_h2IsHalf_low(self):  #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2IsHalf_low")
         self._sel_plus_pc(0.5, True, False, count_A1=False)
 
-    def cmk_test_sel_plus_pc_h2IsHalf_full(self):  #!!! rather a big test case
+    def test_sel_plus_pc_h2IsHalf_full(self):  #!!! rather a big test case
         logging.info("TestSingleSnpSelect sel_plus_pc_h2IsHalf_full")
         self._sel_plus_pc(0.5, False, True, count_A1=False)
 
@@ -235,7 +235,7 @@ class TestSingleSnpSelect(unittest.TestCase):
                 abs(row.PValue - pvalue) < 1e-5
             ), "pair {0} differs too much from file '{1}'".format(sid, reffile)
 
-    def cmk_test_doctest(self):
+    def test_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)) + "/..")
         result = doctest.testmod(sys.modules["fastlmm.association.single_snp_select"])

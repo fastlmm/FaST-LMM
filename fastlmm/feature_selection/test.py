@@ -55,7 +55,7 @@ class TestTwoKernelFeatureSelection(unittest.TestCase):
         self.G_cov = np.ones((len(self.y), 1))
         self.G_cov.flags.writeable = False
 
-    def cmk_test_regression_lmm(self):
+    def test_regression_lmm(self):
 
         # invoke fs
         select = FeatureSelectionInSample(
@@ -74,7 +74,7 @@ class TestTwoKernelFeatureSelection(unittest.TestCase):
         self.assertAlmostEqual(best_mix, 0.8621642030968627, places=6)
         self.assertAlmostEqual(best_delta, 0.7255878551207211, places=6)
 
-    def cmk_test_regression_lr(self):
+    def test_regression_lr(self):
 
         # invoke fs
         select = FeatureSelectionInSample(
@@ -124,7 +124,7 @@ class TestFeatureSelection(unittest.TestCase):
 
     """
     make sure the used pca yields the same result as standard pca
-    def cmk_test_pca(self):
+    def test_pca(self):
 
         from sklearn.decomposition import PCA, KernelPCA
 
@@ -151,16 +151,16 @@ class TestFeatureSelection(unittest.TestCase):
             np.testing.assert_array_almost_equal(pc_1, sign*pc_2)
     """
 
-    def cmk_test_regression_bed(self):
+    def test_regression_bed(self):
         self.regression(self.snpreader_bed, self.regular_regression_answers)
 
-    def cmk_test_regression_hdf5(self):
+    def test_regression_hdf5(self):
         self.regression(self.snpreader_hdf5, self.regular_regression_answers)
 
-    def cmk_test_regression_dat(self):
+    def test_regression_dat(self):
         self.regression(self.snpreader_dat, self.regular_regression_answers)
 
-    def cmk_test_regression_ped(self):
+    def test_regression_ped(self):
         self.regression(self.snpreader_ped, self.regular_regression_answers)
 
     regular_regression_answers = (22, 20.085536923, 61.2448170241, 0.67586545761317196)
@@ -172,7 +172,7 @@ class TestFeatureSelection(unittest.TestCase):
         0.71724685708485092,
     )
 
-    def cmk_test_regression_cov_pcs(self):
+    def test_regression_cov_pcs(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
         cov_fn = currentFolder + "/examples/toydata.cov"
         self.regression(
@@ -182,7 +182,7 @@ class TestFeatureSelection(unittest.TestCase):
             num_pcs=3,
         )
 
-    def cmk_test_regression_cov_pcs_insample_cv(self):
+    def test_regression_cov_pcs_insample_cv(self):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
         cov_fn = currentFolder + "/examples/toydata.cov"
         self.regression(
@@ -281,18 +281,18 @@ class TestFeatureSelection(unittest.TestCase):
             currentFolder + "/examples/toydata.5chrom.bed"
         )  # use string instead of reader, to test that strings work
 
-    def cmk_test_blocking_hdf5(self):
+    def test_blocking_hdf5(self):
         self.blocking(self.snpreader_hdf5)
 
-    def cmk_test_blocking_dat(self):
+    def test_blocking_dat(self):
         self.blocking(self.snpreader_dat)
 
-    def cmk_test_blocking_ped(self):
+    def test_blocking_ped(self):
         self.blocking(self.snpreader_ped)
 
     tolerance = 1e-4
 
-    def cmk_test_blocking_cov_pcs(self):
+    def test_blocking_cov_pcs(self):
         self.blocking_cov_pcs(strategy="lmm_full_cv")
 
     def getworkingtest_blocking_cov_pcs_insample_cv(self):  #!!!
@@ -597,16 +597,16 @@ class TestFeatureSelection(unittest.TestCase):
             self.assertAlmostEqual(best_delta_4, best_delta_5)
             self.assertAlmostEqual(best_delta_4, best_delta_6)
 
-    def cmk_test_log_likelihood_bed(self):
+    def test_log_likelihood_bed(self):
         self.log_likelihood(self.snpreader_bed)
 
-    def cmk_test_log_likelihood_hdf5(self):
+    def test_log_likelihood_hdf5(self):
         self.log_likelihood(self.snpreader_hdf5)
 
-    def cmk_test_log_likelihood_dat(self):
+    def test_log_likelihood_dat(self):
         self.log_likelihood(self.snpreader_dat)
 
-    def cmk_test_log_likelihood_ped(self):
+    def test_log_likelihood_ped(self):
         self.log_likelihood(self.snpreader_ped)
 
     def log_likelihood(self, snpreader):
