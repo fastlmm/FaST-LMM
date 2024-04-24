@@ -173,8 +173,8 @@ if __name__ == "__main__":
             fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),  # 5
             fastlmm.association.tests.test_gwas.getTestSuite(),  # 6
             # ok with after this 1
-            # 7 fastlmm.association.tests.test_snp_set.getTestSuite(),
-            fastlmm.inference.tests.test.getTestSuite(),
+            fastlmm.association.tests.test_snp_set.getTestSuite(),  # 7
+            # 8 fastlmm.inference.tests.test.getTestSuite(),
             fastlmm.association.tests.testepistasis.getTestSuite(),
             fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
             fastlmm.util.test.getTestSuite(),
