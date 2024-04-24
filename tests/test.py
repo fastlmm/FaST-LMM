@@ -168,9 +168,9 @@ if __name__ == "__main__":
             # cmk OK to comment out fastlmm.association.tests.test_single_snp_scale.getTestSuite(),  # 2
             fastlmm.pyplink.test.getTestSuite(),  # 3 must run
             # ok with after this 2
-            # 4 fastlmm.feature_selection.test.getTestSuite(),
+            fastlmm.feature_selection.test.getTestSuite(),  # 4
             # this test is deprecated # fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-            fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
+            # 5 fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
             fastlmm.association.tests.test_gwas.getTestSuite(),
             # ok with after this 1
             fastlmm.association.tests.test_snp_set.getTestSuite(),
