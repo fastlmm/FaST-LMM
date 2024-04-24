@@ -175,8 +175,8 @@ if __name__ == "__main__":
             # ok with after this 1
             fastlmm.association.tests.test_snp_set.getTestSuite(),  # 7
             fastlmm.inference.tests.test.getTestSuite(),  # 8
-            # 9 fastlmm.association.tests.testepistasis.getTestSuite(),
-            fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
+            fastlmm.association.tests.testepistasis.getTestSuite(),  # 9
+            # 10 fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
             fastlmm.util.test.getTestSuite(),
             fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
             fastlmm.inference.tests.test.getTestSuite(),
