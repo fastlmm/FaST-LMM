@@ -170,8 +170,8 @@ if __name__ == "__main__":
             # ok with after this 2
             fastlmm.feature_selection.test.getTestSuite(),  # 4
             # this test is deprecated # fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-            # 5 fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
-            fastlmm.association.tests.test_gwas.getTestSuite(),
+            fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),  # 5
+            # 6 fastlmm.association.tests.test_gwas.getTestSuite(),
             # ok with after this 1
             fastlmm.association.tests.test_snp_set.getTestSuite(),
             fastlmm.inference.tests.test.getTestSuite(),
