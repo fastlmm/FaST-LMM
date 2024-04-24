@@ -171,9 +171,9 @@ if __name__ == "__main__":
             fastlmm.feature_selection.test.getTestSuite(),  # 4
             # this test is deprecated # fastlmm.association.tests.test_single_snp_select.getTestSuite(),
             fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),  # 5
-            # 6 fastlmm.association.tests.test_gwas.getTestSuite(),
+            fastlmm.association.tests.test_gwas.getTestSuite(),  # 6
             # ok with after this 1
-            fastlmm.association.tests.test_snp_set.getTestSuite(),
+            # 7 fastlmm.association.tests.test_snp_set.getTestSuite(),
             fastlmm.inference.tests.test.getTestSuite(),
             fastlmm.association.tests.testepistasis.getTestSuite(),
             fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
