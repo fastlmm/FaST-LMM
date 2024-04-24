@@ -988,7 +988,7 @@ def qqplot(
     if h1 is None:
         h1 = pl.figure(figsize=figsize)
 
-    pl.grid(b=grid, alpha=0.5)
+    pl.grid(which="both", alpha=0.5)
 
     maxval = 0
 
