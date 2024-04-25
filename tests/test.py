@@ -161,7 +161,6 @@ if __name__ == "__main__":
     suites = unittest.TestSuite(
         [
             # for debugging getDebugTestSuite(),
-            # cmk
             getTestSuiteX(),
             # failed with these 3
             fastlmm.inference.tests.test_linear_regression.getTestSuite(),  # 1 must run

@@ -1036,7 +1036,9 @@ class LMM(object):
         if Usnps is not None:
             penalty_ = penalty or 0.0
             assert penalty_ >= 0.0, "penalty has to be non-negative"
-            old_settings = np.seterr(divide="ignore")  # turn /0 into NaN
+            old_settings = np.seterr(
+                divide="ignore", invalid="ignore"
+            )  # turn /0 into NaN
             try:
                 beta = snpsKY / (snpsKsnps + penalty_)
             finally:
