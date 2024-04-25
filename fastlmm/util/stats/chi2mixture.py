@@ -160,29 +160,25 @@ class chi2mixture(object):
         return resmin[0]
 
     def scale_dof_obj(self, scale, dof):
-        base = np.exp(
-            1
-        )  # fitted params are invariant to this logarithm base (i.e.10, or e)
-
         nfalse = len(self.alteqnull) - np.sum(self.alteqnull)
 
         imax = int(np.ceil(self.qmax * nfalse))  # of only non zer dof component
         p = st.chi2.sf(self.lrtsort[0:imax] / scale, dof)
-        logp = ss.loggamma(base, p)
-        r = ss.loggamma(base, self.qnulllrtsort[0:imax]) - logp
+        logp = np.log(p)
+        r = np.log(self.qnulllrtsort[0:imax]) - logp
         if self.abserr:
             err = np.absolute(r).sum()
         else:  # mean square error
             err = (r * r).mean()
         return err, imax
 
-    def mse_qreg(self, scale, dof, lrt, base):
+    def mse_qreg(self, scale, dof, lrt):
         """
         For debugging: returns mse for particular scale and dof, given pre-filtered lrt
         """
         p = st.chi2.sf(lrt / scale, dof)
-        logp = ss.loggamma(base, p)
-        r = ss.loggamma(base, self.qnulllrtsort[0 : len(lrt)]) - logp
+        logp = ss.log(p)
+        r = ss.log(self.qnulllrtsort[0 : len(lrt)]) - logp
         mse = (r * r).mean()
         return mse
 

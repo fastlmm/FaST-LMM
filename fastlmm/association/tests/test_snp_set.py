@@ -132,6 +132,32 @@ class TestSnpSet(unittest.TestCase):
             "msg='{0}', ref='{1}', tmp='{2}'".format(msg, referenceOutfile, tmpOutfile),
         )
 
+    def test_notebook(self):
+        # define file names
+        test_snps_fn = self.currentFolder + "/../../../tests/datasets/synth/chr1"
+        pheno_fn = (
+            self.currentFolder + "/../../../tests/datasets/synth/pheno_10_causals.txt"
+        )
+        cov_fn = self.currentFolder + "/../../../tests/datasets/synth/cov.txt"
+        set_list_fn = (
+            self.currentFolder + "/../../../tests/datasets/synth/chr1.sets.txt"
+        )
+        G0_fn = None
+
+        # run SNP-set analysis
+        results_df = snp_set(
+            test_snps=test_snps_fn,
+            G0=G0_fn,
+            set_list=set_list_fn,
+            pheno=pheno_fn,
+            covar=cov_fn,
+            test="lrt",
+        )
+        top = results_df.iloc[0]
+        logging.debug(top)
+        assert top["SetId"] == "set_65"
+        assert np.abs(top["P-value"] - 0.002564) < 0.0001
+
     def test_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)) + "/..")

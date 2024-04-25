@@ -162,25 +162,22 @@ if __name__ == "__main__":
         [
             # for debugging getDebugTestSuite(),
             getTestSuiteX(),
-            # failed with these 3
-            fastlmm.inference.tests.test_linear_regression.getTestSuite(),  # 1 must run
-            fastlmm.association.tests.test_single_snp_scale.getTestSuite(),  # 2 # cmk OK to comment out
-            fastlmm.pyplink.test.getTestSuite(),  # 3 must run
-            # ok with after this 2
-            fastlmm.feature_selection.test.getTestSuite(),  # 4 must run
+            fastlmm.inference.tests.test_linear_regression.getTestSuite(),
+            fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
+            fastlmm.pyplink.test.getTestSuite(),
+            fastlmm.feature_selection.test.getTestSuite(),
             # this test is deprecated # fastlmm.association.tests.test_single_snp_select.getTestSuite(),
-            fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),  # 5 must run
-            fastlmm.association.tests.test_gwas.getTestSuite(),  # 6 must run
-            # ok with after this 1
-            fastlmm.association.tests.test_snp_set.getTestSuite(),  # 7 must run
-            fastlmm.inference.tests.test.getTestSuite(),  # 8 must run
-            fastlmm.association.tests.testepistasis.getTestSuite(),  # 9 must run
-            fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),  # 10 must run
-            fastlmm.util.test.getTestSuite(),  # must run 11
-            fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),  # must run 12
-            fastlmm.inference.tests.test.getTestSuite(),  # must run 13
-            fastlmm.association.tests.test_single_snp.getTestSuite(),  # special #14 must run
-            fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),  # un 15
+            fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
+            fastlmm.association.tests.test_gwas.getTestSuite(),
+            fastlmm.association.tests.test_snp_set.getTestSuite(),
+            fastlmm.inference.tests.test.getTestSuite(),
+            fastlmm.association.tests.testepistasis.getTestSuite(),
+            fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),
+            fastlmm.util.test.getTestSuite(),
+            fastlmm.association.tests.test_single_snp_all_plus_select.getTestSuite(),
+            fastlmm.inference.tests.test.getTestSuite(),
+            fastlmm.association.tests.test_single_snp.getTestSuite(),
+            fastlmm.association.tests.test_single_snp_linreg.getTestSuite(),
         ]
     )
 
