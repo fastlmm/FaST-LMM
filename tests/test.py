@@ -143,28 +143,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.WARN)
     removeTmpFiles()
 
-    # cmk
-    import numpy as np
-    from fastlmm.association import single_snp
-    from fastlmm.util import example_file  # Download and return local file name
-    from pysnptools.snpreader import Bed
-
-    # set up data
-    ##############################
-    from fastlmm.util import example_file  # Download and return local file name
-
-    bed_fn = example_file("tests/datasets/synth/all.*", "*.bed")
-    pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
-    cov_fn = example_file("tests/datasets/synth/cov.txt")
-
-    # run gwas
-    ###################################################################
-    results_df = single_snp(bed_fn, pheno_fn, covar=cov_fn, count_A1=False)
-    # display(results_df[np.logical_not(np.array(results_df["ChrPos"]==results_df["ChrPos"]))])
-    bed = Bed(bed_fn, count_A1=False)
-    # display(bed.pos[0,:])
-    bed_fn
-
     import fastlmm.association.tests.testepistasis
     import fastlmm.association.tests.test_single_snp
     import fastlmm.association.tests.test_single_snp_linreg
@@ -182,6 +160,7 @@ if __name__ == "__main__":
 
     suites = unittest.TestSuite(
         [
+            # cmk
             # for debugging getDebugTestSuite(),
             getTestSuiteX(),
             fastlmm.inference.tests.test_linear_regression.getTestSuite(),
@@ -204,7 +183,7 @@ if __name__ == "__main__":
     )
 
     if True:  # Standard test run
-        r = unittest.TextTestRunner(failfast=False)
+        r = unittest.TextTestRunner(failfast=True)
         ret = r.run(suites)
         assert ret.wasSuccessful()
     else:  # Cluster test run

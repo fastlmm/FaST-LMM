@@ -92,7 +92,7 @@ setup(
         "pandas>=1.1.1",
         "matplotlib>=1.5.1",
         "scikit-learn>=0.19.1",
-        "bed-reader>=1.0.4b1",
+        "bed-reader>=1.0.4b2",
         "pysnptools>=0.5.11",
         "cloudpickle>=2.2.0",
         "statsmodels>=0.10.1",

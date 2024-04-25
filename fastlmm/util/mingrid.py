@@ -136,7 +136,7 @@ def evalgrid1D(f, evalgrid=None, nGrid=10, minval=0.0, maxval=0.99999, dimF=0):
         is_real = False
         try:
             is_real = np.isreal(fevalgrid).all()
-        except:
+        except Exception:
             is_real = np.isreal(fevalgrid)
         assert is_real, "function returned imaginary value"
 

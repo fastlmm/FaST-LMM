@@ -1,7 +1,7 @@
 conda activate ./.conda
 pip install -r requirements.txt
 
-set pythonpath=O:\programs\bed-reader;O:\programs\fastlmm;O:\programs\pysnptools
+set pythonpath=O:\programs\bed-reader;O:\programs\fastlmm;
 set pythonpath=O:\programs\fastlmm
 
 cd tests

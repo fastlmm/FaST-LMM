@@ -933,7 +933,7 @@ class LMM(object):
                 denom=denom[pheno_index],
                 UA=UY[:, pheno_index : pheno_index + 1],
                 UUA=None if UUY is None else UUY[:, pheno_index : pheno_index + 1],
-            )
+            ).item()
 
         logdetK = np.log(Sd).sum(0)
 
