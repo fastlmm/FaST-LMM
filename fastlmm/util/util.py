@@ -562,7 +562,9 @@ def manhattan_plot(
             chromosome_starts = _compute_x_positions_chrom(array)
         chr_pos_list = _compute_x_positions_snps(array, chromosome_starts)
         plt.xlim([0, chromosome_starts[-1, 2] + 1])
-        plt.xticks(chromosome_starts[:, 1:3].mean(1), chromosome_starts[:, 0])
+        plt.xticks(
+            chromosome_starts[:, 1:3].mean(1), chromosome_starts[:, 0].astype(int)
+        )
     else:  # use rank indices for x-axis
         chr_pos_list = np.arange(array.shape[0])
         xTickMarks = [str(int(item)) for item, count in rle]
@@ -608,15 +610,14 @@ def manhattan_plot(
 def _compute_x_positions_chrom(positions, offset=1e5):
     chromosomes = np.unique(positions[:, 0])
     chromosomes.sort()
-    chromosome_starts = np.zeros((chromosomes.shape[0], 3), dtype="object")
+    chromosome_starts = np.zeros((chromosomes.shape[0], 3), dtype="float")
     chr_start_next = 0
     for i, chromosome in enumerate(chromosomes):
-        pos_chr = positions[positions[:, 0] == chromosome]
+        pos_chr = positions[positions[:, 0] == chromosome, 1]
         chromosome_starts[i, 0] = chromosome  # the chromosome
         chromosome_starts[i, 1] = chr_start_next  # start of the chromosome
-        chromosome_starts[i, 2] = (
-            chr_start_next + pos_chr.max()
-        )  # end of the chromosome
+        # end of the chromosome
+        chromosome_starts[i, 2] = chr_start_next + np.nanmax(pos_chr)
         chr_start_next = chromosome_starts[i, 2] + offset
     return chromosome_starts
 
