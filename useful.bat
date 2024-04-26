@@ -4,6 +4,14 @@ pip install -r requirements.txt
 set pythonpath=O:\programs\bed-reader;O:\programs\fastlmm;
 set pythonpath=O:\programs\fastlmm
 
+
+# docs
+pip install sphinx
+cd doc
+make html
+build\html\index.html
+xcopy /c /e /s /h build\html ..\docs
+
 cd tests
 python test.py
 
