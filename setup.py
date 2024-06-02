@@ -97,7 +97,7 @@ setup(
         "cloudpickle>=2.2.0",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
-        "fastlmmclib>=0.0.5b1",  # cmk
+        "fastlmmclib>=0.0.5b2",  # cmk
     ],
     extras_require={"bgen": ["pysnptools[bgen]>=0.5.12b3"]},
 )
