@@ -11,7 +11,7 @@ import sys
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
 # Version number
-version = "0.6.8"
+version = "0.6.9b1"
 
 
 def readme():
@@ -41,6 +41,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python",
     ],
@@ -93,10 +94,11 @@ setup(
         "matplotlib>=1.5.1",
         "scikit-learn>=0.19.1",
         "bed-reader>=1.0.4",
-        "pysnptools>=0.5.11",
+        "pysnptools>=0.5.12b",  # cmk
         "cloudpickle>=2.2.0",
         "statsmodels>=0.10.1",
         "psutil>=5.6.7",
         "fastlmmclib>=0.0.3",
     ],
+    extras_require={"bgen": ["pysnptools[bgen]>=0.5.12b"]},
 )

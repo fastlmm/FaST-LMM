@@ -25,6 +25,10 @@ Quick install:
 
 `pip install fastlmm`
 
+*If you need support for BGEN files, instead do:*
+
+    pip install fastlmm[bgen]
+
 For best performance, be sure your Python distribution includes a fast version of NumPy. We use Anaconda's [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
 Documentation
