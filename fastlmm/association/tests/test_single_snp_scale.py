@@ -181,7 +181,7 @@ class TestSingleSnpScale(unittest.TestCase):
                     abs(pvalue_frame - pvalue_reference) < 1e-5
                 ).all, "pair {0} differs too much from reference".format(sid)
 
-    def test_local_distribute(self):  # cmk
+    def test_local_distribute(self):
         logging.info("test_local_distribute")
         force_python_only = False
 
