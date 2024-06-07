@@ -95,7 +95,7 @@ setup(
         "bed-reader>=1.0.4",
         "pysnptools>=0.5.12",
         "cloudpickle>=2.2.0",
-        "statsmodels>=0.10.1",
+        "statsmodels>=0.14.2",
         "psutil>=5.6.7",
         "fastlmmclib>=0.0.5",
     ],
