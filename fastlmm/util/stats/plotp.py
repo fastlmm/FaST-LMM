@@ -474,8 +474,8 @@ def type1errdir(
     pv = []
     obs_count = -1 * np.zeros([len(thresh)])
     obs_error = -1 * np.zeros([len(thresh)])
-    p_onet = np.NaN * np.zeros([len(thresh)])
-    p_twot = np.NaN * np.zeros([len(thresh)])
+    p_onet = np.nan * np.zeros([len(thresh)])
+    p_twot = np.nan * np.zeros([len(thresh)])
     ii = 0
     for f in myfiles:
         if "info.txt" not in f:
@@ -931,7 +931,7 @@ def addqqplotinfo(
     if legendlist is not None:
         leg = pl.legend(legendlist, loc=4, numpoints=1)
         # set the markersize for the legend
-        for lo in leg.legendHandles:
+        for lo in leg.legend_handles:
             lo.set_markersize(10)
 
     if fixaxes:

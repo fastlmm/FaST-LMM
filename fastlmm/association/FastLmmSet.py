@@ -769,7 +769,7 @@ class FastLmmSet:  # implements IDistributable
             logging.info("dof=" + str(dof))
             logging.info("scale=" + str(scale))
         else:
-            result.test["pv-local-aUD"] = np.NaN
+            result.test["pv-local-aUD"] = np.nan
 
         logging.info(
             "    used "

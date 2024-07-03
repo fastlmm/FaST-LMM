@@ -595,8 +595,8 @@ def heritability_spatial_correction(
             results_gxe2 = results_gxe2.join(jk_table_gxe2, on="phen")
         else:
             for col in ["h2uncorr SE", "h2corr SE", "diff SE", "e2 SE"]:
-                results_corr[col] = np.NaN
-            results_gxe2["gxe2 SE"] = np.NaN
+                results_corr[col] = np.nan
+            results_gxe2["gxe2 SE"] = np.nan
 
         # compute pValue columns
         results_corr["P (diff=0)"] = (
@@ -834,7 +834,7 @@ def heritability_spatial_correction(
             final1 = final0.join(pivot_table_plus, on="phen")
         else:
             final1 = final0.copy()
-            final1["P(e2=0)"] = np.NaN
+            final1["P(e2=0)"] = np.nan
 
         # Rename some columns and join results
         if permtimes_table_list and len(pivot_table_times) > 0:  # not empty

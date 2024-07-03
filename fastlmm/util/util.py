@@ -256,7 +256,7 @@ def argintersect_left(a, b):
     the indices of elements of a, which are in intersect of a and b
     ----------------------------------------------------------------------
     """
-    return np.arange(a.shape[0])[np.in1d(a, b)]
+    return np.arange(a.shape[0])[np.isin(a, b)]
 
 
 def intersect_ids(idslist, sep="Q_Q"):

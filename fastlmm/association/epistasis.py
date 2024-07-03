@@ -255,10 +255,12 @@ class _Epistasis(object):  # implements IDistributable
             self.G0 = Bed(self.G0, count_A1=self.count_A1)
 
         if isinstance(self.pheno, str):
-            self.pheno = pstpheno.loadOnePhen(self.pheno, vectorize=True, missing="NaN")
+            self.pheno = pstpheno.loadOnePhen(
+                self.pheno, vectorize=True, missing=np.nan
+            )
 
         if self.covar is not None and isinstance(self.covar, str):
-            self.covar = pstpheno.loadPhen(self.covar, missing="NaN")
+            self.covar = pstpheno.loadPhen(self.covar, missing=np.nan)
 
         if self.G1_or_none is not None and isinstance(self.G1_or_none, str):
             self.G1_or_none = Bed(self.G1_or_none, count_A1=self.count_A1)

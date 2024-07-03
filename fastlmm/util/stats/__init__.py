@@ -13,9 +13,9 @@ def print_missing_info(y):
     print(
         str(np.isnan(y).sum().sum())
         + " missing items out of "
-        + str(np.product(y.shape))
+        + str(np.prod(y.shape))
         + "="
-        + str(100.0 * np.isnan(y).sum().sum() / np.product(y.shape))
+        + str(100.0 * np.isnan(y).sum().sum() / np.prod(y.shape))
         + "%"
     )
 
