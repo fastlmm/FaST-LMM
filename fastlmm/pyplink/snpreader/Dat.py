@@ -56,7 +56,7 @@ class Dat(object):
         logging.info("Loading map file {0}".format(mapfile))
         self.bimfields = pd.read_csv(
             mapfile,
-            delimiter="\s",
+            delimiter=r"\s",
             usecols=(0, 1, 2, 3),
             header=None,
             index_col=False,
@@ -76,7 +76,7 @@ class Dat(object):
 
         #!!could change to just create/find an index to the file position of each row. Instead, reading all into memory
         datfields = pd.read_csv(
-            self.dat_filename, delimiter="\s", header=None, index_col=False
+            self.dat_filename, delimiter=r"\s", header=None, index_col=False
         )
         if not np.array_equal(np.array(datfields[0], dtype="string"), self.rs):
             raise Exception(

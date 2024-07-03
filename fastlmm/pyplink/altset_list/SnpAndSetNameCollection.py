@@ -18,7 +18,7 @@ class SnpAndSetNameCollection(object):  # implements ISnpSetList
         import pandas as pd
 
         snp_and_setname_sequence = pd.read_csv(
-            filename, delimiter="\s", index_col=False, engine="python"
+            filename, delimiter=r"\s", index_col=False, engine="python"
         )
 
         from collections import defaultdict

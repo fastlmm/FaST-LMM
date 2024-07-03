@@ -1,3 +1,6 @@
+python setup.py sdist
+twine upload dist/*.tar.gz
+
 conda activate ./.conda
 pip install -r requirements.txt
 

@@ -85,7 +85,7 @@ class TestSingleSnpLinReg(unittest.TestCase):
         # for index, sid in enumerate(sid_list):
         #    sid_to_pvalue[sid] = pvalue_list[index]
 
-        reference = pd.read_csv(reffile, delimiter="\s", comment=None, engine="python")
+        reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
         assert len(frame) == len(
             reference
         ), "# of pairs differs from file '{0}'".format(reffile)

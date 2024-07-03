@@ -76,7 +76,7 @@ class Bed(object):
 
         self.bimfields = pd.read_csv(
             bimfile,
-            delimiter="\s",
+            delimiter=r"\s",
             usecols=(0, 1, 2, 3),
             header=None,
             index_col=False,

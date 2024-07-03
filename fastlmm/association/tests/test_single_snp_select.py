@@ -199,7 +199,7 @@ class TestSingleSnpSelect(unittest.TestCase):
             short = result_file_name + ".LMMSELECT.out"
             results = pd.read_csv(
                 self.tempout_dir + "/" + short + ".txt",
-                delimiter="\s",
+                delimiter=r"\s",
                 comment=None,
                 engine="python",
             )

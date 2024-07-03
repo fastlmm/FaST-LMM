@@ -153,7 +153,7 @@ def _kfold(iid_count, n_folds, seed, end_with_all=False, iid_to_index=None):
             result = iid_to_index([[fid] * 2 for fid in table.CID])
             return result
 
-        table = pd.read_csv(n_folds, delimiter="\s", comment=None, engine="python")
+        table = pd.read_csv(n_folds, delimiter=r"\s", comment=None, engine="python")
         fold_count = 1 + max(table.Fold)
         result = []
         for fold_index in range(fold_count):

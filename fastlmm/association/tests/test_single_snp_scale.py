@@ -363,7 +363,7 @@ class TestSingleSnpScale(unittest.TestCase):
     def compare_files(self, frame, ref_base):
         reffile = self.reference_file("single_snp_scale/" + ref_base + ".txt")
 
-        reference = pd.read_csv(reffile, delimiter="\s", comment=None, engine="python")
+        reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
         assert len(frame) == len(
             reference
         ), "# of pairs differs from file '{0}'".format(reffile)

@@ -337,7 +337,7 @@ class TestSingleSnp(unittest.TestCase):
         covar = self.cov_fn
 
         reffile = TestFeatureSelection.reference_file("single_snp/one.txt")
-        reference = pd.read_csv(reffile, delimiter="\s", comment=None, engine="python")
+        reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
 
         for random_seed in [0, 1]:
             for pvalue_threshold in [0.5, None, 1.0]:
@@ -796,7 +796,7 @@ class TestSingleSnp(unittest.TestCase):
         # for index, sid in enumerate(sid_list):
         #    sid_to_pvalue[sid] = pvalue_list[index]
 
-        reference = pd.read_csv(reffile, delimiter="\s", comment=None, engine="python")
+        reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
         assert len(frame) == len(
             reference
         ), "# of pairs differs from file '{0}'".format(reffile)
@@ -1361,7 +1361,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         # for index, sid in enumerate(sid_list):
         #    sid_to_pvalue[sid] = pvalue_list[index]
 
-        reference = pd.read_csv(reffile, delimiter="\s", comment=None, engine="python")
+        reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
         self.compare_df(frame, reference, reffile)
 
     def compare_df(self, frame, reference, name):
@@ -1386,7 +1386,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
 
     def compare_files_effect_size(self, frame, ref_base):
         reffile = TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
-        reference = pd.read_csv(reffile, delimiter="\s", comment=None, engine="python")
+        reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
         self.compare_df_effect_size(frame, reference, reffile)
 
     def compare_df_effect_size(self, frame, reference, name):
