@@ -6,13 +6,18 @@ on:
     
 jobs:
   ci:
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        include:
+          - {os: macos-13, arch: x86_64, build: "*"}
+          - {os: macos-14, arch: arm64, build: "*"}
+          - {os: windows-2022, arch: AMD64, build: "*"}
+          - {os: ubuntu-latest, arch: x86_64, build: "*manylinux2014*"}
+          - {os: ubuntu-latest, arch: aarch64, build: "*manylinux2014*"}
+          - {os: ubuntu-latest, arch: x86_64, build: "*musllinux_1_1*"}
         python-version: [3.9, "3.10", "3.11", "3.12"]
-    runs-on: ${{ matrix.os }}
-
     steps:
 
     - name: Checkout
