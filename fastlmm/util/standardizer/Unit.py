@@ -1,12 +1,9 @@
-import numpy as np
-import logging
 
 
 class Unit(object):  # IStandardizer
     """The specification for unit standardization"""
 
     def __init__(self):
-        import warnings
 
         #!!warnings.warn("This Unit is deprecated. Pysnptools includes newer versions of Unit", DeprecationWarning)
         pass

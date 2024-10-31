@@ -1,7 +1,5 @@
 import numpy as np
 import logging
-import unittest
-import os
 import scipy.linalg as LA
 import time
 from unittest.mock import patch
@@ -12,15 +10,12 @@ from pysnptools.kernelreader import KernelNpz
 from pysnptools.kernelreader import SnpKernel
 from pysnptools.kernelreader import KernelReader
 from pysnptools.kernelreader import Identity as KernelIdentity
-import pysnptools.util as pstutil
-from pysnptools.standardizer import DiagKtoN, UnitTrained
+from pysnptools.standardizer import DiagKtoN
 from pysnptools.standardizer import Unit
 from pysnptools.util import intersect_apply
-from pysnptools.standardizer import Standardizer
 from fastlmm.inference.lmm import LMM
 from pysnptools.standardizer import Identity as StandardizerIdentity
 from scipy.stats import multivariate_normal
-from fastlmm.util.pickle_io import load, save
 from pysnptools.pstreader import PstReader
 
 
@@ -91,7 +86,7 @@ class _SnpWholeTest(KernelReader):
         try:  # case 1: asking for train x test
             train = self.train[self.train.iid_to_index(iid), :]
             is_ok = True
-        except:
+        except Exception:
             is_ok = False
         if is_ok:
             return _SnpTrainTest(
@@ -282,7 +277,7 @@ def _pheno_fixup(pheno_input, iid_if_none=None, missing="NaN", count_A1=None):
         ret = Pheno(pheno_input, iid_if_none, missing=missing)
         ret.iid  # doing this just to force file load
         return ret
-    except:
+    except Exception:
         return _snps_fixup(pheno_input, iid_if_none=iid_if_none, count_A1=count_A1)
 
 
@@ -333,13 +328,31 @@ class FastLMM(object):
     """
     A predictor, somewhat in the style of scikit-learn, for learning and predicting with linear mixed models.
 
-    **Constructor:**
-        :Parameters: * **GB_goal** (int) -- gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel, which is memory efficient with little overhead on computation time.
-                     * **force_full_rank** (bool) -- Even if kernels are defined with fewer SNPs than IIDs, create an explicit iid_count x iid_count kernel. Cannot be True if force_low_rank is True.
-                     * **force_low_rank** (bool) -- Even if kernels are defined with fewer IIDs than SNPs, create a low-rank iid_count x sid_count kernel. Cannot be True if force_full_rank is True.
-                     * **snp_standardizer** (:class:`Standardizer`) -- The PySnpTools standardizer to be apply to SNP data. Choices include :class:`Standardizer.Unit` (Default. Makes values for each SNP have mean zero and standard deviation 1.0, then fills missing with zero) and :class:`Standardizer.Identity` (Do nothing)
-                     * **covariate_standardizer** (:class:`Standardizer`) -- The PySnpTools standardizer to be apply to X, the covariate data. Some choices include :class:`Standardizer.Unit` (Default. Fills missing with zero) and :class:`Standardizer.Identity` (do nothing)
-                     * **kernel_standardizer** (:class:`KernelStandardizer`) -- The PySnpTools kernel standardizer to be apply to the kernels. Some choices include :class:`KernelStandardizer.DiagKToN` (Default. Make the diagonal sum to iid_count)  and :class:`KernelStandardizer.Identity` (Do nothing)
+**Constructor:**
+    :Parameters:
+        * **GB_goal** (int) -- Memory usage in GB. Optional. If not given,
+          reads test SNPs in blocks the same size as the kernel, which is
+          memory-efficient with minimal overhead.
+        * **force_full_rank** (bool) -- Creates an explicit iid_count x
+          iid_count kernel, even if kernels are defined with fewer SNPs
+          than IIDs. Cannot be True if force_low_rank is True.
+        * **force_low_rank** (bool) -- Creates a low-rank iid_count x
+          sid_count kernel, even if kernels are defined with fewer IIDs
+          than SNPs. Cannot be True if force_full_rank is True.
+        * **snp_standardizer** (:class:`Standardizer`) -- The PySnpTools
+          standardizer to apply to SNP data. Choices include:
+          :class:`Standardizer.Unit` (default, standardizes SNP values
+          to have mean zero and standard deviation 1.0, fills missing
+          values with zero) and :class:`Standardizer.Identity` (no action).
+        * **covariate_standardizer** (:class:`Standardizer`) -- Standardizer
+          to apply to covariate data (X). Options include:
+          :class:`Standardizer.Unit` (default, fills missing with zero) and
+          :class:`Standardizer.Identity` (no action).
+        * **kernel_standardizer** (:class:`KernelStandardizer`) -- Kernel
+          standardizer to apply to kernels. Options include:
+          :class:`KernelStandardizer.DiagKToN` (default, adjusts diagonal
+          to sum to iid_count) and :class:`KernelStandardizer.Identity`
+          (no action).
 
         :Example:
 
@@ -358,7 +371,7 @@ class FastLMM(object):
         >>> #We give it phenotype and covariate information for extra examples, but it reorders and intersects the examples, so only training examples are used.
         >>> _ = fastlmm.fit(K0_train=snpreader[train_idx,:],X=cov_fn,y=pheno_fn)
         >>> mean, covariance = fastlmm.predict(K0_whole_test=snpreader[test_idx,:],X=cov_fn,count_A1=False)
-        >>> print(list(mean.iid[0]), round(mean.val[0,0],7), round(covariance.val[0,0],7))
+        >>> print([str(i) for i in mean.iid[0]], round(mean.val[0, 0], 7), round(covariance.val[0, 0], 7))
         ['per0', 'per0'] 0.1791958 0.8995209
         >>> nll = fastlmm.score(K0_whole_test=snpreader[test_idx,:],X=cov_fn,y=pheno_fn,count_A1=False)
         >>> print(f"{nll:.6f}")
@@ -410,14 +423,14 @@ class FastLMM(object):
 
         :param K0_train: A similarity matrix or SNPs from which to construct such a similarity matrix.
                Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__.
-               If you give a string, can be the name of a PLINK-formated Bed file.
+               If you give a string, can be the name of a PLINK-formatted Bed file.
                Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__.
                If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`__ file.
         :type K0_train: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string or
                `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__
 
         :param K1_train: A second similarity matrix or SNPs from which to construct such a second similarity matrix. (Also, see 'mixing').
-               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formatted Bed file.
                Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__.
                If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`__ file.
         :type K1_train: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string or
@@ -522,7 +535,7 @@ class FastLMM(object):
                 assert isinstance(
                     K_train.standardizer, StandardizerIdentity
                 ), "Expect Identity standardizer"
-                G_train = K_train.snpreader
+                # G_train = K_train.snpreader
                 lmm.setG(G0=K_train.snpreader.val)
             else:
                 lmm.setK(K0=K_train.val)
@@ -572,7 +585,7 @@ class FastLMM(object):
     def _new_snp_name(snpreader):
         new_snp = "always1"
         while True:
-            if not new_snp in snpreader.sid:
+            if new_snp not in snpreader.sid:
                 return np.r_[snpreader.sid, [new_snp]]
             new_snp += "_"
 
@@ -593,21 +606,25 @@ class FastLMM(object):
 
         :param X: testing covariate information, optional:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+            (e.g., `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__
+            or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param y: testing phenotype:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+            (e.g., `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or
+            `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param K0_whole_test: A similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formatted Bed file.
                Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`__ file.
         :type K0_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__
 
         :param K1_whole_test: A second similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formatted Bed file.
                Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`__ file.
         :type K1_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__
 
@@ -681,17 +698,19 @@ class FastLMM(object):
 
         :param X: testing covariate information, optional:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__
+          or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param K0_whole_test: A similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formatted Bed file.
                Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`__ file.
         :type K0_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__
 
         :param K1_whole_test: A second similarity matrix from all the examples to the test examples. Alternatively,
                the test SNPs needed to construct such a similarity matrix.
-               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formated Bed file.
+               Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__. If you give a string, can be the name of a PLINK-formatted Bed file.
                Can be PySnpTools `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__. If you give a string it can be the name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`__ file.
         :type K1_whole_test: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__
 

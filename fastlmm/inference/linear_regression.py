@@ -1,29 +1,15 @@
 import numpy as np
 import logging
-import unittest
-import os
-import scipy.linalg as LA
-import time
 from sklearn.utils import safe_sqr, check_array
 from scipy import stats
 
-from pysnptools.snpreader import Bed, Pheno
-from pysnptools.snpreader import SnpData, SnpReader
-from pysnptools.kernelreader import KernelNpz
-from pysnptools.kernelreader import SnpKernel
-from pysnptools.kernelreader import KernelReader
+from pysnptools.snpreader import SnpData
 from pysnptools.kernelreader import Identity as KernelIdentity
-import pysnptools.util as pstutil
-from pysnptools.standardizer import DiagKtoN, UnitTrained
 from pysnptools.standardizer import Unit
 from pysnptools.util import intersect_apply
-from pysnptools.standardizer import Standardizer
-from fastlmm.inference.lmm import LMM
 from fastlmm.inference.fastlmm_predictor import _pheno_fixup
 from fastlmm.inference import FastLMM
-from pysnptools.standardizer import Identity as StandardizerIdentity
 from scipy.stats import multivariate_normal
-from fastlmm.util.pickle_io import load, save
 from unittest.mock import patch
 
 
@@ -349,7 +335,7 @@ def f_regression_block(fun, X, y, blocksize=None, **args):
            The data matrix
     blocksize    : number of SNPs per block
     """
-    if blocksize == None:
+    if blocksize is None:
         return fun(X, y, **args)
 
     idx_start = 0

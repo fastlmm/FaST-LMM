@@ -1,18 +1,13 @@
-import fastlmm.association.lrt as lr
-import fastlmm.association.score as score
-import fastlmm.association.testCV as testCV
-import fastlmm.inference as fastlmm
 from fastlmm.pyplink.plink import *
 from pysnptools.util.pheno import *
 from fastlmm.pyplink.altset_list import *
-import subprocess, sys, os.path
-import fastlmm.util.stats.chi2mixture as c2
+import subprocess
+import sys
+import os.path
 from pysnptools.util.mapreduce1.distributable import *
 from pysnptools.util.mapreduce1.runner import *
-import pdb
 import pysnptools.util as pstutil
 import fastlmm.util.util as utilx
-import fastlmm.util.stats as ss
 import time
 from .Result import *
 from .PairResult import *
@@ -210,7 +205,7 @@ class FastLmmSet:  # implements IDistributable
             y = None
             y_back = None
             nInd = len(self.__y)
-            haswrittenphen = False
+            # haswrittenphen = False
 
             if self.altset_list2 is None:  # singleton sets
                 for iset, altset in enumerate(self.altsetlist_filtbysnps):
@@ -396,8 +391,8 @@ class FastLmmSet:  # implements IDistributable
 
             try:
                 pstutil.create_directory_if_necessary(infofile)
-            except:
-                logging.warn(
+            except Exception:
+                logging.warning(
                     "Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(
                         infofile
                     )
@@ -422,7 +417,7 @@ class FastLmmSet:  # implements IDistributable
             alteqnullperm = [None] * len(self.altsetlist_filtbysnps) * self.nperm
             setsizeperm = np.nan * np.ones(len(self.altsetlist_filtbysnps) * self.nperm)
 
-            npvals = self.test.npvals
+            # npvals = self.test.npvals
             pv_adj = np.nan * np.ones((len(self.altsetlist_filtbysnps)))
 
             # results can come in any order, so we have to use iperm and iset to put them in the right place
@@ -561,8 +556,8 @@ class FastLmmSet:  # implements IDistributable
         outfile = utilx.appendtofilename(self.outfile, appendNameFile)
         try:
             pstutil.create_directory_if_necessary(outfile)
-        except:
-            logging.warn(
+        except Exception:
+            logging.warning(
                 "Exception while creating directory for '{0}'. Assuming that other cluster task is creating it.".format(
                     outfile
                 )
@@ -571,10 +566,10 @@ class FastLmmSet:  # implements IDistributable
         logging.info("writing to file " + outfile + ".")
 
         assert (
-            type(values) == np.ndarray or type(values) == tuple
+            isinstance(values, (np.ndarray, tuple))
         ), "values can only be np.ndarray or a tuple of np.ndarray."
 
-        if type(values) == np.ndarray:
+        if isinstance(values, np.ndarray):
             values = (values,)
 
         values = list(map(list, list(zip(*values))))
@@ -719,7 +714,7 @@ class FastLmmSet:  # implements IDistributable
         permstatbetter = []
         allstat = []
         alteqnullperm = []
-        yorig = y
+        # yorig = y
         tol = 0.0
         from numpy.random import RandomState
 
@@ -834,7 +829,7 @@ class FastLmmSet:  # implements IDistributable
 
         if varcomp_test is None or not self.cache_from_perm:
             if G1.shape[1] == 0:
-                logging.info("no SNPS in set " + setname)
+                logging.info("no SNPS in set")
                 result = None
                 return [result]
             if np.isnan(G1.sum()):
@@ -944,128 +939,128 @@ class FastLmmSet:  # implements IDistributable
 
         return [result]
 
-    def TESTBEFOREUSING_run_interactiontest(
-        self, altset, iset, altset2, iset2, iperm=-1
-    ):
-        """
-        This function does the main work of the class (when interaction tests are running).
-        It is called (via a lambda) inside the loops found in 'generate_sequence'
+    # def TESTBEFOREUSING_run_interactiontest(
+    #     self, altset, iset, altset2, iset2, iperm=-1
+    # ):
+    #     """
+    #     This function does the main work of the class (when interaction tests are running).
+    #     It is called (via a lambda) inside the loops found in 'generate_sequence'
 
-        Input:
-            altset - a set of snps
-            iset - index to altset
-            iperm - index to permutation (-1 means no permutation)
-        Output:
-            an instance of the Result class
-        """
+    #     Input:
+    #         altset - a set of snps
+    #         iset - index to altset
+    #         iperm - index to permutation (-1 means no permutation)
+    #     Output:
+    #         an instance of the Result class
+    #     """
 
-        t0 = time.time()
+    #     t0 = time.time()
 
-        self.run_once()  # load files, etc. -- stuff we only want to do once no matter how many times we call 'run_test' and then 'reduce.
+    #     self.run_once()  # load files, etc. -- stuff we only want to do once no matter how many times we call 'run_test' and then 'reduce.
 
-        logging.info(
-            "Working on permutation index #{0} out of {1} total permutations...".format(
-                iperm, self.nperm
-            )
-        )
-        logging.info(
-            "\taltset {0}, {1} of {2}  ".format(
-                altset, iset, len(self.altsetlist_filtbysnps)
-            )
-        )
-        self.stdout.flush()
+    #     logging.info(
+    #         "Working on permutation index #{0} out of {1} total permutations...".format(
+    #             iperm, self.nperm
+    #         )
+    #     )
+    #     logging.info(
+    #         "\taltset {0}, {1} of {2}  ".format(
+    #             altset, iset, len(self.altsetlist_filtbysnps)
+    #         )
+    #     )
+    #     self.stdout.flush()
 
-        result = PairResult(
-            iperm=iperm,
-            iset=iset,
-            setname=str(altset),
-            iset2=iset2,
-            setname2=str(altset2),
-        )
+    #     result = PairResult(
+    #         iperm=iperm,
+    #         iset=iset,
+    #         setname=str(altset),
+    #         iset2=iset2,
+    #         setname2=str(altset2),
+    #     )
 
-        # read the alternative model SNPs (for all sets) from disk.
-        SNPs1a = altset.read()  # first set
-        import fastlmm.util.preprocess as util
+    #     # read the alternative model SNPs (for all sets) from disk.
+    #     SNPs1a = altset.read()  # first set
+    #     import fastlmm.util.preprocess as util
 
-        SNPs1a["snps"] = util.standardize(SNPs1a["snps"])
+    #     SNPs1a["snps"] = util.standardize(SNPs1a["snps"])
 
-        SNPs1b = altset2.read()  # second set
-        SNPs1b["snps"] = util.standardize(SNPs1b["snps"])
+    #     SNPs1b = altset2.read()  # second set
+    #     SNPs1b["snps"] = util.standardize(SNPs1b["snps"])
 
-        SNPs1 = dict(SNPs1a)
-        SNPs1.update(SNPs1b)  # concatenate the SNP dictionaries
+    #     SNPs1 = dict(SNPs1a)
+    #     SNPs1.update(SNPs1b)  # concatenate the SNP dictionaries
 
-        G1 = SNPs1["snps"] / np.sqrt(SNPs1["snps"].shape[1])
-        if G1.shape[1] == 0:
-            raise Exception("no SNPs to test")
-        result.setsize = SNPs1["snps"].shape[1]
+    #     G1 = SNPs1["snps"] / np.sqrt(SNPs1["snps"].shape[1])
+    #     if G1.shape[1] == 0:
+    #         raise Exception("no SNPs to test")
+    #     result.setsize = SNPs1["snps"].shape[1]
 
-        logging.info(" (" + str(result.setsize) + " SNPs)")
+    #     logging.info(" (" + str(result.setsize) + " SNPs)")
 
-        if self.permute >= 0:
-            permutationIndex = utilx.generate_permutation(
-                SNPs1["snps"].shape[0], self.rseed ^ self.permute
-            )
-            G1 = G1[permutationIndex]
+    #     if self.permute >= 0:
+    #         permutationIndex = utilx.generate_permutation(
+    #             SNPs1["snps"].shape[0], self.rseed ^ self.permute
+    #         )
+    #         G1 = G1[permutationIndex]
 
-        if iperm >= 0:
-            newseed = self.rseed ^ iperm
-            if self.permute >= 0:
-                # Add a left shift so that iperm=1 and self.permute=2 gives a different newseed than iperm=2 and self.permute=1
-                newseed = (newseed << 1) ^ self.permute
-            permutationIndex = utilx.generate_permutation(
-                SNPs1["snps"].shape[0], newseed
-            )
-            # permute the data to create Null-only P-values
-            G1 = G1[permutationIndex]
+    #     if iperm >= 0:
+    #         newseed = self.rseed ^ iperm
+    #         if self.permute >= 0:
+    #             # Add a left shift so that iperm=1 and self.permute=2 gives a different newseed than iperm=2 and self.permute=1
+    #             newseed = (newseed << 1) ^ self.permute
+    #         permutationIndex = utilx.generate_permutation(
+    #             SNPs1["snps"].shape[0], newseed
+    #         )
+    #         # permute the data to create Null-only P-values
+    #         G1 = G1[permutationIndex]
 
-        if self.filenull is not None:
-            i_exclude = utilx.excludeinds(
-                self.__SNPs0["data"]["pos"],
-                SNPs1["pos"],
-                mindist=self.mindist,
-                idist=self.idist,
-            )
-            result.nexclude = i_exclude.sum()
-            logging.info("numExcluded=" + str(result.nexclude))
-        else:
-            result.nexclude = 0
+    #     if self.filenull is not None:
+    #         i_exclude = utilx.excludeinds(
+    #             self.__SNPs0["data"]["pos"],
+    #             SNPs1["pos"],
+    #             mindist=self.mindist,
+    #             idist=self.idist,
+    #         )
+    #         result.nexclude = i_exclude.sum()
+    #         logging.info("numExcluded=" + str(result.nexclude))
+    #     else:
+    #         result.nexclude = 0
 
-        null_model_changed = result.nexclude > 0
+    #     null_model_changed = result.nexclude > 0
 
-        # need to make this caching smarter for when background kernel changes in every test (e.g. interactions)
-        if null_model_changed:
-            logging.info(" (computing needed null info anew) ")
-            G0_to_use = self.__SNPs0["data"]["snps"][:, ~i_exclude] / np.sqrt(
-                self.__SNPs0["data"]["snps"][:, ~i_exclude].shape[1]
-            )  # excluded SNPs
-            null_model = None
-        else:  # use cached values
-            G0_to_use = self.__G0
-            null_model = self.__varcomp_test
-            logging.info(" (using cached null info)")
+    #     # need to make this caching smarter for when background kernel changes in every test (e.g. interactions)
+    #     if null_model_changed:
+    #         logging.info(" (computing needed null info anew) ")
+    #         G0_to_use = self.__SNPs0["data"]["snps"][:, ~i_exclude] / np.sqrt(
+    #             self.__SNPs0["data"]["snps"][:, ~i_exclude].shape[1]
+    #         )  # excluded SNPs
+    #         null_model = None
+    #     else:  # use cached values
+    #         G0_to_use = self.__G0
+    #         null_model = self.__varcomp_test
+    #         logging.info(" (using cached null info)")
 
-        [result.pv, result.lik0, result.lik1] = self.test.pv_etc(
-            filenull,
-            G0_to_use,
-            G1,
-            y,
-            x,
-            appendBias,
-            null_model,
-            self.__varcomp_test,
-            forcefullrank,
-        )
+    #     [result.pv, result.lik0, result.lik1] = self.test.pv_etc(
+    #         filenull,
+    #         G0_to_use,
+    #         G1,
+    #         y,
+    #         x,
+    #         appendBias,
+    #         null_model,
+    #         self.__varcomp_test,
+    #         forcefullrank,
+    #     )
 
-        # where is result.test used?
-        result.test = (
-            self.test
-        )  # probably not the best way to do this, but hacking it for now
+    #     # where is result.test used?
+    #     result.test = (
+    #         self.test
+    #     )  # probably not the best way to do this, but hacking it for now
 
-        t1 = time.time()
-        logging.info("%.2f seconds elapsed" % (t1 - t0))
+    #     t1 = time.time()
+    #     logging.info("%.2f seconds elapsed" % (t1 - t0))
 
-        return result
+    #     return result
 
     def setSNPs0(self):
         logging.info("Reading SNPs0")
@@ -1104,7 +1099,7 @@ class FastLmmSet:  # implements IDistributable
 
             with TemporaryFile() as stdin_temp:  # An empty to file from which to read stdin (This allows this to run even when there is no normal stdin defined)
                 with TemporaryFile() as stdout_temp:
-                    if self.covarfile == None:
+                    if self.covarfile is None:
                         subprocess.call(
                             fastlmmpath
                             + " -autoselect select/auto -bfilesim "
@@ -1285,7 +1280,7 @@ class FastLmmSet:  # implements IDistributable
             self.__SNPs0 = None
             # self.__G0=None
 
-        if self.covarfile == None:
+        if self.covarfile is None:
             covar = None
         else:
             covar = loadPhen(self.covarfile, missing="NaN")
@@ -1298,7 +1293,7 @@ class FastLmmSet:  # implements IDistributable
 
         covar, pheno, indarr = self.intersect_data(covar, pheno)
         N = pheno["vals"].shape[0]
-        if self.covarfile == None:
+        if self.covarfile is None:
             self.__X = np.ones((N, 1))
         else:
             # check for covariates which are constant, as the lmm code crashes on these
@@ -1311,7 +1306,7 @@ class FastLmmSet:  # implements IDistributable
             self.__X = np.hstack((np.ones((N, 1)), covar["vals"]))
         self.__y = pheno["vals"]
 
-        if not covar is None and np.isnan(covar["vals"].sum()):
+        if covar is not None and np.isnan(covar["vals"].sum()):
             raise Exception(
                 "found missing values in covariates file that remain after intersection"
             )
@@ -1471,7 +1466,6 @@ class FastLmmSet:  # implements IDistributable
                 varbacknullsnp = None
 
             # the order of inputs here is reflected in the reordering indexes below of 0,1,2,3,4
-            import warnings
 
             #!!warnings.warn("This intersect_ids is deprecated. Pysnptools includes newer versions of intersect_ids", DeprecationWarning)
             indarr = utilx.intersect_ids(
@@ -1561,7 +1555,7 @@ class FastLmmSet:  # implements IDistributable
 
     # overridden to provide a nice name on the cluster.
     def __str__(self):
-        if self.outfile == None:
+        if self.outfile is None:
             return self.__class__.__name__
         else:
             return "{0} {1}".format(self.__class__.__name__, self.outfile)
@@ -1622,6 +1616,6 @@ if __name__ == "__main__":
     exec(d)
 
     tt0 = time.time()
-    runner.run(distributable)
+    runner.run(distributable) # type: ignore
     tt1 = time.time()
     logging.info("Final elapsed time for all processing is %.2f seconds" % (tt1 - tt0))

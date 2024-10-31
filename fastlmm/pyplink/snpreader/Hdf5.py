@@ -1,6 +1,6 @@
 try:
     import h5py
-except:
+except Exception:
     pass
 
 import logging
@@ -149,7 +149,7 @@ class Hdf5(object):
         self.run_once()
 
         order = order.upper()
-        opposite_order = "C" if order == "F" else "F"
+        # opposite_order = "C" if order == "F" else "F"
 
         snp_index_list = np.array(
             list(snpset_with_snpreader)

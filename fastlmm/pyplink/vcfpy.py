@@ -1,7 +1,5 @@
-import sys
 import os
 import gzip
-import re
 import numpy as np
 
 writesmall = 0

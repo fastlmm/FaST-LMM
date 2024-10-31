@@ -3,7 +3,6 @@ file to set up python package, see http://docs.python.org/2/distutils/setupscrip
 """
 
 
-import platform
 import os
 import sys
 import shutil

@@ -1,18 +1,11 @@
 import numpy as NP
 import numpy as np
 import scipy.linalg as LA
-import scipy.optimize as opt
-import scipy.stats as ST
 import scipy.special as SS
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
 import time
 
-from bin2kernel import Bin2Kernel
-from bin2kernel import makeBin2KernelAsEstimator
-from bin2kernel import Bin2KernelLaplaceLinearN
-from bin2kernel import getFastestBin2Kernel
-from bin2kernel import Bin2KernelEPLinearN
 
 
 def rotate(A, rotationMatrix, transposeRot=True):

@@ -1,12 +1,9 @@
 import numpy as np
 import scipy.linalg as LA
-import scipy.optimize as opt
-import scipy.stats as ST
 import scipy.special as SS
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
 import time
-import warnings
 import logging
 
 
@@ -110,7 +107,7 @@ class LMM(object):
         a version of setX that doesn't assume that Eigenvalue decomposition has been done.
         """
         self.X = X
-        N = self.X.shape[0]
+        # N = self.X.shape[0]
 
     def sety(self, y):
         """
@@ -135,7 +132,7 @@ class LMM(object):
         """
         assert y.ndim == 1, "y should be 1-dimensional"
         self.y = y
-        N = self.y.shape[0]
+        # N = self.y.shape[0]
 
     def setG(self, G0=None, G1=None, a2=0.0, K0=None, K1=None):
         """
@@ -345,7 +342,7 @@ class LMM(object):
 
         if verbose:
             logging.info("finda2")
-        min = minimize1D(f=f, nGrid=nGridA2, minval=minA2, maxval=maxA2, verbose=False)
+        _min = minimize1D(f=f, nGrid=nGridA2, minval=minA2, maxval=maxA2, verbose=False)
         # print "numcalls to innerLoopTwoKernel= " + str(self.numcalls)
         return resmin[0]
 
@@ -373,7 +370,7 @@ class LMM(object):
             logging.debug("search\t{0}\t{1}".format(x, res["nLL"]))
             return res["nLL"]
 
-        min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
+        _min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
         return resmin[0]
 
     def find_log_delta(
@@ -402,7 +399,7 @@ class LMM(object):
             # logging.info("search\t{0}\t{1}".format(x,res['nLL']))
             return res["nLL"]
 
-        min = minimize1D(f=f, nGrid=nGrid, minval=min_log_delta, maxval=max_log_delta)
+        _min = minimize1D(f=f, nGrid=nGrid, minval=min_log_delta, maxval=max_log_delta)
         res = resmin[0]
         internal_delta = 1.0 / res["h2"] - 1.0
         ln_external_delta = np.log(internal_delta / sid_count)
@@ -452,7 +449,7 @@ class LMM(object):
         N = self.y.shape[0]
         D = self.UX.shape[1]
 
-        # if REML == True:
+        # if REML:
         #    # this needs to be fixed, please see test_gwas.py for details
         #    raise NotImplementedError("REML in lmm object not supported, please use lmm_cov.py instead")
 
@@ -882,7 +879,7 @@ class LMM(object):
     def nLL(lmm, beta, sigma2, h2, y_actual):
         from scipy.stats import multivariate_normal
 
-        y_star, var_star = predict_mean_and_variance(
+        y_star, var_star = LMM.predict_mean_and_variance(
             lmm, beta, sigma2, h2, lmm.Kstar_star
         )
         var = multivariate_normal(mean=y_star.reshape(-1), cov=var_star)
@@ -914,7 +911,7 @@ class LMM(object):
         # TODO: REML?
 
         if (h2 < 0.0) or (h2 >= 1.0):
-            return np.nan * np.ones(M)
+            return np.nan # * np.ones(M)
 
         k = self.S.shape[0]
         N = self.y.shape[0]

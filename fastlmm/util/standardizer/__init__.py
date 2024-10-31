@@ -19,7 +19,7 @@ def factory(s):
 
 
 def standardize_with_lambda(snps, lambdax, blocksize=None):
-    if blocksize == None:
+    if blocksize is None:
         return lambdax(snps)
 
     idx_start = 0

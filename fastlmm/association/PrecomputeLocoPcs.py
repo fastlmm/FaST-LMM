@@ -7,17 +7,12 @@ Created on 2014-04-02
 @summary: Helper Module for precomputing principal components for Leave one Chromosme out GWAS
 """
 
-import logging
 import numpy as np
-import pandas as pd
-from scipy import stats
-import pylab
-import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
 import pysnptools.util as pstutil
 import fastlmm.util.util as util
 import fastlmm.util.standardizer as stdizer
-from fastlmm.util.pickle_io import load, save
+from fastlmm.util.pickle_io import save
 import os.path
 from sklearn.decomposition import PCA
 
@@ -48,7 +43,7 @@ def load_intersect(snp_reader, pheno_fn_or_none, snp_set=AllSnps()):
     snp_names = geno["rs"]
     chr_ids = geno["pos"][:, 0]
 
-    if not pheno_fn_or_none is None:
+    if pheno_fn_or_none is not None:
 
         # load phenotype
         pheno = pstpheno.loadOnePhen(pheno_fn_or_none, 0)

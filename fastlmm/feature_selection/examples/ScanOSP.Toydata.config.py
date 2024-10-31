@@ -1,8 +1,10 @@
+import numpy as np
+
 exactUpdate = False
 logdelta = np.log(16)
 topKbyLinReg = 16
 
-if topKbyLinReg != None:
+if topKbyLinReg is not None:
     outFile = "examples/ScanOSP.exact%d.nSnps%d.logdelta%.2f.out.txt" % (
         exactUpdate,
         topKbyLinReg,
@@ -14,7 +16,7 @@ else:
         logdelta,
     )
 
-obj = ScanOSP(
+obj = ScanOSP(  # noqa: F821 # type: ignore
     phenoFile="examples/toydata.phe",
     bedFile="examples/toydata",
     windowByPosition=100,

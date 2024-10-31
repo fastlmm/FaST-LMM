@@ -11,7 +11,7 @@ Examples:
     #['a']
 
     >>> matrix = np.array([[3, 3, 1],[3, 3, 1],[1, 1, 3]])
-    >>> VertexCut().work(matrix,2)
+    >>> [int(x) for x in VertexCut().work(matrix, 2)]
     [0]
 
 """
@@ -19,7 +19,6 @@ Examples:
 import numpy as np
 from collections import defaultdict
 import logging
-import itertools
 
 
 class VertexCut(object):
@@ -67,7 +66,7 @@ class VertexCut(object):
     def _check_that_symmetric(self, graph):
         for node1, list in graph.items():
             for node2 in list:
-                if not node1 in graph[node2]:
+                if node1 not in graph[node2]:
                     raise Exception(
                         "expect symmetric graph {0}, {1}".format(node1, node2)
                     )

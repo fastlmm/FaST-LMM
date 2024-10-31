@@ -2,12 +2,7 @@ from fastlmm import Pr
 import scipy.optimize as opt
 import numpy as np
 from numpy import dot
-import scipy.integrate
-from scipy.linalg import cholesky, solve_triangular
 from fastlmm.external.util.math import (
-    check_definite_positiveness,
-    check_symmetry,
-    mvnormpdf,
     ddot,
     trace2,
     dotd,
@@ -15,7 +10,6 @@ from fastlmm.external.util.math import (
 from fastlmm.external.util.math import stl, stu
 from fastlmm.inference.glmm import GLMM_N1K3, GLMM_N3K1
 from fastlmm.inference.likelihood import LogitLikelihood, ProbitLikelihood
-from fastlmm import Pr
 import sys
 
 """

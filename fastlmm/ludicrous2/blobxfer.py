@@ -1647,7 +1647,7 @@ def azure_request(req, timeout=None, *args, **kwargs):
     while True:
         try:
             return req(*args, **kwargs)
-        except requests.Timeout as exc:
+        except requests.Timeout:
             pass
         except (
             requests.ConnectionError,
@@ -3096,7 +3096,7 @@ def main_internal(exit_is_ok):
                             content_settings=None,
                             timeout=args.timeout,
                         )
-                    except azure.common.AzureMissingResourceHttpError as exc:
+                    except azure.common.AzureMissingResourceHttpError:
                         create_all_parent_directories_fileshare(
                             file_service, args, fsfile, dirscreated
                         )

@@ -3,17 +3,15 @@ import numpy as np
 import unittest
 import os.path
 import doctest
-import pandas as pd
 import sys
 import pysnptools.util as pstutil
 from unittest.mock import patch
 
 from fastlmm.inference import FastLMM
 from fastlmm.inference.fastlmm_predictor import _SnpWholeTest
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.standardizer import Unit, Standardizer
+from pysnptools.standardizer import Unit
 from pysnptools.standardizer import Identity as SS_Identity
 from pysnptools.kernelstandardizer import Identity as KS_Identity
 from pysnptools.kernelreader import Identity as KernelIdentity
@@ -867,8 +865,6 @@ class TestFastLMM(unittest.TestCase):
         self.compare_files(predicted_pheno, "one")
 
     def test_lr(self):
-        import matplotlib.pyplot as plt
-        import pylab
 
         logging.info("TestLmmTrain test_lr")
 

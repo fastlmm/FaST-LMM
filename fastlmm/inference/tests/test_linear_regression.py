@@ -3,19 +3,14 @@ import numpy as np
 import unittest
 import os.path
 import doctest
-import pandas as pd
 import pysnptools.util as pstutil
 import sys
 
 from fastlmm.inference import LinearRegression
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.standardizer import Unit, Standardizer
-from pysnptools.standardizer import Identity as SS_Identity
-from pysnptools.kernelstandardizer import Identity as KS_Identity
 from pysnptools.kernelreader import Identity as KernelIdentity
-from pysnptools.kernelreader import KernelData, SnpKernel
 
 
 class TestLinRegTrain(unittest.TestCase):

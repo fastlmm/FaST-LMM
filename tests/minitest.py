@@ -1,2 +1,1 @@
-import fastlmm
 print("OK")

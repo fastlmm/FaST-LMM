@@ -1,7 +1,6 @@
 # flake8: noqa: E501
 
 import numpy as np
-import warnings
 import scipy.optimize as opt
 import scipy.stats as st
 import scipy.special as ss

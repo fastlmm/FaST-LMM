@@ -14,7 +14,7 @@ from fastlmm.association import single_snp
 from fastlmm.association import single_snp_linreg
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+from pysnptools.util.mapreduce1.runner import LocalMultiProc
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -48,7 +48,7 @@ class TestSingleSnp(unittest.TestCase):
     def test_match_cpp(self):
         """
         match
-            FaSTLMM.207\Data\DemoData>..\.cd.\bin\windows\cpp_mkl\fastlmmc -bfile snps -extract topsnps.txt -bfileSim snps -extractSim ASout.snps.txt -pheno pheno.txt -covar covariate.txt -out topsnps.singlesnp.txt -logDelta 0 -verbose 100
+            FaSTLMM.207\\Data\\DemoData>..\\.cd.\bin\\windows\\cpp_mkl\fastlmmc -bfile snps -extract topsnps.txt -bfileSim snps -extractSim ASout.snps.txt -pheno pheno.txt -covar covariate.txt -out topsnps.singlesnp.txt -logDelta 0 -verbose 100
 
         """
         logging.info("TestSingleSnp test_match_cpp")
@@ -288,7 +288,7 @@ class TestSingleSnp(unittest.TestCase):
                 covar=covar,
                 count_A1=False,
             )
-        except Exception as e:
+        except Exception:
             got_expected_fail = True
         assert got_expected_fail, "Did not get expected fail"
 
@@ -310,7 +310,7 @@ class TestSingleSnp(unittest.TestCase):
                 covar=covar,
                 count_A1=False,
             )
-        except Exception as e:
+        except Exception:
             got_expected_fail = True
         assert got_expected_fail, "Did not get expected fail"
 
@@ -326,7 +326,7 @@ class TestSingleSnp(unittest.TestCase):
                 covar_by_chrom=covar_by_chrom,
                 count_A1=False,
             )
-        except Exception as e:
+        except Exception:
             got_expected_fail = True
         assert got_expected_fail, "Did not get expected fail"
 
@@ -760,7 +760,7 @@ class TestSingleSnp(unittest.TestCase):
                 count_A1=False,
             )
             failed = False
-        except:
+        except Exception:
             failed = True
 
         assert failed
@@ -1083,7 +1083,6 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                     ).all, "pair {0} differs too much from reference".format(sid)
 
     def create_phen3(self, phen):
-        from fastlmm.util import example_file  # Download and return local file name
 
         phen = phen.read()
         rng = np.random.RandomState(seed=0)
@@ -1101,7 +1100,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
     def test_multipheno3(self):
         from pysnptools.kernelreader import SnpKernel
         from fastlmm.util import example_file  # Download and return local file name
-        from pysnptools.standardizer import Standardizer, Unit
+        from pysnptools.standardizer import Unit
 
         bed = Bed(example_file("tests/datasets/synth/all.*", "*.bed"), count_A1=True)[
             :, ::10
@@ -1173,9 +1172,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
                             )
 
     def test_multipheno_expected_exceptions(self):
-        from pysnptools.kernelreader import SnpKernel
         from fastlmm.util import example_file  # Download and return local file name
-        from pysnptools.standardizer import Standardizer, Unit
 
         bed = Bed(example_file("tests/datasets/synth/all.*", "*.bed"), count_A1=True)[
             :, ::10
@@ -1418,7 +1415,7 @@ def getTestSuite():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+    from pysnptools.util.mapreduce1.runner import LocalMultiProc
 
     # this import is needed for the runner
     from fastlmm.association.tests.test_single_snp import (

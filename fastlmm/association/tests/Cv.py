@@ -1,4 +1,3 @@
-import fastlmm.association.lrt as lr
 import numpy as np
 import fastlmm.util.stats.chi2mixture as c2
 import fastlmm.association.testCV as testCV

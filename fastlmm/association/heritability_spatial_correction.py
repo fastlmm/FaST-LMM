@@ -1,23 +1,14 @@
 from pysnptools.util.mapreduce1.runner import *
 import logging
-import fastlmm.pyplink.plink as plink
-import pysnptools.util.pheno as pstpheno
 import pysnptools.util as pstutil
 import numpy as np
 import scipy.stats as stats
-from pysnptools.snpreader import Bed
-from pysnptools.standardizer import DiagKtoN
-from pysnptools.kernelreader import KernelData, KernelNpz
-import time
+from pysnptools.kernelreader import KernelData
 import pandas as pd
-from fastlmm.inference.lmm_cov import LMM as fastLMM
 from fastlmm.inference.lmm import LMM
 import sklearn.metrics
-from pysnptools.snpreader import Pheno
 from pysnptools.standardizer import Unit
-import itertools
 from sklearn import model_selection
-from scipy import stats
 from unittest.mock import patch
 
 

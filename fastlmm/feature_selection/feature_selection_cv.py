@@ -6,15 +6,8 @@ Created on 2013-07-28
 """
 
 # std modules
-from collections import defaultdict
-import gzip
-import bz2
-import pickle
 import time
 import os
-import gc
-import subprocess
-import sys
 import logging
 from unittest.mock import patch
 
@@ -23,20 +16,13 @@ import numpy as np
 import pandas as pd
 
 # sklearn
-from sklearn.linear_model import RidgeCV, Ridge
-from sklearn.model_selection import KFold, LeaveOneOut, ShuffleSplit
-from sklearn.metrics import mean_squared_error
-from sklearn.feature_selection import f_regression
-from sklearn import model_selection
+from sklearn.model_selection import ShuffleSplit
 from sklearn.decomposition import KernelPCA
 
 # project
 from pysnptools.snpreader import Bed
 import pysnptools.util as pstutil
 import pysnptools.util.pheno as pstpheno
-import fastlmm.util.util as util
-import fastlmm.util.preprocess as up
-import fastlmm.inference as inference
 import fastlmm.inference.linear_regression as lin_reg
 from fastlmm.feature_selection import PerformSelectionDistributable as psd
 from pysnptools.util.mapreduce1.runner import *
@@ -144,8 +130,8 @@ class FeatureSelectionStrategy(object):
         self.blocksize = 1000
         self.biggest_k = None
 
-        if log is not None:
-            logger.setLevel(log)
+        # if log is not None:
+        #     logger.setLevel(log)
 
     def run_once(self):
         with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
@@ -158,7 +144,6 @@ class FeatureSelectionStrategy(object):
 
             # precompute kernel on all snps if needed
             if self.num_pcs > 0 or self.biggest_k >= self.snpreader.sid_count:
-                from pysnptools.standardizer import Identity
 
                 self.K = self.G.kernel()
                 self.K.flags.writeable = False
@@ -168,7 +153,7 @@ class FeatureSelectionStrategy(object):
                 self.perform_pca()
 
     def load_covariates(self, pheno):
-        if self.cov_fn == None:
+        if self.cov_fn is None:
             cov_iid = pheno["iid"]
             X = np.ones((len(cov_iid), 1))
         else:
@@ -293,7 +278,7 @@ class FeatureSelectionStrategy(object):
 
         max_k : int
             Maximum number of SNPs to store for precomputation.
-            SNPs will be sorted ascendingly by p-value and
+            SNPs will be sorted ascending by p-value and
             at most max_k features will be kept.
 
         """
@@ -534,7 +519,7 @@ class FeatureSelectionStrategy(object):
                         % (label, best_delta_idx)
                     )
                     # if output_prefix is not None:
-                    # create a size-zero file so that the cluster will aways have something to copy
+                    # create a size-zero file so that the cluster will always have something to copy
                     # plot_fn=output_prefix+"_parabola.pdf"
                     # pstutil.create_directory_if_necessary(plot_fn)
                     # open(plot_fn, "w").close()
@@ -584,7 +569,7 @@ class FeatureSelectionStrategy(object):
                     pylab.xlabel("k")
                     pylab.grid(True)
                     # pylab.show()
-                except:
+                except Exception:
                     pass
                 xval_fn = output_prefix + "_xval_%s.pdf" % label
                 pstutil.create_directory_if_necessary(xval_fn)
@@ -661,7 +646,7 @@ class FeatureSelectionStrategy(object):
                     pylab.ylabel(label)
                     pylab.xlabel("k")
                     pylab.grid(True)
-                except:
+                except Exception:
                     pass
                 plot_fn = output_prefix + "_xval_%s.pdf" % label
                 pstutil.create_directory_if_necessary(plot_fn)
@@ -692,7 +677,7 @@ class FeatureSelectionStrategy(object):
         feat_idx = np.argsort(_pval)
 
         _pval_feat_idx = _pval[feat_idx]
-        sid_feat_idx = self.sid[feat_idx]
+        # sid_feat_idx = self.sid[feat_idx]
         lingreg_results = (_pval[feat_idx], self.sid[feat_idx])
         logging.info("fin_scan time %.2f s" % (float(time.time() - tt0)))
 
@@ -838,7 +823,7 @@ def load_snp_data(
     # assert np.testing.assert_array_equal(ind_iid, pheno['iid'][indarr[:,0]])
 
     # load covariates or generate vector of ones (for bias)
-    if cov_fn == None:
+    if cov_fn is None:
         cov = {"vals": np.ones((len(pheno["iid"]), 1)), "iid": pheno["iid"]}
     else:
         cov = pstpheno.loadPhen(cov_fn)
@@ -857,11 +842,11 @@ def load_snp_data(
     return G, X, y
 
 
-from pysnptools.standardizer import Unit
-from pysnptools.standardizer import Identity
-from pysnptools.standardizer import Beta
-from pysnptools.standardizer import BySqrtSidCount
-from pysnptools.standardizer import BySidCount
+from pysnptools.standardizer import Unit  # noqa: E402
+from pysnptools.standardizer import Identity  # noqa: E402
+from pysnptools.standardizer import Beta  # noqa: E402
+from pysnptools.standardizer import BySqrtSidCount  # noqa: E402
+from pysnptools.standardizer import BySidCount  # noqa: E402
 
 
 def factory(s):
@@ -1010,7 +995,7 @@ def main():
     if (
         args.strategy != "lmm_full_cv"
         and args.strategy != "insample_cv"
-        and args.select_by_ll == True
+        and args.select_by_ll
     ):
         logging.critical(
             "Log-likelihood computation only supported for strategy: 'lmm_full_cv' and 'insample_cv' (strategy '%s' was used)"
@@ -1056,7 +1041,7 @@ def main():
         snpreader = Bed(args.snpreader, count_A1=self.count_A1)
     else:
         logging.info(
-            "'{0}' + '.bed' doesn't exisit as a file so will evaluate it as an expression".format(
+            "'{0}' + '.bed' doesn't exist as a file so will evaluate it as an expression".format(
                 args.snpreader
             )
         )

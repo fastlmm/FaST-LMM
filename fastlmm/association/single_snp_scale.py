@@ -1,7 +1,6 @@
 import os
 import logging
 import sys
-import collections
 
 if sys.version_info.major == 3 and sys.version_info.minor >= 10:
     from collections.abc import Mapping
@@ -15,8 +14,8 @@ import time
 from datetime import datetime
 import pysnptools.util as pstutil
 from bed_reader import get_num_threads
-from pysnptools.snpreader import Bed, Pheno, SnpData, SnpReader, SnpNpz
-from pysnptools.kernelreader import KernelData, KernelNpz
+from pysnptools.snpreader import Bed, Pheno, SnpData, SnpNpz
+from pysnptools.kernelreader import KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
 from pysnptools.util.mapreduce1.mapreduce import _identity, _MapReduce
 from pysnptools.util.mapreduce1.runner import Local
@@ -27,7 +26,7 @@ from pysnptools.util import _file_transfer_reporter
 from pysnptools.snpreader import SnpMemMap
 from pysnptools.standardizer import Unit
 from pysnptools.snpreader import SnpGen
-from pysnptools.util.filecache import LocalCache, FileCache
+from pysnptools.util.filecache import FileCache
 from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
 from fastlmm.util.mingrid import minimize1D
 from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb, mmultfile_ata
@@ -56,7 +55,7 @@ def single_snp_scale(
     clear_local_lambda=None,
     force_python_only=False,
 ):
-    """
+    r"""
     Function performing single SNP GWAS using REML and cross validation over the chromosomes. Will reorder and intersect IIDs as needed.
     It gives the same results as :func:`.single_snp` but scales a little better on a single machine and has the ability to run on a cluster. (Cluster
     runs require appropriate modules for parameters ``cache`` and ``runner``.)
@@ -1022,7 +1021,7 @@ def postsvd_piece(
                 )  #!!! instead of reading whole column, how about just reading the piece of the column that is wanted? Whould this be a little faster?
                 try:
                     piece[:, sid_index] = row[start_iid_index:stop_iid_index]
-                except:
+                except Exception:
                     raise Exception(
                         "piece[:,{0}] = row[{1}:{2}]".format(
                             sid_index, start_iid_index, stop_iid_index
@@ -1821,7 +1820,7 @@ def map_reduceX(input_seq, mapper=_identity, reducer=list, runner=None, name=Non
     if runner is None:
         runner = Local()
 
-    if name == None:
+    if name is None:
         name = str(distributable_list[0]) or ""
         if len(distributable_list) > 1:
             name += "-etc"

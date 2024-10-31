@@ -1,37 +1,21 @@
 # std modules
-from collections import defaultdict
-import gzip
-import bz2
-import pickle
 import time
-import os
-import gc
 import logging
 import io
 
 # common modules
 import numpy as np
 import pandas as pd
-import sys
 
 # sklearn
-from sklearn.linear_model import RidgeCV, Ridge
-from sklearn.model_selection import KFold, LeaveOneOut, ShuffleSplit
 from sklearn.metrics import mean_squared_error
-from sklearn.feature_selection import f_regression
-from sklearn import model_selection
-from sklearn.decomposition import PCA
 
 # project
-import fastlmm.pyplink.plink as plink
 import pysnptools.util as pstutil
-import fastlmm.util.util as util
 import fastlmm.util.preprocess as up
 import fastlmm.inference as fastlmm
-import fastlmm.inference.linear_regression as lin_reg
 from fastlmm.pyplink.snpset import *
 
-from pysnptools.snpreader import Bed
 
 
 class PerformSelectionDistributable(object):  # implements IDistributable
@@ -133,7 +117,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
             mse_cv.append(mse_cv1)
             ll_cv.append(ll_cv1)
             best_delta_for_k.append(best_delta_for_k_1)
-        if lingreg_results == None:
+        if lingreg_results is None:
             raise Exception("assert")
         if (self.strategy == "insample_cv") or (self.strategy == "lmm_full_cv"):
             if (
@@ -256,7 +240,7 @@ class PerformSelectionDistributable(object):  # implements IDistributable
             return self.output_prefix + ".work_directory"
 
     def __str__(self):
-        if self.output_prefix == None:
+        if self.output_prefix is None:
             return self.__class__.__name__
         else:
             return "{1} {0}".format(self.__class__.__name__, self.output_prefix)
@@ -498,7 +482,7 @@ def build_kernel_blocked(
     for start in range(0, current_size, blocksize):
         ct += blocksize
 
-        if snp_idx == None:
+        if snp_idx is None:
             tmp_set = PositionRange(start, blocksize)
         else:
             tmp_set = SnpAndSetName("someset", snp_names[start : start + blocksize])

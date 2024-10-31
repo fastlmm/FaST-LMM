@@ -1,21 +1,14 @@
 import sys
-import numpy as np
 import logging
 import unittest
 import os.path
 import doctest
 import pandas as pd
-import sys
 
-from fastlmm.association import single_snp
 from fastlmm.association import single_snp_linreg
-import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
-from pysnptools.kernelreader import Identity as KernelIdentity
-from pysnptools.standardizer import Unit
-from pysnptools.snpreader import Bed, Pheno, SnpData
-from pysnptools.kernelreader import SnpKernel
+from pysnptools.util.mapreduce1.runner import Local
+from pysnptools.snpreader import Bed
 
 
 class TestSingleSnpLinReg(unittest.TestCase):

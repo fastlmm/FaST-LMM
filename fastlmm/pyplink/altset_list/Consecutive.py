@@ -1,5 +1,3 @@
-import numpy as np
-import subprocess, sys, os.path
 from itertools import *
 from fastlmm.pyplink.snpset import *
 import math

@@ -42,7 +42,7 @@ class Result:
     def h2(self):
         try:
             return self.test["lik1"]["h2"][0]
-        except:
+        except Exception:
             logging.info("found a scalar h2")
             return self.test["lik1"]["h2"]
 
@@ -50,7 +50,7 @@ class Result:
     def h2_1(self):
         try:
             return self.test["lik1"]["h2_1"][0]
-        except:
+        except Exception:
             logging.info("found a scalar h2_1")
             return self.test["lik1"]["h2_1"]
 

@@ -1,5 +1,4 @@
 import numpy as np
-import subprocess, sys, os.path
 
 
 class PositionRange(object):  # implements ISnpSet

@@ -1,21 +1,11 @@
-import time
-import os
-import sys
 
 import numpy as np
 import sklearn.metrics as SKM
 
-import sklearn.feature_selection as SKFS
 import sklearn.model_selection as SKCV
-import sklearn.metrics as SKM
 
 from pysnptools.util.mapreduce1.distributable import *
 from pysnptools.util.mapreduce1.runner import *
-import fastlmm.pyplink.plink as plink
-import fastlmm.pyplink.Bed as Bed
-import fastlmm.pyplink.snpset.PositionRange as PositionRange
-import fastlmm.pyplink.snpset.SnpSetAndName as SnpSetAndName
-import fastlmm.util.util as util
 import fastlmm.inference as fastlmm
 
 from .feature_selection_cv import load_snp_data
@@ -89,7 +79,7 @@ class KernelRidgeCV:  # implements IDistributable
         import matplotlib.pylab as PLT
 
         # use precomputed data if available
-        if self.K == None:
+        if self.K is None:
             self.setup_kernel()
 
         print("run selection strategy %s" % strategy)
@@ -123,9 +113,9 @@ class KernelRidgeCV:  # implements IDistributable
             PLT.ylabel("nLL")
             PLT.title("Best delta: %f" % best_delta)
             PLT.grid(True)
-            if plots_fn != None:
+            if plots_fn is not None:
                 PLT.savefig(plots_fn)
-            if results_fn != None:
+            if results_fn is not None:
                 np.savetxt(
                     results_fn,
                     np.vstack((delta_values, nLLs)).T,
@@ -165,9 +155,9 @@ class KernelRidgeCV:  # implements IDistributable
             PLT.ylabel("MSE")
             PLT.grid(True)
             PLT.title("Best delta: %f" % best_delta)
-            if plots_fn != None:
+            if plots_fn is not None:
                 PLT.savefig(plots_fn)
-            if results_fn != None:
+            if results_fn is not None:
                 np.savetxt(
                     results_fn,
                     np.vstack((delta_values, MSE)).T,

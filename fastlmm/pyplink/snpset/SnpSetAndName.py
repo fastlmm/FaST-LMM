@@ -1,5 +1,3 @@
-import numpy as np
-import subprocess, sys, os.path
 
 
 class SnpAndSetName(object):  # implements ISnpSet

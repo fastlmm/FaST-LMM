@@ -30,12 +30,12 @@ class _MinMaxSetSizePlusBed(object): # implements ISnpSetListPlusBed
 
 
     def __len__(self):
-        if self.__len == None:
+        if self.__len is None:
             self.__len = sum(1 for i in self)
         return self.__len
 
     def __iter__(self):
         for name, snp_reader in self.inner:
             setsize = snp_reader.sid_count
-            if (self.spec.minsetsize == None or self.spec.minsetsize <= setsize) and (self.spec.maxsetsize == None or setsize <= self.spec.maxsetsize ) :
+            if (self.spec.minsetsize is None or self.spec.minsetsize <= setsize) and (self.spec.maxsetsize is None or setsize <= self.spec.maxsetsize ) :
                yield name, snp_reader

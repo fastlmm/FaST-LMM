@@ -1,11 +1,8 @@
-import numpy as np
-import logging
 import doctest
 import sys
 
 import unittest
 import os.path
-import time
 
 
 # We do it this way instead of using doctest.DocTestSuite because doctest.DocTestSuite requires modules to be pickled, which python doesn't allow.
@@ -27,14 +24,12 @@ class TestDocStrings(unittest.TestCase):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-        import matplotlib.pyplot as plt
 
         result = doctest.testmod(fastlmm.util.util)
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 
     def deprecated_test_compute_auto_pcs(self):
-        import fastlmm.util.compute_auto_pcs
 
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -55,7 +50,6 @@ def getTestSuite():
 
 
 if __name__ == "__main__":
-
     suites = getTestSuite()
     r = unittest.TextTestRunner(failfast=False)
     ret = r.run(suites)

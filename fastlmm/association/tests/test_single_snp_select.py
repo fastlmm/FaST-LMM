@@ -4,12 +4,11 @@
 import pandas as pd
 import sys
 
-import numpy as np
 import logging
 import unittest
 import doctest
 import os.path
-from pysnptools.snpreader import Bed, Pheno, SnpData
+from pysnptools.snpreader import Pheno, SnpData
 from fastlmm.association import single_snp_select
 from fastlmm.feature_selection.test import TestFeatureSelection
 import platform
@@ -158,7 +157,6 @@ class TestSingleSnpSelect(unittest.TestCase):
 
         logging.info("TestSingleSnpSelect old_sel_plus_pc")
 
-        from pysnptools.snpreader import Bed
         from fastlmm.util import compute_auto_pcs
 
         # define file names
@@ -171,7 +169,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         logging.info("selected number of PCs: {0}".format(result["vals"].shape[1]))
 
         # import algorithms
-        from fastlmm.util.run_fastlmmc import runFASTLMM, runLMMSELECT
+        from fastlmm.util.run_fastlmmc import runLMMSELECT
 
         # set some file paths for fastlmmc
         phen_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
@@ -219,7 +217,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         # for index, sid in enumerate(sid_list):
         #    sid_to_pvalue[sid] = pvalue_list[index]
 
-        reference = pd.read_csv(reffile, delimiter="\s", comment=None, engine="python")
+        reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
         if "Pvalue" in reference.columns:
             reference["PValue"] = (
                 reference.Pvalue

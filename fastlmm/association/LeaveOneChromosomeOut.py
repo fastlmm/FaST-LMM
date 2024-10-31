@@ -9,20 +9,11 @@ Created on 2014-03-11
 @summary: Module for performing GWAS
 """
 
-import logging
 
 import numpy as np
-import pandas as pd
-from scipy import stats
-import pylab
 
-import time
 
-import fastlmm.inference as fastlmm
 
-import fastlmm.util.util as util
-from fastlmm.util.pickle_io import load, save
-from fastlmm.util.util import argintersect_left
 
 
 class LeaveOneChromosomeOut(object):

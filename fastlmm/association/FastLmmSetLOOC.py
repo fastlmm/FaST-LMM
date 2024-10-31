@@ -16,7 +16,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         sys.argv.append("Local()")
     if len(sys.argv) != 3:
-        if len(sys.argv) != 5 and not "chrm" in sys.argv:
+        if len(sys.argv) != 5 and "chrm" not in sys.argv:
             logging.info(
                 "Usage:python FastLmmSetLOOC.py <inputfile> [optional <runner>]"
             )

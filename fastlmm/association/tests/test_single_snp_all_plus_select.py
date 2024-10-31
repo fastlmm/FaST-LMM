@@ -7,13 +7,13 @@ import doctest
 import os.path
 from unittest.mock import patch
 
-from pysnptools.snpreader import Bed, Pheno,SnpData
+from pysnptools.snpreader import Bed, Pheno
 from fastlmm.association import single_snp_all_plus_select,single_snp
 from fastlmm.feature_selection.test import TestFeatureSelection
 import multiprocessing
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts, LocalMultiThread
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 
-class TestSingleSnpAllPlusSelect(unittest.TestCase): 
+class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -58,7 +58,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         snps = self.bedbase
         pheno = self.phen_fn
         covar = self.cov_fn
-        
+
         output_file_name = self.file_name("one")
         results = single_snp_all_plus_select(test_snps=snps, pheno=pheno,
                                   covar=covar,
@@ -97,7 +97,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         self.compare_files(results,"three")
 
     def too_slowtest_two(self): #!!! rather a big test case
-        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import LocalMultiProc
         logging.info("TestSingleSnpAllPlusSelect test_two")
         do_plot = False
 
@@ -170,7 +170,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
             # partition data into the first 50 SNPs on chr1 and all but chr1
 
         select = FeatureSelectionInSample(max_log_k=7, n_folds=7, order_by_lmm=True, measure="ll", random_state=42)
-        best_k, feat_idx, best_mix, best_delta = select.run_select(G0.val, G0.val, y, cov=X_cov)    
+        best_k, feat_idx, best_mix, best_delta = select.run_select(G0.val, G0.val, y, cov=X_cov)
 
         # plot out of sample error
         if do_plot: select.plot_results(measure="ll")
@@ -205,7 +205,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         #for index, sid in enumerate(sid_list):
         #    sid_to_pvalue[sid] = pvalue_list[index]
 
-        reference=pd.read_csv(reffile,delimiter='\s',comment=None,engine='python')
+        reference=pd.read_csv(reffile,delimiter=r'\s',comment=None,engine='python')
         if 'Pvalue' in reference.columns: reference['PValue']=reference.Pvalue #add a new column with different capitalization if it is there
 
 
@@ -225,7 +225,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
 
 def getTestSuite():
-    
+
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestSingleSnpAllPlusSelect)
     return unittest.TestSuite([suite1])
 

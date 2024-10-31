@@ -1,8 +1,4 @@
-import platform
-import os
-import shutil
 from setuptools import setup
-import numpy
 
 # Work around https://github.com/pypa/pip/issues/7953
 import site

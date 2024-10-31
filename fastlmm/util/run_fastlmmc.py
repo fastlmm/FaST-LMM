@@ -1,7 +1,5 @@
 import subprocess
 import os
-import scipy
-import scipy.io as IO
 import sys
 import logging
 
@@ -151,67 +149,67 @@ def run(
         fastlmmpath
     )  # change that! logdelta is always only optimized on the null model
 
-    if bfile != None:
+    if bfile is not None:
         assert os.path.exists(bfile + ".bed"), "ouch, bfile is missing: %s" % bfile
         assert os.path.exists(bfile + ".bim"), "ouch, bfile is missing: %s" % bfile
         assert os.path.exists(bfile + ".fam"), "ouch, bfile is missing: %s" % bfile
         cmd += " -bfile %s" % bfile
-    if pheno != None:
+    if pheno is not None:
         assert os.path.exists(pheno), "ouch, pheno is missing: %s" % pheno
         cmd += " -pheno %s" % pheno
-    if sim != None:
+    if sim is not None:
         assert os.path.exists(sim), "ouch, sim is missing: %s" % sim
         cmd += " -sim %s" % sim
-    if linreg == True:
+    if linreg:
         cmd += " -linreg"
-    if covar != None:
+    if covar is not None:
         assert os.path.exists(covar), "ouch, covar is missing: %s" % covar
         cmd += " -covar %s" % covar
     if REML:
         cmd += " -REML"
     else:
         cmd += " -ML"
-    if out != None:
+    if out is not None:
         cmd += " -out %s" % out
-    if optLogdelta != None:
+    if optLogdelta is not None:
         cmd += (
             " -brentMinLogVal %.4f -brentMaxLogVal %.4f -brentStarts 1 -brentMaxIter 1"
             % (optLogdelta - 1e-3, optLogdelta + 1e-3)
         )  # Why substract .001?
     else:
         cmd += " -brentMinLogVal %.4f -brentMaxLogVal %.4f " % (-5, 10)
-    if extract != None:
+    if extract is not None:
         assert os.path.exists(extract), "ouch, extract is missing: %s" % extract
         cmd += " -extract %s" % extract
-    if extractSim != None:
+    if extractSim is not None:
         assert os.path.exists(extractSim), (
             "ouch, extractSim is missing: %s" % extractSim
         )
         cmd += " -extractSim %s" % extractSim
-    if autoSelect != None:
+    if autoSelect is not None:
         cmd += " -autoSelect %s" % autoSelect
-    if autoSelectCriterionMSE == True:
+    if autoSelectCriterionMSE:
         cmd += " -autoSelectCriterionMSE"
-    if excludeByGeneticDistance != None:
+    if excludeByGeneticDistance is not None:
         cmd += " -excludeByGeneticDistance %d" % excludeByGeneticDistance
-    if excludeByPosition != None:
+    if excludeByPosition is not None:
         cmd += " -excludeByPosition %d -verboseOut" % excludeByPosition
-    if eigen != None:
+    if eigen is not None:
         cmd += " -eigen %s" % eigen
-    if eigenOut != None:
+    if eigenOut is not None:
         cmd += (
             " -eigenOut %s -runGwasType NORUN" % eigenOut
         )  # stop after computing the EVD
-    if maxThreads != None:
+    if maxThreads is not None:
         cmd += " -maxThreads %d" % maxThreads
-    if simOut != None:
+    if simOut is not None:
         cmd += " -simOut %s -runGwasType NORUN" % simOut  # stop after computer the EVD
-    if numJobs != None:
+    if numJobs is not None:
         cmd += " -numjobs %d" % numJobs
-    if thisJob != None:
+    if thisJob is not None:
         cmd += " -thisjob %d" % thisJob
 
-    if bfileSim != None:
+    if bfileSim is not None:
         assert os.path.exists(bfileSim + ".bed"), (
             "ouch, bfileSim is missing: %s" % bfileSim
         )
@@ -222,7 +220,7 @@ def run(
             "ouch, bfileSim is missing: %s" % bfileSim
         )
         cmd += " -bfileSim %s" % bfileSim
-    if topKbyLinReg != None:
+    if topKbyLinReg is not None:
         cmd += " -topKbyLinReg %d" % topKbyLinReg
     logging.info(cmd)
 

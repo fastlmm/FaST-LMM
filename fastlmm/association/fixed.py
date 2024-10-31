@@ -1,4 +1,3 @@
-import fastlmm.association as association
 import fastlmm.association.lrt as lrt
 import numpy as np
 import scipy.linalg as la

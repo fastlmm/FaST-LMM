@@ -142,7 +142,6 @@ class TestFeatureSelection(unittest.TestCase):
         pcs = pca.fit_transform(fss.G)
 
         for i in xrange(num_pcs):
-            
             pc_1 = fss.pcs[:,i]
             pc_2 = pcs[:,i]
             # sign -1 if signs different, 1 else
@@ -335,12 +334,12 @@ class TestFeatureSelection(unittest.TestCase):
         output_dir = "tmp"
         try:
             os.mkdir(output_dir)
-        except:
+        except Exception:
             pass
         output_dir = output_dir + "/feature_selection"
         try:
             os.mkdir(output_dir)
-        except:
+        except Exception:
             pass
         self.blocking(
             self.snpreader_bed,

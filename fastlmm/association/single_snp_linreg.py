@@ -1,37 +1,14 @@
 from pysnptools.util.mapreduce1.runner import *
 import logging
-import fastlmm.pyplink.plink as plink
-from pysnptools.snpreader import Pheno
 import pysnptools.util as pstutil
 import numpy as np
-import scipy.stats as stats
-from pysnptools.snpreader import Bed
-from fastlmm.util.pickle_io import load, save
-import time
 import pandas as pd
-from fastlmm.inference.lmm_cov import LMM as fastLMM
-import warnings
-from pysnptools.snpreader import SnpReader
-from pysnptools.snpreader import SnpData
-from pysnptools.standardizer import Unit
-from pysnptools.standardizer import Identity as SS_Identity
-from pysnptools.standardizer import DiagKtoN
-from pysnptools.standardizer import UnitTrained
-from pysnptools.kernelreader import Identity as KernelIdentity
-from pysnptools.kernelreader import KernelData
-from pysnptools.kernelreader import SnpKernel
-from pysnptools.kernelreader import KernelNpz
 from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.util import create_directory_if_necessary
-from pysnptools.util.intrangeset import IntRangeSet
 from fastlmm.inference.fastlmm_predictor import (
     _snps_fixup,
     _pheno_fixup,
-    _kernel_fixup,
-    _SnpTrainTest,
 )
 import fastlmm.inference.linear_regression as lin_reg
-from fastlmm.association.single_snp import _set_block_size
 from unittest.mock import patch
 
 

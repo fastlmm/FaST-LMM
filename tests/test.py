@@ -1,23 +1,14 @@
 import re
-import numpy as NP
-import scipy.io as SIO
-import time
 import os
 import os.path
-import sys
-from fastlmm.association.FastLmmSet import FastLmmSet
-from fastlmm.association.FastLmmSet import Local
 import unittest
-import subprocess
 import fastlmm.inference.tests.test
 import fastlmm.feature_selection.test
-import pysnptools.test
 import shutil
 import logging
 import fastlmm.util.util as ut
 from pysnptools.util.mapreduce1.distributabletest import DistributableTest
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
-from fastlmm.pyplink.snpreader.Hdf5 import Hdf5  # Need by some *.py's that we eval
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 
 tolerance = 1e-4
 
@@ -83,10 +74,12 @@ class WidgetTestCase(unittest.TestCase):
 
         runner = Local()
         try:
+            from fastlmm.association.FastLmmSet import FastLmmSet  # noqa: F401
+            from fastlmm.pyplink.snpreader import Hdf5  # noqa: F401
             distributable = eval(filecontent)
         except Exception as e:
             raise Exception(
-                "Can't eval '{0}' because of '{1}'".format(self._infile, e.message)
+                "Can't eval '{0}' because of '{1}'".format(self._infile, str(e))
             )
         runner.run(distributable)
 

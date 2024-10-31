@@ -1,10 +1,7 @@
-import os
 import logging
 import numpy as np
-import datetime
-import multiprocessing
 from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.kernelreader import KernelData, KernelNpz
+from pysnptools.kernelreader import KernelData
 import time
 from pysnptools.util import format_delta
 from pysnptools.snpreader import SnpMemMap
@@ -137,11 +134,11 @@ def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=0, force_python_only=F
                         num_threads = get_num_threads(None),
                         log_frequency=log_frequency,
             )
-        
+
     if do_both:
         if not np.abs(aTb_python-aTb).max() < 1e-12 or not np.abs(aaTb_python-aaTb).max() < 1e-12:
            raise AssertionError("Expect Python and Rust to get the same mmultfile_b_less_aatb answer")
-        
+
     return aTb, aaTb
 
 if __name__ == '__main__':
@@ -166,7 +163,7 @@ if __name__ == '__main__':
             filename = r"D:\deldir\test\_Storage\mid_1.6\G0_data.memmap"
         else:
             filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.memmap"
-        
+
 
         do_original = False
         force_python_only = False
@@ -191,7 +188,7 @@ if __name__ == '__main__':
         print(U_memmap.val)
         logging.info("clocktime {0}".format(format_delta(time.time()-t0)))
         print("done")
-        
+
 
 
     elif test_ata:

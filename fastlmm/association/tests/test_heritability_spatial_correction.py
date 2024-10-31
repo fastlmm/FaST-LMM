@@ -2,16 +2,13 @@ import numpy as np
 import logging
 import unittest
 import os.path
-import time
 import sys
 import doctest
-import pandas as pd
 import fastlmm.util.util as ut
 from fastlmm.association.heritability_spatial_correction import (
     heritability_spatial_correction,
 )
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
-from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
+from pysnptools.snpreader import Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
 
 

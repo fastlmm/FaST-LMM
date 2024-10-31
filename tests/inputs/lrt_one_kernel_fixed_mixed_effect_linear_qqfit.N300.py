@@ -6,7 +6,7 @@ FastLmmSet(
     filenull = None,
     autoselect = False,
     mindist = 0,
-    idist=2,    
+    idist=2,
     nperm = 10,
     test="lrt",
     nullfit="qq", #use quantile-quantile fit to estimate params of null distribution

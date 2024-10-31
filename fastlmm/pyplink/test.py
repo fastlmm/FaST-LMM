@@ -1,11 +1,8 @@
-import numpy as np
-import logging
 import doctest
 import sys
 
 import unittest
 import os.path
-import time
 
 
 # We do it this way instead of using doctest.DocTestSuite because doctest.DocTestSuite requires modules to be pickled, which python doesn't allow.
@@ -13,7 +10,6 @@ import time
 class TestDocStrings(unittest.TestCase):
 
     def test_bed(self):
-        import fastlmm.pyplink.snpreader.Bed
 
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)))

@@ -1,7 +1,5 @@
-import os
 import numpy as np
 from .snpset import *
-import logging
 
 
 def readPED(basefilename, delimiter=" ", missing="0", standardize=True, pheno=None):

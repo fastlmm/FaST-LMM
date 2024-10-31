@@ -1,4 +1,3 @@
-import pandas as pd
 import logging
 
 
@@ -29,7 +28,7 @@ class NearBronze:
         # parse arguments
         args = parser.parse_args()
 
-        if bool(args.distance == None) == bool(args.position == None):
+        if bool(args.distance is None) == bool(args.position is None):
             raise Exception("Should give 'distance' or 'position', but not both")
 
         return args
@@ -71,7 +70,7 @@ class NearBronze:
     #    try:
     #        length = len(bronze_chrom)
     #        return True
-    #    except:
+    #    except Exception:
     #        return False
 
     # @staticmethod
@@ -113,7 +112,7 @@ class NearBronze:
         if directory_name != "":
             try:
                 os.makedirs(directory_name)
-            except OSError as e:
+            except OSError:
                 if not os.path.isdir(directory_name):
                     raise Exception("not valid path: " + directory_name)
 

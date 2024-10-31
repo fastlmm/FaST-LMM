@@ -1,12 +1,8 @@
 import os
 import numpy as np
-import warnings
 import logging
-import sys
-import time
 import pysnptools.util as pstutil
 
-from types import ModuleType
 
 
 def thin_results_file(myfile, dup_postfix="v2"):
@@ -49,7 +45,7 @@ def compare_files(file1, file2, tol=1e-8, delimiter="\t"):
     try:
         head1 = dat1[0, :]
         head2 = dat2[0, :]
-    except:
+    except Exception:
         # file contains just a single column.
         return np.all(
             dat1 == dat2
@@ -85,7 +81,7 @@ def compare_files(file1, file2, tol=1e-8, delimiter="\t"):
                         "numeric column %s does diff of %e not match within tolerance %e"
                         % (head1[c], max(absdiff), tol),
                     )
-                except:
+                except Exception:
                     return (
                         False,
                         "Error trying to print error message while comparing '{0}' and '{1}'".format(
@@ -114,7 +110,7 @@ def compare_mixed_files(file1, file2, tol=1e-8, delimiter="\t"):
     try:
         r_count = dat1.shape[0]
         c_count = dat1.shape[1]
-    except:
+    except Exception:
         # file contains just a single column.
         return np.all(
             dat1 == dat2
@@ -128,7 +124,7 @@ def compare_mixed_files(file1, file2, tol=1e-8, delimiter="\t"):
                 try:
                     f1 = float(val1)
                     f2 = float(val2)
-                except:
+                except Exception:
                     return (
                         False,
                         "Values do not match up (file='{0}', '{1}' =?= '{2}')".format(
@@ -197,7 +193,6 @@ def to_bytes(item):
 
 def combineseeds(seed1, seed2):
     import hashlib
-    import sys
 
     seed = int(
         hashlib.md5(to_bytes(seed1) + b"_" + to_bytes(seed2)).hexdigest()[-8:], 16
@@ -276,11 +271,11 @@ def intersect_ids(idslist, sep="Q_Q"):
     L = len(idslist)
     observed = np.zeros(L, dtype="bool")
 
-    for l, id_list in enumerate(idslist):
+    for index, id_list in enumerate(idslist):
         if id_list is not None:
-            observed[l] = 1
-            if l == 0:
-                if ~observed[l]:
+            observed[index] = 1
+            if index == 0:
+                if ~observed[index]:
                     raise Exception("first list must be non-empty")
                 else:
                     for i in range(id_list.shape[0]):
@@ -288,13 +283,13 @@ def intersect_ids(idslist, sep="Q_Q"):
                         entry = (
                             np.zeros(L) * np.nan
                         )  # id_list to contain the index for this id, for all lists provided
-                        entry[l] = i  # index for the first one
+                        entry[index] = i  # index for the first one
                         id2ind[id] = entry
-            elif observed[l]:
+            elif observed[index]:
                 for i in range(id_list.shape[0]):
                     id = id_list[i, 0] + sep + id_list[i, 1]
                     if id in id2ind:
-                        id2ind[id][l] = i
+                        id2ind[id][index] = i
 
     indarr = np.array(
         list(id2ind.values()), dtype="float"
@@ -326,7 +321,6 @@ def constfeatures(X, axis=0):
 
 
 def appendtofilename(filename, midfix, sep="."):
-    import os
 
     dir, fileext = os.path.split(filename)
     file, extension = os.path.splitext(fileext)
@@ -531,6 +525,8 @@ def manhattan_plot(
 
     :Example:
 
+        >>> import matplotlib
+        >>> matplotlib.use("Agg")
         >>> from fastlmm.association import single_snp
         >>> from pysnptools.snpreader import Bed
         >>> from fastlmm.util import example_file # Download and return local file name

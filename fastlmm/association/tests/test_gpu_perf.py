@@ -55,7 +55,6 @@ def one_experiment(
 ):
     import numpy as np
     from pysnptools.util.mapreduce1.runner import LocalMultiProc
-    from unittest.mock import patch
     from fastlmm.association import single_snp
 
     if K0_goal is not None:
@@ -587,7 +586,8 @@ def benchmark1():
 
 def benchmark2():
     # Based on http://learningsys.org/nips17/assets/papers/paper_16.pdf
-    import time, numpy
+    import time
+    import numpy
 
     # import cupy
 

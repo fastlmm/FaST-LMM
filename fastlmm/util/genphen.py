@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.linalg as la
 import fastlmm.util.util as utilx
-import sys
 
 
 def genphen(y_G0, G1, covDat, options, nInd, K1=None, fracCausal=None, randseed=None):

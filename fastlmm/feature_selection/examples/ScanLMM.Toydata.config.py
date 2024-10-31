@@ -1,8 +1,8 @@
 obj = ScanLMM(
     phenoFile = 'examples/toydata.phe',
-    
+
     phenoTestFile = 'examples/toydata.phe',
-    
+
     bedFile = 'examples/toydata',
     outFileLMM = 'examples/LmmGWAS.out.txt',
 

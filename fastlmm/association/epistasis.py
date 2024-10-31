@@ -1,13 +1,11 @@
 from pysnptools.util.mapreduce1.runner import *
 import logging
-import fastlmm.pyplink.plink as plink
 import pysnptools.util as pstutil
 import pysnptools.util.pheno as pstpheno
 import numpy as np
 from fastlmm.inference import LMM
 import scipy.stats as stats
 from pysnptools.snpreader import Bed
-from fastlmm.util.pickle_io import load, save
 import time
 import pandas as pd
 from unittest.mock import patch
@@ -30,7 +28,7 @@ def epistasis(
     runner=None,
     count_A1=None,
 ):
-    """
+    r"""
     Function performing epistasis GWAS.  See http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html.
     REML is used to optimize H2 and beta is always estimated via ML (maximum likelihood, see https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1681/MediaObjects/41592_2011_BFnmeth1681_MOESM290_ESM.pdf).
 

@@ -1,3 +1,144 @@
 [build-system]
-requires = ["numpy>=1.11.3", "setuptools>=46.1.3", "cython", "wheel", "scipy"]
+requires = [
+    "numpy>=1.17.0",
+    "setuptools",
+    "cython",
+    "wheel",
+    "scipy",
+] # cmk add versions
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastlmm"
+version = "0.6.12-alpha.1"
+description = "Fast GWAS"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = [
+    "gwas",
+    "bioinformatics",
+    "LMMs",
+    "MLMs",
+    "linear",
+    "mixed models",
+    "genomics",
+    "genetics",
+    "python",
+]
+authors = [{ name = "FaST-LMM Team", email = "fastlmm-dev@python.org" }]
+license = { text = "Apache 2.0" }
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "pandas>=1.3.1",
+    "matplotlib>=3.8.0",
+    "scikit-learn>=1.4.2",
+    "cloudpickle>=3.1.0",
+    "statsmodels>=0.14.2",
+    "psutil>=6.1.0",
+    "pysnptools>=0.5.14a1", #cmk
+    "fastlmmclib>=0.0.7a1", #cmk
+]
+[project.urls]
+homepage = "https://fastlmm.github.io/"
+bug-tracker = "https://github.com/fastlmm/FaST-LMM/issues"
+documentation = "http://fastlmm.github.io/FaST-LMM"
+source-code = "https://github.com/fastlmm/FaST-LMM"
+
+[project.optional-dependencies]
+bgen = ["cbgen>=1.0.6", "bgen-reader>=4.0.9"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-doctestplus",
+    "pytest-datadir",
+    "limix-sphinx-theme>=0.0.4",
+    "pytest-sphinx>=0.2.2",
+    "sphinx>=6.2.1",
+    "sphinx_rtd_theme>=0.4.3",
+    "ruff>=0.1.0",
+]
+
+
+[tool.ruff]
+line-length = 250
+ignore = ["F403", "F405"]
+exclude = [
+    "*.ipynb",
+    "doc/source/conf.py",
+    "bed_reader/tests/benchmark/benchmark.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --doctest-glob=*.rst --doctest-glob=*.md"
+doctest_optionflags = ["ELLIPSIS", "NORMALIZE_WHITESPACE"]
+filterwarnings = [
+    "ignore:Converting float64 to float32 can cause loss of information:UserWarning",
+    "ignore:'count_A1' was not set.*will default to 'False':FutureWarning",
+    "ignore:standardizing an ndarray instead of a SnpData is deprecated:DeprecationWarning",
+    "ignore:.*\\.kernel.*deprecated.*read_kernel.*val:DeprecationWarning",
+    "ignore:'parent_string' is deprecated. Use 'name':DeprecationWarning",
+]
+
+[tool.uv]
+dev-dependencies = ["pytest-xdist>=3.6.1", "twine>=5.1.1"]
+
+
+[tool.setuptools]
+packages = [
+    "fastlmm",
+    "fastlmm.association",
+    "fastlmm.association.altset_list",
+    "fastlmm.association.tests",
+    "fastlmm.external",
+    "fastlmm.external.util",
+    "fastlmm.feature_selection",
+    "fastlmm.inference",
+    "fastlmm.inference.tests",
+    "fastlmm.pyplink",                 # old snpreader
+    "fastlmm.pyplink.altset_list",     # old snpreader
+    "fastlmm.pyplink.snpreader",       # old snpreader
+    "fastlmm.pyplink.snpset",          # old snpreader
+    "fastlmm.util",
+    "fastlmm.util.matrix",
+    "fastlmm.util.standardizer",
+    "fastlmm.util.stats",
+]
+
+
+[tool.setuptools.package-data]
+"*" = ["LICENSE.md", "AUTHORS.txt", "*.rst"]
+"doc" = ["*"]
+"tests" = ["*"]
+"fastlmm.association" = [
+    "Fastlmm_autoselect/FastLmmC.exe",
+    "Fastlmm_autoselect/libiomp5md.dll",
+    "Fastlmm_autoselect/fastlmmc",
+    "Fastlmm_autoselect/FastLmmC.Manual.pdf",
+]
+"fastlmm.feature_selection" = [
+    "examples/bronze.txt",
+    "examples/ScanISP.Toydata.config.py",
+    "examples/ScanLMM.Toydata.config.py",
+    "examples/ScanOSP.Toydata.config.py",
+    "examples/toydata.5chrom.bed",
+    "examples/toydata.5chrom.bim",
+    "examples/toydata.5chrom.fam",
+    "examples/toydata.cov",
+    "examples/toydata.map",
+    "examples/toydata.phe",
+    "examples/toydata.shufflePlus.phe",
+    "examples/toydata.sim",
+    "examples/toydataTest.phe",
+    "examples/toydataTrain.phe",
+]
+"fastlmm" = ["util/fastlmm.hashdown.json"]

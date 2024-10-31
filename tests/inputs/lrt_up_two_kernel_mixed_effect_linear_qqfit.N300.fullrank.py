@@ -6,7 +6,7 @@ FastLmmSet(
     filenull = 'datasets/all_chr.maf0.001.chr22.23.N300.bed',
     autoselect = False,
     mindist = 0,
-    idist=2,    
+    idist=2,
     nperm = 10,
     test="lrt_up",
     nullfit="qq", #use quantile-quantile fit to estimate params of null distribution

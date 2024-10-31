@@ -2,15 +2,11 @@ import numpy as np
 import logging
 import unittest
 import os.path
-import time
 import sys
 import doctest
-import pandas as pd
 
 from fastlmm.association import snp_set
-import fastlmm.pyplink.plink as plink
-from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.runner import Local
 import fastlmm.util.util as ut
 
 tolerance = 1e-4

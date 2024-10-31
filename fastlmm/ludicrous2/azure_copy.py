@@ -1,5 +1,4 @@
 import os
-import sys
 import shutil
 import tempfile
 import logging
@@ -8,7 +7,7 @@ import unittest
 
 logging.basicConfig(level=logging.INFO)
 from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalMultiThread
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiThread
 import re
 import datetime
 import pytz
@@ -16,27 +15,20 @@ import pysnptools.util as pstutil
 import time
 import multiprocessing
 import random
-from io import StringIO
-import random
-from contextlib import contextmanager
 from onemil.AzureBatch import AzureBatch
-from pysnptools.util.mapreduce1.runner import Local
 import azure.batch.models as batchmodels
 
 try:
     import azure.storage.blob as azureblob
 
     azure_ok = True
-except Exception as exception:
+except Exception:
     logging.warning("Can't import azure, so won't be able to clusterize to azure")
     azure_ok = False
 
 if azure_ok:
     import azure.batch.batch_service_client as batch
     import azure.batch.batch_auth as batchauth
-    from onemil.blobxfer import (
-        run_command_string as blobxfer,
-    )  # https://pypi.io/project/blobxfer/
 
 
 class StorageCredential(object):
@@ -122,7 +114,7 @@ class StorageCredential(object):
             auto_user=batchmodels.AutoUserSpecification(elevation_level="admin")
         )
         start_task = batchmodels.StartTask(
-            command_line="cmd /c %AZ_BATCH_APP_PACKAGE_STARTUP%\startup.bat",
+            command_line=r"cmd /c %AZ_BATCH_APP_PACKAGE_STARTUP%\startup.bat",
             user_identity=user_identity,
             wait_for_success=True,
         )
@@ -202,7 +194,7 @@ class StorageCredential(object):
         else:
             root, account_name, container_name, sub_path = azure_path.split("/", 3)
         assert root == "", "Expect path to start with '/'"
-        if not account_name in self._account_name_to_block_blob_service:
+        if account_name not in self._account_name_to_block_blob_service:
             assert (
                 account_name in self._account_name_to_key
             ), "Don't know key for account_name '{0}'".format(account_name)
@@ -835,7 +827,7 @@ class TestAzureShardContainer(unittest.TestCase):
 
     def zzztest_big_files_fileshare(self):  #!!!needs to be updated
         logging.info("test_big_files_fileshare")
-        from onemil.AzureP2P import AzureP2P, ip_address_local
+        from onemil.AzureP2P import ip_address_local
         from onemil.file_cache import AzureStorage, PeerToPeer
 
         directory = AzureStorage(
@@ -928,9 +920,6 @@ class TestAzureShardContainer(unittest.TestCase):
     def zzztest_big_files_slow_down(self):  #!!! need to update
         logging.info("test_big_files_slow_down")
         from onemil.AzureP2P import AzureP2P, ip_address
-        from fastlmm.association.tests.test_single_snp_all_plus_select import (
-            mf_to_runner_function,
-        )
 
         def closure():
             unique_name = ip_address()

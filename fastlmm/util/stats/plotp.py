@@ -1,7 +1,5 @@
 import numpy as np
 import scipy.stats as st
-import scipy.interpolate
-import scipy.linalg as la
 import pylab as pl
 from fastlmm.association.tests import Cv
 import fastlmm.util.util as ut
@@ -246,7 +244,7 @@ def pairedpvalsplot(
         lambdas[j] = lambda_gc = estimate_lambda(pv[j])
         # pv[j]=-np.log10(pv[j])
         # pv[j][pv[j]<minpval]=minpval
-        label[j] = os.path.basename(myfiles[j]) + ", $\lambda$=%1.3f" % lambdas[j]
+        label[j] = os.path.basename(myfiles[j]) + r", $\lambda$=%1.3f" % lambdas[j]
         if j == 0:
             idorder = rowids[j]
         else:
@@ -735,7 +733,7 @@ def extractpvals(
             dtype={pname: np.float64, nullname: np.float64, altname: np.float64},
             usecols=[pname, rowname, nullname, altname],
         )
-    except:
+    except Exception:
         data = pd.read_csv(
             filein, delimiter="\t", dtype={pname: np.float64}, usecols=[pname, rowname]
         )
@@ -745,7 +743,7 @@ def extractpvals(
     try:
         llalt = data[altname]
         llnull = data[nullname]
-    except:
+    except Exception:
         llalt = None
         llnull = None
     rowids = data[rowname].values
@@ -850,7 +848,6 @@ def pvalhist(pv, numbins=50, linewidth=3.0, linespec="--r"):
 
 
 def tmp():
-    import fastlmm.util.stats.plotp as pt
 
     pall = []
     for j in np.arange(0, 100):
@@ -1005,7 +1002,7 @@ def qqplot(
             qnull = st.chi2.isf(pnull, 1)
             qemp = st.chi2.isf(np.sort(pval), 1)
             xl = "LOD scores"
-            yl = "$\chi^2$ quantiles"
+            yl = r"$\chi^2$ quantiles"
 
         if distr == "log10":
             qnull = -np.log10(pnull)
@@ -1024,10 +1021,10 @@ def qqplot(
             # pl.legend(["gc="+ '%1.3f' % lambda_gc],loc=2)
             # if there's only one method, just print the lambda
             if len(pvallist) == 1:
-                legendlist = ["$\lambda_{GC}=$%1.4f" % lambda_gc]
+                legendlist = [r"$\lambda_{GC}=$%1.4f" % lambda_gc]
             # otherwise add it at the end of the name
             else:
-                legendlist[i] = legendlist[i] + " ($\lambda_{GC}=$%1.4f)" % lambda_gc
+                legendlist[i] = legendlist[i] + r" ($\lambda_{GC}=$%1.4f)" % lambda_gc
 
     addqqplotinfo(qnull, M, xl, yl, xlim, ylim, alphalevel, legendlist, fixaxes)
 

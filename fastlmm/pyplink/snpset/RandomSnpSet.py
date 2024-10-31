@@ -1,5 +1,4 @@
 import numpy as np
-import subprocess, sys, os.path
 import fastlmm.util.util as utilx
 
 

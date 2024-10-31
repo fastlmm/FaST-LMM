@@ -59,7 +59,7 @@ def single_snp(
     xp=None,
     count_A1=None,
 ):
-    """
+    r"""
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
     (For backwards compatibility, you may use 'leave_out_one_chrom=False' to skip cross validation, but that is not recommended.)
 
@@ -80,9 +80,9 @@ def single_snp(
            Can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
            If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
            If leave_out_one_chrom is True, can be a dictionary from chromosome number to any `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_
-           or the name a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file.
+           or the name a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formatted file.
            If leave_out_one_chrom is False, can be any `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_ or
-           name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formated file.
+           name of a `KernelNpz <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelnpz>`_-formatted file.
     :type K0: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
            or dictionary or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`_)
 
@@ -762,12 +762,12 @@ def _set_block_size(K0, K1, mixing, GB_goal, force_full_rank, force_low_rank):
 
     try:
         K0.block_size = block_size
-    except:
+    except Exception:
         pass  # ignore
 
     try:
         K1.block_size = block_size
-    except:
+    except Exception:
         pass  # ignore
 
     return K0, K1, block_size
@@ -1627,7 +1627,7 @@ if __name__ == "__main__":
             sid_count = 5 * 1000  # number of SNPs
             cache_top = r"c:\deldir"
             leave_out_one_chrom = False
-            runner = LocalMultiProc(5, just_one_process=False)
+            runner = LocalMultiProc(5, just_one_process=False)  # noqa: F821
 
             if True:
                 test_snps = Bed(
@@ -1649,7 +1649,6 @@ if __name__ == "__main__":
                     test_snps_cache.walk(), None
                 ):  # If no files in the test_snps folder, generate data (takes about 6 hours)
                     from pysnptools.snpreader import SnpGen
-                    from pysnptools.util.mapreduce1.runner import LocalMultiProc
 
                     snpgen = SnpGen(
                         seed=seed,
@@ -1769,7 +1768,7 @@ if __name__ == "__main__":
         # and the "SNP" name is "snp1,snp2"
         import os
 
-        os.chdir("D:\OneDrive\Projects\Science")
+        os.chdir(r"D:\OneDrive\Projects\Science")
 
         ###################################
         # Build the similarity matrix with everything except chroms 4 and 5.

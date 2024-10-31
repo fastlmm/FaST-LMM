@@ -1,6 +1,5 @@
 import fastlmm.inference.lmm_cov as lmm
 import numpy as np
-import fastlmm.util.stats.chi2mixture as c2
 import fastlmm.association as association
 import scipy.stats as st
 from . import tests_util as tu
@@ -120,7 +119,7 @@ class lrt(association.varcomp_test):
         )  # The alternative model has two kernels and needs to find both a2 and h2
         try:
             alteqnull = lik1["h2_1"][0] <= (0.0 + tol)
-        except:
+        except Exception:
             alteqnull = lik1["h2_1"] <= (0.0 + tol)
 
         stat = 2.0 * (lik0["nLL"][0] - lik1["nLL"][0])

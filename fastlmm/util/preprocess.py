@@ -1,7 +1,5 @@
 import numpy as np
-import time
 import fastlmm.util.standardizer as stdizer
-import warnings
 
 
 # TODO: wrap C-stuff here?

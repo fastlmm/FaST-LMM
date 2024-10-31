@@ -1,11 +1,4 @@
 from pysnptools.util.mapreduce1.runner import *
-import logging
-import fastlmm.pyplink.plink as plink
-import numpy as np
-from fastlmm.inference.lmm_cov import LMM as fastLMM
-import scipy.stats as stats
-from fastlmm.util.pickle_io import load, save
-import time
 import pandas as pd
 
 

@@ -3,20 +3,17 @@ import logging
 from fastlmm.association import single_snp
 from sklearn.model_selection import KFold
 import pandas as pd
-import os
 import time
 from unittest.mock import patch
 
 import pysnptools.util as pstutil
 from pysnptools.standardizer import Unit
 from pysnptools.kernelreader import KernelReader
-from pysnptools.kernelreader import KernelData
 from pysnptools.util.mapreduce1 import map_reduce
 
 from fastlmm.inference import FastLMM
-from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup, _kernel_fixup
+from fastlmm.inference.fastlmm_predictor import _snps_fixup, _pheno_fixup
 from fastlmm.association.single_snp import _K_per_chrom
-from fastlmm.association import single_snp_linreg
 
 
 #!!!move this

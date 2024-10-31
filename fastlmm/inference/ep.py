@@ -1,15 +1,11 @@
 import numpy as NP
 from numpy import dot
 import scipy.stats as ST
-from scipy.linalg import cholesky, solve_triangular
 from fastlmm.external.util.math import (
-    check_definite_positiveness,
-    check_symmetry,
-    mvnormpdf,
     ddot,
     trace2,
 )
-from fastlmm.external.util.math import stl, stu, dotd
+from fastlmm.external.util.math import stl, dotd
 from fastlmm.inference.glmm import GLMM_N1K3, GLMM_N3K1
 from fastlmm.inference.likelihood import LogitLikelihood, ProbitLikelihood
 from fastlmm import Pr

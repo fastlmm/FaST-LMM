@@ -1,23 +1,14 @@
-import copy
-import scipy.linalg as LA
 import numpy as np
-import logging as LG
-import scipy.optimize as opt
 import scipy.stats as ST
-import scipy.special as SS
-import os
-import sys
 from fastlmm.pyplink.plink import *
 from pysnptools.util.pheno import *
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
 import fastlmm.util.stats as ss
 import fastlmm.inference as inference
-import fastlmm.association.score as score
 import fastlmm.association as association
 import statsmodels.api as sm
 
-from sklearn import linear_model
 
 
 class lrt(association.varcomp_test):
@@ -80,7 +71,6 @@ class lrt(association.varcomp_test):
     def _nullModelLogReg(self, G0, penalty="L2"):
         assert G0 is None, "Logistic regression cannot handle two kernels."
         self.model0 = {}
-        import statsmodels.api as sm
 
         logreg_mod = sm.Logit(self.Y, self.X)
         # logreg_sk = linear_model.LogisticRegression(penalty=penalty)

@@ -1,11 +1,9 @@
-import numpy as np
-import random
 import os
 import shutil
 import tempfile
 import logging
 import unittest
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalMultiThread
+from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 from onemil.file_cache import AzureStorage, PeerToPeer, FileCache, LocalCache
 import time
 from onemil.file_cache import DibLib
@@ -14,22 +12,14 @@ import threading
 
 
 try:
-    import azure.batch.models as batchmodels
-    import azure.storage.blob as azureblob
 
     azure_ok = True
-except Exception as exception:
+except Exception:
     logging.warning("Can't import azure, so won't be able to clusterize to azure")
     azure_ok = False
 
 if azure_ok:
-    import onemil.azurehelper as commonhelpers  #!!! is this the best way to include the code from the Azure python sample's common.helper.py?
-    import azure.batch.batch_service_client as batch
-    import azure.batch.batch_auth as batchauth
-    from onemil.blobxfer import (
-        run_command_string as blobxfer,
-    )  # https://pypi.io/project/blobxfer/
-    from onemil.blobxfer import compute_md5_for_file_asbase64
+    pass
 
 
 def path_join(*p):
@@ -50,7 +40,7 @@ def ip_address_local():
 
 def ip_address_pid_local():  #!!! compare with ip_address_pid
     """
-    A function the returns 1. the ip address of the machine on which it is run and 2. a Windows file share on that machine called 'scratch\\\<pid>',
+    A function the returns 1. the ip address of the machine on which it is run and 2. a Windows file share on that machine called 'scratch\\\\<pid>',
     where <pid> is the current process id.
 
     It is used by :class:`AzureP2P` to retrieve a local place from which peers may copy files. The addition of the <pid> allows multiple processes
@@ -466,7 +456,6 @@ class TestAzureP2P(unittest.TestCase):
 
     def test_azure_p2p_multiproc(self):
         from pysnptools.util.mapreduce1.mapreduce import map_reduce
-        import threading
 
         logging.info("test_azure_p2p_multiproc")
         runner = LocalMultiProc(3, just_one_process=False)  # Local()
@@ -711,8 +700,6 @@ def getTestSuite():
 
 
 if __name__ == "__main__":
-    from msgen_cli.malibucommon import pause_and_display
-    import msgen_cli.datatransfer as datatransfer
     from onemil.AzureP2P import getTestSuite, TestAzureP2P
 
     logging.basicConfig(level=logging.INFO)

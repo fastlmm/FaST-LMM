@@ -1,21 +1,14 @@
 import logging
 import datetime
 import os
-import time
-from collections import Counter
-import unittest
-import shutil
-import tempfile
 import numpy as np
 import math
-from pysnptools.util.mapreduce1 import map_reduce
-from pysnptools.util.mapreduce1.mapreduce import _identity
 import pysnptools.util as pstutil
 
 
 try:
     import cloudpickle as pickle
-except:
+except Exception:
     logging.warning(
         "Can't import cloudpickle, so won't be able to clusterize lambda expressions. If you try, you'll get this error 'Can't pickle <type 'function'>: attribute lookup __builtin__.function failed'"
     )
@@ -26,7 +19,7 @@ try:
     import azure.storage.blob as azureblob
 
     azure_ok = True
-except Exception as exception:
+except Exception:
     logging.warning("Can't import azure, so won't be able to clusterize to azure")
     azure_ok = False
 
@@ -35,7 +28,6 @@ if azure_ok:
         azurehelper as commonhelpers,
     )  #!!! is this the best way to include the code from the Azure python sample's common.helper.py?
     import azure.batch.batch_service_client as batch
-    import azure.batch.batch_auth as batchauth
     from onemil.blobxfer import (
         run_command_string as blobxfer,
     )  # https://pypi.io/project/blobxfer/
@@ -178,7 +170,7 @@ class AzureBatch:  # implements Irunner
             "PYTHONPATH"
         )  #!!should it be able to work without pythonpath being set (e.g. if there was just one file)? Also, is None really the return or is it an exception.
 
-        if localpythonpath == None:
+        if localpythonpath is None:
             raise Exception("Expect local machine to have 'pythonpath' set")
         for i, localpathpart in enumerate(localpythonpath.split(";")):
             logging.info(

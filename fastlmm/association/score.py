@@ -11,9 +11,6 @@ from pysnptools.util.pheno import *
 from fastlmm.util.mingrid import *
 
 # import pdb
-import scipy.stats as ST
-import fastlmm.util.stats as ss
-import fastlmm.util.util as util
 import fastlmm.association as association
 
 

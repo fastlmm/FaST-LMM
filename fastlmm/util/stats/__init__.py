@@ -3,7 +3,6 @@ import scipy.stats as st
 import scipy.interpolate
 import scipy.linalg as la
 import fastlmm.util.preprocess as util
-import scipy.stats as st
 import time
 
 # import ipdb

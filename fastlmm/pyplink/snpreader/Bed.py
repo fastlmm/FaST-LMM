@@ -1,5 +1,4 @@
 import numpy as np
-import subprocess, sys, os.path
 from itertools import *
 from fastlmm.pyplink.snpset import *
 from fastlmm.pyplink.altset_list import *
@@ -15,17 +14,16 @@ def decide_once_on_plink_reader():
     # (Usually messages go to stdout, but when the code is run on Hadoop, they are sent to stderr)
 
     global WRAPPED_PLINK_PARSER_PRESENT
-    if WRAPPED_PLINK_PARSER_PRESENT == None:
+    if WRAPPED_PLINK_PARSER_PRESENT is None:
         # attempt to import wrapped plink parser
         try:
-            from bed_reader import read_f32, read_f64
 
             WRAPPED_PLINK_PARSER_PRESENT = (
                 True  #!!!does the standardizer work without c++
             )
             logging.info("using Rust-based plink parser")
         except Exception as detail:
-            logging.warn(detail)
+            logging.warning(detail)
             WRAPPED_PLINK_PARSER_PRESENT = False
 
 
@@ -271,7 +269,7 @@ class Bed(object):
             # An earlier version of this code had a way to read consecutive SNPs of code in one read. May want
             # to add that ability back to the code.
             # Also, note that reading with python will often result in non-contiguous memory, so the python standardizers will automatically be used, too.
-            logging.warn("using pure python plink parser (might be much slower!!)")
+            logging.warning("using pure python plink parser (might be much slower!!)")
             SNPs = np.zeros(
                 ((int(np.ceil(0.25 * iid_count_in)) * 4), snp_count_out),
                 order=order,

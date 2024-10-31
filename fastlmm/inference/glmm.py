@@ -1,19 +1,13 @@
 import scipy.optimize as opt
-import scipy.stats as ST
 import numpy as NP
 from numpy import dot
-from scipy.linalg import cholesky, solve_triangular
+from scipy.linalg import cholesky
 from fastlmm.external.util.math import (
     check_definite_positiveness,
     check_symmetry,
     ddot,
     dotd,
-    trace2,
 )
-from fastlmm.external.util.math import stl, stu
-from sklearn.base import BaseEstimator
-from fastlmm import Pr
-import sys
 
 
 """

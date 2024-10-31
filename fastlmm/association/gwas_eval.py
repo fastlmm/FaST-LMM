@@ -90,7 +90,7 @@ def eval_gwas(pv, i_causal, out_fn=None, plot=False):
             1.0 * (len(i_causal) - n_causal)
         )
 
-    if plot == True:
+    if plot:
         import pylab
 
         pylab.figure()
@@ -103,7 +103,7 @@ def eval_gwas(pv, i_causal, out_fn=None, plot=False):
         pylab.grid(True)
         pylab.plot(pv_thresholds, power_corr, "-o")
 
-        if not out_fn is None:
+        if out_fn is not None:
             pow_fn = out_fn.replace(".pickle", "_pow.pdf")
             pylab.savefig(pow_fn)
         else:
@@ -121,7 +121,7 @@ def eval_gwas(pv, i_causal, out_fn=None, plot=False):
 
         pylab.plot(pv_thresholds, pv_thresholds, "-", label="thres")
         pylab.legend(loc="upper left")
-        if not out_fn is None:
+        if out_fn is not None:
             t1err_fn = out_fn.replace(".pickle", "_t1err.pdf")
             pylab.savefig(t1err_fn)
         else:
@@ -292,7 +292,7 @@ def plot_roc(y, out, label="", out_fn=None):
     pylab.figure()
     plot_roc_noshow(y, out, label=label)
 
-    if not out_fn is None:
+    if out_fn is not None:
         pylab.savefig(out_fn)
     else:
         pylab.show()
@@ -357,7 +357,7 @@ def plot_prc(y, out, label="", out_fn=None):
     pylab.figure()
     plot_prc_noshow(y, out, label=label)
 
-    if not out_fn is None:
+    if out_fn is not None:
         pylab.savefig(out_fn)
     else:
         pylab.show()

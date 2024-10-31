@@ -2,16 +2,14 @@ import numpy as np
 import logging
 import unittest
 import os.path
-import time
 import sys
 import doctest
 
 from fastlmm.association import epistasis
 from fastlmm.association.epistasis import write
-import fastlmm.pyplink.plink as plink
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc, LocalInParts
+from pysnptools.util.mapreduce1.runner import Local
 
 
 class TestEpistasis(unittest.TestCase):
@@ -37,7 +35,7 @@ class TestEpistasis(unittest.TestCase):
     tempout_dir = "tempout/epistasis"
 
     def test_match_cpp(self):
-        """
+        r"""
         match
             FaSTLMM.207\Data\DemoData>fastlmmc -snpPairs -bfile snps -extract topsnps.txt -bfileSim snps -extractSim ASout.snps.txt -pheno pheno.txt -covar covariate.txt -out topsnps.pairs.txt -logDelta 0 -verbose 100
 
@@ -487,7 +485,7 @@ class TestEpistasis(unittest.TestCase):
                 count_A1=False,
             )  # Skip 5 snps, use next 10
             failed = False
-        except:
+        except Exception:
             failed = True
 
         assert failed

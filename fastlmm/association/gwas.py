@@ -18,23 +18,20 @@
 
 import numpy as np
 import numpy.linalg as la
-import scipy.optimize as opt
 import scipy.stats as st
-import scipy.special as ss
 import pandas as pd
 from fastlmm.util.mingrid import *
 from fastlmm.util import *
-import time, os
+import time
+import os
 
 # import ipdb
 from pysnptools.snpreader import Bed
 
-import logging
 import pysnptools.standardizer
 import pysnptools
 import pysnptools.util
 import pysnptools.util.pheno
-import time
 import fastlmm.inference.lmm_cov as lmm_cov
 import glob
 

@@ -4,7 +4,8 @@ example of how to use feature selection from python (see also command line inter
 
 import numpy as np
 import scipy.linalg as LA
-import sys, os
+import sys
+import os
 from fastlmm.pyplink.snpreader.Bed import Bed
 from fastlmm.feature_selection import PerformSelectionDistributable as dist
 

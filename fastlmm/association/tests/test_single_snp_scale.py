@@ -5,11 +5,9 @@ import logging
 import os
 import pandas as pd
 import tempfile
-import shutil
 import sys
 from numpy.random import RandomState
 
-import pysnptools.util as pstutil
 from pysnptools.snpreader import Bed, DistributedBed
 from pysnptools.snpreader import Pheno, SnpData
 from pysnptools.util.filecache import LocalCache

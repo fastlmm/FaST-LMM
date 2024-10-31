@@ -9,23 +9,16 @@ Created on 2014-03-11
 
 import time
 import logging
-import os.path
 from unittest.mock import patch
 
 import numpy as np
-import pandas as pd
 from scipy import stats
 
-import fastlmm.inference as fastlmm
 
-import fastlmm.util.util as util
 from fastlmm.util.pickle_io import load, save
 from fastlmm.util.util import argintersect_left
 
-import fastlmm.pyplink.plink as plink
-import fastlmm.util.standardizer as stdizer
 
-from sklearn.decomposition import PCA, KernelPCA
 from sklearn.feature_selection import f_regression
 from fastlmm.association.PrecomputeLocoPcs import PrecomputeLocoPcs, load_intersect
 from fastlmm.association.LeaveOneChromosomeOut import LeaveOneChromosomeOut
@@ -147,7 +140,7 @@ class LocoGwas(object):  # implements IDistributable
         logging.info("{0}, {1}".format(len(train_snp_idx), len(test_snp_idx)))
 
         # intersect selected SNPs with train snps
-        if not self.selected_snps is None:
+        if self.selected_snps is not None:
             # intersect snp names
             logging.info("intersecting train snps with selected snps for LOCO")
             int_snp_idx = argintersect_left(
@@ -171,7 +164,7 @@ class LocoGwas(object):  # implements IDistributable
         if self.num_pcs == 0:
             pcs = None
         else:
-            if not self.pc_prefix is None:
+            if self.pc_prefix is not None:
                 out_fn = PrecomputeLocoPcs.create_out_fn(self.pc_prefix, i)
                 logging.info("loading pc from file: %s" % out_fn)
                 pcs = load(out_fn)[:, 0 : self.num_pcs]
@@ -300,7 +293,6 @@ class LocoGwas(object):  # implements IDistributable
         res["num_selected_snps"] = self.selected_snps
         res["mixing"] = self.mixing
 
-        from fastlmm.util.pickle_io import save
 
         save(out_fn, res)
 
@@ -434,7 +426,7 @@ class FastGwas(object):
                 assert self.delta is None, "either findh2 or set delta"
             else:
                 h2 = 0.0
-                assert not self.delta is None
+                assert self.delta is not None
                 logging.info("using externally provided delta")
 
             res = lmm.nLLeval(
