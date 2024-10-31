@@ -28,15 +28,15 @@ def threshlist():
 def getfiles(dirin, filepattern):
     import glob
 
-    filepatternorig = filepattern
+    # filepatternorig = filepattern
     filepattern = dirin + r"/" + filepattern
     myfilestmp = glob.glob(filepattern)
     myfiles = []
     f = -1
     for f in myfilestmp:
         keep = True
-        for st in excludefiles():
-            if st in f:
+        for st0 in excludefiles():
+            if st0 in f:
                 keep = False
         if keep:
             myfiles.append(f)
@@ -241,7 +241,7 @@ def pairedpvalsplot(
             myfiles[j], pnames, rownames, sort=True
         )
         pvorig[j] = pv[j]
-        lambdas[j] = lambda_gc = estimate_lambda(pv[j])
+        lambdas[j] = estimate_lambda(pv[j])
         # pv[j]=-np.log10(pv[j])
         # pv[j][pv[j]<minpval]=minpval
         label[j] = os.path.basename(myfiles[j]) + r", $\lambda$=%1.3f" % lambdas[j]
@@ -452,15 +452,15 @@ def type1errdir(
     myfiles = []
     for f in myfilestmp:
         keep = True
-        for st in excludefiles():
-            if st in f:
+        for st0 in excludefiles():
+            if st0 in f:
                 keep = False
         if keep:
             myfiles.append(f)
 
     if verbose:
         print(str(len(myfiles)) + " files found")
-    ycoord = 0
+    # ycoord = 0
 
     auditdic = {}
     duplicates = []
@@ -639,8 +639,8 @@ def qqplotdir(
     f = -1
     for f in myfilestmp:
         keep = True
-        for st in excludefiles():
-            if st in f:
+        for st0 in excludefiles():
+            if st0 in f:
                 keep = False
         if keep:
             myfiles.append(f)
@@ -842,7 +842,7 @@ def pvalhist(pv, numbins=50, linewidth=3.0, linespec="--r"):
     """
     import pylab as pl
 
-    h2 = pl.figure()
+    _h2 = pl.figure()
     [nn, bins, patches] = pl.hist(pv, numbins, normed=1)
     pl.plot([0, 1], [1, 1], linespec, linewidth=linewidth)
 
@@ -973,11 +973,11 @@ def qqplot(
     distr = "log10"
     import pylab as pl
 
-    if type(pvals) == list:
+    if isinstance(pvals, list):
         pvallist = pvals
     else:
         pvallist = [pvals]
-    if type(legend) == list:
+    if isinstance(legend, list):
         legendlist = legend
     else:
         legendlist = [legend]

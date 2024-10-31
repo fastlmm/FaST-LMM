@@ -35,7 +35,7 @@ def runselect(
     # set up grid
     ##############################
     num_steps_delta = 10
-    num_steps_k = 5
+    # num_steps_k = 5
 
     # log_2 space and all SNPs
     # k_values = np.logspace(0, 9, base=2, num=num_steps_k, endpoint=True).tolist() + [10000]

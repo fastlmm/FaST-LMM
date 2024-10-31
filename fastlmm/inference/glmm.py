@@ -302,7 +302,7 @@ class GLMM(object):
         (xmean, xK01, xkk) = self._xMeanCov(xX, xG0, xG1)
 
         ps = self._predict(xmean, xK01, xkk, prob)
-        if prob == False:
+        if prob is False:
             return self._in2outy(ps)
         return ps
 

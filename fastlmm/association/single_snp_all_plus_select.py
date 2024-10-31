@@ -70,7 +70,7 @@ class _SnpWholeWithTrain(KernelReader):
                     order=order,
                 )
                 ct = 0
-                ts = time.time()
+                time.time()
 
                 for start in range(0, self.whole.sid_count, self.block_size):
                     ct += self.block_size

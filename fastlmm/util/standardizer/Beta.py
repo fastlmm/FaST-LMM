@@ -12,7 +12,7 @@ class Beta(object):  # IStandardizer
     def standardize(
         self, snps, blocksize=None, force_python_only=False, num_threads=None
     ):
-        l = self.lambdaFactory(
+        thing = self.lambdaFactory(
             snps,
             blocksize=blocksize,
             force_python_only=force_python_only,
@@ -20,7 +20,7 @@ class Beta(object):  # IStandardizer
         )
         import fastlmm.util.standardizer as stdizer
 
-        return stdizer.standardize_with_lambda(snps, l, blocksize)
+        return stdizer.standardize_with_lambda(snps, thing, blocksize)
 
     @staticmethod
     def _standardizer(snps, a, b, force_python_only, num_threads):
@@ -40,7 +40,7 @@ class Beta(object):  # IStandardizer
         return snps
 
     def lambdaFactory(
-        self, snps, blocksize=None, force_python_only=False, num_theads=None
+        self, snps, blocksize=None, force_python_only=False, num_threads=None
     ):
 
         return lambda s, a=self.a, b=self.b, force_python_only=force_python_only: self._standardizer(

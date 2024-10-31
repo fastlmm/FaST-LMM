@@ -91,7 +91,7 @@ class GWAS(object):
                 np.ones((self.covariates.shape[0])), index=self.covariates.index
             )
             self.covariates["bias"] = bias
-        elif (add_bias == False) and self.covariates is None:
+        elif (add_bias is False) and self.covariates is None:
             raise NotImplementedError(
                 "currently a model with neither bias term, nor covariates is not supported."
             )
@@ -215,14 +215,14 @@ class GWAS(object):
 
     @staticmethod
     def check_pheno_format(phenotype):
-        if type(phenotype) == np.ndarray:
+        if isinstance(phenotype, np.ndarray):
             if len(phenotype.shape) == 1:
                 phenotype = phenotype[:, np.newaxis]
 
             return pd.DataFrame(data=phenotype)
-        elif type(phenotype) == pd.DataFrame:
+        elif isinstance(phenotype, pd.DataFrame):
             return phenotype
-        elif type(phenotype) == dict:
+        elif isinstance(phenotype, dict):
             assert "iid" in phenotype, "assuming format to be the fastlmm format."
             assert "header" in phenotype, "assuming format to be the fastlmm format."
             assert "vals" in phenotype, "assuming format to be the fastlmm format."

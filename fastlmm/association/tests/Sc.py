@@ -84,7 +84,7 @@ class Sc(object):
             )
             return score.scoretest(Y=Y[:, np.newaxis], X=X)
         else:
-            raise Exception("Invalid link for score null model: " + link)
+            raise Exception("Invalid link for score null model")
 
     def pv(self, squaredform, expectationsqform, varsqform, GPG):
         if self.score == "davies":
@@ -185,7 +185,7 @@ class Sc(object):
         self, filenull, G0_to_use, G1, y, x, null_model, varcomp_test, forcefullrank
     ):
         if forcefullrank:
-            raise Exception("full rank score not implemented here")
+            raise NotImplementedError("full rank score not implemented here")
         if self.filenull is not None:
             pv, garbage = score.twokerneltest(
                 G0=G0_to_use,

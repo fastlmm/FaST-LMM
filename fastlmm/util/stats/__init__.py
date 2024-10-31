@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.stats as st
-import scipy.interpolate
+# import scipy.interpolate
 import scipy.linalg as la
-import fastlmm.util.preprocess as util
-import time
+# import fastlmm.util.preprocess as util
+# import time
 
 # import ipdb
 
@@ -19,69 +19,69 @@ def print_missing_info(y):
     )
 
 
-# would be nice to make a low-mem version of this, but this requires
-# 2-passes, because we must mean-center not only the SNPs, but also the
-# individuals
-def TESTBEFOREUSING_pca_covariates(bedfile, npc, outfile=None):
-    """
-    Read in bed file and compute PC covariates (a la Eigenstrat)
-    bedfile should include the .bed extension
-    returns pccov, U, S
-    """
-    import fastlmm.pyplink.plink as pl
-    import os.path
-    import time
-    import scipy.linalg as la
-    import numpy as np
+# # would be nice to make a low-mem version of this, but this requires
+# # 2-passes, because we must mean-center not only the SNPs, but also the
+# # individuals
+# def TESTBEFOREUSING_pca_covariates(bedfile, npc, outfile=None):
+#     """
+#     Read in bed file and compute PC covariates (a la Eigenstrat)
+#     bedfile should include the .bed extension
+#     returns pccov, U, S
+#     """
+#     import fastlmm.pyplink.plink as pl
+#     import os.path
+#     import time
+#     import scipy.linalg as la
+#     import numpy as np
 
-    root, ext = os.path.splitext(bedfile)
-    print("reading in bed file...")
+#     root, ext = os.path.splitext(bedfile)
+#     print("reading in bed file...")
 
-    t0 = time.time()
-    SNPs = Bed(root).read().standardize()
-    t1 = time.time()
-    print(("Elapsed time %.2f seconds" % (t1 - t0)))
+#     t0 = time.time()
+#     SNPs = Bed(root).read().standardize()
+#     t1 = time.time()
+#     print(("Elapsed time %.2f seconds" % (t1 - t0)))
 
-    [N, M] = snps.shape
-    print("found nind=" + str(N) + ", nsnp=" + str(M))
-    if M < N:
-        print("only doing full rank, should use low rank here")
+#     [N, M] = snps.shape
+#     print("found nind=" + str(N) + ", nsnp=" + str(M))
+#     if M < N:
+#         print("only doing full rank, should use low rank here")
 
-    # not needed, and in practice, makes no difference
-    # mean center the individuals
-    # meanval=np.mean(snps,axis=0)
-    # snps=snps-meanval
+#     # not needed, and in practice, makes no difference
+#     # mean center the individuals
+#     # meanval=np.mean(snps,axis=0)
+#     # snps=snps-meanval
 
-    print("computing kernel...")
-    t0 = time.time()
-    K = np.dot(snps, snps.T)
-    t1 = time.time()
-    print(("Elapsed time %.2f seconds" % (t1 - t0)))
-    snps = None
+#     print("computing kernel...")
+#     t0 = time.time()
+#     K = np.dot(snps, snps.T)
+#     t1 = time.time()
+#     print(("Elapsed time %.2f seconds" % (t1 - t0)))
+#     # snps = None
 
-    t0 = time.time()
-    print("computing svd...")
-    [U, S, V] = la.svd(K, full_matrices=False)  #!!!use big_svd?
-    t1 = time.time()
-    print(("Elapsed time %.2f seconds" % (t1 - t0)))
+#     t0 = time.time()
+#     print("computing svd...")
+#     [U, S, V] = la.svd(K, full_matrices=False)  #!!!use big_svd?
+#     t1 = time.time()
+#     print(("Elapsed time %.2f seconds" % (t1 - t0)))
 
-    S = np.sqrt(S)
-    # UShalf=np.dot(U,np.diag(S)) #expensive
-    UShalf = np.multiply(
-        U, np.tile(S, (N, 1))
-    )  # faster, but not as fast as as_strided which I can't get to work
-    pccov = UShalf[:, 0:npc]
-    print("done.")
-    if outfile is not None:
-        import fastlmm.util.util as ut
+#     S = np.sqrt(S)
+#     # UShalf=np.dot(U,np.diag(S)) #expensive
+#     UShalf = np.multiply(
+#         U, np.tile(S, (N, 1))
+#     )  # faster, but not as fast as as_strided which I can't get to work
+#     pccov = UShalf[:, 0:npc]
+#     print("done.")
+#     if outfile is not None:
+#         import fastlmm.util.util as ut
 
-        ut.write_plink_covariates(SNPs["iid"], pccov, outfile)
-    return pccov, U, S
+#         ut.write_plink_covariates(SNPs["iid"], pccov, outfile)
+#     return pccov, U, S
 
 
 def lrtpvals_qqfit_file(filein, qmax=0.1):
     import fastlmm.util.stats.chi2mixture as c2
-    import fastlmm.util.stats.plotp
+    # import fastlmm.util.stats.plotp
     import pandas as pd
 
     colname = "2*(LL(alt)-LL(null))"
@@ -105,37 +105,37 @@ def lrt_method(stat, dof):
     return pv
 
 
-def linreg_uniscan(X, y, covar=None, REML=False):
-    """
-    Iterate through each column of X, using it in the alternative model, and otherwise,
-    only covar/covar+bias in the null model. Y is a 1D phenotype vector
-    Output:
-        p-value, LLnull, LLalt
-    """
-    numtests = X.shape[1]
-    print("numtests=" + str(numtests))
-    pv = np.nan * np.ones(numtests)
-    m_alt = []
-    nullfeat = np.ones_like(y)  # bias term
-    if covar is not None:
-        nullfeat = np.hstack((nullfeat, covar))
+# def linreg_uniscan(X, y, covar=None, REML=False):
+#     """
+#     Iterate through each column of X, using it in the alternative model, and otherwise,
+#     only covar/covar+bias in the null model. Y is a 1D phenotype vector
+#     Output:
+#         p-value, LLnull, LLalt
+#     """
+#     numtests = X.shape[1]
+#     print("numtests=" + str(numtests))
+#     pv = np.nan * np.ones(numtests)
+#     m_alt = []
+#     nullfeat = np.ones_like(y)  # bias term
+#     if covar is not None:
+#         nullfeat = np.hstack((nullfeat, covar))
 
-    m_null = linreg(nullfeat, y, REML=REML)
-    ttt0 = time.time()
-    for i in range(numtests):
-        snp = X[:, i : i + 1]
-        if np.isnan(y).sum() > 0:
-            raise Exception("missing data found")
-        snp_w_nullfeat = np.hstack((snp, nullfeat))
-        m_alt.append(linreg(snp_w_nullfeat, y, REML=REML))
-        pv[i] = lrt(-2 * (m_alt[i]["nLL"] - m_null["nLL"]), dof=1)
-        if i % 50000 == 0:
-            ttt1 = time.time()
-            print(
-                "Elapsed time for %d of %d tests is %.2f seconds"
-                % (i, numtests, (ttt1 - ttt0))
-            )
-    return pv, m_null, m_alt
+#     m_null = linreg(nullfeat, y, REML=REML)
+#     ttt0 = time.time()
+#     for i in range(numtests):
+#         snp = X[:, i : i + 1]
+#         if np.isnan(y).sum() > 0:
+#             raise Exception("missing data found")
+#         snp_w_nullfeat = np.hstack((snp, nullfeat))
+#         m_alt.append(linreg(snp_w_nullfeat, y, REML=REML))
+#         pv[i] = lrt(-2 * (m_alt[i]["nLL"] - m_null["nLL"]), dof=1)
+#         if i % 50000 == 0:
+#             ttt1 = time.time()
+#             print(
+#                 "Elapsed time for %d of %d tests is %.2f seconds"
+#                 % (i, numtests, (ttt1 - ttt0))
+#             )
+#     return pv, m_null, m_alt
 
 
 def linreg(X, y, REML=True, **kwargs):

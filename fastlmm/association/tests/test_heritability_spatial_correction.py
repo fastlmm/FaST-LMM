@@ -54,7 +54,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         )
 
         spatial_coor = [[i, -i] for i in range(self.snpreader_whole.iid_count)]
-        alpha_list = alpha_list_big = [
+        alpha_list = [
             int(v) for v in np.logspace(2, np.log10(4000), 2)
         ]
         dataframe = heritability_spatial_correction(
@@ -91,7 +91,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         snpreader = self.snpreader_whole[:10, :]
 
         spatial_coor = [[i, -i] for i in range(snpreader.iid_count)]
-        alpha_list = alpha_list_big = [
+        alpha_list = [
             int(v) for v in np.logspace(2, np.log10(4000), 2)
         ]
         dataframe = heritability_spatial_correction(
@@ -128,7 +128,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         snpreader = self.snpreader_whole[:10, :]
 
         spatial_coor = [[i, -i] for i in range(snpreader.iid_count)]
-        alpha_list = alpha_list_big = [
+        alpha_list = [
             int(v) for v in np.logspace(2, np.log10(4000), 2)
         ]
         dataframe = heritability_spatial_correction(

@@ -342,7 +342,7 @@ class LMM(object):
 
         if verbose:
             logging.info("finda2")
-        _min = minimize1D(f=f, nGrid=nGridA2, minval=minA2, maxval=maxA2, verbose=False)
+        __min = minimize1D(f=f, nGrid=nGridA2, minval=minA2, maxval=maxA2, verbose=False)
         # print "numcalls to innerLoopTwoKernel= " + str(self.numcalls)
         return resmin[0]
 
@@ -370,7 +370,7 @@ class LMM(object):
             logging.debug("search\t{0}\t{1}".format(x, res["nLL"]))
             return res["nLL"]
 
-        _min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
+        __min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
         return resmin[0]
 
     def find_log_delta(
@@ -399,7 +399,7 @@ class LMM(object):
             # logging.info("search\t{0}\t{1}".format(x,res['nLL']))
             return res["nLL"]
 
-        _min = minimize1D(f=f, nGrid=nGrid, minval=min_log_delta, maxval=max_log_delta)
+        __min = minimize1D(f=f, nGrid=nGrid, minval=min_log_delta, maxval=max_log_delta)
         res = resmin[0]
         internal_delta = 1.0 / res["h2"] - 1.0
         ln_external_delta = np.log(internal_delta / sid_count)

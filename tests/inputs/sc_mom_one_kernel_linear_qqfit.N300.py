@@ -1,4 +1,4 @@
-FastLmmSet(
+FastLmmSet(  # noqa: F821
     test="sc_mom",
     outfile = 'tmp/sc_mom_one_kernel_linear_qqfit.N300.txt',
     phenofile = 'datasets/phenSynthFrom22.23.N300.txt',
@@ -17,5 +17,5 @@ FastLmmSet(
     datestamp=None,
     nullModel={'link':'linear', 'effect':'fixed'},
     altModel={'link':'linear', 'effect':'mixed'},
-    log = logging.CRITICAL,
+    log = logging.CRITICAL,  # noqa: F821
     )

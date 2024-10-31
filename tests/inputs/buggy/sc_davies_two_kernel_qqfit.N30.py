@@ -1,3 +1,6 @@
+import logging
+from fastlmm.association.FastLmmSet import FastLmmSet
+
 distributable = FastLmmSet(
     test="sc_davies",
     outfile = 'tmp/sc_davies_two_kernel_qqfit.N30.txt',

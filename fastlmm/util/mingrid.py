@@ -82,14 +82,14 @@ def minimize1D(
                     minglobal = minlocal[0:2]
         if verbose:
             print("exploring triplets with brent search")
-        onebrent = False
+        # onebrent = False
         for i in range(
             resultgrid.shape[0] - 2
         ):  # if any triplet is found, where the inner point is a local optimum expand search
             if (resultgrid[i + 1] < resultgrid[i + 2]) and (
                 resultgrid[i + 1] < resultgrid[i]
             ):
-                onebrent = True
+                # onebrent = True
                 if verbose:
                     print("found triplet to explore")
                 minlocal = opt.brent(

@@ -154,8 +154,8 @@ class TestSingleSnp(unittest.TestCase):
                     reldiff = abs(row.Pvalue - pvalue) / row.Pvalue
                     assert (
                         reldiff < 0.035
-                    ), "'{0}' pvalue_list differ too much {4} -- {2} vs {3}".format(
-                        sid, None, row.Pvalue, pvalue, reldiff
+                    ), "'{0}' pvalue_list differ too much {3} -- {1} vs {2}".format(
+                        sid, row.Pvalue, pvalue, reldiff
                     )
 
     def file_name(self, testcase_name):
@@ -279,7 +279,7 @@ class TestSingleSnp(unittest.TestCase):
 
         got_expected_fail = False
         try:
-            frame = single_snp(
+            single_snp(
                 test_snps=test_snps[:, :10],
                 pheno=pheno,
                 mixing=0,
@@ -301,7 +301,7 @@ class TestSingleSnp(unittest.TestCase):
 
         got_expected_fail = False
         try:
-            frame = single_snp(
+            single_snp(
                 test_snps=test_snps[:, :10],
                 pheno=pheno,
                 mixing=0,
@@ -317,7 +317,7 @@ class TestSingleSnp(unittest.TestCase):
         covar_by_chrom = {chrom: covar for chrom in set(test_snps.pos[:, 0])}
         got_expected_fail = False
         try:
-            frame = single_snp(
+            single_snp(
                 test_snps=test_snps[:, :10],
                 pheno=pheno,
                 mixing=0,
@@ -749,7 +749,7 @@ class TestSingleSnp(unittest.TestCase):
         covar = self.cov_fn
 
         try:
-            frame = single_snp(
+            single_snp(
                 test_snps=test_snps,
                 G0=test_snps,
                 pheno=pheno,

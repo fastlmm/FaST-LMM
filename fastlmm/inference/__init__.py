@@ -1,5 +1,5 @@
-from fastlmm.inference.fastlmm_predictor import FastLMM
-from fastlmm.inference.linear_regression import LinearRegression
+from fastlmm.inference.fastlmm_predictor import FastLMM  # noqa: F401
+from fastlmm.inference.linear_regression import LinearRegression  # noqa: F401
 
 
 # from bin2kernel import Bin2Kernel

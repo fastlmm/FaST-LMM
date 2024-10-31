@@ -37,7 +37,7 @@ class lrt(association.varcomp_test):
         altModel=None,
     ):
         association.varcomp_test.__init__(self, Y=Y, X=X, appendbias=appendbias)
-        N = self.Y.shape[0]
+        self.Y.shape[0]
         self.forcefullrank = forcefullrank
 
         self.nullModel = nullModel
@@ -167,15 +167,15 @@ class lrt(association.varcomp_test):
         # if self.nullModel['effect']=='fixed' and self.nullModel['link']=='linear':
         #    self._nullModelLinReg(self.G0)
         # else:
-        #    raise Exception("not implemented")
+        #    raise NotImplementedError("not implemented")
 
         # compute the alternative likelihood
         if self.altModel["effect"] == "fixed":
-            raise Exception("not implemented")
+            raise NotImplementedError("not implemented")
         elif self.altModel["effect"] == "mixed" and self.altModel["link"] == "linear":
             (lik1, stat, alteqnull) = self._altModelMixedEffectLinearUpdate(self.model1)
         else:
-            raise Exception("not implemented")
+            raise NotImplementedError("not implemented")
 
         # due to optimization the alternative log-likelihood might be a about 1E-6 worse than the null log-likelihood
         pvreg = ST.chi2.sf(
@@ -261,7 +261,7 @@ class lrt(association.varcomp_test):
         Assumes that setG has been called already (expensive in many cases), and does not redo it.
         """
         if self.G0 is not None:
-            raise Exception("not implemented")
+            raise NotImplementedError("not implemented")
         else:
             lmm1.setX(self.X)
             lmm1.sety(self.Y)

@@ -5,8 +5,9 @@ import numpy as np
 
 def set_Gexclude(G_exclude, G1, i_exclude):
     if G_exclude is None and i_exclude is not None and i_exclude.sum() > 0:
-        assert self.G0 is not None, "i_exclude without SNPs to exclude"
-        G = np.hstack((self.G0[:, i_exclude], G1))
+        raise NotImplementedError("not implemented")
+        assert self.G0 is not None, "i_exclude without SNPs to exclude"  # noqa: F821
+        G = np.hstack((self.G0[:, i_exclude], G1))  # noqa: F821
         i_G1 = np.ones(G.shape[1], dtype="bool")
         n_exclude = i_exclude.sum()
         i_G1[0:n_exclude] = False

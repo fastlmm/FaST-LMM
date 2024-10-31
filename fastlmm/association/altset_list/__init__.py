@@ -17,9 +17,9 @@ a altset_list is a list of snpsets (defined with the stand-aline PySnpTools read
 #    def __iter__(self):
 #        return # a sequence of ISnpSetPlusBed's
 
-from .snpandsetnamecollection import SnpAndSetNameCollection
-from .subset import Subset
-from .minmaxsetsize import MinMaxSetSize
-from .consecutive import Consecutive
+from .snpandsetnamecollection import SnpAndSetNameCollection  # noqa: F401
+from .subset import Subset # noqa: F401
+from .minmaxsetsize import MinMaxSetSize # noqa: F401
+from .consecutive import Consecutive # noqa: F401
 #!! ISnpSetList Later replace all interfaces with abstract classes
 #!!remove all these __init__.py imports?

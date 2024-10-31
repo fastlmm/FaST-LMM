@@ -1,3 +1,6 @@
+import logging
+from fastlmm.association.FastLmmSet import FastLmmSet
+
 distributable = FastLmmSet(
     phenofile = 'datasets/phenSynthFrom22.23.N30.txt',
     bedfilealt = 'datasets/all_chr.maf0.001.N30',

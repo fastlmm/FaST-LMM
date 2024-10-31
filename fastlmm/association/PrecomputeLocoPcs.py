@@ -142,7 +142,7 @@ class PrecomputeLocoPcs(object):  # implements IDistributable
         This can return anything, but note that it will be binary serialized (pickleable), and you don't want to have more than is required there for reduce
         """
         # fast indexing (needs to be C-order)
-        assert np.isfortran(G) == False
+        assert np.isfortran(G) is False
         G_train = G.take(train_snp_idx, axis=1)
 
         pca = PCA()

@@ -23,4 +23,4 @@ interface ISnpSetPlusBed:
 from .Lrt import *
 from .Cv import *
 from .Sc import *
-from . import LRT_up as lrt
+from . import LRT_up as lrt  # noqa: F401

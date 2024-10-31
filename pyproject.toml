@@ -67,7 +67,6 @@ dev = [
 
 [tool.ruff]
 line-length = 250
-ignore = ["F403", "F405"]
 exclude = [
     "*.ipynb",
     "doc/source/conf.py",
@@ -76,6 +75,7 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
+ignore = ["F403", "F405"]
 
 
 [tool.pytest.ini_options]

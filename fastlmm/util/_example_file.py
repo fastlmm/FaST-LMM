@@ -17,7 +17,7 @@ def example_file(pattern, endswith=None):
     Returns the local location of a FaST-LMM example file, downloading it
     if needed.
 
-    :param pattern: The name of the example file of interest. A 
+    :param pattern: The name of the example file of interest. A
         `file name pattern <https://docs.python.org/3.7/library/fnmatch.html>`__
         may be given. All matching files will be downloaded (if needed) and
         the name of one will be returned.

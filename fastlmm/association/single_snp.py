@@ -27,7 +27,7 @@ from pysnptools.standardizer import Standardizer, Unit
 from pysnptools.util import create_directory_if_necessary
 from pysnptools.util.intrangeset import IntRangeSet
 from pysnptools.util.mapreduce1 import map_reduce
-
+warnings.filterwarnings("ignore", message="Input line .* contained no data and will not be counted towards `max_rows=.*")
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
 #  might be a covar mix up.(but only if a SnpKernel

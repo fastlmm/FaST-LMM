@@ -9,6 +9,7 @@ class MinMaxSetSize(object): # implements ISnpSetList
         self.minsetsize = minsetsize
         self.maxsetsize = maxsetsize
         if isinstance(altset_list, str):#if given a filename, then assumes group-SNP format (default)
+            from fastlmm.pyplink.altset_list import SnpAndSetNameCollection
             self.inner = SnpAndSetNameCollection(altset_list)
         else:                           #given a NucRangeList(filenam.txt), or any other reader
             self.inner = altset_list

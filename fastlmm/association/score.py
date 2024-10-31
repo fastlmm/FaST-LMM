@@ -114,15 +114,15 @@ class scoretest_logit(scoretest):
         """
         Y = self.Y
         X = self.X
-        N = Y.shape[0]
+        Y.shape[0]
         if Y.ndim == 1:
             P = 1  # num of phenotypes
         else:
             P = Y.shape[1]
         if X is None:
-            D = 1  # num of covariates (and assumes they are independent)
+            pass  # num of covariates (and assumes they are independent)
         else:
-            D = X.shape[1]
+            X.shape[1]
         RxY = (
             self.Y.flatten() - self.pY
         )  # residual of y regressed on X, which here, is equivalent to sigma2*Py (P is the projection matrix, which is idempotent)
@@ -235,7 +235,7 @@ class scoretest2K(scoretest):
                 resmin[0] = res
             return res["nLL"]
 
-        min = minimize1D(f, evalgrid=None, nGrid=20, minval=0.0, maxval=0.99999)
+        _min = minimize1D(f, evalgrid=None, nGrid=20, minval=0.0, maxval=0.99999)
 
         self.optparams = resmin[0]
 
@@ -285,7 +285,7 @@ class scoretest2K(scoretest):
         if (h2 < 0.0) or (h2 >= 1.0):
             return {"nLL": 3e20, "h2": h2}
         k = self.S.shape[0]
-        N = self.Y.shape[0]
+        self.Y.shape[0]
         if self.Y.ndim == 1:
             P = 1
         else:
@@ -403,15 +403,15 @@ class scoretest2K(scoretest):
                 resmin[0] = res
             return res["nLL"]
 
-        min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
+        _min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
         return resmin[0]
 
 
 def linreg(Y, X=None, Xdagger=None, rcond=-1):
     if Y.ndim == 1:
-        P = 1
+        pass
     else:
-        P = Y.shape[1]
+        Y.shape[1]
     if X is None:
         RxY = Y - Y.mean(0)
         return RxY, None

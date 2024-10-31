@@ -1,12 +1,12 @@
 # flake8: noqa: E501
 
 import numpy as np
-import scipy.optimize as opt
-import scipy.stats as st
+# import scipy.optimize as opt
+# import scipy.stats as st
 import scipy.special as ss
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
-import time
+# import time
 import pysnptools.util as pstutil
 
 
@@ -379,7 +379,7 @@ class LMM(object):
 
         def f(x, resmin=resmin, **kwargs):
             self.numcalls += 1
-            t0 = time.time()
+            # t0 = time.time()
             h2_1 = (1.0 - h2) * x
             res = self.nLLeval_2K(
                 h2_1=h2_1, i_up=i_up, i_G1=i_G1, UW=UW, UUW=UUW, h2=h2, **kwargs
@@ -387,14 +387,14 @@ class LMM(object):
 
             if (resmin[0] is None) or (res["nLL"] < resmin[0]["nLL"]):
                 resmin[0] = res
-            t1 = time.time()
+            # t1 = time.time()
             # print "one objective function call took %.2f seconds elapsed" % (t1-t0)
             # import pdb; pdb.set_trace()
             return res["nLL"]
 
         if verbose:
             print("finda2")
-        min = minimize1D(f=f, nGrid=nGridA2, minval=minA2, maxval=maxA2, verbose=False)
+        _min = minimize1D(f=f, nGrid=nGridA2, minval=minA2, maxval=maxA2, verbose=False)
         # print "numcalls to innerLoopTwoKernel= " + str(self.numcalls)
         return resmin[0]
 
@@ -466,7 +466,7 @@ class LMM(object):
                 resmin[0] = res
             return res["nLL"]
 
-        min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
+        _min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
         return resmin[0]
 
     def find_log_delta(
@@ -500,7 +500,7 @@ class LMM(object):
             # logging.info("search\t{0}\t{1}".format(x,res['nLL']))
             return res["nLL"]
 
-        min = minimize1D(f=f, nGrid=nGrid, minval=min_log_delta, maxval=max_log_delta)
+        _min = minimize1D(f=f, nGrid=nGrid, minval=min_log_delta, maxval=max_log_delta)
         res = resmin[0]
         internal_delta = 1.0 / res["h2"] - 1.0
         ln_external_delta = np.log(internal_delta / sid_count)
@@ -525,7 +525,7 @@ class LMM(object):
         # f = lambda x : (self.nLLeval(h2=x,**kwargs)['nLL'])
         resmin = [None for i in range(self.Y.shape[1])]
         # logging.info("starting H2 search")
-        assert estimate_Bayes == False, "not implemented"
+        assert estimate_Bayes is False, "not implemented"
         if self.Y.shape[1] > 1:
 
             def f(x):
@@ -576,7 +576,7 @@ class LMM(object):
                     resmin[0] = res
                 return res["nLL"][0]
 
-            min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
+            __min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
             return resmin[0]
 
     def posterior_h2(self, nGridH2=1000, minH2=0.0, maxH2=0.99999, **kwargs):
@@ -686,10 +686,10 @@ class LMM(object):
             'scale'     : Scale parameter that multiplies the Covariance matrix (default 1.0)
         """
 
-        N = self.Y.shape[0] - self.linreg.D
-        P = self.Y.shape[1]
+        # N = self.Y.shape[0] - self.linreg.D
+        # P = self.Y.shape[1]
         S, U = self.getSU()
-        k = S.shape[0]  # the rank of the data (or dof of the likelihood)
+        # k = S.shape[0]  # the rank of the data (or dof of the likelihood)
         if (h2 < 0.0) or (h2 + h2_1 >= 0.99999) or (h2_1 < 0.0):
             return {"nLL": 3e20, "h2": h2, "h2_1": h2_1, "scale": scale}
         denom = (1.0 - h2 - h2_1) * scale  # determine normalization factor
@@ -803,7 +803,7 @@ class LMM(object):
         # logging.info("Starting nLLeval")
         # N = self.Y.shape[0] - self.linreg.D #number of degrees of freedom - commented out because not use and misleading name for dof
         S, U = self.getSU()
-        k = S.shape[0]
+        # k = S.shape[0]
         P = self.Y.shape[1]  # number of phenotypes used
 
         Sd, denom, h2 = self.get_Sd_etc(Sd, denom, h2, logdelta, delta, scale, weightW)
@@ -1165,10 +1165,10 @@ class Linreg(object):
 
     def set_beta(self, Y):
         self.N = Y.shape[0]
-        if Y.ndim == 1:
-            P = 1
-        else:
-            P = Y.shape[1]
+        # if Y.ndim == 1:
+        #     P = 1
+        # else:
+        #     P = Y.shape[1]
         if self.X is None:
             self.beta = Y.mean(0)
         else:
@@ -1232,228 +1232,228 @@ if False:
     P = Kinv - KX.dot(la.inv(XKX)).dot(KX.T)  # matches with P
 
 
-if __name__ == "__main__":
-    from fastlmm.association.gwas import *
+# if __name__ == "__main__":
+    # from fastlmm.association.gwas import *
 
-    # from fastlmm.pyplink.snpreader.Bed import Bed
-    # import time
+    # # from fastlmm.pyplink.snpreader.Bed import Bed
+    # # import time
 
-    delta = 1.0
-    num_pcs = 100
-    mixing = 0.5
+    # delta = 1.0
+    # num_pcs = 100
+    # mixing = 0.5
 
-    # bed_fn = "G:\Genetics/dbgap/ARIC/autosomes.genic"
-    # pheno_fn = "G:\Genetics/dbgap/ARIC/all-ldlsiu02.phe"
+    # # bed_fn = "G:\Genetics/dbgap/ARIC/autosomes.genic"
+    # # pheno_fn = "G:\Genetics/dbgap/ARIC/all-ldlsiu02.phe"
 
-    # bed_fn = "../data/autosomes.genic"
-    # pheno_fn = "../all-ldlsiu02.phe"
+    # # bed_fn = "../data/autosomes.genic"
+    # # pheno_fn = "../all-ldlsiu02.phe"
 
-    bed_fn = "../feature_selection/examples/toydata.5chrom.bed"
-    pheno_fn = "../feature_selection/examples/toydata.phe"
+    # bed_fn = "../feature_selection/examples/toydata.5chrom.bed"
+    # pheno_fn = "../feature_selection/examples/toydata.phe"
 
-    selected_snp_pos_fn = "../feature_selection/examples/test_snps.txt"
-    selected_snp_pos = np.loadtxt(selected_snp_pos_fn, comments=None)
+    # selected_snp_pos_fn = "../feature_selection/examples/test_snps.txt"
+    # selected_snp_pos = np.loadtxt(selected_snp_pos_fn, comments=None)
 
-    snp_reader = Bed(bed_fn)
+    # snp_reader = Bed(bed_fn)
 
-    G, y, rs = load_intersect(snp_reader, pheno_fn)
+    # G, y, rs = load_intersect(snp_reader, pheno_fn)
 
-    # get chr names/id
-    chr_ids = snp_reader.pos[:, 0]
-    snp_pos = snp_reader.pos[:, 2]
+    # # get chr names/id
+    # chr_ids = snp_reader.pos[:, 0]
+    # snp_pos = snp_reader.pos[:, 2]
 
-    # snp_name = geno['rs']
+    # # snp_name = geno['rs']
 
-    # loco = LeaveOneChromosomeOut(chr_ids, indices=True)
-    loco = [[list(range(0, 5000)), list(range(5000, 10000))]]
+    # # loco = LeaveOneChromosomeOut(chr_ids, indices=True)
+    # loco = [[list(range(0, 5000)), list(range(5000, 10000))]]
 
-    if 0:
-        # TODO: wrap up results using pandas
-        for train_snp_idx, test_snp_idx in loco:
-            print(len(train_snp_idx), len(test_snp_idx))
+    # if 0:
+    #     # TODO: wrap up results using pandas
+    #     for train_snp_idx, test_snp_idx in loco:
+    #         print(len(train_snp_idx), len(test_snp_idx))
 
-            int_snp_idx = argintersect_left(snp_pos[train_snp_idx], selected_snp_pos)
-            sim_keeper_idx = np.array(train_snp_idx)[int_snp_idx]
+    #         int_snp_idx = argintersect_left(snp_pos[train_snp_idx], selected_snp_pos)
+    #         sim_keeper_idx = np.array(train_snp_idx)[int_snp_idx]
 
-            print(sim_keeper_idx)
+    #         print(sim_keeper_idx)
 
-            G_train = G[:, train_snp_idx]
-            G_sim = G[:, sim_keeper_idx]
-            G_test = G[:, test_snp_idx]
+    #         G_train = G[:, train_snp_idx]
+    #         G_sim = G[:, sim_keeper_idx]
+    #         G_test = G[:, test_snp_idx]
 
-            import pdb
+    #         import pdb
 
-            pdb.set_trace()
+    #         pdb.set_trace()
 
-            logging.info("computing pca...")
+    #         logging.info("computing pca...")
 
-            t0 = time.time()
+    #         t0 = time.time()
 
-            pca = PCA(n_components=num_pcs)
-            pcs = pca.fit_transform(G_train)
+    #         pca = PCA(n_components=num_pcs)
+    #         pcs = pca.fit_transform(G_train)
 
-            t1 = time.time()
+    #         t1 = time.time()
 
-            logging.info("done after %.4f seconds" % (t1 - t0))
+    #         logging.info("done after %.4f seconds" % (t1 - t0))
 
-            gwas = Gwas(G_sim, G_test, y, delta, train_pcs=pcs, mixing_weight=mixing)
-            gwas.run_gwas()
+    #         gwas = Gwas(G_sim, G_test, y, delta, train_pcs=pcs, mixing_weight=mixing)
+    #         gwas.run_gwas()
 
-    if 1:
-        i_min = np.array(
-            [
-                [576],
-                [2750],
-                [4684],
-                [7487],
-                [3999],
-                [4742],
-                [564],
-                [9930],
-                [6252],
-                [5480],
-                [8209],
-                [3829],
-                [582],
-                [6072],
-                [2237],
-                [7051],
-                [71],
-                [8590],
-                [5202],
-                [6598],
-            ]
-        )
-        N = G.shape[0]
-        S = G.shape[1]
+    # if 1:
+    #     i_min = np.array(
+    #         [
+    #             [576],
+    #             [2750],
+    #             [4684],
+    #             [7487],
+    #             [3999],
+    #             [4742],
+    #             [564],
+    #             [9930],
+    #             [6252],
+    #             [5480],
+    #             [8209],
+    #             [3829],
+    #             [582],
+    #             [6072],
+    #             [2237],
+    #             [7051],
+    #             [71],
+    #             [8590],
+    #             [5202],
+    #             [6598],
+    #         ]
+    #     )
+    #     N = G.shape[0]
+    #     S = G.shape[1]
 
-        t0 = time.time()
-        Gup = np.hstack((G[:, i_min[17:18, 0]], G[:, 18:27])).copy()
-        Gdown = G[:, 20:25]
-        Gback = np.hstack((G[:, 0:12], G[:, i_min[10:12, 0]], 0 * Gdown)).copy()
-        Gback_ = np.hstack((Gup, G[:, 0:12], G[:, i_min[10:12, 0]])).copy()
+    #     t0 = time.time()
+    #     Gup = np.hstack((G[:, i_min[17:18, 0]], G[:, 18:27])).copy()
+    #     Gdown = G[:, 20:25]
+    #     Gback = np.hstack((G[:, 0:12], G[:, i_min[10:12, 0]], 0 * Gdown)).copy()
+    #     Gback_ = np.hstack((Gup, G[:, 0:12], G[:, i_min[10:12, 0]])).copy()
 
-        Gcovar = G[:, [9374, 1344]]
-        covariates = np.hstack([Gcovar, np.ones((N, 1))]).copy()
-        fullr = False
-        K = None
+    #     Gcovar = G[:, [9374, 1344]]
+    #     covariates = np.hstack([Gcovar, np.ones((N, 1))]).copy()
+    #     fullr = False
+    #     K = None
 
-        weightW = np.ones(Gup.shape[1] + Gdown.shape[1]) * 0.0
-        weightW[0 : Gup.shape[1]] = -1.0
-        W = np.hstack((Gup, Gdown)).copy()
+    #     weightW = np.ones(Gup.shape[1] + Gdown.shape[1]) * 0.0
+    #     weightW[0 : Gup.shape[1]] = -1.0
+    #     W = np.hstack((Gup, Gdown)).copy()
 
-        # W = G_snp
-        lmm = LMM(X=covariates, Y=y[:, np.newaxis], G=Gback_, K=K, forcefullrank=fullr)
-        UGup, UUGup = lmm.rotate(W)
-        # UGup,UUGup=None,None
+    #     # W = G_snp
+    #     lmm = LMM(X=covariates, Y=y[:, np.newaxis], G=Gback_, K=K, forcefullrank=fullr)
+    #     UGup, UUGup = lmm.rotate(W)
+    #     # UGup,UUGup=None,None
 
-        opt = lmm.findH2(nGridH2=10, UW=UGup, UUW=UUGup, weightW=weightW)
-        h2 = opt["h2"]
+    #     opt = lmm.findH2(nGridH2=10, UW=UGup, UUW=UUGup, weightW=weightW)
+    #     h2 = opt["h2"]
 
-        delta = None  # =(1.0/h2-1.0)
-        # REML=False
-        REML = False
-        # lmm.set_snps(snps=G)
-        i_up = weightW == -1.0
-        i_G1 = weightW == 4
+    #     delta = None  # =(1.0/h2-1.0)
+    #     # REML=False
+    #     REML = False
+    #     # lmm.set_snps(snps=G)
+    #     i_up = weightW == -1.0
+    #     i_G1 = weightW == 4
 
-        res2 = lmm.nLLeval_2K(
-            h2=h2,
-            h2_1=(4.0 * h2),
-            dof=None,
-            scale=1.0,
-            penalty=0.0,
-            snps=G,
-            UW=UGup,
-            UUW=UUGup,
-            i_up=i_up,
-            i_G1=i_G1,
-            subset=False,
-        )
-        res = lmm.nLLeval(
-            h2=h2,
-            logdelta=None,
-            delta=None,
-            dof=None,
-            scale=1.0,
-            penalty=0.0,
-            snps=G,
-            UW=UGup,
-            UUW=UUGup,
-            weightW=weightW,
-        )  # see comment about weightW*h2 in nLLeval
-        chi2stats = res["beta"] * res["beta"] / res["variance_beta"]
+    #     res2 = lmm.nLLeval_2K(
+    #         h2=h2,
+    #         h2_1=(4.0 * h2),
+    #         dof=None,
+    #         scale=1.0,
+    #         penalty=0.0,
+    #         snps=G,
+    #         UW=UGup,
+    #         UUW=UUGup,
+    #         i_up=i_up,
+    #         i_G1=i_G1,
+    #         subset=False,
+    #     )
+    #     res = lmm.nLLeval(
+    #         h2=h2,
+    #         logdelta=None,
+    #         delta=None,
+    #         dof=None,
+    #         scale=1.0,
+    #         penalty=0.0,
+    #         snps=G,
+    #         UW=UGup,
+    #         UUW=UUGup,
+    #         weightW=weightW,
+    #     )  # see comment about weightW*h2 in nLLeval
+    #     chi2stats = res["beta"] * res["beta"] / res["variance_beta"]
 
-        pv = st.chi2.sf(chi2stats, 1)
-        pv_ = st.f.sf(
-            chi2stats, 1, G.shape[0] - (lmm.linreg.D + 1)
-        )  # note that G.shape is the number of individuals
+    #     pv = st.chi2.sf(chi2stats, 1)
+    #     pv_ = st.f.sf(
+    #         chi2stats, 1, G.shape[0] - (lmm.linreg.D + 1)
+    #     )  # note that G.shape is the number of individuals
 
-        chi2stats2 = res2["beta"] * res2["beta"] / res2["variance_beta"]
+    #     chi2stats2 = res2["beta"] * res2["beta"] / res2["variance_beta"]
 
-        pv2 = st.chi2.sf(chi2stats2, 1)
+    #     pv2 = st.chi2.sf(chi2stats2, 1)
 
-        opt_2K = lmm.findH2_2K(
-            nGridH2=10,
-            minH2=0.0,
-            maxH2=0.99999,
-            i_up=i_up,
-            i_G1=i_G1,
-            UW=UGup,
-            UUW=UUGup,
-        )
-        res_2K_ = lmm.nLLeval_2K(
-            h2=opt["h2"],
-            h2_1=0,
-            dof=None,
-            scale=1.0,
-            penalty=0.0,
-            snps=G,
-            UW=UGup,
-            UUW=UUGup,
-            i_up=i_up,
-            i_G1=i_G1,
-            subset=False,
-        )
-        res_2K = lmm.nLLeval_2K(
-            h2=opt_2K["h2"],
-            h2_1=opt_2K["h2_1"],
-            dof=None,
-            scale=1.0,
-            penalty=0.0,
-            snps=G,
-            UW=UGup,
-            UUW=UUGup,
-            i_up=i_up,
-            i_G1=i_G1,
-            subset=False,
-        )
-        t1 = time.time()
-        i_pv = pv[:, 0].argsort()
+    #     opt_2K = lmm.findH2_2K(
+    #         nGridH2=10,
+    #         minH2=0.0,
+    #         maxH2=0.99999,
+    #         i_up=i_up,
+    #         i_G1=i_G1,
+    #         UW=UGup,
+    #         UUW=UUGup,
+    #     )
+    #     res_2K_ = lmm.nLLeval_2K(
+    #         h2=opt["h2"],
+    #         h2_1=0,
+    #         dof=None,
+    #         scale=1.0,
+    #         penalty=0.0,
+    #         snps=G,
+    #         UW=UGup,
+    #         UUW=UUGup,
+    #         i_up=i_up,
+    #         i_G1=i_G1,
+    #         subset=False,
+    #     )
+    #     res_2K = lmm.nLLeval_2K(
+    #         h2=opt_2K["h2"],
+    #         h2_1=opt_2K["h2_1"],
+    #         dof=None,
+    #         scale=1.0,
+    #         penalty=0.0,
+    #         snps=G,
+    #         UW=UGup,
+    #         UUW=UUGup,
+    #         i_up=i_up,
+    #         i_G1=i_G1,
+    #         subset=False,
+    #     )
+    #     t1 = time.time()
+    #     i_pv = pv[:, 0].argsort()
 
-        if 0:
-            # lmm.findH2()
+    #     if 0:
+    #         # lmm.findH2()
 
-            gwas = Gwas(
-                Gback,
-                G,
-                y,
-                mixing_weight=mixing,
-                cov=covariates,
-                delta=delta,
-                REML=REML,
-            )
-            gwas.run_gwas()
-            t2 = time.time()
+    #         gwas = Gwas(
+    #             Gback,
+    #             G,
+    #             y,
+    #             mixing_weight=mixing,
+    #             cov=covariates,
+    #             delta=delta,
+    #             REML=REML,
+    #         )
+    #         gwas.run_gwas()
+    #         t2 = time.time()
 
-            timing1 = t1 - t0
-            timing2 = t2 - t1
-            print("t1 = %.5f   t2 = %.5f" % (timing1, timing2))
+    #         timing1 = t1 - t0
+    #         timing2 = t2 - t1
+    #         print("t1 = %.5f   t2 = %.5f" % (timing1, timing2))
 
-            # import pylab as PL
-            PL.ion()
-            PL.figure()
-            PL.plot([0, 8], [0, 8])
-            PL.plot(-np.log10(pv[gwas.p_idx, 0]), -np.log10(gwas.p_values), ".g")
+    #         # import pylab as PL
+    #         PL.ion()
+    #         PL.figure()
+    #         PL.plot([0, 8], [0, 8])
+    #         PL.plot(-np.log10(pv[gwas.p_idx, 0]), -np.log10(gwas.p_values), ".g")
 
-            PL.plot(-np.log10(pv), -np.log10(pv2), ".r")
+    #         PL.plot(-np.log10(pv), -np.log10(pv2), ".r")

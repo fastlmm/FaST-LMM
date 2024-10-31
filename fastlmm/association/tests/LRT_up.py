@@ -31,7 +31,7 @@ class lrt(association.varcomp_test):
         altModel=None,
     ):
         association.varcomp_test.__init__(self, Y=Y, X=X, appendbias=appendbias)
-        N = self.Y.shape[0]
+        self.Y.shape[0]
         self.forcefullrank = forcefullrank
         self.nullModel = nullModel
         self.altModel = altModel
@@ -342,25 +342,25 @@ class LRT_up(object):
             row += "\n"
             fp.write(row)
 
-    def pv_etc(
-        self, filenull, G0_to_use, G1, y, x, null_model, varcomp_test, forcefullrank
-    ):
-        if self.filenull is not None:
-            return lr.twokerneltest(
-                G0=G0_to_use,
-                G1=G1,
-                y=y,
-                covar=x,
-                appendbias=False,
-                lik0=null_model,
-                forcefullrank=forcefullrank,
-            )
-        else:
-            return lr.onekerneltest(
-                G1=G1,
-                y=y,
-                covar=x,
-                appendbias=False,
-                lik0=varcomp_test,
-                forcefullrank=self.forcefullrank,
-            )
+    # def pv_etc(
+    #     self, filenull, G0_to_use, G1, y, x, null_model, varcomp_test, forcefullrank
+    # ):
+    #     if self.filenull is not None:
+    #         return lr.twokerneltest(
+    #             G0=G0_to_use,
+    #             G1=G1,
+    #             y=y,
+    #             covar=x,
+    #             appendbias=False,
+    #             lik0=null_model,
+    #             forcefullrank=forcefullrank,
+    #         )
+    #     else:
+    #         return lr.onekerneltest(
+    #             G1=G1,
+    #             y=y,
+    #             covar=x,
+    #             appendbias=False,
+    #             lik0=varcomp_test,
+    #             forcefullrank=self.forcefullrank,
+    #         )

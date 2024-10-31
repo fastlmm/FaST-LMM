@@ -12,8 +12,8 @@ from pysnptools.snpreader import Pheno, SnpData
 from fastlmm.association import single_snp_select
 from fastlmm.feature_selection.test import TestFeatureSelection
 import platform
-import multiprocessing
-from pysnptools.util.mapreduce1.runner import LocalMultiProc
+# import multiprocessing
+# from pysnptools.util.mapreduce1.runner import LocalMultiProc
 
 
 class TestSingleSnpSelect(unittest.TestCase):
@@ -70,7 +70,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         self._sel_plus_pc(0.5, False, True, count_A1=False)
 
     def _sel_plus_pc(self, h2, force_low_rank, force_full_rank, count_A1=None):
-        do_plot = False
+        # do_plot = False
         use_cache = False
 
         # define file names
@@ -91,7 +91,7 @@ class TestSingleSnpSelect(unittest.TestCase):
             logging.info("Using top pcs's cache")
             covar = Pheno(pcs_fn)
 
-        runner = LocalMultiProc(multiprocessing.cpu_count(), mkl_num_threads=2)
+        # runner = LocalMultiProc(multiprocessing.cpu_count(), mkl_num_threads=2)
 
         logging.info(
             "Working on h2={0},force_low_rank={1},force_full_rank={2}".format(
@@ -258,23 +258,23 @@ if __name__ == "__main__":
         r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
-    else:  # Cluster test run
+    # else:  # Cluster test run
 
-        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+    #     from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 
-        logging.basicConfig(level=logging.INFO)
+    #     logging.basicConfig(level=logging.INFO)
 
-        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
+    #     from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
-        # runner = HPC(10, 'RR1-N13-09-H44',r'\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond',
-        #                remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
-        #                update_remote_python_parent=True,
-        #                priority="AboveNormal",mkl_num_threads=1)
-        runner = Local()
-        # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
-        # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
-        # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
-        distributable_test = DistributableTest(suites, "temp_test")
-        print(runner.run(distributable_test))
+    #     # runner = HPC(10, 'RR1-N13-09-H44',r'\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond',
+    #     #                remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
+    #     #                update_remote_python_parent=True,
+    #     #                priority="AboveNormal",mkl_num_threads=1)
+    #     runner = Local()
+    #     # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
+    #     # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
+    #     # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
+    #     distributable_test = DistributableTest(suites, "temp_test")
+    #     print(runner.run(distributable_test))
 
     logging.info("done with testing")

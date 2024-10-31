@@ -42,7 +42,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         # define file names
         snp_reader = Bed(self.pythonpath + "/tests/datasets/synth/all.bed",count_A1=False)
         pheno_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"
-        cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
+        # cov_fn = self.pythonpath + "/tests/datasets/synth/cov.txt"
 
         # find the chr5 SNPs
         test_snps = snp_reader[:,snp_reader.pos[:,0] == 5]
@@ -173,7 +173,8 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         best_k, feat_idx, best_mix, best_delta = select.run_select(G0.val, G0.val, y, cov=X_cov)
 
         # plot out of sample error
-        if do_plot: select.plot_results(measure="ll")
+        if do_plot:
+            select.plot_results(measure="ll")
         # select.plot_results(measure="mse")
 
         # print results
@@ -206,7 +207,8 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
         #    sid_to_pvalue[sid] = pvalue_list[index]
 
         reference=pd.read_csv(reffile,delimiter=r'\s',comment=None,engine='python')
-        if 'Pvalue' in reference.columns: reference['PValue']=reference.Pvalue #add a new column with different capitalization if it is there
+        if 'Pvalue' in reference.columns:
+            reference['PValue']=reference.Pvalue #add a new column with different capitalization if it is there
 
 
         assert len(frame) == len(reference), "# of pairs differs from file '{0}'".format(reffile)

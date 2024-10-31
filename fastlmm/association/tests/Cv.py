@@ -30,10 +30,11 @@ class Cv(object):
         scoring=None,
         greater_is_better=None,
     ):
+        raise NotImplementedError("construct not implemented for cv")
         return testCV.testCV(
             Y=Y[:, np.newaxis],
             X=X,
-            G0=G0,
+            G0=G0,  # noqa: F821
             nullModel=nullModel,
             altModel=altModel,
             scoring=scoring,
@@ -43,7 +44,7 @@ class Cv(object):
     def construct_no_backgound_kernel(
         self, Y, X, forcefullrank, nullModel, altModel, scoring, greater_is_better
     ):
-        return construct(
+        return Cv.construct(
             Y, X, forcefullrank, None, nullModel, altModel, scoring, greater_is_better
         )
 
@@ -201,7 +202,7 @@ class Cv(object):
             res = mix.fit_params_Qreg()  # parameter fitting
 
             imax = res["imax"]
-            mse = res["mse"]
+            res["mse"]
             logging.info("# of pvals used for nullfit=" + str(imax))
             pv_adj = mix.sf(
                 lrt=lrt, alteqnull=alteqnull
@@ -243,7 +244,7 @@ class Cv(object):
             res = mix.fit_params_Qreg()  # parameter fitting
 
             imax = res["imax"]
-            mse = res["mse"]
+            res["mse"]
             logging.info("# of pvals used for nullfit=" + str(imax))
             pv_adj = mix.sf(
                 lrt=lrt, alteqnull=alteqnull

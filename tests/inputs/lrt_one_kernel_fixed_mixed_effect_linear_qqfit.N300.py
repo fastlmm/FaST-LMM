@@ -1,4 +1,4 @@
-FastLmmSet(
+FastLmmSet(  # noqa: F821
     phenofile = 'datasets/phenSynthFrom22.23.N300.txt',
     alt_snpreader = 'datasets/all_chr.maf0.001.N300',
     altset_list = 'datasets/set_input.23.txt',
@@ -17,5 +17,5 @@ FastLmmSet(
     datestamp=None,
     nullModel={'effect':'fixed', 'link':'linear'},
     altModel={'effect':'mixed', 'link':'linear'},
-    log = logging.CRITICAL,
+    log = logging.CRITICAL,  # noqa: F821
     )

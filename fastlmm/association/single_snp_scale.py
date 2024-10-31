@@ -1,5 +1,6 @@
 import os
 import logging
+import shutil
 import sys
 
 if sys.version_info.major == 3 and sys.version_info.minor >= 10:
@@ -278,100 +279,101 @@ def covar_fn(data_folder, file_index):
     return data_folder + "/covar.{0}.txt".format(file_index)
 
 
-def generate(data_folder, iid_count, file_count, sid_count, seed=0):
-    from pysnptools.util import snp_gen
-    from pysnptools.util.generate import _generate_phenotype
+# def generate(data_folder, iid_count, file_count, sid_count, seed=0):
+#     from pysnptools.util import snp_gen
+#     from pysnptools.util.generate import _generate_phenotype
 
-    for file_index in range(file_count):
-        snp_filename = snp_fn(data_folder, file_index)
-        pheno_filename = pheno_fn(data_folder, file_index)
-        covar_filename = covar_fn(data_folder, file_index)
+#     for file_index in range(file_count):
+#         snp_filename = snp_fn(data_folder, file_index)
+#         pheno_filename = pheno_fn(data_folder, file_index)
+#         covar_filename = covar_fn(data_folder, file_index)
 
-        if file_index > 0:
-            iid = [
-                [iid[0], "{0}.{1}".format(iid[1], file_index)]
-                for iid in full_snp_data.iid
-            ]
-            if not os.path.exists(snp_filename):
-                snp_data1 = SnpData(
-                    iid=iid,
-                    sid=full_snp_data.sid,
-                    val=full_snp_data.val,
-                    pos=full_snp_data.pos,
-                )
-                Bed.write(snp_filename, snp_data1)
-            if not os.path.exists(pheno_filename):
-                pheno_data1 = SnpData(iid=iid, sid=phenodata.sid, val=phenodata.val)
-                Pheno.write(pheno_filename, pheno_data1)
-            if not os.path.exists(covar_filename):
-                covar_data1 = SnpData(iid=iid, sid=covardata.sid, val=covardata.val)
-                Pheno.write(covar_filename, covar_data1)
+#         if file_index > 0:
+#             iid = [
+#                 [iid[0], "{0}.{1}".format(iid[1], file_index)]
+#                 for iid in full_snp_data.iid
+#             ]
+#             if not os.path.exists(snp_filename):
+#                 snp_data1 = SnpData(
+#                     iid=iid,
+#                     sid=full_snp_data.sid,
+#                     val=full_snp_data.val,
+#                     pos=full_snp_data.pos,
+#                 )
+#                 Bed.write(snp_filename, snp_data1)
+#             if not os.path.exists(pheno_filename):
+#                 pheno_data1 = SnpData(iid=iid, sid=phenodata.sid, val=phenodata.val)
+#                 Pheno.write(pheno_filename, pheno_data1)
+#             if not os.path.exists(covar_filename):
+#                 covar_data1 = SnpData(iid=iid, sid=covardata.sid, val=covardata.val)
+#                 Pheno.write(covar_filename, covar_data1)
 
-        else:
-            #########################
-            # SNPs
-            #########################
-            if not os.path.exists(snp_filename):
-                logging.info("Creating '{0}'".format(snp_filename))
-                # for 1000 x 4M takes about 6 clock minutes and 36 gig of memory
-                full_snp_data = snp_gen(
-                    fst=0.1,
-                    dfr=0,
-                    iid_count=iid_count // file_count,
-                    sid_count=sid_count,
-                    chr_count=22,
-                    label_with_pop=True,
-                    seed=seed,
-                )
-                # writing 1000 x 4M takes about 1.5 clock minutes (1 proc), 1 gig on
-                Bed.write(snp_filename, full_snp_data)
-                some_snp_data = full_snp_data[:, ::100]
-            else:
-                full_snp_data = Bed(snp_filename).read()
-                some_snp_data = Bed(snp_filename)[
-                    :, ::100
-                ].read()  # Reading takes 5 clock secs (1 proc) and .5 gig of memory
+#         else:
+#             #########################
+#             # SNPs
+#             #########################
+#             if not os.path.exists(snp_filename):
+#                 logging.info("Creating '{0}'".format(snp_filename))
+#                 # for 1000 x 4M takes about 6 clock minutes and 36 gig of memory
+#                 full_snp_data = snp_gen(
+#                     fst=0.1,
+#                     dfr=0,
+#                     iid_count=iid_count // file_count,
+#                     sid_count=sid_count,
+#                     chr_count=22,
+#                     label_with_pop=True,
+#                     seed=seed,
+#                 )
+#                 # writing 1000 x 4M takes about 1.5 clock minutes (1 proc), 1 gig on
+#                 Bed.write(snp_filename, full_snp_data)
+#                 some_snp_data = full_snp_data[:, ::100]
+#             else:
+#                 full_snp_data = Bed(snp_filename).read()
+#                 some_snp_data = Bed(snp_filename)[
+#                     :, ::100
+#                 ].read()  # Reading takes 5 clock secs (1 proc) and .5 gig of memory
 
-            #########################
-            # Pheno
-            #########################
-            if not os.path.exists(pheno_filename):
-                logging.info("Creating '{0}'".format(pheno_filename))
-                phenodata = SnpData(
-                    iid=some_snp_data.iid,
-                    sid=["pheno"],
-                    val=_generate_phenotype(
-                        some_snp_data, 10, genetic_var=0.5, noise_var=0.5, seed=seed
-                    ).reshape(-1, 1),
-                )
-                Pheno.write(pheno_filename, phenodata)
-            else:
-                phenodata = Pheno(pheno_filename).read()
+#             #########################
+#             # Pheno
+#             #########################
+#             if not os.path.exists(pheno_filename):
+#                 logging.info("Creating '{0}'".format(pheno_filename))
+#                 phenodata = SnpData(
+#                     iid=some_snp_data.iid,
+#                     sid=["pheno"],
+#                     val=_generate_phenotype(
+#                         some_snp_data, 10, genetic_var=0.5, noise_var=0.5, seed=seed
+#                     ).reshape(-1, 1),
+#                 )
+#                 Pheno.write(pheno_filename, phenodata)
+#             else:
+#                 phenodata = Pheno(pheno_filename).read()
 
-            #########################
-            # Covar
-            #########################
-            if not os.path.exists(covar_filename):
-                logging.info("Creating '{0}'".format(covar_filename))
-                np.random.seed(seed)
-                cov_val_0 = (
-                    phenodata.val[:, 0] * 0.0001
-                    + np.random.normal(size=some_snp_data.iid_count) * 1
-                )
-                cov_val_1 = np.random.normal(size=some_snp_data.iid_count) * 2
-                covardata = SnpData(
-                    iid=some_snp_data.iid,
-                    sid=["covar0", "covar2"],
-                    val=np.c_[cov_val_0, cov_val_1],
-                )
-                Pheno.write(covar_filename, covardata)
-            else:
-                covardata = Pheno(covar_filename).read()
+#             #########################
+#             # Covar
+#             #########################
+#             if not os.path.exists(covar_filename):
+#                 logging.info("Creating '{0}'".format(covar_filename))
+#                 np.random.seed(seed)
+#                 cov_val_0 = (
+#                     phenodata.val[:, 0] * 0.0001
+#                     + np.random.normal(size=some_snp_data.iid_count) * 1
+#                 )
+#                 cov_val_1 = np.random.normal(size=some_snp_data.iid_count) * 2
+#                 covardata = SnpData(
+#                     iid=some_snp_data.iid,
+#                     sid=["covar0", "covar2"],
+#                     val=np.c_[cov_val_0, cov_val_1],
+#                 )
+#                 Pheno.write(covar_filename, covardata)
+#             else:
+#                 covardata = Pheno(covar_filename).read()
 
 
 def read_pheno_cache(data_folder, file_index_end, prefix, fn_fp):
     merge_fn = data_folder + "/{0}.0.{1}.merge.npz".format(prefix, file_index_end)
     if not os.path.exists(merge_fn):
+        from pysnptools.snpreader import _MergeIIDs
         snpreader = _MergeIIDs(
             [
                 Pheno(fn_fp(data_folder, file_index))
@@ -409,6 +411,7 @@ def read_bed_cache(data_folder, file_index_end):
         ]
         np.savez(snps_iid_list_fn, iid_list=iid_list)
     snps_merge_fn = data_folder + "/snps.0.{0}.mergeiids.npz".format(file_index_end)
+    from pysnptools.snpreader import _MergeIIDs
     snp = _MergeIIDs(
         bed_list(data_folder, snp0, file_index_end, iid_list),
         cache_file=snps_merge_fn,
@@ -499,7 +502,7 @@ def compute_stats(
     r2 = YKY[np.newaxis, :] - variance_explained_beta
     variance_beta = r2 / (N - 1) / snpsKsnps
     sigma2 = r2 / N
-    nLL = 0.5 * (logdetK + N * (np.log(2.0 * np.pi * sigma2) + 1))
+    0.5 * (logdetK + N * (np.log(2.0 * np.pi * sigma2) + 1))
     chi2stats = beta * beta / variance_beta
     p_values = stats.f.sf(chi2stats, 1, iid_count - (covar_bias_count + 1))[
         :, 0
@@ -524,8 +527,8 @@ def compute_stats(
     return dataframe
 
 
-def _internal_single2(G0_chrom, test_snps_chrom, pheno, covar):
-    return frame
+# def _internal_single2(G0_chrom, test_snps_chrom, pheno, covar):
+#     return frame
 
 
 def preload(covar, G0, pheno, test_snps, count_A1, multi_pheno_is_ok=False):
@@ -1184,7 +1187,7 @@ def postsvd(
             for fn_U_piece, start_iid_index, stop_iid_index, _, _ in fn_U_piece_list:
                 with chrom_storage.open_read(
                     fn_U_piece
-                ) as local_file_name:  #!!! is assuming that a local file with the name is OK.
+                ):  #!!! is assuming that a local file with the name is OK.
                     pass
 
             t0_download = time.time()
@@ -1206,7 +1209,6 @@ def postsvd(
                 fp_list = (
                     []
                 )  #!!! would be nice to have a try_catch to be sure all these get closed
-                file_name_list = []
                 for piece_index, (
                     fn_U_piece,
                     start_iid_index,
@@ -1347,7 +1349,7 @@ def get_U_h2(
     #!!! similar code above
     logging.debug("Retrieving on chrom {0}".format(chrom))
     idx = G0_pos[:, 0] != chrom
-    factor = float(G0_iid_count) / ss_per_snp[idx].sum()
+    float(G0_iid_count) / ss_per_snp[idx].sum()
 
     ##############################################################
     ############# SLOWEST ########################################
@@ -1378,7 +1380,7 @@ def __del__(test_snps):
     Close any open Bed files
     """
     from pysnptools.snpreader._subset import _SnpSubset
-    from pysnptools.snpreader import SnpData, _Distributed1Bed, DistributedBed
+    from pysnptools.snpreader import _Distributed1Bed, DistributedBed
     from pysnptools.pstreader import _MergeRows, _MergeCols
 
     if isinstance(test_snps, Bed) or isinstance(test_snps, _Distributed1Bed):
@@ -1449,7 +1451,7 @@ def do_test_snps(
     results_storage = cache_dict[0].join("4_TestSNPs")
 
     def mapper_closure2(chrom):
-        chrom_index = chrom_list.index(chrom)
+        chrom_list.index(chrom)
         chrom = int(chrom)
         chrom_storage = cache_dict[chrom]
 
@@ -1821,9 +1823,10 @@ def map_reduceX(input_seq, mapper=_identity, reducer=list, runner=None, name=Non
         runner = Local()
 
     if name is None:
-        name = str(distributable_list[0]) or ""
-        if len(distributable_list) > 1:
-            name += "-etc"
+        name = ""
+        # name = str(distributable_list[0]) or ""
+        # if len(distributable_list) > 1:
+        #     name += "-etc"
 
     with _MapReduce._dyn_vars(is_in_nested=True):
         distributable_list = [mapper(input) for input in input_seq]

@@ -100,7 +100,7 @@ def one_experiment(
 
     start_time = time.time()
 
-    results_dataframe = single_snp(
+    single_snp(
         K0=K0,
         K1=test_snps if two_ks else None,
         test_snps=test_snps,
@@ -616,7 +616,6 @@ def benchmark2():
         print(f"{repeat}x{size:,} {xp.__name__} {diff}")
         return max(t2 - t1, 1e-16)
 
-    repeat = 50
     for exp in range(6, 9):
         size = 10**exp
         t_dict = {}

@@ -48,8 +48,8 @@ class EPGLMM(object):
 
         ttau = NP.zeros(self._N)
         tnu = NP.zeros(self._N)
-        sig2_ = NP.zeros(self._N)
-        mu_ = NP.zeros(self._N)
+        # sig2_ = NP.zeros(self._N)
+        # mu_ = NP.zeros(self._N)
 
         prevsig2 = self._dKn()
 
@@ -144,7 +144,7 @@ class EPGLMM_N1K3(GLMM_N1K3, EPGLMM):
         ttau = self._ttau
         tau_ = self._tau_
         nu_ = self._nu_
-        G01 = self._G01
+        # G01 = self._G01
         V = self._V
         Lk = self._Lk
         H = self._H
@@ -266,7 +266,7 @@ class EPGLMM_N1K3(GLMM_N1K3, EPGLMM):
 
         m = self._mean
         tnu = self._tnu
-        Lk = self._Lk
+        # Lk = self._Lk
         H = self._H
         V = self._V
 
@@ -283,7 +283,7 @@ class EPGLMM_N1K3(GLMM_N1K3, EPGLMM):
         )
 
         if prob is False:
-            if nom > 0.0:
+            if nom > 0.0:  # noqa: F821
                 return +1.0
             return -1.0
 
@@ -360,7 +360,7 @@ class EPGLMM_N3K1(GLMM_N3K1, EPGLMM):
         m = self._mean
         ttau = self._ttau
         tnu = self._tnu
-        Ssq = self._Ssq
+        # Ssq = self._Ssq
         LnSsq = self._LnSsq
         LnSsqK = self._LnSsqK
 
@@ -429,9 +429,9 @@ class EPGLMM_N3K1(GLMM_N3K1, EPGLMM):
 
         m = self._mean
         tnu = self._tnu
-        K = self._K
-        Ln = self._Ln
-        Ssq = self._Ssq
+        # K = self._K
+        # Ln = self._Ln
+        # Ssq = self._Ssq
         LnSsq = self._LnSsq
         LnSsqkstar = dot(LnSsq, kstar)
         LnSsqK = self._LnSsqK
@@ -443,7 +443,7 @@ class EPGLMM_N3K1(GLMM_N3K1, EPGLMM):
         )
 
         if prob is False:
-            if nom > 0.0:
+            if nom > 0.0:  # noqa: F821
                 return +1.0
             return -1.0
 

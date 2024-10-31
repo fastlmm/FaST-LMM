@@ -1,3 +1,5 @@
+import numpy as np
+import logging
 from .Beta import *
 from .Unit import *
 
@@ -42,8 +44,8 @@ def standardize_unit_python(snps, returnStats=False):
     standardize snps to zero-mean and unit variance
     """
 
-    N = snps.shape[0]
-    S = snps.shape[1]
+    # N = snps.shape[0]
+    # S = snps.shape[1]
 
     imissX = np.isnan(snps)
     snp_sum = np.nansum(snps, axis=0)
@@ -73,8 +75,8 @@ def standardize_beta_python(snps, betaA, betaB):
     standardize snps with Beta prior
     """
 
-    N = snps.shape[0]
-    S = snps.shape[1]
+    # N = snps.shape[0]
+    # S = snps.shape[1]
 
     imissX = np.isnan(snps)
     snp_sum = np.nansum(snps, axis=0)

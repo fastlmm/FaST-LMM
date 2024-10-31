@@ -67,7 +67,7 @@ class LaplaceGLMM(object):
 
     def printDebug(self):
         assert self._debug is True
-        from tabulate import tabulate
+        from tabulate import tabulate # type: ignore
 
         iters = [
             self._debugUACalls[i].innerIters for i in range(len(self._debugUACalls))
@@ -290,7 +290,7 @@ class LaplaceGLMM_N1K3(GLMM_N1K3, LaplaceGLMM):
         self._updateApproximation()
 
         (f, a) = (self._f, self._a)
-        (W, Wsq) = (self._W, self._Wsq)
+        (W, _Wsq) = (self._W, self._Wsq)
         Lk = self._Lk
 
         m = self._mean
@@ -457,7 +457,7 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
         self._Wsq = np.sqrt(self._W)
 
         self._A = 1.0 + self._W * self._sign2
-        V = self._W / self._A
+        # V = self._W / self._A
         self._Ln = self._calculateLn(self._K, self._Wsq)
 
     def _regular_marginal_loglikelihood(self):
@@ -480,13 +480,13 @@ class LaplaceGLMM_N3K1(GLMM_N3K1, LaplaceGLMM):
         self._updateConstants()
         self._updateApproximation()
 
-        W = self._W
+        # W = self._W
         Wsq = self._Wsq
         f = self._f
         K = self._K
         K0 = self._K0
         K1 = self._K1
-        m = self._mean
+        # m = self._mean
         a = self._a
         Ln = self._Ln
         X = self._X

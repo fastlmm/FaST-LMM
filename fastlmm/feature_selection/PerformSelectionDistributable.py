@@ -382,8 +382,8 @@ class PerformSelectionDistributable(object):  # implements IDistributable
                     )
 
             elif self.strategy == "insample_cv":
-                best_res = None
-                best_delta = None
+                # best_res = None
+                # best_delta = None
                 best_nLL = float("inf")
                 REML = True
 
@@ -421,9 +421,9 @@ class PerformSelectionDistributable(object):  # implements IDistributable
                         # TODO: check if we need scale
 
                         if res["nLL"] < best_nLL:
-                            best_res = res
-                            best_delta_act = delta_act
-                            best_delta = delta
+                            # best_res = res
+                            # best_delta_act = delta_act
+                            # best_delta = delta
                             best_nLL = res["nLL"]
                 out = model.predictMean(
                     beta=resmin[0]["beta"], delta=resmin[0]["delta_corr"]

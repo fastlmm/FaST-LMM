@@ -83,16 +83,16 @@ import azure.storage.blob
 import azure.storage.file
 
 try:
-    import cryptography.hazmat.backends
-    import cryptography.hazmat.primitives.asymmetric.padding
-    import cryptography.hazmat.primitives.asymmetric.rsa
-    import cryptography.hazmat.primitives.ciphers
-    import cryptography.hazmat.primitives.ciphers.algorithms
-    import cryptography.hazmat.primitives.ciphers.modes
-    import cryptography.hazmat.primitives.constant_time
-    import cryptography.hazmat.primitives.hashes
-    import cryptography.hazmat.primitives.padding
-    import cryptography.hazmat.primitives.serialization
+    import cryptography.hazmat.backends # type: ignore
+    import cryptography.hazmat.primitives.asymmetric.padding # type: ignore
+    import cryptography.hazmat.primitives.asymmetric.rsa # type: ignore
+    import cryptography.hazmat.primitives.ciphers # type: ignore
+    import cryptography.hazmat.primitives.ciphers.algorithms # type: ignore
+    import cryptography.hazmat.primitives.ciphers.modes # type: ignore
+    import cryptography.hazmat.primitives.constant_time # type: ignore
+    import cryptography.hazmat.primitives.hashes # type: ignore
+    import cryptography.hazmat.primitives.padding # type: ignore
+    import cryptography.hazmat.primitives.serialization # type: ignore
 except ImportError:  # pragma: no cover
     pass
 import requests
@@ -1842,10 +1842,10 @@ def run_command_string(command_string, wd=None):
 
 def container_exists(blob_service, args, metadata=True):
     marker = None
-    blobdict = {}
+    # blobdict = {}
     incl = azure.storage.blob.Include(metadata=metadata)
     try:
-        result = azure_request(
+        _result = azure_request(
             blob_service.list_blobs,
             timeout=args.timeout,
             container_name=args.container,

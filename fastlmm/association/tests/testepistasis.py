@@ -9,7 +9,7 @@ from fastlmm.association import epistasis
 from fastlmm.association.epistasis import write
 import pysnptools.util.pheno as pstpheno
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.util.mapreduce1.runner import Local
+# from pysnptools.util.mapreduce1.runner import Local
 
 
 class TestEpistasis(unittest.TestCase):
@@ -456,9 +456,18 @@ class TestEpistasis(unittest.TestCase):
     #    snps = Bed(os.path.join(self.pythonpath, "tests/datasets/selecttest/snps.bed"),count_A1=False)
     #    pheno = os.path.join(self.pythonpath, "tests/datasets/selecttest/pheno.txt")
     #    covar = os.path.join(self.pythonpath, "tests/datasets/selecttest/covariate.txt")
-    #    sim_sid = ["snp26250_m0_.19m1_.19","snp82500_m0_.28m1_.28","snp63751_m0_.23m1_.23","snp48753_m0_.4m1_.4","snp45001_m0_.26m1_.26","snp52500_m0_.05m1_.05","snp75002_m0_.39m1_.39","snp41253_m0_.07m1_.07","snp11253_m0_.2m1_.2","snp86250_m0_.33m1_.33","snp3753_m0_.23m1_.23","snp75003_m0_.32m1_.32","snp30002_m0_.25m1_.25","snp26252_m0_.19m1_.19","snp67501_m0_.15m1_.15","snp63750_m0_.28m1_.28","snp30001_m0_.28m1_.28","snp52502_m0_.35m1_.35","snp33752_m0_.31m1_.31","snp37503_m0_.37m1_.37","snp15002_m0_.11m1_.11","snp3751_m0_.34m1_.34","snp7502_m0_.18m1_.18","snp52503_m0_.3m1_.3","snp30000_m0_.39m1_.39","isnp4457_m0_.11m1_.11","isnp23145_m0_.2m1_.2","snp60001_m0_.39m1_.39","snp33753_m0_.16m1_.16","isnp60813_m0_.2m1_.2","snp82502_m0_.34m1_.34","snp11252_m0_.13m1_.13"]
+    #    sim_sid = ["snp26250_m0_.19m1_.19","snp82500_m0_.28m1_.28","snp63751_m0_.23m1_.23","snp48753_m0_.4m1_.4",
+    # "snp45001_m0_.26m1_.26","snp52500_m0_.05m1_.05","snp75002_m0_.39m1_.39","snp41253_m0_.07m1_.07","snp11253_m0_.2m1_.2",
+    # "snp86250_m0_.33m1_.33","snp3753_m0_.23m1_.23","snp75003_m0_.32m1_.32","snp30002_m0_.25m1_.25","snp26252_m0_.19m1_.19",
+    # "snp67501_m0_.15m1_.15","snp63750_m0_.28m1_.28","snp30001_m0_.28m1_.28","snp52502_m0_.35m1_.35","snp33752_m0_.31m1_.31",
+    # "snp37503_m0_.37m1_.37","snp15002_m0_.11m1_.11","snp3751_m0_.34m1_.34","snp7502_m0_.18m1_.18","snp52503_m0_.3m1_.3",
+    # "snp30000_m0_.39m1_.39","isnp4457_m0_.11m1_.11","isnp23145_m0_.2m1_.2","snp60001_m0_.39m1_.39","snp33753_m0_.16m1_.16",
+    # "isnp60813_m0_.2m1_.2","snp82502_m0_.34m1_.34","snp11252_m0_.13m1_.13"]
     #    sim_idx = snps.sid_to_index(sim_sid)
-    #    test_sid = ["snp26250_m0_.19m1_.19","snp63751_m0_.23m1_.23","snp82500_m0_.28m1_.28","snp48753_m0_.4m1_.4","snp45001_m0_.26m1_.26","snp52500_m0_.05m1_.05","snp75002_m0_.39m1_.39","snp41253_m0_.07m1_.07","snp86250_m0_.33m1_.33","snp15002_m0_.11m1_.11","snp33752_m0_.31m1_.31","snp26252_m0_.19m1_.19","snp30001_m0_.28m1_.28","snp11253_m0_.2m1_.2","snp67501_m0_.15m1_.15","snp3753_m0_.23m1_.23","snp52502_m0_.35m1_.35","snp30000_m0_.39m1_.39","snp30002_m0_.25m1_.25"]
+    #    test_sid = ["snp26250_m0_.19m1_.19","snp63751_m0_.23m1_.23","snp82500_m0_.28m1_.28","snp48753_m0_.4m1_.4",
+    # "snp45001_m0_.26m1_.26","snp52500_m0_.05m1_.05","snp75002_m0_.39m1_.39","snp41253_m0_.07m1_.07","snp86250_m0_.33m1_.33"
+    # ,"snp15002_m0_.11m1_.11","snp33752_m0_.31m1_.31","snp26252_m0_.19m1_.19","snp30001_m0_.28m1_.28","snp11253_m0_.2m1_.2",
+    # snp67501_m0_.15m1_.15","snp3753_m0_.23m1_.23","snp52502_m0_.35m1_.35","snp30000_m0_.39m1_.39","snp30002_m0_.25m1_.25"]
     #    test_idx = snps.sid_to_index(test_sid)
 
     #    output_file = self.file_name("REML_delta")
@@ -476,7 +485,7 @@ class TestEpistasis(unittest.TestCase):
         covar = self.cov_fn
 
         try:
-            frame = epistasis(
+            _frame = epistasis(
                 test_snps,
                 pheno,
                 covar=covar,
@@ -572,23 +581,23 @@ if __name__ == "__main__":
         r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
-    else:  # Cluster test run
-        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
+    # else:  # Cluster test run
+    #     from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
-        runner = HPC(
-            10,
-            "RR1-N13-09-H44",
-            r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond",
-            remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
-            update_remote_python_parent=True,
-            priority="AboveNormal",
-            mkl_num_threads=1,
-        )
-        runner = Local()
-        # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
-        # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
-        # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
-        distributable_test = DistributableTest(suites, "temp_test")
-        print(runner.run(distributable_test))
+    #     runner = HPC(
+    #         10,
+    #         "RR1-N13-09-H44",
+    #         r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond",
+    #         remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
+    #         update_remote_python_parent=True,
+    #         priority="AboveNormal",
+    #         mkl_num_threads=1,
+    #     )
+    #     runner = Local()
+    #     # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
+    #     # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
+    #     # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
+    #     distributable_test = DistributableTest(suites, "temp_test")
+    #     print(runner.run(distributable_test))
 
     logging.info("done with testing")

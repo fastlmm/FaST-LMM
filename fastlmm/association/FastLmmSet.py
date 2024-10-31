@@ -1289,7 +1289,7 @@ class FastLmmSet:  # implements IDistributable
             elif self.covarimp is None:
                 pass
             else:
-                raise Exception("covarimp=" + self.covarimp + " not implemented")
+                raise NotImplementedError("covarimp=" + self.covarimp + " not implemented")
 
         covar, pheno, indarr = self.intersect_data(covar, pheno)
         N = pheno["vals"].shape[0]

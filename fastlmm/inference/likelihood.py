@@ -1,8 +1,10 @@
 import scipy.stats as ST
 import numpy as NP
 
-logit_sigmoid = lambda x: 1.0 / (1.0 + NP.exp(-x))
-probit_sigmoid = lambda x: ST.norm.cdf(x)
+def logit_sigmoid(x):
+    return 1.0 / (1.0 + NP.exp(-x))
+def probit_sigmoid(x):
+    return ST.norm.cdf(x)
 
 
 class Likelihood:

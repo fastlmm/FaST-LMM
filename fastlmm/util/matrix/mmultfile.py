@@ -38,7 +38,7 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
         result = writer(gtg_data)
         return result
 
-    gtg_npz_lambda = map_reduce(range(work_count),
+    _gtg_npz_lambda = map_reduce(range(work_count),
                mapper=mapper_closure,
                reducer=reducer_closure,
                runner=runner,
@@ -165,29 +165,30 @@ if __name__ == '__main__':
             filename = r"D:\deldir\scratch\escience\carlk\cachebio\genetics\onemil\fc\bigsyn0\U1.memmap"
 
 
-        do_original = False
-        force_python_only = False
-        memory_factor = 1
-        log_frequency = 100
+        # do_original = False
+        # force_python_only = False
+        # memory_factor = 1
+        # log_frequency = 100
 
-        G0_memmap = SnpMemMap(filename)
-        idx = G0_memmap.pos[:,0]!=2
-        inonzero = np.array([True]*sum(idx))
-        inonzero[0] = False
-        logging.info("Generating random {0}x{0}".format(sum(idx)))
-        if sum(idx) < 10000:
-            np.random.seed(0)
-            SVinv3 = np.random.random((sum(idx),sum(idx)))
-        else:
-            SVinv3 = np.zeros((sum(idx),sum(idx)))
-            np.fill_diagonal(SVinv3,val=1)
-        logging.info("Done Generating random")
-        local_fn_U = r"d:\deldir\local_fn_U.memmap"
-        t0 = time.time()
-        U_memmap = post_svd(local_fn_U, G0_memmap, idx, SVinv3, inonzero, memory_factor, runner, do_original=do_original,force_python_only=force_python_only,log_frequency=log_frequency)
-        print(U_memmap.val)
-        logging.info("clocktime {0}".format(format_delta(time.time()-t0)))
-        print("done")
+        # G0_memmap = SnpMemMap(filename)
+        # idx = G0_memmap.pos[:,0]!=2
+        # inonzero = np.array([True]*sum(idx))
+        # inonzero[0] = False
+        # logging.info("Generating random {0}x{0}".format(sum(idx)))
+        # if sum(idx) < 10000:
+        #     np.random.seed(0)
+        #     SVinv3 = np.random.random((sum(idx),sum(idx)))
+        # else:
+        #     SVinv3 = np.zeros((sum(idx),sum(idx)))
+        #     np.fill_diagonal(SVinv3,val=1)
+        # logging.info("Done Generating random")
+        # local_fn_U = r"d:\deldir\local_fn_U.memmap"
+        # t0 = time.time()
+        # runner = None
+        # U_memmap = post_svd(local_fn_U, G0_memmap, idx, SVinv3, inonzero, memory_factor, runner, do_original=do_original,force_python_only=force_python_only,log_frequency=log_frequency)
+        # print(U_memmap.val)
+        # logging.info("clocktime {0}".format(format_delta(time.time()-t0)))
+        # print("done")
 
 
 
@@ -207,7 +208,7 @@ if __name__ == '__main__':
         def writer(kernel_data):
             result.append(kernel_data)
 
-
+        from pysnptools.util.mapreduce1.runner import Local
         mmultfile_ata(memmap_lambda,writer,a.sid,work_count,name=None,runner=Local(),force_python_only=force_python_only)
         result = result[0]
         print(result.val)

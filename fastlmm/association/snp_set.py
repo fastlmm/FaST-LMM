@@ -153,7 +153,7 @@ def snp_set(
         write_lrtperm=write_lrtperm,
         show_pvalue_5050=show_pvalue_5050,
     )
-    result = Local().run(fast_lmm_set)
+    Local().run(fast_lmm_set)
 
     dataframe = pd.read_csv(
         output_file_name, delimiter="\t", comment=None

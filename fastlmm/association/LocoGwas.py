@@ -154,7 +154,7 @@ class LocoGwas(object):  # implements IDistributable
         # subset data
 
         # fast indexing (needs to be C-order)
-        assert np.isfortran(G) == False
+        assert np.isfortran(G) is False
         # G_train = G.take(train_snp_idx, axis=1)
         G_sim = G.take(sim_keeper_idx, axis=1)
         G_test = G.take(test_snp_idx, axis=1)
@@ -222,7 +222,7 @@ class LocoGwas(object):  # implements IDistributable
     #        # subset data
 
     #        # fast indexing (needs to be C-order)
-    #        assert np.isfortran(G) == False
+    #        assert np.isfortran(G) is False
     #        G_train = G.take(train_snp_idx, axis=1)
     #        G_sim = G.take(sim_keeper_idx, axis=1)
     #        G_test = G.take(test_snp_idx, axis=1)
@@ -279,8 +279,8 @@ class LocoGwas(object):  # implements IDistributable
         """
         wrapper for function
         """
-
-        res = eval_gwas(
+        raise NotImplementedError("eval_gwas not implemented")
+        res = eval_gwas(  # noqa: F821 # type: ignore
             self.p_values,
             self.pos,
             causal_idx,

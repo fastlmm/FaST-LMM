@@ -127,7 +127,7 @@ class chi2mixture(object):
                     }
                 return mse
 
-        min = mingrid.minimize1D(f=f, nGrid=10, minval=self.dofmin, maxval=self.dofmax)
+        __min = mingrid.minimize1D(f=f, nGrid=10, minval=self.dofmin, maxval=self.dofmax)
         self.dof = resmin[0]["dof"]
         self.scale = resmin[0]["scale"]
         self.imax = resmin[0]["imax"]
@@ -154,7 +154,7 @@ class chi2mixture(object):
                 }
             return err
 
-        min = mingrid.minimize1D(
+        __min = mingrid.minimize1D(
             f=f, nGrid=10, minval=self.scalemin, maxval=self.scalemax
         )
         return resmin[0]
@@ -206,92 +206,92 @@ class chi2mixture(object):
         pv[np.array(alteqnull)] = 1.0
         return pv
 
-    # OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
-    def computePVmixtureChi2(lrt, a2=None, tol=0.0, mixture=0.5, scale=1.0, dof=1.0):
-        """
-        OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
+    # # OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
+    # def computePVmixtureChi2(lrt, a2=None, tol=0.0, mixture=0.5, scale=1.0, dof=1.0):
+    #     """
+    #     OBSOLETE: but was known to work. Can delete once we get past problems with python code solved.
 
-        computes P-values for a mixture of a scaled Chi^2_dof and Chi^2_0 distributions.
-        The mixture weight is estimated from the fraction of models, where the parameter is at the boundary.
-        The scale and degrees of freedom (dof) of the scaled Chi^2_dof are estimated by maximum likelihood, if the parameters provided are set to None.
-        Note that accurate estimation of the mixture coefficient needs a sufficiently large number of tests to be performed.
-        The P-values are computed as mixture*(1.0-CDF_Chi^2_1(lrt))
-        --------------------------------------------------------------------------
-        Input:
-        lrt     : [S] 1D array of likelihood ratio tests (2*ln(likelihood ratio))
-        a2      : [S] 1D array, if specified then a2 is used to determine the Chi^2_0
-                  component, else lrt is used (optional).
-        tol     : cutoff for members of the Chi^2_0 component is a2/lrt 0+tol.
-        mixture : the scaled Chi^2_dof1 mixture component, if this parameter is set
-                  to None, it will be estimated by the fraction of the tests that have
-                  the weight a2 at the boundary (a2=0.0, lrt=0.0)
-        scale   : the scale parameter of the scaled Chi^2_dof, if set to None the
-                  parameter will be determined by maximum likelihood. (default 1.0)
-        dof     : the degrees of freedom of the scaled Chi^2_dof, if set to None the
-                  parameter will be determined by maximum likelihood. (default 1.0)
-        --------------------------------------------------------------------------
-        Output:
-        pv        : [S] 1D-array of P-values computed as mixture*(1.0-CDF_Chi^2_dof(scale,lrt))
-        mixture   : mixture weight of the scaled Chi^2_dof component
-        scale     : scale of the scaled Chi^2_dof distribution
-        dof       : degrees of freedom of the scaled Chi^2_dof distribution
-        i0        : indicator for Chi^2_0 P-values
-        --------------------------------------------------------------------------
-        """
-        raise Exception(
-            "made changes to use alteqnull and did not modify this code as it looks obsolete"
-        )
-        loc = None
-        chi2mix = chi2mixture()
-        chi2mix.lrt = lrt
-        if mixture is None:
-            i0, mixture = chi2mix.fit_mixture(a2=a2, tol=tol)
-        else:
-            chi2mix.mixture = mixture
-            if a2 is None:
-                i0 = lrt <= (0.0 + tol)
-            else:
-                i0 = a2 <= (0.0 + tol)
+    #     computes P-values for a mixture of a scaled Chi^2_dof and Chi^2_0 distributions.
+    #     The mixture weight is estimated from the fraction of models, where the parameter is at the boundary.
+    #     The scale and degrees of freedom (dof) of the scaled Chi^2_dof are estimated by maximum likelihood, if the parameters provided are set to None.
+    #     Note that accurate estimation of the mixture coefficient needs a sufficiently large number of tests to be performed.
+    #     The P-values are computed as mixture*(1.0-CDF_Chi^2_1(lrt))
+    #     --------------------------------------------------------------------------
+    #     Input:
+    #     lrt     : [S] 1D array of likelihood ratio tests (2*ln(likelihood ratio))
+    #     a2      : [S] 1D array, if specified then a2 is used to determine the Chi^2_0
+    #               component, else lrt is used (optional).
+    #     tol     : cutoff for members of the Chi^2_0 component is a2/lrt 0+tol.
+    #     mixture : the scaled Chi^2_dof1 mixture component, if this parameter is set
+    #               to None, it will be estimated by the fraction of the tests that have
+    #               the weight a2 at the boundary (a2=0.0, lrt=0.0)
+    #     scale   : the scale parameter of the scaled Chi^2_dof, if set to None the
+    #               parameter will be determined by maximum likelihood. (default 1.0)
+    #     dof     : the degrees of freedom of the scaled Chi^2_dof, if set to None the
+    #               parameter will be determined by maximum likelihood. (default 1.0)
+    #     --------------------------------------------------------------------------
+    #     Output:
+    #     pv        : [S] 1D-array of P-values computed as mixture*(1.0-CDF_Chi^2_dof(scale,lrt))
+    #     mixture   : mixture weight of the scaled Chi^2_dof component
+    #     scale     : scale of the scaled Chi^2_dof distribution
+    #     dof       : degrees of freedom of the scaled Chi^2_dof distribution
+    #     i0        : indicator for Chi^2_0 P-values
+    #     --------------------------------------------------------------------------
+    #     """
+    #     raise Exception(
+    #         "made changes to use alteqnull and did not modify this code as it looks obsolete"
+    #     )
+    #     loc = None
+    #     chi2mix = chi2mixture()
+    #     chi2mix.lrt = lrt
+    #     if mixture is None:
+    #         i0, mixture = chi2mix.fit_mixture(a2=a2, tol=tol)
+    #     else:
+    #         chi2mix.mixture = mixture
+    #         if a2 is None:
+    #             i0 = lrt <= (0.0 + tol)
+    #         else:
+    #             i0 = a2 <= (0.0 + tol)
 
-        N = (~i0).sum()
-        sumX = (lrt[~i0]).sum()
-        logsumX = (np.log(lrt[~i0])).sum()
-        if (dof is None) and (scale is None):
-            # f is the Gamma likelihood with the scale parameter maximized analytically as a function of 0.5 * the degrees of freedom
-            f = lambda k: -1.0 * (
-                -N * np.special.gammaln(k)
-                - k * N * (np.log(sumX) - np.log(k) - np.log(N))
-                + (k - 1.0) * logsumX
-                - k * N
-            )
-            # f_ = lambda(x): 1-N*N/(2.0*x*sumX)
-            res = minimize1D(f, evalgrid=None, nGrid=10, minval=0.1, maxval=3.0)
-            dof = 2.0 * res[0]
-        elif dof is None:
-            f = lambda k: -1.0 * (
-                -N * np.special.gammaln(k)
-                - k * N * np.log(2.0 * scale)
-                + (k - 1.0) * logsumX
-                - sumX / (2.0 * scale)
-            )
-            res = minimize1D(f, evalgrid=None, nGrid=10, minval=0.1, maxval=3.0)
-            dof = 2.0 * res[0]
-        if scale is None:
-            # compute condition for ML
-            if 1.0 - (N * N * dof) / (4.0 * sumX) > 0:
-                logging.warning(
-                    "Warning: positive second derivative: No maximum likelihood solution can be found for the scale. returning scale=1.0 and dof=1.0"
-                )
-                scale = 1.0
-                dof = 1.0
+    #     N = (~i0).sum()
+    #     sumX = (lrt[~i0]).sum()
+    #     logsumX = (np.log(lrt[~i0])).sum()
+    #     if (dof is None) and (scale is None):
+    #         # f is the Gamma likelihood with the scale parameter maximized analytically as a function of 0.5 * the degrees of freedom
+    #         f = lambda k: -1.0 * (
+    #             -N * np.special.gammaln(k)
+    #             - k * N * (np.log(sumX) - np.log(k) - np.log(N))
+    #             + (k - 1.0) * logsumX
+    #             - k * N
+    #         )
+    #         # f_ = lambda(x): 1-N*N/(2.0*x*sumX)
+    #         res = minimize1D(f, evalgrid=None, nGrid=10, minval=0.1, maxval=3.0)
+    #         dof = 2.0 * res[0]
+    #     elif dof is None:
+    #         f = lambda k: -1.0 * (
+    #             -N * np.special.gammaln(k)
+    #             - k * N * np.log(2.0 * scale)
+    #             + (k - 1.0) * logsumX
+    #             - sumX / (2.0 * scale)
+    #         )
+    #         res = minimize1D(f, evalgrid=None, nGrid=10, minval=0.1, maxval=3.0)
+    #         dof = 2.0 * res[0]
+    #     if scale is None:
+    #         # compute condition for ML
+    #         if 1.0 - (N * N * dof) / (4.0 * sumX) > 0:
+    #             logging.warning(
+    #                 "Warning: positive second derivative: No maximum likelihood solution can be found for the scale. returning scale=1.0 and dof=1.0"
+    #             )
+    #             scale = 1.0
+    #             dof = 1.0
 
-            else:
-                scale = sumX / (N * dof)
-        pv = mixture * (
-            st.chi2.sf(lrt / scale, dof)
-        )  # Can use the Chi^2 CDF/SF to evaluate the scaled Chi^2 by rescaling the input.
-        pv[i0] = 1.0
-        return (pv, mixture, scale, dof, i0)
+    #         else:
+    #             scale = sumX / (N * dof)
+    #     pv = mixture * (
+    #         st.chi2.sf(lrt / scale, dof)
+    #     )  # Can use the Chi^2 CDF/SF to evaluate the scaled Chi^2 by rescaling the input.
+    #     pv[i0] = 1.0
+    #     return (pv, mixture, scale, dof, i0)
 
 
 if __name__ == "__main__":

@@ -67,5 +67,7 @@ def kl_divergence(p, q):
     return np.sum(np.log(p / q) * p)
 
 
-stl = lambda a, b: la.solve_triangular(a, b, lower=True, check_finite=False)
-stu = lambda a, b: la.solve_triangular(a, b, lower=False, check_finite=False)
+def stl(a, b):
+    return la.solve_triangular(a, b, lower=True, check_finite=False)
+def stu(a, b):
+    return la.solve_triangular(a, b, lower=False, check_finite=False)

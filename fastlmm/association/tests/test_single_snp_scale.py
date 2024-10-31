@@ -48,7 +48,7 @@ class TestSingleSnpScale(unittest.TestCase):
         cache_file = tempfile.gettempdir() + "/test_snpgen_cache.snpgen.npz"
         if os.path.exists(cache_file):
             os.remove(cache_file)
-        snpgen = SnpGen(
+        _snpgen = SnpGen(
             seed=0,
             iid_count=1000,
             sid_count=5000,
@@ -167,7 +167,7 @@ class TestSingleSnpScale(unittest.TestCase):
 
             assert len(frame) == len(
                 reference
-            ), "# of pairs differs from file '{0}'".format(reffile)
+            ), "# of pairs differs from file '{0}'".format("reffile")
             for sid in sorted(
                 set(reference.SNP)
             ):  # This ignores which pheno produces which pvalue

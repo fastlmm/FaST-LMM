@@ -19,7 +19,9 @@ class LinearRegression(object):
     A linear regression predictor, that works like the FastLMM in fastlmm_predictor.py, but that expects all similarity matrices to be identity.
 
     **Constructor:**
-        :Parameters: * **covariate_standardizer** (:class:`Standardizer`) -- The PySnpTools standardizer to be apply to X, the covariate data. Some choices include :class:`Standardizer.Unit` (Default. Fills missing with zero) and :class:`Standardizer.Identity` (do nothing)
+        :Parameters: * **covariate_standardizer** (:class:`Standardizer`) --
+          The PySnpTools standardizer to be apply to X, the covariate data. Some choices include
+          :class:`Standardizer.Unit` (Default. Fills missing with zero) and :class:`Standardizer.Identity` (do nothing)
 
         :Example:
 
@@ -65,17 +67,22 @@ class LinearRegression(object):
 
         :param X: training covariate information, optional:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__
+          or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param y: training phenotype:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__
+          or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param K0_train: Must be None. Represents the identity similarity matrix.
         :type K0_train: None
 
         :param K1_train: Must be None. Represents the identity similarity matrix.
-        :type K1_train: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__
+        :type K1_train: `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+          or a string or `KernelReader <http://fastlmm.github.io/PySnpTools/#kernelreader-kernelreader>`__
 
         :param h2: Ignored. Optional.
         :type h2: number
@@ -117,8 +124,8 @@ class LinearRegression(object):
             lsqSol = np.linalg.lstsq(X.val, y.val[:, 0], rcond=-1)
             bs = lsqSol[0]  # weights
             r2 = lsqSol[1]  # squared residuals
-            D = lsqSol[2]  # rank of design matrix
-            N = y.iid_count
+            # D = lsqSol[2]  # rank of design matrix
+            # N = y.iid_count
 
             self.beta = bs
             self.ssres = float(r2)
@@ -143,7 +150,9 @@ class LinearRegression(object):
 
         :param X: testing covariate information, optional:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__
+          or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param K0_whole_test: Must be None. Represents the identity similarity matrix.
         :type K0_whole_test: None
@@ -214,11 +223,15 @@ class LinearRegression(object):
 
         :param X: testing covariate information, optional:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type X: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__
+          or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param y: testing phenotype:
           If you give a string, it should be the file name of a PLINK phenotype-formatted file.
-        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__ or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
+        :type y: a PySnpTools `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__
+          (such as `Pheno <http://fastlmm.github.io/PySnpTools/#snpreader-pheno>`__
+          or `SnpData <http://fastlmm.github.io/PySnpTools/#snpreader-snpdata>`__) or string.
 
         :param K0_whole_test: Must be None. Represents the identity similarity matrix.
         :type K0_whole_test: None
@@ -483,41 +496,41 @@ def f_regression_cov(X, y, C):
     return F, pv
 
 
-def test_bias():
-    """
-    make sure we get the same result for setting C=unitvec
-    """
+# def test_bias():
+#     """
+#     make sure we get the same result for setting C=unitvec
+#     """
 
-    S, y = get_example_data()
-    C = np.ones((len(y), 1))
+#     S, y = get_example_data()
+#     C = np.ones((len(y), 1))
 
-    from sklearn.feature_selection import f_regression
+#     from sklearn.feature_selection import f_regression
 
-    F1, pval1 = f_regression(S, y, center=True)
-    F2, pval2 = f_regression_cov(S, C, y)
-    F3, pval3 = f_regression_cov_alt(S, C, y)
+#     F1, pval1 = f_regression(S, y, center=True)
+#     F2, pval2 = f_regression_cov(S, C, y)
+#     F3, pval3 = f_regression_cov_alt(S, C, y)
 
-    # make sure values are the same
-    np.testing.assert_array_almost_equal(F1, F2)
-    np.testing.assert_array_almost_equal(F2, F3)
-    np.testing.assert_array_almost_equal(pval1, pval2)
-    np.testing.assert_array_almost_equal(pval2, pval3)
+#     # make sure values are the same
+#     np.testing.assert_array_almost_equal(F1, F2)
+#     np.testing.assert_array_almost_equal(F2, F3)
+#     np.testing.assert_array_almost_equal(pval1, pval2)
+#     np.testing.assert_array_almost_equal(pval2, pval3)
 
 
-def test_cov():
-    """
-    compare different implementations, make sure results are the same
-    """
+# def test_cov():
+#     """
+#     compare different implementations, make sure results are the same
+#     """
 
-    S, y = get_example_data()
-    C = S[:, 0:10]
-    S = S[:, 10:]
+#     S, y = get_example_data()
+#     C = S[:, 0:10]
+#     S = S[:, 10:]
 
-    F1, pval1 = f_regression_cov(S, C, y)
-    F2, pval2 = f_regression_cov_alt(S, C, y)
+#     F1, pval1 = f_regression_cov(S, C, y)
+#     F2, pval2 = f_regression_cov_alt(S, C, y)
 
-    np.testing.assert_array_almost_equal(F1, F2)
-    np.testing.assert_array_almost_equal(pval1, pval2)
+#     np.testing.assert_array_almost_equal(F1, F2)
+#     np.testing.assert_array_almost_equal(pval1, pval2)
 
 
 if __name__ == "__main__":

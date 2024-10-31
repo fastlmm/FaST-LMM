@@ -1,4 +1,4 @@
-FastLmmSet(
+FastLmmSet(  # noqa: F821
     test="sc_davies",
     outfile = 'tmp/sc_davies_one_kernel_logistic_qqfit.N300.txt',
     phenofile = 'datasets/phenSynthFrom22.23.bin.N300.txt',
@@ -17,5 +17,5 @@ FastLmmSet(
     datestamp=None,
     nullModel={'link':'logistic', 'effect':'fixed'},
     altModel={'link':'logistic', 'effect':'mixed'},
-    log = logging.CRITICAL,
+    log = logging.CRITICAL,  # noqa: F821
     )

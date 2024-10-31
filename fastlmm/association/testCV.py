@@ -245,6 +245,7 @@ class testCV(association.varcomp_test):
                 )
             else:
                 model.fit(trainData, trainY.flatten())
+                from fastlmm.external.sklearn.metrics.scorer import SCORERS # type: ignore
                 scores[i_fold] = SCORERS[self.scoring](model, testData, testY.flatten())
             i_fold += 1
 

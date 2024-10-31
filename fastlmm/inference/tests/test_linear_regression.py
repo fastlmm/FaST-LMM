@@ -7,10 +7,10 @@ import pysnptools.util as pstutil
 import sys
 
 from fastlmm.inference import LinearRegression
-from pysnptools.util.mapreduce1.runner import Local
+# from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
 from fastlmm.feature_selection.test import TestFeatureSelection
-from pysnptools.kernelreader import Identity as KernelIdentity
+# from pysnptools.kernelreader import Identity as KernelIdentity
 
 
 class TestLinRegTrain(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestLinRegTrain(unittest.TestCase):
         covar.val = np.array([[float(num)] for num in range(covar.iid_count)])
         covariate_train = covar[train_idx, :].read()
         covariate_test = covar[test_idx, :].read()
-        K0_test_test = KernelIdentity(covariate_test.iid)
+        # K0_test_test = KernelIdentity(covariate_test.iid)
 
         # make pheno  # pheno = 2*covar+100+normal(0,1)*10
         pheno = self.pheno_whole.read()
@@ -246,23 +246,23 @@ if __name__ == "__main__":
         r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
-    else:  # Cluster test run
-        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
+    # else:  # Cluster test run
+        # from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
-        runner = HPC(
-            10,
-            "RR1-N13-09-H44",
-            r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond",
-            remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
-            update_remote_python_parent=True,
-            priority="AboveNormal",
-            mkl_num_threads=1,
-        )
-        runner = Local()
-        # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
-        # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
-        # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
-        distributable_test = DistributableTest(suites, "temp_test")
-        print(runner.run(distributable_test))
+        # runner = HPC(
+        #     10,
+        #     "RR1-N13-09-H44",
+        #     r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond",
+        #     remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
+        #     update_remote_python_parent=True,
+        #     priority="AboveNormal",
+        #     mkl_num_threads=1,
+        # )
+        # runner = Local()
+        # # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5)
+        # # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
+        # # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
+        # distributable_test = DistributableTest(suites, "temp_test")
+        # print(runner.run(distributable_test))
 
     logging.info("done with testing")

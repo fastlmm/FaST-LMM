@@ -7,6 +7,7 @@ class Subset(object): # implements ISnpSetList
     def __init__(self, altset_list, subset_list):
         self.subset_list = subset_list
         if isinstance(altset_list, str):#if given a filename, then assumes group-SNP format (default)
+            from fastlmm.pyplink.altset_list import SnpAndSetNameCollection
             self.inner = SnpAndSetNameCollection(altset_list)
         else:                           #given a NucRangeList(filenam.txt), or any other reader
             self.inner = altset_list
@@ -39,4 +40,5 @@ class _SubsetPlusBed(object): # implements ISnpSetListPlusBed
             if altset_name in self.spec.subset_list:
                seenit.append(altset_name)
                yield altset_name, altset
-        if not len(seenit)==len(self) : raise Exception("some sets specified not present")
+        if not len(seenit)==len(self):
+            raise Exception("some sets specified not present")

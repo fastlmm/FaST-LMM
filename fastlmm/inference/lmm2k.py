@@ -4,7 +4,7 @@ import scipy.linalg as LA
 import scipy.special as SS
 from fastlmm.util.mingrid import *
 from fastlmm.util.util import *
-import time
+# import time
 
 
 
@@ -48,11 +48,11 @@ def rotSymm(A, eig, delta=1.0, gamma=1.0, exponent=-0.5, forceSymm=True):
             "rotation and A are not aligned A.shape =  [%i,%i], rotation.shape = [%i,%i]"
             % (N, M, Nr, k)
         )
-    if symmetric and N != M:
-        raise Exception(
-            "A is not symmetric. A.shape =  [%i,%i], rotation.shape = [%i,%i]"
-            % (N, M, Nr, k)
-        )
+    # if symmetric and N != M:
+    #     raise Exception(
+    #         "A is not symmetric. A.shape =  [%i,%i], rotation.shape = [%i,%i]"
+    #         % (N, M, Nr, k)
+    #     )
     if k > Nr:
         raise Exception(
             "rotation matrix has more columns than rows =  [%i,%i], rotation.shape = [%i,%i]"
@@ -60,7 +60,7 @@ def rotSymm(A, eig, delta=1.0, gamma=1.0, exponent=-0.5, forceSymm=True):
         )
 
     res = eig[1].T.dot(A)
-    deltaPow = myPow(delta, exponent, minVal)
+    deltaPow = myPow(delta, exponent, minVal=0.0)
     diag = eig[0] * gamma + delta
     diag = myPow(diag, exponent, minVal=0.0)
     if Nr > k:
@@ -85,12 +85,12 @@ def dotDiag(A, diag, minVal=None, symmetric=False, exponent=1.0):
     if symmetric and N != M:
         raise Exception(
             "A is not symmetric. A.shape =  [%i,%i], rotation.shape = [%i,%i]"
-            % (N, M, Nr, k)
+            % (N, M, "?", "?")
         )
     if Nd != N:
         raise Exception(
             "Matrices misaligned A.shape =  [%i,%i], diag.shape = [%i,%i]"
-            % (N, M, Nr, k)
+            % (N, M,  "?", "?")
         )
 
     diagcorr = myPow(diag, exponent, minVal)
@@ -428,7 +428,7 @@ class lmm2k(object):
                 self.setGamma1[x]
             return res["nLL"]
 
-        min = minimize1D(f=f, nGrid=nGridGamma1, minval=minGamma1, maxval=maxGamma1)
+        _min = minimize1D(f=f, nGrid=nGridGamma1, minval=minGamma1, maxval=maxGamma1)
         return resmin[0]
 
     def findGammas(
@@ -469,7 +469,7 @@ class lmm2k(object):
             **kwargs
         ):
             self.numcalls += 1
-            t0 = time.time()
+            # t0 = time.time()
             res = self.findGamma1givenGamma0(
                 gamma0=x,
                 nGridGamma1=nGridGamma1,
@@ -479,14 +479,14 @@ class lmm2k(object):
             )
             if (resmin[0] is None) or (res["nLL"] < resmin[0]["nLL"]):
                 resmin[0] = res
-            t1 = time.time()
+            # t1 = time.time()
             # print "one objective function call took %.2f seconds elapsed" % (t1-t0)
             # import pdb; pdb.set_trace()
             return res["nLL"]
 
         if verbose:
             print("findGammas")
-        min = minimize1D(
+        _min = minimize1D(
             f=f, nGrid=nGridGamma1, minval=minGamma1, maxval=maxGamma1, verbose=False
         )
         # print "numcalls to innerLoopTwoKernel= " + str(self.numcalls)
@@ -542,7 +542,7 @@ class lmm2k(object):
 
         XKX = UXS.T.dot(self.UX)
         XKy = UXS.T.dot(self.Uy)
-        yKy = UyS.T.dot(self.Uy)
+        yKy = UYS.T.dot(self.Uy)
 
         logdetK = np.log(Sd).sum()
 
@@ -560,7 +560,7 @@ class lmm2k(object):
         # exclude SNPs from the RRM in the likelihood evaluation
 
         if len(self.exclude_idx) > 0:
-            raise Exception("not implemented")
+            raise NotImplementedError("not implemented")
             num_exclude = len(self.exclude_idx)
 
             # consider only excluded SNPs

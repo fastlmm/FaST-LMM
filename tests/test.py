@@ -147,9 +147,9 @@ if __name__ == "__main__":
     import fastlmm.association.tests.test_single_snp_scale
     import fastlmm.inference.tests.test_fastlmm_predictor
     import fastlmm.inference.tests.test_linear_regression
-    import fastlmm.inference.tests.test
-    import fastlmm.util.test
-    import fastlmm.pyplink.test
+    import fastlmm.inference.tests.test # noqa: F401
+    import fastlmm.util.test # noqa: F401
+    import fastlmm.pyplink.test # noqa: F401
 
     suites = unittest.TestSuite(
         [

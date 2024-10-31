@@ -59,9 +59,9 @@ class TestFastLMM(unittest.TestCase):
                 .read()
                 .standardize(Unit(), return_trained=True)
             )
-            cov_test = (
-                self.covariate_whole[test_idx, :].read().standardize(unit_trained)
-            )
+            # cov_test = (
+            #     self.covariate_whole[test_idx, :].read().standardize(unit_trained)
+            # )
 
             #####################################################
             # standardize whole kernel from snps (both ways) and then pull out the 3 parts
@@ -71,12 +71,12 @@ class TestFastLMM(unittest.TestCase):
                 SnpKernel(self.covariate_whole, Unit()).read().standardize(DiagKtoN())
             )
             train_kernel = whole_kernel[train_idx].read(order="A", view_ok=True)
-            test_kernel = whole_kernel[train_idx, test_idx].read(
-                order="A", view_ok=True
-            )
-            test_test_kernel = whole_kernel[test_idx, test_idx].read(
-                order="A", view_ok=True
-            )
+            # test_kernel = whole_kernel[train_idx, test_idx].read(
+            #     order="A", view_ok=True
+            # )
+            # test_test_kernel = whole_kernel[test_idx, test_idx].read(
+            #     order="A", view_ok=True
+            # )
 
             #####################################################
             # create train_train, train_test, and test_test based on just the training snps (both standardizations)
@@ -93,23 +93,23 @@ class TestFastLMM(unittest.TestCase):
                 to_kerneldata=True, kernel_standardizer=DiagKtoN(), return_trained=True
             )
 
-            K_whole_test = _SnpWholeTest(
+            _K_whole_test = _SnpWholeTest(
                 train=self.snpreader_whole[train_idx, :],
                 test=self.snpreader_whole[test_idx, :],
                 standardizer=snp_trained,
                 block_size=100,
             )
-            train_idx2 = K_whole_test.iid0_to_index(
-                self.snpreader_whole.iid[train_idx]
-            )  # The new reader may have the iids in a different order than the original reader
-            train_test_kernel = (
-                K_whole_test[train_idx2, :].read().standardize(kernel_trained)
-            )
+            # train_idx2 = K_whole_test.iid0_to_index(
+            #     self.snpreader_whole.iid[train_idx]
+            # )  # The new reader may have the iids in a different order than the original reader
+            # train_test_kernel = (
+            #     K_whole_test[train_idx2, :].read().standardize(kernel_trained)
+            # )
 
-            test_idx2 = K_whole_test.iid0_to_index(self.snpreader_whole.iid[test_idx])
-            test_test_kernel = (
-                K_whole_test[test_idx2, :].read().standardize(kernel_trained)
-            )
+            # test_idx2 = K_whole_test.iid0_to_index(self.snpreader_whole.iid[test_idx])
+            # test_test_kernel = (
+            #     K_whole_test[test_idx2, :].read().standardize(kernel_trained)
+            # )
 
             #####################################################
             # How does predict look with whole_test as input?
@@ -242,7 +242,7 @@ class TestFastLMM(unittest.TestCase):
         output_file = self.file_name("one")
         Dat.write(output_file, predicted_pheno)
 
-        pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
+        # pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
 
         # pylab.plot(pheno_actual, predicted_pheno.val,".")
         # pylab.show()
@@ -285,7 +285,7 @@ class TestFastLMM(unittest.TestCase):
         logging.info("TestLinRegTrain test_lr_no_k0")
 
         train_idx = np.r_[10 : self.snpreader_whole.iid_count]  # iids 10 and on
-        test_idx = np.r_[0:10]  # the first 10 iids
+        # test_idx = np.r_[0:10]  # the first 10 iids
 
         covariate_train3 = self.covariate_whole[train_idx, :].read()
         covariate_train3.val = np.array(
@@ -301,7 +301,7 @@ class TestFastLMM(unittest.TestCase):
 
         # Learn model, save, load
         fastlmm3x = FastLMM(GB_goal=2).fit(X=covariate_train3, y=pheno_train3)
-        filename = self.tempout_dir + "/model3.flm.p"
+        # filename = self.tempout_dir + "/model3.flm.p"
         fastlmm3 = fastlmm3x
 
         # Predict with model (test on train)
@@ -576,7 +576,7 @@ class TestFastLMM(unittest.TestCase):
                 K0_train=K0_train, X=covariate_train, y=pheno_train
             )
 
-            filename = self.tempout_dir + "/model_lr2.flm.p"
+            # filename = self.tempout_dir + "/model_lr2.flm.p"
             fastlmm = fastlmmx
 
             do_test_on_train = True
@@ -684,7 +684,7 @@ class TestFastLMM(unittest.TestCase):
         fastlmm2 = fastlmm1
 
         # predict on test set
-        G0_test = self.snpreader_whole[test_idx, :]
+        # G0_test = self.snpreader_whole[test_idx, :]
         covariate_test = self.covariate_whole[test_idx, :]
 
         predicted_pheno, covar = fastlmm2.predict(
@@ -772,7 +772,7 @@ class TestFastLMM(unittest.TestCase):
         )
         Dat.write(output_file, predicted_pheno)
 
-        pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
+        # pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
 
         # pylab.plot(pheno_actual, predicted_pheno.val,".")
         # pylab.show()
@@ -857,7 +857,7 @@ class TestFastLMM(unittest.TestCase):
         output_file = self.file_name("one")
         Dat.write(output_file, predicted_pheno)
 
-        pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
+        # pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
 
         # pylab.plot(pheno_actual, predicted_pheno.val,".")
         # pylab.show()
@@ -869,7 +869,7 @@ class TestFastLMM(unittest.TestCase):
         logging.info("TestLmmTrain test_lr")
 
         train_idx = np.r_[10 : self.snpreader_whole.iid_count]  # iids 10 and on
-        test_idx = np.r_[0:10]  # the first 10 iids
+        # test_idx = np.r_[0:10]  # the first 10 iids
 
         G0_train = self.snpreader_whole[train_idx, :]
         covariate_train3 = self.covariate_whole[train_idx, :].read()
@@ -1200,7 +1200,7 @@ class TestFastLMM(unittest.TestCase):
         logging.info("TestLmmTrain test_snps")
 
         train_idx = np.r_[10 : self.snpreader_whole.iid_count]  # iids 10 and on
-        test_idx = np.r_[0:10]  # the first 10 iids
+        # test_idx = np.r_[0:10]  # the first 10 iids
 
         # Show it using the snps
         G0_train = self.snpreader_whole[train_idx, :]
@@ -1242,7 +1242,7 @@ class TestFastLMM(unittest.TestCase):
             logging.info("TestLmmTrain test_kernel")
 
             train_idx = np.r_[10 : self.snpreader_whole.iid_count]  # iids 10 and on
-            test_idx = np.r_[0:10]  # the first 10 iids
+            # test_idx = np.r_[0:10]  # the first 10 iids
 
             # Show it using the snps
             K0_train = self.snpreader_whole[train_idx, :].read_kernel(Unit())
@@ -1321,7 +1321,7 @@ class TestFastLMM(unittest.TestCase):
         output_file = self.file_name("kernel_one")
         Dat.write(output_file, predicted_pheno)
 
-        pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
+        # pheno_actual = self.pheno_whole[test_idx, :].read().val[:, 0]
 
         # pylab.plot(pheno_actual, predicted_pheno.val,".")
         # pylab.show()
@@ -1395,23 +1395,23 @@ if __name__ == "__main__":
         r = unittest.TextTestRunner(failfast=False)
         ret = r.run(suites)
         assert ret.wasSuccessful()
-    else:  # Cluster test run
-        from pysnptools.util.mapreduce1.distributabletest import DistributableTest
+    # else:  # Cluster test run
+    #     from pysnptools.util.mapreduce1.distributabletest import DistributableTest
 
-        runner = HPC(
-            10,
-            "RR1-N13-09-H44",
-            r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond",
-            remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
-            update_remote_python_parent=True,
-            priority="AboveNormal",
-            mkl_num_threads=1,
-        )
-        # runner = Local()
-        # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5,just_one_process=True)
-        # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
-        # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
-        distributable_test = DistributableTest(suites, "temp_test")
-        print(runner.run(distributable_test))
+    #     runner = HPC(
+    #         10,
+    #         "RR1-N13-09-H44",
+    #         r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\Redmond",
+    #         remote_python_parent=r"\\msr-arrays\Scratch\msr-pool\Scratch_Storage4\REDMOND\carlk\Source\carlk\july_7_14\tests\runs\2014-07-24_15_02_02_554725991686\pythonpath",
+    #         update_remote_python_parent=True,
+    #         priority="AboveNormal",
+    #         mkl_num_threads=1,
+    #     )
+    #     # runner = Local()
+    #     # runner = LocalMultiProc(taskcount=20,mkl_num_threads=5,just_one_process=True)
+    #     # runner = LocalInParts(1,2,mkl_num_threads=1) # For debugging the cluster runs
+    #     # runner = Hadoop(100, mapmemory=8*1024, reducememory=8*1024, mkl_num_threads=1, queue="default")
+    #     distributable_test = DistributableTest(suites, "temp_test")
+    #     print(runner.run(distributable_test))
 
     logging.info("done with testing")
