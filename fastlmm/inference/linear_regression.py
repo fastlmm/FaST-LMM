@@ -19,11 +19,11 @@ class LinearRegression(object):
     A linear regression predictor, that works like the FastLMM in fastlmm_predictor.py, but that expects all similarity matrices to be identity.
 
     **Constructor:**
-        :Parameters: * **covariate_standardizer** (:class:`Standardizer`) --
-          The PySnpTools standardizer to be apply to X, the covariate data. Some choices include
-          :class:`Standardizer.Unit` (Default. Fills missing with zero) and :class:`Standardizer.Identity` (do nothing)
+        :Parameters: **covariate_standardizer** (:class:`Standardizer`) --
+            The PySnpTools standardizer to be apply to X, the covariate data. Some choices include
+            :class:`Standardizer.Unit` (Default. Fills missing with zero) and :class:`Standardizer.Identity` (do nothing)
 
-        :Example:
+    :Example:
 
         >>> import numpy as np
         >>> import logging
@@ -44,8 +44,6 @@ class LinearRegression(object):
         >>> nll = linreg.score(X=cov[test_idx,:],y=pheno_fn)
         >>> print(f"{nll:.6f}")
         13.668845
-
-
     """
 
     def __init__(self, covariate_standardizer=Unit()):

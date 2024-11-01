@@ -1,7 +1,0 @@
-#include *.rst
-#recursive-include doc *
-#recursive-include tests *
-#recursive-include fastlmm *.py (this will only work for sdist, source distribution)
-include LICENSE.md
-include AUTHORS.txt
-include README.md
