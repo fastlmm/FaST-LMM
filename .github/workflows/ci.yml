@@ -29,11 +29,11 @@ jobs:
       run: |
         uvx ruff@0.7.1 check
         uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
-        uv sync --all-extras --allow-prereleases
+        uv sync --all-extras --prerelease allow
         source .venv/bin/activate
         cd tests
         python test.py
-        uv sync --all-extras --allow-prereleases
+        uv sync --all-extras --prerelease allow
         source .venv/bin/activate
         cd ..
         uv build
@@ -43,11 +43,11 @@ jobs:
       run: |
         uvx ruff@0.7.1 check
         uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
-        uv sync --all-extras --allow-prereleases
+        uv sync --all-extras --prerelease allow
         .venv\Scripts\activate
         cd tests
         python test.py
-        uv sync --all-extras --allow-prereleases
+        uv sync --all-extras --prerelease allow
         .venv\Scripts\activate
         cd ..
         uv build
