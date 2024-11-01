@@ -41,10 +41,10 @@ jobs:
       run: |
         uvx ruff@0.7.1 check
         uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
-        cd tests
-        python test.py
         uv sync --all-extras --prerelease allow
         .venv\Scripts\activate
+        cd tests
+        python test.py
         cd ..
         uv build
 
