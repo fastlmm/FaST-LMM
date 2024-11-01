@@ -69,7 +69,8 @@ class EPGLMM(object):
 
             # dan: using _cdf and _pdf instead of cdf and pdf I avoid
             # a lot of overhead due to error checking and other things
-            nc_hz = NP.exp(ST.norm._logpdf(c) - ST.norm._logcdf(c))
+            nc_hz = NP.exp(ST.norm._logpdf(c) - ST.norm._
+                           (c))
 
             hmu = nu_ / tau_ + nc_hz * self._y / stt
 

@@ -6,12 +6,11 @@ from fastlmm.pyplink.snpreader.Bed import Bed
 # from fastlmm.association.gwas import LeaveOneChromosomeOut, LocoGwas, FastGwas, load_intersect
 from fastlmm.association.LeaveOneChromosomeOut import LeaveOneChromosomeOut
 from fastlmm.association.PrecomputeLocoPcs import load_intersect
-from fastlmm.association.LocoGwas import FastGwas, LocoGwas
+from fastlmm.association.LocoGwas import FastGwas
 from fastlmm.util import run_fastlmmc
 from fastlmm.inference import LMM
 import unittest
 import os.path
-import time
 
 import platform
 
@@ -171,12 +170,12 @@ class TestGwas(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             np.log(gwas.p_values), np.log(gwas_c_reml.p_values), decimal=3
         )
-        if False:
-            import pylab
+        # if False:
+        #     import pylab
 
-            pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas_f.p_values_F), "x")
-            pylab.plot(list(range(-66, 0, 1)), list(range(-66, 0, 1)))
-            pylab.show()
+        #     pylab.plot(np.log(gwas_c_reml.p_values), np.log(gwas_f.p_values_F), "x")
+        #     pylab.plot(list(range(-66, 0, 1)), list(range(-66, 0, 1)))
+        #     pylab.show()
 
         # we compare lmm_cov.py to fastlmmc with REML=False
         gwas_c = GwasTest(bed_fn, pheno_fn, snp_pos_sim, snp_pos_test, delta, REML=True)
@@ -203,7 +202,7 @@ class TestGwas(unittest.TestCase):
             leave_out_one_chrom=False,
             count_A1=False,
         )
-        sid_list, pvalue_list = frame["SNP"].values, frame["PValue"].values
+        _sid_list, pvalue_list = frame["SNP"].values, frame["PValue"].values
         np.testing.assert_allclose(gwas_f.sorted_p_values_F, pvalue_list, rtol=1e-10)
 
         p_vals_by_genomic_pos = frame.sort_values(["Chr", "ChrPos"])["PValue"].tolist()

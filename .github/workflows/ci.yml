@@ -3,45 +3,60 @@ on:
   push:
   schedule:
     - cron: '0 0 1 * *'
-    
+  pull_request:
+  workflow_dispatch:
+
 jobs:
   ci:
-    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9, "3.10", "3.11", "3.12"]
-        os: [macos-13, macos-14, windows-2022, ubuntu-latest]
+        os: [ubuntu-latest, windows-2022, macos-13, macos-14]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
     steps:
-
     - name: Checkout
       uses: actions/checkout@v4
-      
-    - name: Set up Miniconda ${{ matrix.python-version }}
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-    - name: Install Project
-      shell: bash -l {0}
-      run: |
-        conda install numpy
-        pip freeze
-        pip install .
-        python setup.py sdist
 
-    - name: Test
-      shell: bash -l {0}
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Install Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Setup, Lint, and Test Python (Linux/macOS)
+      if: runner.os != 'Windows'
       run: |
-        pip uninstall fastlmm --yes
+        uvx ruff@0.7.1 check
+        uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
+        uv sync --extra dev
+        source .venv/bin/activate
         export PYTHONPATH=${GITHUB_WORKSPACE}
         cd tests
         python test.py
+        uv sync --all-extras
+        source .venv/bin/activate
+        cd ..
+        uv build
+
+    - name: Setup, Lint, and Test Python (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        uvx ruff@0.7.1 check
+        uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
+        uv sync --extra dev
+        .venv\Scripts\activate
+        set PYTHONPATH=%GITHUB_WORKSPACE%
+        cd tests
+        python test.py
+        uv sync --all-extras
+        .venv\Scripts\activate
+        cd ..
+        uv build
 
     - name: Save SDist
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
-      uses: actions/upload-artifact@v3
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+      uses: actions/upload-artifact@v4
       with:
-        name: sdist
+        name: wheels
         path: dist/*.tar.gz
