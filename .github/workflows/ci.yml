@@ -38,7 +38,8 @@ jobs:
         else
           source .venv/Scripts/activate
         fi
-        python tests/test.py
+        cd tests
+        python test.py
 
     - name: Build
       run: uv build        
