@@ -1,16 +1,16 @@
 [build-system]
 requires = [
-    "numpy>=1.17.0",
-    "setuptools",
-    "cython",
-    "wheel",
-    "scipy",
-] # cmk add versions
+    "numpy>=1.22.0",
+    "setuptools>=42.0.0",
+    "cython>=0.29.0",
+    "wheel>=0.34.0",
+    "scipy>=1.5.0",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastlmm"
-version = "0.6.12-alpha.1"
+version = "0.6.12"
 description = "Fast GWAS"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,8 +41,8 @@ dependencies = [
     "cloudpickle>=3.1.0",
     "statsmodels>=0.14.2",
     "psutil>=6.1.0",
-    "pysnptools>=0.5.14a1", #cmk
-    "fastlmmclib>=0.0.7a1", #cmk
+    "pysnptools>=0.5.14",
+    "fastlmmclib>=0.0.7",
 ]
 [project.urls]
 homepage = "https://fastlmm.github.io/"

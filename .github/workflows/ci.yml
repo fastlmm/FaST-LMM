@@ -24,30 +24,24 @@ jobs:
     - name: Install Python ${{ matrix.python-version }}
       run: uv python install ${{ matrix.python-version }}
 
-    - name: Setup, Lint, and Test Python (Linux/macOS)
-      if: runner.os != 'Windows'
+    - name: Pinned Ruff
+      run:  uvx ruff@0.7.1 check
+    - name: Lastest Ruff (just to check for warnings)
+      run: uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
+    - name: Install dependencies
+      run:  uv sync --all-extras --prerelease allow
+    - name: Run test
+      shell: bash
       run: |
-        uvx ruff@0.7.1 check
-        uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
-        uv sync --all-extras --prerelease allow
-        source .venv/bin/activate
-        cd tests
-        python test.py
-        cd ..
-        uv build
+        if [[ "$RUNNER_OS" != "Windows" ]]; then
+          source .venv/bin/activate
+        else
+          source .venv/Scripts/activate
+        fi
+        python tests/test.py
 
-    - name: Setup, Lint, and Test Python (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        uvx ruff@0.7.1 check
-        uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
-        uv sync --all-extras --prerelease allow
-        .venv\Scripts\activate
-        cd tests
-        python test.py
-        cd ..
-        uv build
-
+    - name: Build
+      run: uv build        
     - name: Save SDist
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
       uses: actions/upload-artifact@v4

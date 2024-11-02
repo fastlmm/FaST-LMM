@@ -5,6 +5,31 @@ uv sync --extra dev --prerelease allow
 ```
 
 ```bash
+cd doc
+make.bat html
+build\html\index.html
+xcopy /c /e /s /h build\html ..\docs
+cd ..
+```
+
+* Download and extract wheel artifacts from GitHub.
+
+```bash
+cd /d "C:\Users\carlk\Downloads\wheels (46)"
+twine upload fastlmm*
+```
+
+Create a local distribution"
+
+```bash
+uv build
+twine upload dist/fastlmm-0.????.tar.gz
+
+```
+
+## Old
+
+```bash
 python setup.py sdist
 twine upload dist/*.tar.gz
 
