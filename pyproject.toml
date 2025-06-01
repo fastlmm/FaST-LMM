@@ -4,13 +4,13 @@ requires = [
     "setuptools>=42.0.0",
     "cython>=0.29.0",
     "wheel>=0.34.0",
-    "scipy>=1.5.0",
+    "scipy>=1.5.0,<1.12",
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastlmm"
-version = "0.6.12"
+version = "0.6.13"
 description = "Fast GWAS"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,6 +40,7 @@ dependencies = [
     "scikit-learn>=1.4.2",
     "cloudpickle>=3.1.0",
     "statsmodels>=0.14.2",
+    "scipy>=1.5.0,<1.12",  # ← new upper-bound
     "psutil>=6.1.0",
     "pysnptools>=0.5.14",
     "fastlmmclib>=0.0.7",
