@@ -4,7 +4,7 @@ requires = [
     "setuptools>=42.0.0",
     "cython>=0.29.0",
     "wheel>=0.34.0",
-    "scipy>=1.9.0,<1.12",
+    "scipy>=1.10.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -39,8 +39,8 @@ dependencies = [
     "matplotlib>=3.8.0",
     "scikit-learn>=1.4.2",
     "cloudpickle>=3.1.0",
-    "statsmodels>=0.14.2",
-    "scipy>=1.9.0,<1.12",  # temporary: statsmodels needs _lazywhere, avoid scipy 1.12+
+    "statsmodels>=0.14.2", # 0.14.2+ includes scipy 1.12+ compatibility fix
+    "scipy>=1.10.0",       # Remove <1.12 constraint since statsmodels 0.14.2+ is compatible
     "psutil>=6.1.0",
     "pysnptools>=0.5.14",
     "fastlmmclib>=0.0.7",
