@@ -4,7 +4,7 @@ requires = [
     "setuptools>=42.0.0",
     "cython>=0.29.0",
     "wheel>=0.34.0",
-    "scipy==1.11.2",
+    "scipy==1.11.1",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -40,7 +40,7 @@ dependencies = [
     "scikit-learn>=1.4.2",
     "cloudpickle>=3.1.0",
     "statsmodels>=0.14.2",
-    "scipy==1.11.2",       # temporary: statsmodels needs _lazywhere, exact pin for Python 3.12+ support
+    "scipy==1.11.1",       # temporary: statsmodels needs _lazywhere, avoid yanked 1.11.0
     "psutil>=6.1.0",
     "pysnptools>=0.5.14",
     "fastlmmclib>=0.0.7",
