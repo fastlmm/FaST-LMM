@@ -39,8 +39,8 @@ dependencies = [
     "matplotlib>=3.8.0",
     "scikit-learn>=1.4.2",
     "cloudpickle>=3.1.0",
-    "statsmodels>=0.14.2", # 0.14.2+ includes scipy 1.12+ compatibility fix
-    "scipy>=1.10.0",       # Remove <1.12 constraint since statsmodels 0.14.2+ is compatible
+    "statsmodels @ git+https://github.com/statsmodels/statsmodels.git@775d8f96a7f37cdfb574f0f8c92011ebf4afabc2",
+    "scipy>=1.10.0",
     "psutil>=6.1.0",
     "pysnptools>=0.5.14",
     "fastlmmclib>=0.0.7",
