@@ -1,10 +1,10 @@
 [build-system]
 requires = [
-    "numpy>=2.1.2",
+    "numpy>=1.22.0",
     "setuptools>=42.0.0",
     "cython>=0.29.0",
     "wheel>=0.34.0",
-    "scipy>=1.15.0",
+    "scipy>=1.5.0,<1.12",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -39,8 +39,8 @@ dependencies = [
     "matplotlib>=3.8.0",
     "scikit-learn>=1.4.2",
     "cloudpickle>=3.1.0",
-    "statsmodels>=0.14.4",
-    "scipy>=1.15.0",
+    "statsmodels>=0.14.2",
+    "scipy>=1.5.0,<1.12",  # temporary: statsmodels needs _lazywhere
     "psutil>=6.1.0",
     "pysnptools>=0.5.14",
     "fastlmmclib>=0.0.7",
@@ -52,7 +52,7 @@ documentation = "http://fastlmm.github.io/FaST-LMM"
 source-code = "https://github.com/fastlmm/FaST-LMM"
 
 [project.optional-dependencies]
-bgen = ["cbgen>=1.0.6", "bgen-reader>=4.0.9"]
+bgen = ["cbgen>=1.0.5,<1.0.6", "bgen-reader>=4.0.8,<4.0.9"]
 dev = [
     "pytest",
     "pytest-cov",
