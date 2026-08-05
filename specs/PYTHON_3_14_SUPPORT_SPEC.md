@@ -695,6 +695,35 @@ PySnpTools and fastlmmclib had no open pull requests at the time of this
 review. Recheck all three repositories immediately before release rather than
 assuming this snapshot remains current.
 
+### Post-release closure checklist
+
+After the Python 3.14 release sequence is complete and its published artifacts
+have passed final acceptance, review and close these items with a comment
+linking to the relevant release, test, tag, or superseding decision:
+
+- [PySnpTools issue #10](https://github.com/fastlmm/PySnpTools/issues/10):
+  close after the released package retrieves all five synthetic tutorial files
+  from the immutable `bed-sample-files` revision, verifies their hashes, and
+  successfully opens the BED/BIM/FAM dataset.
+- [FaST-LMM issue #48](https://github.com/fastlmm/FaST-LMM/issues/48): close
+  after the corrected Matplotlib `legend_handles` path is covered by a
+  passing headless regression test in the released version.
+- [fastlmmclib issue #2](https://github.com/fastlmm/fastlmmclib/issues/2):
+  close after the Python 3.14-compatible fastlmmclib PyPI release has a
+  matching immutable Git tag at the exact artifact source commit.
+- [FaST-LMM pull request #15](https://github.com/fastlmm/FaST-LMM/pull/15):
+  close without merging. Explain that the old conflicting plotting enhancement
+  was not part of the compatibility release and invite a new focused pull
+  request against current code if the feature is still wanted.
+- [FaST-LMM pull request #7](https://github.com/fastlmm/FaST-LMM/pull/7):
+  close without merging. Explain that the stale Docker change and its bundled
+  notebook, checkpoint, generated, and binary files do not fit the current
+  release or repository packaging approach.
+
+Do not close FaST-LMM issues #55, #52, #51, or #26 merely because the Python
+3.14 release completed. They describe support, documentation, performance, or
+memory-scaling work that this release does not resolve.
+
 ## Out of Scope
 
 - Dropping any Python version from 3.10 through 3.13 while `bed-reader`

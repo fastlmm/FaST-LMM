@@ -14,6 +14,9 @@
 		},
 		{
 			"path": "../../InstallTest"
+		},
+		{
+			"path": "../../bed-sample-files"
 		}
 	],
 	"settings": {}
