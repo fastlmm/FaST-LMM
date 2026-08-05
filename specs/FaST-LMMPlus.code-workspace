@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../PySnpTools"
+		},
+		{
+			"path": "../../fastlmmclib"
+		},
+		{
+			"path": "../../fastlmm.github.io"
+		},
+		{
+			"path": "../../InstallTest"
+		}
+	],
+	"settings": {}
+}
