@@ -23,17 +23,13 @@ correctness unless the task explicitly changes those goals.
 - Preserve behavior on every supported Python version, not only the interpreter
   used for development.
 
-## Python 3.14 Support
+## Cross-Repository Release Coordination
 
-For work related to Python 3.14 support, read and follow
-[`specs/PYTHON_3_14_SUPPORT_SPEC.md`](specs/PYTHON_3_14_SUPPORT_SPEC.md) before
-making changes.
-
-Keep the spec aligned with implementation decisions that materially change its
-scope, dependency requirements, validation matrix, artifact requirements, or
-release plan. Do not mark Python 3.14 support complete until the prerequisite
-`pysnptools` and `fastlmmclib` releases and the spec's acceptance criteria are
-satisfied.
+FaST-LMM depends on the separately released `pysnptools` and `fastlmmclib`
+projects. When a release changes their compatibility requirements, complete and
+publish the prerequisite releases first, update FaST-LMM's dependency bounds,
+and perform final acceptance against the published artifacts rather than
+unpublished sibling checkouts.
 
 ## Numerical Correctness
 
