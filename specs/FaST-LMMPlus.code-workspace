@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "../../bed-sample-files"
+		},
+		{
+			"path": "../../bed-reader"
 		}
 	],
 	"settings": {}
