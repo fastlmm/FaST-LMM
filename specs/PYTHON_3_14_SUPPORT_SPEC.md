@@ -408,7 +408,12 @@ Update `pyproject.toml` to:
 
 Build and inspect both artifacts to verify that metadata and included files are
 correct, including the license, authorship files, documentation, executables,
-and sample data.
+and sample data. The build must emit no setuptools or backend deprecation
+warning for the license configuration. Verify the wheel metadata contains
+`License-Expression: Apache-2.0` and exactly `License-File: LICENSE.md` for the
+project license. Retain `AUTHORS.txt` in the source distribution and wherever
+else intentionally packaged, but do not allow it to be classified as a license
+file merely because of backend filename auto-detection.
 
 ## Code Compatibility
 
@@ -671,7 +676,10 @@ of the following are true:
 - The exact wheel and sdist install and pass smoke tests in isolated Python
   3.10 and 3.14 environments.
 - No Python 3.14 job is experimental or allowed to fail.
-- Current PEP 639 license metadata and HTTPS project URLs are present.
+- Current PEP 639 license metadata and HTTPS project URLs are present. Artifact
+  metadata records `Apache-2.0` and only `LICENSE.md` as the project license,
+  retains the intended authorship file, and builds without a license-metadata
+  deprecation warning.
 - GitHub Actions use minimal permissions and reviewed full-SHA pins.
 - A protected Trusted Publishing workflow publishes the already-tested
   artifacts without a long-lived PyPI token.
