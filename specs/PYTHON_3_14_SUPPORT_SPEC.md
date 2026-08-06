@@ -256,6 +256,34 @@ older Python versions retain their existing lower bound when possible. Prefer
 stable releases. Prereleases may be used only as a documented temporary bridge
 during development and must not be needed for release acceptance.
 
+### Direct dependency refresh checklist
+
+Review every direct runtime dependency during this release and record the
+tested decision in the implementation change:
+
+| Dependency | Required decision |
+| --- | --- |
+| NumPy | Add and test the explicit pre-3.14 and 3.14-or-newer markers above. |
+| SciPy | Add it as a direct dependency, test the current stable line including the 1.18 line identified during planning, and use markers if only Python 3.14 needs the newer bound. |
+| pandas | Test the current stable line, including the 3.0 line identified during planning, while preserving the older lower bound where it remains truthful. |
+| Matplotlib | Test both the declared minimum and current stable release, including plotting and the `legend_handles` regression. |
+| scikit-learn | Test the declared minimum and current stable release across affected inference and model-selection paths. |
+| statsmodels | Resolve the historical compatibility concern using stable releases and record the tested SciPy/statsmodels combinations. |
+| cloudpickle | Test the declared minimum and current stable release across serialization and distributed execution paths. |
+| psutil | Test the declared minimum and current stable release; retain or raise the minimum based on evidence. |
+| PySnpTools | Require the published Python 3.14-compatible release and consume it from the package index in final qualification. |
+| fastlmmclib | Require the published Python 3.14-compatible release and test its installed native artifact. |
+
+Also validate h5py, `bed-reader[samples]`, and more-itertools through the
+published PySnpTools prerequisite. Do not declare them directly in FaST-LMM
+unless FaST-LMM itself imports them. Remove wheel and other packaging tools
+from runtime or build requirements where no verified build step needs them.
+
+Do not mechanically replace every lower bound with the newest version shown by
+an editor. The normal stable-resolution job proves compatibility with current
+releases; the lower-bound job proves that published minimums remain honest.
+Use a Python-version marker when only Python 3.14 requires the newer line.
+
 Before release, explicitly resolve the optional BGEN status on Python 3.14.
 If stable compatible `cbgen` and `bgen-reader` artifacts are available, test
 and support the `bgen` extra normally. If they are not available, do not leave
@@ -614,6 +642,8 @@ of the following are true:
   existing NumPy lower bound.
 - NumPy and SciPy are declared as direct runtime dependencies with tested lower
   bounds, and unnecessary build requirements have been removed.
+- The direct dependency refresh checklist has a recorded result for both the
+  declared boundary and current stable release of each dependency.
 - `uv_build` is the sole build backend; setuptools configuration and fallback
   paths are removed.
 - Direct-checkout and sdist-derived wheels have equivalent intended contents,
