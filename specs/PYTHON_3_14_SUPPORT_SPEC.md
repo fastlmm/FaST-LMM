@@ -4,7 +4,23 @@
 
 ## Status
 
-Proposed.
+In progress.
+
+The two prerequisite releases are complete:
+
+- PySnpTools 0.5.15 was published from tag `v0.5.15`, supports Python 3.10
+  through 3.14, repairs and integrity-checks the tutorial-data retrieval path,
+  and passed clean installation and notebook verification.
+- fastlmmclib 0.0.8 was published from tag `v0.0.8` with 35 tested native
+  wheels and one source distribution. Its seven CPython 3.14 platform wheels,
+  including native manylinux and musllinux ARM64 wheels, passed clean
+  installation and numerical tests. Publication used the protected `pypi`
+  environment and PyPI Trusted Publishing.
+
+FaST-LMM integration is now the active phase. Its dependency metadata now
+requires `pysnptools>=0.5.15` and `fastlmmclib>=0.0.8`. The remaining
+dependency, toolchain, test, packaging, CI, and release work below must be
+qualified against those published packages.
 
 ## Objective
 
@@ -44,8 +60,9 @@ dependencies in Rust.
 
 - `pyproject.toml` requires Python 3.10 or newer and advertises Python 3.10
   through 3.13.
-- `.github/workflows/ci.yml` tests Python 3.10 through 3.13 on
-  `ubuntu-latest`, `windows-2022`, `macos-13`, and `macos-14`.
+- `.github/workflows/ci.yml` still tests only Python 3.10 through 3.13. A local
+  implementation change has replaced `macos-13` and `macos-14` with
+  `macos-15-intel` and `macos-15`, but the broader CI modernization remains.
 - CI uses `astral-sh/setup-uv@v3`, runs `uv python install`, manually activates
   `.venv`, and permits dependency prereleases.
 - CI runs lint and package builds redundantly in every OS/Python matrix entry.
@@ -63,15 +80,14 @@ dependencies in Rust.
   legacy `[tool.uv].dev-dependencies` field.
 - The package uses the deprecated table form of the `license` field.
 - The repository has no automated, trusted-publishing release workflow.
-- FaST-LMM depends on the maintainer-owned sibling projects
-  `pysnptools>=0.5.14` and `fastlmmclib>=0.0.7`.
+- FaST-LMM now requires the published Python 3.14-compatible prerequisites
+  `pysnptools>=0.5.15` and `fastlmmclib>=0.0.8`.
 
 ## Required Prerequisite Releases
 
-The maintainer must update, test, and release **both `pysnptools` and
-`fastlmmclib` with Python 3.14 support** before completing the FaST-LMM release.
-These projects must not be treated as optional or replaced with unpublished
-local checkouts in final verification.
+The required Python 3.14-compatible PySnpTools and fastlmmclib releases were
+published on August 7, 2026. They must be consumed from PyPI rather than
+replaced with unpublished local checkouts in final FaST-LMM verification.
 
 For each prerequisite project:
 
@@ -86,8 +102,9 @@ For each prerequisite project:
 6. Test installation from the built artifacts in clean Python 3.14
    environments.
 7. Publish a release containing those artifacts.
-8. Update FaST-LMM's lower bounds for `pysnptools` and `fastlmmclib` to the
-   first released versions that provide Python 3.14 support.
+8. Require the first released versions that provide Python 3.14 support:
+   `pysnptools>=0.5.15` and `fastlmmclib>=0.0.8`. This is implemented in the
+   current FaST-LMM working tree.
 9. Create a matching version tag that points to the exact source commit used
    to build the published artifacts.
 
@@ -97,29 +114,24 @@ packages from the package index used by end users.
 
 ### Dependency-ordered project work
 
-Perform and release the work in this order:
+The prerequisite work completed in this order:
 
-1. **fastlmmclib**
-   - Regenerate the Cython-generated extension sources with a current,
-     Python-3.14-compatible Cython release rather than relying on the old
-     checked-in generated C/C++ as-is.
-   - Build and test the native wheels for every supported operating system,
-     architecture, and Python version, including clean Python 3.14 artifact
-     installation.
-   - Publish the tested artifacts from a matching version tag.
-2. **PySnpTools**
-   - Fix the broken tutorial-data references reported in
-     [PySnpTools issue #10](https://github.com/fastlmm/PySnpTools/issues/10).
-     The `pysnptools.hashdown.json` manifest must not refer to unavailable
-     `doc/ipynb/all.bed`, `.bim`, or `.fam` objects.
-   - Add a focused integration smoke test that exercises `example_file(...)`
-     against the tutorial dataset and verifies that each required file can be
-     retrieved and passes its declared integrity check. Keep network-dependent
-     validation in an appropriate integration or release-gate job rather than
-     making ordinary offline unit tests flaky.
-   - Complete the Python 3.10-through-3.14 matrix and artifact tests, then
-     publish the tested artifacts from a matching version tag.
-3. **FaST-LMM**
+1. **PySnpTools 0.5.15 — complete**
+   - Repaired the tutorial-data references reported in
+     [PySnpTools issue #10](https://github.com/fastlmm/PySnpTools/issues/10)
+     and added retrieval and integrity coverage for the synthetic dataset.
+   - Completed the Python 3.10-through-3.14 CI, artifact, notebook, and
+     published-package checks.
+   - Published the tested artifacts with Trusted Publishing from the matching
+     `v0.5.15` tag. Issue #10 is closed.
+2. **fastlmmclib 0.0.8 — complete**
+   - Built the extension from its Cython source with a current compatible
+     build environment instead of relying on the old generated-source fallback.
+   - Built and tested native wheels for Python 3.10 through 3.14 across Linux
+     x86-64 and ARM64, Windows x86-64, Intel macOS, and Apple Silicon macOS.
+   - Published the tested 35-wheel plus source-distribution artifact set with
+     Trusted Publishing from the matching `v0.0.8` tag.
+3. **FaST-LMM — active**
    - Consume the released prerequisite versions from the end-user package
      index for final tests; do not qualify the release against sibling source
      checkouts.
@@ -729,9 +741,10 @@ Do not merge either currently open FaST-LMM pull request into this release:
   unrelated Docker contribution containing substantial notebook, checkpoint,
   generated, and binary data.
 
-PySnpTools and fastlmmclib had no open pull requests at the time of this
-review. Recheck all three repositories immediately before release rather than
-assuming this snapshot remains current.
+As of August 7, 2026, PySnpTools and fastlmmclib have no open pull requests.
+FaST-LMM still has the two stale pull requests listed above. Recheck all three
+repositories immediately before the FaST-LMM release rather than assuming this
+snapshot remains current.
 
 ### Post-release closure checklist
 
@@ -739,16 +752,16 @@ After the Python 3.14 release sequence is complete and its published artifacts
 have passed final acceptance, review and close these items with a comment
 linking to the relevant release, test, tag, or superseding decision:
 
-- [PySnpTools issue #10](https://github.com/fastlmm/PySnpTools/issues/10):
-  close after the released package retrieves all five synthetic tutorial files
-  from the immutable `bed-sample-files` revision, verifies their hashes, and
-  successfully opens the BED/BIM/FAM dataset.
+- [PySnpTools issue #10](https://github.com/fastlmm/PySnpTools/issues/10) —
+  **closed August 7, 2026:** PySnpTools 0.5.15 retrieves the synthetic tutorial
+  files from the immutable `bed-sample-files` revision, verifies their hashes,
+  and successfully opens the BED/BIM/FAM dataset.
 - [FaST-LMM issue #48](https://github.com/fastlmm/FaST-LMM/issues/48): close
   after the corrected Matplotlib `legend_handles` path is covered by a
   passing headless regression test in the released version.
-- [fastlmmclib issue #2](https://github.com/fastlmm/fastlmmclib/issues/2):
-  close after the Python 3.14-compatible fastlmmclib PyPI release has a
-  matching immutable Git tag at the exact artifact source commit.
+- [fastlmmclib issue #2](https://github.com/fastlmm/fastlmmclib/issues/2) —
+  **ready to close:** fastlmmclib 0.0.8 is published on PyPI and its immutable
+  `v0.0.8` tag points to the exact commit used by the qualified artifact build.
 - [FaST-LMM pull request #15](https://github.com/fastlmm/FaST-LMM/pull/15):
   close without merging. Explain that the old conflicting plotting enhancement
   was not part of the compatibility release and invite a new focused pull

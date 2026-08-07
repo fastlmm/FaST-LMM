@@ -41,8 +41,8 @@ dependencies = [
     "cloudpickle>=3.1.0",
     "statsmodels>=0.14.2",
     "psutil>=6.1.0",
-    "pysnptools>=0.5.14",
-    "fastlmmclib>=0.0.7",
+    "pysnptools>=0.5.15",
+    "fastlmmclib>=0.0.8",
 ]
 [project.urls]
 homepage = "https://fastlmm.github.io/"
