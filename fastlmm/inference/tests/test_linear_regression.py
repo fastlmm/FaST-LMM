@@ -86,10 +86,10 @@ class TestLinRegTrain(unittest.TestCase):
         N = pheno_train.iid_count
         REML = False
         if not REML:
-            sigma2 = float(r2 / N)
+            sigma2 = (r2 / N).item()
             nLL = N * 0.5 * np.log(2 * np.pi * sigma2) + N * 0.5
         else:
-            sigma2 = float(r2 / (N - D))
+            sigma2 = (r2 / (N - D)).item()
             nLL = N * 0.5 * np.log(2 * np.pi * sigma2) + 0.5 / sigma2 * r2
             nLL -= 0.5 * D * np.log(2 * np.pi * sigma2)
             # REML term

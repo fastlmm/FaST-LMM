@@ -551,7 +551,9 @@ class FastLMM(object):
 
             # We compute sigma2 instead of using res['sigma2'] because res['sigma2'] is only the pure noise.
             full_sigma2 = (
-                float(sum((np.dot(X.val, res["beta"]).reshape(-1, 1) - y0) ** 2))
+                np.sum(
+                    (np.dot(X.val, res["beta"]).reshape(-1, 1) - y0) ** 2
+                ).item()
                 / y.iid_count
             )  #!!! this is non REML. Is that right?
 

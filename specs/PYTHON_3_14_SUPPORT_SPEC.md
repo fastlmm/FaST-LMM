@@ -22,6 +22,16 @@ requires `pysnptools>=0.5.15` and `fastlmmclib>=0.0.8`. The remaining
 dependency, toolchain, test, packaging, CI, and release work below must be
 qualified against those published packages.
 
+Current dependency qualification on Python 3.14.5:
+
+- The canonical 178-test suite passes at the declared Python 3.14 boundaries:
+  NumPy 2.3.5 and SciPy 1.16.1, with pandas 3.0.5.
+- The same 178 tests pass with the current stable NumPy 2.5.1, SciPy 1.18.0,
+  and pandas 3.0.5 after replacing deprecated size-one-array scalar coercions
+  with explicit `.item()` conversions.
+- pandas is constrained to `>=1.3.1,<4`. The current 3.0 line is supported;
+  the next untested major line is rejected until separately qualified.
+
 ## Objective
 
 Add complete Python 3.14 support to FaST-LMM while preserving the same supported
@@ -70,8 +80,8 @@ dependencies in Rust.
   discovery and the configured doctests are all included.
 - `uv.lock` is ignored rather than committed, so ordinary CI is not frozen or
   reproducible.
-- NumPy and SciPy are direct runtime imports, but neither is declared as a
-  direct runtime dependency.
+- NumPy and SciPy are now declared as direct runtime dependencies with
+  Python-version-specific lower bounds.
 - NumPy, SciPy, Cython, and wheel are listed as build requirements even though
   no root-package extension build or Cython source has been identified.
 - The package uses setuptools with explicit package and package-data lists that
@@ -232,6 +242,17 @@ Determine and test an honest lower bound. If Python 3.14 needs a different lower
 bound, express it with a Python-version marker without unnecessarily raising
 the bound on Python 3.10 through 3.13.
 
+The tested requirements are:
+
+```toml
+"scipy>=1.8.0; python_version < '3.14'",
+"scipy>=1.16.1; python_version >= '3.14'",
+```
+
+SciPy 1.16.1 is the first stable release with CPython 3.14 wheels. Final
+qualification must continue to cover both that boundary and the current stable
+line.
+
 The historical `jun25` branch is evidence that SciPy and statsmodels
 compatibility needs explicit testing, but it is not an implementation base for
 this work. Do not cherry-pick its final dependency metadata: that branch limits
@@ -277,7 +298,7 @@ tested decision in the implementation change:
 | --- | --- |
 | NumPy | Add and test the explicit pre-3.14 and 3.14-or-newer markers above. |
 | SciPy | Add it as a direct dependency, test the current stable line including the 1.18 line identified during planning, and use markers if only Python 3.14 needs the newer bound. |
-| pandas | Test the current stable line, including the 3.0 line identified during planning, while preserving the older lower bound where it remains truthful. |
+| pandas | Test the current stable 3.0 line, preserve the older lower bound where it remains truthful, and use `<4` to reject the next untested major line. |
 | Matplotlib | Test both the declared minimum and current stable release, including plotting and the `legend_handles` regression. |
 | scikit-learn | Test the declared minimum and current stable release across affected inference and model-selection paths. |
 | statsmodels | Resolve the historical compatibility concern using stable releases and record the tested SciPy/statsmodels combinations. |
@@ -615,7 +636,11 @@ Before opening or merging the implementation change:
 14. Verify the tutorial-data retrieval smoke test in PySnpTools, the
     Matplotlib legend regression test in FaST-LMM, and the documented BGEN
     support or exclusion behavior on Python 3.14.
-15. Verify that each release artifact version and source commit correspond to
+15. Run all supported FaST-LMM tutorial and documentation notebooks (or every
+    notebook that can run with the documented optional dependencies), inspect
+    their saved-output diffs, and account for every change before committing
+    regenerated notebooks. Record any notebook that cannot be run and why.
+16. Verify that each release artifact version and source commit correspond to
     the release's version tag.
 
 Python 3.10 and 3.14 are the required local boundary checks; CI remains the

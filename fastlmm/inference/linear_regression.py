@@ -126,7 +126,7 @@ class LinearRegression(object):
             # N = y.iid_count
 
             self.beta = bs
-            self.ssres = float(r2)
+            self.ssres = r2.item()
             self.sstot = ((y.val - y.val.mean()) ** 2).sum()
             self.covar_unit_trained = covar_unit_trained
             self.iid_count = X.iid_count

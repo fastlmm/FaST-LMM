@@ -859,7 +859,7 @@ def find_h2_inner(k, N, UUYUUYsum0, UYUY, S, chrom):
     resmin = [None]
 
     def f(x, resmin=resmin):
-        h2 = float(x)
+        h2 = np.asarray(x).item()
         logdetK, YKY, _, _ = apply_h2_inner(h2, S, UYUY, UUYUUYsum0, N, k)
         sigma2 = YKY / N
         nLL = 0.5 * (logdetK + N * (np.log(2.0 * np.pi * sigma2) + 1))
