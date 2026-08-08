@@ -44,6 +44,9 @@ Current packaging qualification:
 - A clean Python 3.14 environment imports FaST-LMM from the installed wheel.
   The complete suite uses large repository fixtures that remain external to
   the user artifact rather than adding roughly 125 MB to the wheel.
+- The working CI workflow now separates lint, the Python 3.10-through-3.14
+  four-platform test matrix, one reproducible build, and clean wheel/sdist
+  smoke tests on Python 3.10 and 3.14. Remote CI qualification is pending.
 
 ## Objective
 
@@ -83,12 +86,13 @@ dependencies in Rust.
 
 - `pyproject.toml` requires Python 3.10 or newer and now advertises Python 3.10
   through 3.14.
-- `.github/workflows/ci.yml` still tests only Python 3.10 through 3.13. A local
-  implementation change has replaced `macos-13` and `macos-14` with
-  `macos-15-intel` and `macos-15`, but the broader CI modernization remains.
-- CI uses `astral-sh/setup-uv@v3`, runs `uv python install`, manually activates
-  `.venv`, and permits dependency prereleases.
-- CI runs lint and package builds redundantly in every OS/Python matrix entry.
+- The working CI workflow tests Python 3.10 through 3.14 on Ubuntu, Windows,
+  Intel macOS, and Apple Silicon macOS.
+- CI uses pinned checkout, setup-uv, upload-artifact, and download-artifact
+  commits; pins uv 0.12.2; consumes `uv.lock` with `--frozen`; and neither
+  manually activates environments nor permits dependency prereleases.
+- CI runs lint and package builds once, separately from the test matrix, and
+  verifies clean wheel and sdist installations on Python 3.10 and 3.14.
 - CI directly runs `tests/test.py`; it has not demonstrated that pytest
   discovery and the configured doctests are all included.
 - `uv.lock` is generated and no longer ignored in the current working tree;
