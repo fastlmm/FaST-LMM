@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../PySnpTools"
+		},
+		{
+			"path": "../../fastlmmclib"
+		},
+		{
+			"path": "../../fastlmm.github.io"
+		},
+		{
+			"path": "../../InstallTest"
+		},
+		{
+			"path": "../../bed-sample-files"
+		},
+		{
+			"path": "../../bed-reader"
+		}
+	],
+	"settings": {}
+}

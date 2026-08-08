@@ -133,6 +133,9 @@ def evalgrid1D(f, evalgrid=None, nGrid=10, minval=0.0, maxval=0.99999, dimF=0):
     for i in range(evalgrid.shape[0]):
         fevalgrid = f(evalgrid[i])
 
+        if not dimF:
+            fevalgrid = np.asarray(fevalgrid).item()
+
         is_real = False
         try:
             is_real = np.isreal(fevalgrid).all()

@@ -38,6 +38,35 @@ class TestDocStrings(unittest.TestCase):
         assert result.failed == 0, "failed doc test: " + __file__
 
 
+class TestPlotP(unittest.TestCase):
+
+    def test_qqplot_legend_handles(self):
+        import matplotlib
+
+        matplotlib.use("Agg", force=True)
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from fastlmm.util.stats import plotp
+
+        figure, axes = plt.subplots()
+        try:
+            axes.plot([0.0, 1.0], [0.0, 1.0], ".")
+            plt.sca(axes)
+            plotp.addqqplotinfo(
+                np.array([0.0, 1.0]),
+                2,
+                alphalevel=None,
+                legendlist=["observed"],
+            )
+
+            legend = axes.get_legend()
+            self.assertIsNotNone(legend)
+            self.assertEqual(legend.legend_handles[0].get_markersize(), 10)
+        finally:
+            plt.close(figure)
+
+
 def getTestSuite():
     """
     set up composite test suite
@@ -45,6 +74,7 @@ def getTestSuite():
 
     test_suite = unittest.TestSuite([])
     test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDocStrings))
+    test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestPlotP))
 
     return test_suite
 

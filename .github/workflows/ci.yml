@@ -1,51 +1,207 @@
 name: CI
+
 on:
-  push:
-  schedule:
-    - cron: '0 0 1 * *'
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 1 * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
+  lint:
+    name: Ruff
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Ruff
+        run: uvx ruff@0.7.1 check
+
+  minimum-dependencies:
+    name: Minimum dependencies (Python ${{ matrix.python-version }})
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2022, macos-13, macos-14]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-    runs-on: ${{ matrix.os }}
+        python-version: ["3.10", "3.14"]
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-    - name: Install the latest version of uv
-      uses: astral-sh/setup-uv@v3
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-suffix: minimum-${{ matrix.python-version }}
 
-    - name: Install Python ${{ matrix.python-version }}
-      run: uv python install ${{ matrix.python-version }}
+      - name: Install declared direct dependency minimums
+        run: |
+          uv venv --python ${{ matrix.python-version }} .minimum-venv
+          uv pip install --python .minimum-venv/bin/python --resolution lowest-direct --editable ".[bgen]"
 
-    - name: Pinned Ruff
-      run:  uvx ruff@0.7.1 check
-    - name: Lastest Ruff (just to check for warnings)
-      run: uvx ruff@latest check || echo "Ignoring warnings from the latest version of ruff"
-    - name: Install dependencies
-      run:  uv sync --all-extras --prerelease allow
-    - name: Run test
-      shell: bash
-      run: |
-        if [[ "$RUNNER_OS" != "Windows" ]]; then
-          source .venv/bin/activate
-        else
-          source .venv/Scripts/activate
-        fi
-        cd tests
-        python test.py
+      - name: Run the canonical suite
+        working-directory: tests
+        run: ../.minimum-venv/bin/python test.py
 
-    - name: Build
-      run: uv build        
-    - name: Save SDist
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
-      uses: actions/upload-artifact@v4
-      with:
-        name: wheels
-        path: dist/*.tar.gz
+  dependency-freshness:
+    name: Latest stable dependencies (Python 3.14)
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install uv and Python 3.14
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: "3.14"
+          enable-cache: true
+          cache-suffix: freshness-3.14
+
+      - name: Resolve latest stable dependencies
+        run: uv lock --upgrade
+
+      - name: Install the refreshed environment
+        run: uv sync --all-extras
+
+      - name: Run the canonical suite
+        working-directory: tests
+        run: uv run --no-sync python test.py
+
+  test:
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    if: github.event_name != 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2022, macos-15-intel, macos-15]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}
+
+      - name: Install all test dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Run the canonical suite
+        working-directory: tests
+        run: uv run --frozen --no-sync python test.py
+
+  build:
+    name: Build distributions
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Verify the lockfile
+        run: uv lock --check
+
+      - name: Build wheel and source distribution
+        run: uv build --no-sources
+
+      - name: Build wheel from the source distribution
+        run: uv build --wheel --no-sources --out-dir sdist-dist dist/*.tar.gz
+
+      - name: Compare direct and sdist-derived wheels
+        shell: bash
+        run: cmp dist/*.whl sdist-dist/*.whl
+
+      - name: Upload distributions and smoke test
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: distributions
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            tests/artifact_smoke_test.py
+          if-no-files-found: error
+          retention-days: 7
+
+  artifact-test:
+    name: Artifact test (${{ matrix.kind }}, Python ${{ matrix.python-version }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: wheel
+            python-version: "3.10"
+            package: artifact/dist/*.whl
+          - kind: sdist
+            python-version: "3.10"
+            package: artifact/dist/*.tar.gz
+          - kind: wheel
+            python-version: "3.14"
+            package: artifact/dist/*.whl
+          - kind: sdist
+            python-version: "3.14"
+            package: artifact/dist/*.tar.gz
+    steps:
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: ${{ matrix.python-version }}
+          no-project: true
+          enable-cache: false
+
+      - name: Download distributions and smoke test
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: distributions
+          path: artifact
+
+      - name: Create clean environment
+        run: uv venv --python ${{ matrix.python-version }} .artifact-venv
+
+      - name: Install exact ${{ matrix.kind }} artifact
+        run: uv pip install --python .artifact-venv/bin/python ${{ matrix.package }}
+
+      - name: Smoke-test installed package
+        run: .artifact-venv/bin/python artifact/tests/artifact_smoke_test.py

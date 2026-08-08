@@ -270,8 +270,8 @@ class FeatureSelectionInSample(object):
                     )
 
                     # recover a2 from alternate parameterization
-                    a2 = res["h2_1"] / float(res["h2"] + res["h2_1"])
-                    h2 = res["h2"] + res["h2_1"]
+                    h2 = np.asarray(res["h2"] + res["h2_1"]).item()
+                    a2 = np.asarray(res["h2_1"]).item() / h2
                     delta = (1 - h2) / h2
                     # res_cov = res
 

@@ -25,6 +25,8 @@ Quick install:
 
 `pip install fastlmm`
 
+FaST-LMM supports Python 3.10 through 3.14.
+
 *If you need support for BGEN files, instead do:*
 
     pip install fastlmm[bgen]
@@ -45,8 +47,37 @@ Documentation
 
 Code
 =================================
+
 * [PyPi](https://pypi.org/project/fastlmm/)
 * [GitHub](https://github.com/fastlmm/FaST-LMM)
+
+Development
+=================================
+
+The project uses [uv](https://docs.astral.sh/uv/) for reproducible development
+environments, dependency locking, testing, and builds:
+
+```console
+uv sync --frozen --all-extras
+cd tests
+uv run --frozen --no-sync python test.py
+cd ..
+uv build --no-sources
+```
+
+See [RELEASING.md](RELEASING.md) for lower-bound, artifact, notebook, and
+release qualification.
+
+Policy on AI-assisted development and contributions
+=================================
+
+AI tools may be used as productivity aids for drafting, exploration, and
+refactoring. Every contributed code or documentation change must be reviewed,
+edited, and validated by a human. AI does not replace design judgment,
+testing, or human responsibility for correctness.
+
+The repository's published instructions and constraints for AI tools are in
+[AGENTS.md](AGENTS.md).
 
 Contacts
 =================================

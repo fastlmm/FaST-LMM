@@ -470,4 +470,3 @@ fastlmm/association/tests/pcs_cov.txt
 fastlmm/association/tests/test_gwas.py
 ignore.bat
 doc/ipynb/DebugApr2024.ipynb
-uv.lock
