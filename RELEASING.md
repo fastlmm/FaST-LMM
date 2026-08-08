@@ -85,6 +85,10 @@ repository or GitHub Actions.
 
    ```console
    UV_PROJECT_ENVIRONMENT=.venv-notebook314 uv sync --python 3.14 --frozen --all-extras --group notebook
+   fastlmm_docs_output="$(mktemp -d)"
+   UV_PROJECT_ENVIRONMENT=.venv-notebook314 uv run --frozen --no-sync sphinx-build -W --keep-going -E -a -d /tmp/fastlmm-doctrees -b html doc/source "$fastlmm_docs_output"
+   diff -ru --exclude=.nojekyll "$fastlmm_docs_output" docs
+   UV_PROJECT_ENVIRONMENT=.venv-notebook314 uv run --frozen --no-sync sphinx-build -W --keep-going -E -a -b linkcheck doc/source doc/build/linkcheck
    ```
 
    The maintained public notebooks are the four linked from `README.md`.

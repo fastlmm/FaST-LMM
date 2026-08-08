@@ -33,6 +33,31 @@ jobs:
       - name: Ruff
         run: uvx ruff@0.7.1 check
 
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install uv and Python 3.14
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: "3.14"
+          enable-cache: true
+          cache-suffix: documentation
+
+      - name: Install documentation dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Build documentation from clean sources
+        run: uv run --frozen --no-sync sphinx-build -W --keep-going -E -a -d "${{ runner.temp }}/doctrees" -b html doc/source "${{ runner.temp }}/generated-docs"
+
+      - name: Verify generated documentation is current
+        run: diff -ru --exclude=.nojekyll "${{ runner.temp }}/generated-docs" docs
+
   minimum-dependencies:
     name: Minimum dependencies (Python ${{ matrix.python-version }})
     if: github.event_name != 'schedule'

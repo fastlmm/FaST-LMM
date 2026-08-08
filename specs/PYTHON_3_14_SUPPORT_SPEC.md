@@ -61,13 +61,13 @@ Current packaging qualification:
   four-platform test matrix, one reproducible build, and clean wheel/sdist
   smoke tests on Python 3.10 and 3.14. That baseline workflow passed remotely
   on the `py314` branch on August 7, 2026.
-- The next local CI change adds required Python 3.10 and 3.14 direct-minimum
-  suites plus a monthly, latest-stable Python 3.14 freshness solve. Its remote
-  qualification is pending.
-- The working tree also contains a tag-only Trusted Publishing release
-  workflow and grouped monthly GitHub Actions updates. The PyPI Trusted
-  Publisher and protected GitHub `pypi` environment still require one-time
-  maintainer configuration before the release tag is pushed.
+- Required Python 3.10 and 3.14 direct-minimum suites, the complete platform
+  matrix, artifact tests, and the monthly latest-stable Python 3.14 freshness
+  solve are present. The pull-request CI for the merged release change passed
+  on August 8, 2026.
+- The tag-only release workflow, PyPI Trusted Publisher, and protected GitHub
+  `pypi` environment are configured. Publishing requires maintainer approval,
+  administrator bypass is disabled, and only `v*` tags may deploy.
 - A locked `notebook` dependency group now provides a project-local Python
   3.14 execution environment. `FaST-LMM.ipynb`, `fastlmm2021.ipynb`, and
   `heritability_si.ipynb` have now completed successfully. Their checked-in
@@ -77,9 +77,39 @@ Current packaging qualification:
   exactly identical. Heritability worker logging is suppressed at the
   notebook boundary, keeping its regenerated file concise. `SingleSnpScale`
   remains unchanged because its full machine-specific workload was not run.
-- A source documentation build passes without warnings under Sphinx 9.1.0.
+- The Sphinx version now comes directly from `pyproject.toml`; both the source
+  build and checked-in GitHub Pages output display 0.6.13 and build without
+  warnings under Sphinx 9.1.0. The external link check passes. CI and the tag
+  release workflow now rebuild both outputs and reject stale generated pages.
 - The working tree contains draft 0.6.13 release notes plus the required root
   README contributor setup and AI-assisted contribution policy.
+
+Before tagging, review and commit the documentation corrections and workflow
+enforcement, run one final CI qualification on that exact `master` commit, and
+repeat the live issue, pull-request, tag, and PyPI-availability checks.
+
+### Final pre-tag gate
+
+- [x] Publish and clean-install PySnpTools 0.5.15 and fastlmmclib 0.0.8.
+- [x] Qualify dependency bounds, the full test matrix, lower bounds, artifacts,
+  and notebooks; record the intentional `SingleSnpScale` execution exception.
+- [x] Review numerical notebook output rather than accepting it mechanically.
+- [x] Build FaST-LMM and PySnpTools documentation warning-free with Sphinx
+  9.1.0, check external links, and regenerate the published `docs/` trees.
+- [x] Remove ignored duplicate `doc/build` output from Git tracking and add CI
+  and release-workflow checks against clean source builds.
+- [x] Recheck open issues and pull requests in all three repositories; defer
+  FaST-LMM issues #57 and #26 plus Dependabot PR #59.
+- [x] Configure the PyPI Trusted Publisher and protected GitHub `pypi`
+  environment for FaST-LMM.
+- [ ] Review and commit the documentation and workflow audit changes in all
+  affected repositories.
+- [ ] Run the complete FaST-LMM CI workflow on the exact resulting `master`
+  commit and require every non-scheduled job, including Documentation, to pass.
+- [ ] Immediately before tagging, repeat the live issue/PR check and confirm
+  that `v0.6.13` and PyPI version 0.6.13 remain unused.
+- [ ] Create and push `v0.6.13`, let the release workflow requalify the source,
+  artifacts, and generated documentation, then manually approve publication.
 
 ## Objective
 
@@ -801,60 +831,24 @@ of the following are true:
 
 ## GitHub Issue and Pull-Request Triage
 
-The open issue and pull-request review for this release produced the explicit
-requirements above. Keep the remaining work out of the Python 3.14 critical
-path unless implementation reveals a direct compatibility failure:
+The final live recheck on August 8, 2026 found no open issues or pull requests
+in PySnpTools or fastlmmclib. FaST-LMM has two intentionally deferred issues:
 
-- [FaST-LMM issue #55](https://github.com/fastlmm/FaST-LMM/issues/55), a
-  multi-phenotype usage and output-size support question.
-- [FaST-LMM issue #52](https://github.com/fastlmm/FaST-LMM/issues/52), a
-  request to document how the synthetic test dataset was generated.
-- [FaST-LMM issue #51](https://github.com/fastlmm/FaST-LMM/issues/51), a
-  performance report for analyses exceeding five million SNPs.
-- [FaST-LMM issue #26](https://github.com/fastlmm/FaST-LMM/issues/26), a
-  request to batch large numbers of phenotypes to reduce memory use.
+- [Issue #57](https://github.com/fastlmm/FaST-LMM/issues/57) tracks renaming
+  the default branch from `master` to `main` after the 0.6.13 release.
+- [Issue #26](https://github.com/fastlmm/FaST-LMM/issues/26) requests batching
+  very large numbers of phenotypes to reduce memory use. It is unrelated to
+  Python 3.14 compatibility and remains out of scope.
 
-Do not merge either currently open FaST-LMM pull request into this release:
+[Pull request #59](https://github.com/fastlmm/FaST-LMM/pull/59) is an automated
+grouped major-version update for `actions/checkout`, `setup-uv`, and
+`actions/download-artifact`. Its existing checks pass, but it changes the CI
+and release workflows under final qualification. Defer it until after 0.6.13,
+then rebase and review it as a separate workflow migration.
 
-- [Pull request #15](https://github.com/fastlmm/FaST-LMM/pull/15) is a stale,
-  conflicting Manhattan-plot enhancement without current validation.
-- [Pull request #7](https://github.com/fastlmm/FaST-LMM/pull/7) is a stale,
-  unrelated Docker contribution containing substantial notebook, checkpoint,
-  generated, and binary data.
-
-As of August 7, 2026, PySnpTools and fastlmmclib have no open pull requests.
-FaST-LMM still has the two stale pull requests listed above. Recheck all three
-repositories immediately before the FaST-LMM release rather than assuming this
-snapshot remains current.
-
-### Post-release closure checklist
-
-After the Python 3.14 release sequence is complete and its published artifacts
-have passed final acceptance, review and close these items with a comment
-linking to the relevant release, test, tag, or superseding decision:
-
-- [PySnpTools issue #10](https://github.com/fastlmm/PySnpTools/issues/10) —
-  **closed August 7, 2026:** PySnpTools 0.5.15 retrieves the synthetic tutorial
-  files from the immutable `bed-sample-files` revision, verifies their hashes,
-  and successfully opens the BED/BIM/FAM dataset.
-- [FaST-LMM issue #48](https://github.com/fastlmm/FaST-LMM/issues/48): close
-  after the corrected Matplotlib `legend_handles` path is covered by a
-  passing headless regression test in the released version.
-- [fastlmmclib issue #2](https://github.com/fastlmm/fastlmmclib/issues/2) —
-  **ready to close:** fastlmmclib 0.0.8 is published on PyPI and its immutable
-  `v0.0.8` tag points to the exact commit used by the qualified artifact build.
-- [FaST-LMM pull request #15](https://github.com/fastlmm/FaST-LMM/pull/15):
-  close without merging. Explain that the old conflicting plotting enhancement
-  was not part of the compatibility release and invite a new focused pull
-  request against current code if the feature is still wanted.
-- [FaST-LMM pull request #7](https://github.com/fastlmm/FaST-LMM/pull/7):
-  close without merging. Explain that the stale Docker change and its bundled
-  notebook, checkpoint, generated, and binary files do not fit the current
-  release or repository packaging approach.
-
-Do not close FaST-LMM issues #55, #52, #51, or #26 merely because the Python
-3.14 release completed. They describe support, documentation, performance, or
-memory-scaling work that this release does not resolve.
+All issues and stale pull requests previously identified as closeable during
+this release cycle have been closed. Recheck all three repositories again
+immediately before tagging rather than treating this snapshot as permanent.
 
 ## Out of Scope
 

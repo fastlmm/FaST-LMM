@@ -5,13 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>fastlmm Documentation &#8212; fastlmm 0.0.1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <title>fastlmm Documentation &#8212; fastlmm 0.6.13 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/documentation_options.js?v=f150e01c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -22,7 +22,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.6.13 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> Documentation</a></li> 
       </ul>
     </div>  
@@ -163,10 +163,10 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-even">Example<span class="colon">:</span></dt>
 <dd class="field-even"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
@@ -256,10 +256,10 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="n">example_file</span><span class="p">(</span><span class="s1">&#39;tests/datasets/synth/all.*&#39;</span><span class="p">,</span><span class="s1">&#39;*.bed&#39;</span><span class="p">),</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:,::</span><span class="mi">10</span><span class="p">]</span> <span class="c1">#use every 10th SNP</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;tests/datasets/synth/pheno_10_causals.txt&quot;</span><span class="p">)</span>
@@ -335,12 +335,12 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp_all_plus_select</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.util.mapreduce1.runner</span> <span class="kn">import</span> <span class="n">LocalMultiProc</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">single_snp_all_plus_select</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.util.mapreduce1.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalMultiProc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
@@ -388,11 +388,11 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp_linreg</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">single_snp_linreg</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
@@ -449,12 +449,12 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp_select</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">compute_auto_pcs</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">single_snp_select</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_auto_pcs</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bed_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;tests/datasets/synth/all.bed&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">phen_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;tests/datasets/synth/pheno_10_causals.txt&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">bed_fn</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -518,10 +518,10 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">epistasis</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">epistasis</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bed_file</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s1">&#39;tests/datasets/all_chr.maf0.001.N300.*&#39;</span><span class="p">,</span><span class="s1">&#39;*.bed&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="n">bed_file</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -577,8 +577,8 @@ Provided for backwards compatibility.</p></li>
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">snp_set</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">snp_set</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">result_dataframe</span> <span class="o">=</span> <span class="n">snp_set</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">test_snps</span> <span class="o">=</span> <span class="s1">&#39;../../tests/datasets/all_chr.maf0.001.N300&#39;</span><span class="p">,</span>
@@ -595,7 +595,7 @@ Provided for backwards compatibility.</p></li>
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">FastLMM</span></code><a class="headerlink" href="#fastlmm" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="fastlmm.inference.FastLMM">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fastlmm.inference.</span></span><span class="sig-name descname"><span class="pre">FastLMM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">GB_goal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_full_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_low_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snp_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Unit()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariate_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Unit()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DiagKtoN()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">fastlmm.inference.</span></span><span class="sig-name descname"><span class="pre">FastLMM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">GB_goal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_full_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_low_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snp_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Unit()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariate_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Unit()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DiagKtoN()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.FastLMM" title="Link to this definition">¶</a></dt>
 <dd><blockquote>
 <div><p>A predictor, somewhat in the style of scikit-learn, for learning and predicting with linear mixed models.</p>
 </div></blockquote>
@@ -631,11 +631,11 @@ to sum to iid_count) and <code class="xref py py-class docutils literal notransl
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span><span class="p">,</span> <span class="n">Pheno</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="kn">import</span> <span class="n">FastLMM</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span><span class="p">,</span> <span class="n">Pheno</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastLMM</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">snpreader</span> <span class="o">=</span> <span class="n">Bed</span><span class="p">(</span><span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">),</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cov_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.cov&quot;</span><span class="p">)</span>
@@ -770,7 +770,7 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <h2><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearRegression</span></code><a class="headerlink" href="#linearregression" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="fastlmm.inference.LinearRegression">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fastlmm.inference.</span></span><span class="sig-name descname"><span class="pre">LinearRegression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">covariate_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Unit()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">fastlmm.inference.</span></span><span class="sig-name descname"><span class="pre">LinearRegression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">covariate_standardizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Unit()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.inference.LinearRegression" title="Link to this definition">¶</a></dt>
 <dd><p>A linear regression predictor, that works like the FastLMM in fastlmm_predictor.py, but that expects all similarity matrices to be identity.</p>
 <dl class="simple">
 <dt><strong>Constructor:</strong></dt><dd><dl class="field-list simple">
@@ -784,11 +784,11 @@ The PySnpTools standardizer to be apply to X, the covariate data. Some choices i
 </dl>
 <dl class="field-list">
 <dt class="field-odd">Example<span class="colon">:</span></dt>
-<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Pheno</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.inference</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pheno</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">Pheno</span><span class="p">(</span><span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.cov&quot;</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
@@ -899,7 +899,7 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">heritability_spatial_correction</span></code><a class="headerlink" href="#heritability-spatial-correction" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="fastlmm.association.heritability_spatial_correction">
-<span class="sig-prename descclassname"><span class="pre">fastlmm.association.</span></span><span class="sig-name descname"><span class="pre">heritability_spatial_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spatial_coor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spatial_iid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pheno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_function=&lt;class</span> <span class="pre">'map'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_folder=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jackknife_count=500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permute_plus_count=10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permute_times_count=10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">just_testing=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">always_remote=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_gxe2=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_A1=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.heritability_spatial_correction" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">fastlmm.association.</span></span><span class="sig-name descname"><span class="pre">heritability_spatial_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spatial_coor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spatial_iid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pheno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'map'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jackknife_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permute_plus_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permute_times_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">just_testing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">always_remote</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_gxe2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_A1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fastlmm.association.heritability_spatial_correction" title="Link to this definition">¶</a></dt>
 <dd><p>Function measuring heritability with correction for spatial location.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -966,9 +966,9 @@ alleles (the PLINK standard) or the number of A2 alleles. False is the current d
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">compute_auto_pcs</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_auto_pcs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">file_name</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">best_pcs</span> <span class="o">=</span> <span class="n">compute_auto_pcs</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span><span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1007,13 +1007,13 @@ use rank of SNP positions. (default: True)</p></li>
 cumulative chromosome starts used in plotting.</p>
 </dd>
 <dt class="field-odd">Example<span class="colon">:</span></dt>
-<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib</span>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.association</span> <span class="kn">import</span> <span class="n">single_snp</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pysnptools.snpreader</span> <span class="kn">import</span> <span class="n">Bed</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fastlmm.util</span> <span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">fastlmm.util.util</span> <span class="k">as</span> <span class="nn">flutil</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.association</span><span class="w"> </span><span class="kn">import</span> <span class="n">single_snp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pysnptools.snpreader</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">fastlmm.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">example_file</span> <span class="c1"># Download and return local file name</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">fastlmm.util.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">flutil</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_snps</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.5chrom.*&quot;</span><span class="p">,</span><span class="s2">&quot;*.bed&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pheno_fn</span> <span class="o">=</span> <span class="n">example_file</span><span class="p">(</span><span class="s2">&quot;fastlmm/feature_selection/examples/toydata.phe&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results_dataframe</span> <span class="o">=</span> <span class="n">single_snp</span><span class="p">(</span><span class="n">test_snps</span><span class="o">=</span><span class="n">test_snps</span><span class="p">,</span> <span class="n">pheno</span><span class="o">=</span><span class="n">pheno_fn</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mf">.2</span><span class="p">,</span> <span class="n">count_A1</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1144,13 +1144,13 @@ cumulative chromosome starts used in plotting.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">fastlmm 0.6.13 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">fastlmm</span></code> Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
     &#169; Copyright .
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     </div>
   </body>
 </html>
