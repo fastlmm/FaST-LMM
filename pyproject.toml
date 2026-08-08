@@ -1,12 +1,6 @@
 [build-system]
-requires = [
-    "numpy>=1.22.0",
-    "setuptools>=42.0.0",
-    "cython>=0.29.0",
-    "wheel>=0.34.0",
-    "scipy>=1.5.0",
-]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.12.3,<0.13"]
+build-backend = "uv_build"
 
 [project]
 name = "fastlmm"
@@ -26,13 +20,15 @@ keywords = [
     "python",
 ]
 authors = [{ name = "FaST-LMM Team", email = "fastlmm-dev@python.org" }]
-license = { text = "Apache 2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE.md"]
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "numpy>=1.22.0; python_version < '3.14'",
@@ -49,10 +45,10 @@ dependencies = [
     "fastlmmclib>=0.0.8",
 ]
 [project.urls]
-homepage = "https://fastlmm.github.io/"
-bug-tracker = "https://github.com/fastlmm/FaST-LMM/issues"
-documentation = "http://fastlmm.github.io/FaST-LMM"
-source-code = "https://github.com/fastlmm/FaST-LMM"
+Homepage = "https://fastlmm.github.io/"
+Documentation = "https://fastlmm.github.io/FaST-LMM"
+Issues = "https://github.com/fastlmm/FaST-LMM/issues"
+Source = "https://github.com/fastlmm/FaST-LMM"
 
 [project.optional-dependencies]
 bgen = ["cbgen>=1.0.6", "bgen-reader>=4.0.9"]
@@ -93,56 +89,47 @@ filterwarnings = [
     "ignore:'parent_string' is deprecated. Use 'name':DeprecationWarning",
 ]
 
-[tool.uv]
-dev-dependencies = ["pytest-xdist>=3.6.1", "twine>=5.1.1"]
+[dependency-groups]
+dev = ["pytest-xdist>=3.6.1", "twine>=5.1.1"]
 
 
-[tool.setuptools]
-packages = [
-    "fastlmm",
-    "fastlmm.association",
-    "fastlmm.association.altset_list",
-    "fastlmm.association.tests",
-    "fastlmm.external",
-    "fastlmm.external.util",
-    "fastlmm.feature_selection",
-    "fastlmm.inference",
-    "fastlmm.inference.tests",
-    "fastlmm.pyplink",                 # old snpreader
-    "fastlmm.pyplink.altset_list",     # old snpreader
-    "fastlmm.pyplink.snpreader",       # old snpreader
-    "fastlmm.pyplink.snpset",          # old snpreader
-    "fastlmm.util",
-    "fastlmm.util.matrix",
-    "fastlmm.util.standardizer",
-    "fastlmm.util.stats",
+[tool.uv.build-backend]
+module-name = "fastlmm"
+module-root = ""
+source-include = ["AUTHORS.txt"]
+source-exclude = [
+    "/fastlmm/**/.working/**",
+    "/fastlmm/**/*.pyproj",
+    "/fastlmm/**/*.sln",
+    "/fastlmm/association/Fastlmm_autoselect/bypass/**",
+    "/fastlmm/association/sampleInput.txt",
+    "/fastlmm/association/setthreads.bat",
+    "/fastlmm/association/testcp50K5K.profile",
+    "/fastlmm/feature_selection/examples/test_snps.txt",
+    "/fastlmm/feature_selection/examples/toydata.dat",
+    "/fastlmm/feature_selection/examples/toydata.fam",
+    "/fastlmm/feature_selection/examples/toydata.iidmajor.hdf5",
+    "/fastlmm/feature_selection/examples/toydata.ped",
+    "/fastlmm/feature_selection/examples/toydata.snpmajor.hdf5",
+    "/fastlmm/ludicrous2/**",
+    "/fastlmm/pyplink/chr22.small.vcf",
+    "/fastlmm/pyplink/testdata/**",
 ]
-
-
-[tool.setuptools.package-data]
-"*" = ["LICENSE.md", "AUTHORS.txt", "*.rst"]
-"doc" = ["*"]
-"tests" = ["*"]
-"fastlmm.association" = [
-    "Fastlmm_autoselect/FastLmmC.exe",
-    "Fastlmm_autoselect/libiomp5md.dll",
-    "Fastlmm_autoselect/fastlmmc",
-    "Fastlmm_autoselect/FastLmmC.Manual.pdf",
+wheel-exclude = [
+    "/fastlmm/**/.working/**",
+    "/fastlmm/**/*.pyproj",
+    "/fastlmm/**/*.sln",
+    "/fastlmm/association/Fastlmm_autoselect/bypass/**",
+    "/fastlmm/association/sampleInput.txt",
+    "/fastlmm/association/setthreads.bat",
+    "/fastlmm/association/testcp50K5K.profile",
+    "/fastlmm/feature_selection/examples/test_snps.txt",
+    "/fastlmm/feature_selection/examples/toydata.dat",
+    "/fastlmm/feature_selection/examples/toydata.fam",
+    "/fastlmm/feature_selection/examples/toydata.iidmajor.hdf5",
+    "/fastlmm/feature_selection/examples/toydata.ped",
+    "/fastlmm/feature_selection/examples/toydata.snpmajor.hdf5",
+    "/fastlmm/ludicrous2/**",
+    "/fastlmm/pyplink/chr22.small.vcf",
+    "/fastlmm/pyplink/testdata/**",
 ]
-"fastlmm.feature_selection" = [
-    "examples/bronze.txt",
-    "examples/ScanISP.Toydata.config.py",
-    "examples/ScanLMM.Toydata.config.py",
-    "examples/ScanOSP.Toydata.config.py",
-    "examples/toydata.5chrom.bed",
-    "examples/toydata.5chrom.bim",
-    "examples/toydata.5chrom.fam",
-    "examples/toydata.cov",
-    "examples/toydata.map",
-    "examples/toydata.phe",
-    "examples/toydata.shufflePlus.phe",
-    "examples/toydata.sim",
-    "examples/toydataTest.phe",
-    "examples/toydataTrain.phe",
-]
-"fastlmm" = ["util/fastlmm.hashdown.json"]

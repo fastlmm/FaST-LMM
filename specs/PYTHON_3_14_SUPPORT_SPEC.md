@@ -32,6 +32,19 @@ Current dependency qualification on Python 3.14.5:
 - pandas is constrained to `>=1.3.1,<4`. The current 3.0 line is supported;
   the next untested major line is rejected until separately qualified.
 
+Current packaging qualification:
+
+- The working tree uses `uv_build>=0.12.3,<0.13`, PEP 639 license metadata,
+  standardized dependency groups, and a generated, unignored `uv.lock`.
+- The Python 3.14 wheel builds cleanly from the generated sdist. Its runtime
+  files are byte-for-byte identical to the setuptools baseline wheel.
+- Intentional wheel differences are limited to removing setuptools's
+  `top_level.txt` and no longer misclassifying `AUTHORS.txt` as a license;
+  `AUTHORS.txt` remains in the sdist.
+- A clean Python 3.14 environment imports FaST-LMM from the installed wheel.
+  The complete suite uses large repository fixtures that remain external to
+  the user artifact rather than adding roughly 125 MB to the wheel.
+
 ## Objective
 
 Add complete Python 3.14 support to FaST-LMM while preserving the same supported
@@ -68,8 +81,8 @@ dependencies in Rust.
 
 ## Current State
 
-- `pyproject.toml` requires Python 3.10 or newer and advertises Python 3.10
-  through 3.13.
+- `pyproject.toml` requires Python 3.10 or newer and now advertises Python 3.10
+  through 3.14.
 - `.github/workflows/ci.yml` still tests only Python 3.10 through 3.13. A local
   implementation change has replaced `macos-13` and `macos-14` with
   `macos-15-intel` and `macos-15`, but the broader CI modernization remains.
@@ -78,17 +91,16 @@ dependencies in Rust.
 - CI runs lint and package builds redundantly in every OS/Python matrix entry.
 - CI directly runs `tests/test.py`; it has not demonstrated that pytest
   discovery and the configured doctests are all included.
-- `uv.lock` is ignored rather than committed, so ordinary CI is not frozen or
-  reproducible.
+- `uv.lock` is generated and no longer ignored in the current working tree;
+  CI still needs to consume it with `--frozen`.
 - NumPy and SciPy are now declared as direct runtime dependencies with
   Python-version-specific lower bounds.
-- NumPy, SciPy, Cython, and wheel are listed as build requirements even though
-  no root-package extension build or Cython source has been identified.
-- The package uses setuptools with explicit package and package-data lists that
-  must be translated and verified during migration to `uv_build`.
-- Development dependencies are split between a published `dev` extra and the
-  legacy `[tool.uv].dev-dependencies` field.
-- The package uses the deprecated table form of the `license` field.
+- The working tree uses `uv_build` with explicit artifact exclusions; its
+  Python 3.14 wheel payload and metadata have been compared with the
+  setuptools baseline.
+- The legacy `[tool.uv].dev-dependencies` field has been replaced with
+  `[dependency-groups]`. The existing published `dev` extra remains unchanged.
+- The working tree uses PEP 639 license metadata.
 - The repository has no automated, trusted-publishing release workflow.
 - FaST-LMM now requires the published Python 3.14-compatible prerequisites
   `pysnptools>=0.5.15` and `fastlmmclib>=0.0.8`.
@@ -340,7 +352,7 @@ configuration is:
 
 ```toml
 [build-system]
-requires = ["uv_build>=0.11.32,<0.12"]
+requires = ["uv_build>=0.12.3,<0.13"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
@@ -566,6 +578,12 @@ Where practical, it should also load a tiny packaged dataset and perform one
 inexpensive calculation so package-data and native dependency problems are
 detected. The Python 3.14 artifact tests must consume published releases of
 `pysnptools` and `fastlmmclib` for final acceptance.
+
+The complete installed-wheel suite also needs repository test datasets and
+expected outputs that are intentionally not shipped to users, including the
+large DAT, PED, and HDF5 feature-selection fixtures. Artifact CI must stage
+those fixtures outside the installed package (or link them into a temporary
+test environment) without placing the repository source tree on `PYTHONPATH`.
 
 ### Workflow reliability and security
 
