@@ -24,13 +24,26 @@ qualified against those published packages.
 
 Current dependency qualification on Python 3.14.5:
 
-- The canonical 178-test suite passes at the declared Python 3.14 boundaries:
-  NumPy 2.3.5 and SciPy 1.16.1, with pandas 3.0.5.
+- The canonical 178-test suite passes at the declared Python 3.14 direct
+  dependency boundaries, including NumPy 2.3.5, SciPy 1.16.1, pandas 2.3.3,
+  Matplotlib 3.10.5, scikit-learn 1.7.2, statsmodels 0.14.5, psutil 7.1.2,
+  and cloudpickle 3.1.1.
+- cloudpickle 3.1.0 fails three multiprocessing tests on Python 3.14 with a
+  serialization recursion error. Version 3.1.1 passes those tests, so the
+  working metadata uses a Python 3.14-specific `>=3.1.1` lower bound while
+  preserving `>=3.1.0` on older Python versions.
 - The same 178 tests pass with the current stable NumPy 2.5.1, SciPy 1.18.0,
   and pandas 3.0.5 after replacing deprecated size-one-array scalar coercions
   with explicit `.item()` conversions.
-- pandas is constrained to `>=1.3.1,<4`. The current 3.0 line is supported;
-  the next untested major line is rejected until separately qualified.
+- pandas is constrained below 4, with `>=1.3.1` before Python 3.14 and
+  `>=2.3.3` on Python 3.14. The current 3.0 line is supported; the next
+  untested major line is rejected until separately qualified.
+- A focused headless test now exercises the Matplotlib `legend_handles` path
+  on the Python 3.10 and Python 3.14 lower-bound environments.
+- The Python 3.10 lowest-direct environment also passes all 178 canonical
+  tests. Its effective direct versions include NumPy 2.1.2, SciPy 1.13.0,
+  pandas 2.2.3, Matplotlib 3.8.4, scikit-learn 1.4.2, statsmodels 0.14.2,
+  cloudpickle 3.1.0, and psutil 6.1.0.
 
 Current packaging qualification:
 
@@ -46,7 +59,27 @@ Current packaging qualification:
   the user artifact rather than adding roughly 125 MB to the wheel.
 - The working CI workflow now separates lint, the Python 3.10-through-3.14
   four-platform test matrix, one reproducible build, and clean wheel/sdist
-  smoke tests on Python 3.10 and 3.14. Remote CI qualification is pending.
+  smoke tests on Python 3.10 and 3.14. That baseline workflow passed remotely
+  on the `py314` branch on August 7, 2026.
+- The next local CI change adds required Python 3.10 and 3.14 direct-minimum
+  suites plus a monthly, latest-stable Python 3.14 freshness solve. Its remote
+  qualification is pending.
+- The working tree also contains a tag-only Trusted Publishing release
+  workflow and grouped monthly GitHub Actions updates. The PyPI Trusted
+  Publisher and protected GitHub `pypi` environment still require one-time
+  maintainer configuration before the release tag is pushed.
+- A locked `notebook` dependency group now provides a project-local Python
+  3.14 execution environment. `FaST-LMM.ipynb`, `fastlmm2021.ipynb`, and
+  `heritability_si.ipynb` have now completed successfully. Their checked-in
+  outputs were reviewed: the main notebook has only harmless last-digit
+  numerical/rendering differences, `fastlmm2021.ipynb` has unchanged result
+  tables apart from cache-file listing order, and the heritability tables are
+  exactly identical. Heritability worker logging is suppressed at the
+  notebook boundary, keeping its regenerated file concise. `SingleSnpScale`
+  remains unchanged because its full machine-specific workload was not run.
+- A source documentation build passes without warnings under Sphinx 9.1.0.
+- The working tree contains draft 0.6.13 release notes plus the required root
+  README contributor setup and AI-assisted contribution policy.
 
 ## Objective
 
@@ -95,8 +128,8 @@ dependencies in Rust.
   verifies clean wheel and sdist installations on Python 3.10 and 3.14.
 - CI directly runs `tests/test.py`; it has not demonstrated that pytest
   discovery and the configured doctests are all included.
-- `uv.lock` is generated and no longer ignored in the current working tree;
-  CI still needs to consume it with `--frozen`.
+- `uv.lock` is generated and no longer ignored; ordinary CI consumes it with
+  `--frozen`.
 - NumPy and SciPy are now declared as direct runtime dependencies with
   Python-version-specific lower bounds.
 - The working tree uses `uv_build` with explicit artifact exclusions; its
@@ -105,7 +138,8 @@ dependencies in Rust.
 - The legacy `[tool.uv].dev-dependencies` field has been replaced with
   `[dependency-groups]`. The existing published `dev` extra remains unchanged.
 - The working tree uses PEP 639 license metadata.
-- The repository has no automated, trusted-publishing release workflow.
+- The working tree has a tag-triggered Trusted Publishing workflow; its PyPI
+  publisher and protected GitHub environment are not yet configured.
 - FaST-LMM now requires the published Python 3.14-compatible prerequisites
   `pysnptools>=0.5.15` and `fastlmmclib>=0.0.8`.
 
@@ -610,8 +644,8 @@ test environment) without placing the repository source tree on `PYTHONPATH`.
 
 ## Release Workflow
 
-Add a separate release workflow using PyPI Trusted Publishing rather than a
-long-lived API token.
+Use the separate tag-triggered release workflow with PyPI Trusted Publishing
+rather than a long-lived API token.
 
 The workflow must:
 

@@ -5,8 +5,8 @@ compatibility investigations belong in `specs/`; keep this file limited to the
 process that should apply to every release.
 
 The maintainer chooses the version and explicitly approves publication. A
-release must be built from a clean commit on `main`, and its `vX.Y.Z` tag must
-point to that exact commit.
+release must be built from a clean commit on the repository's default branch,
+and its `vX.Y.Z` tag must point to that exact commit.
 
 ## Release order
 
@@ -19,9 +19,8 @@ sibling source checkouts, Git dependencies, or prereleases.
 
 ## One-time repository setup
 
-- Add a tag-triggered `.github/workflows/release.yml` workflow.
 - Configure a PyPI Trusted Publisher for the `fastlmm/FaST-LMM` repository,
-  that workflow filename, and a protected GitHub `pypi` environment.
+  `.github/workflows/release.yml`, and a protected GitHub `pypi` environment.
 - Require maintainer approval for the `pypi` environment and restrict it to
   version tags.
 - Give the publish job only the permissions it needs, including
@@ -37,7 +36,7 @@ repository or GitHub Actions.
 
 ## Prepare the release
 
-1. Start from a clean release branch based on current `main`.
+1. Start from a clean release branch based on the current default branch.
 2. Review open issues, pull requests, and dependency advisories for anything
    that affects the release.
 3. Set the version in `pyproject.toml` and update the release notes with the
@@ -45,7 +44,21 @@ repository or GitHub Actions.
 4. Confirm that the required published PySnpTools and `fastlmmclib` versions
    install on every supported Python version and platform.
 5. Confirm that dependency bounds and Python-version markers describe versions
-   actually tested in CI.
+   actually tested in CI. Exercise the declared direct minimums on the oldest
+   and newest supported Python versions:
+
+   ```console
+   uv venv --python 3.10 .minimum-310
+   uv pip install --python .minimum-310/bin/python --resolution lowest-direct --editable ".[bgen]"
+   cd tests
+   ../.minimum-310/bin/python test.py
+   cd ..
+   uv venv --python 3.14 .minimum-314
+   uv pip install --python .minimum-314/bin/python --resolution lowest-direct --editable ".[bgen]"
+   cd tests
+   ../.minimum-314/bin/python test.py
+   cd ..
+   ```
 6. Regenerate and commit `uv.lock`, then verify it:
 
    ```console
@@ -57,7 +70,9 @@ repository or GitHub Actions.
 
    ```console
    uv sync --frozen --all-extras
-   uv run --frozen --no-sync python tests/test.py
+   cd tests
+   uv run --frozen --no-sync python test.py
+   cd ..
    ```
 
 8. Run representative end-to-end association and inference tests. Investigate
@@ -65,7 +80,16 @@ repository or GitHub Actions.
    schemas before updating expected output.
 9. Execute the maintained notebooks from start to finish in clean environments
    and inspect their results. Build the documentation from its sources and
-   check links and examples.
+   check links and examples. Create the locked Python 3.14 notebook environment
+   with:
+
+   ```console
+   UV_PROJECT_ENVIRONMENT=.venv-notebook314 uv sync --python 3.14 --frozen --all-extras --group notebook
+   ```
+
+   The maintained public notebooks are the four linked from `README.md`.
+   Record any deliberately skipped machine-specific or multi-hour example and
+   why it was not part of the routine execution pass.
 10. Build the source distribution and wheel without local source overrides:
 
     ```console
@@ -91,8 +115,8 @@ release path.
 
 ## Publish
 
-1. Merge the reviewed release change into `main` and confirm that `main` is
-   clean and up to date.
+1. Merge the reviewed release change into the default branch and confirm that
+   it is clean and up to date.
 2. Confirm that the version is not already present on PyPI and that the tag does
    not already exist.
 3. Create and push an annotated tag at the release commit:

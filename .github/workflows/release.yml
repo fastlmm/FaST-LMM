@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and test distributions
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Verify tag and package version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: >-
+          python -c
+          "import os, pathlib, tomllib;
+          version = tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'];
+          expected = f'v{version}';
+          assert os.environ['RELEASE_TAG'] == expected,
+          f'tag {os.environ[\"RELEASE_TAG\"]!r} does not match package version {version!r}'"
+
+      - name: Verify the lockfile
+        run: uv lock --check
+
+      - name: Install all test dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Run the canonical suite
+        working-directory: tests
+        run: uv run --frozen --no-sync python test.py
+
+      - name: Build wheel and source distribution
+        run: uv build --no-sources
+
+      - name: Build wheel from the source distribution
+        run: uv build --wheel --no-sources --out-dir sdist-dist dist/*.tar.gz
+
+      - name: Compare direct and sdist-derived wheels
+        run: cmp dist/*.whl sdist-dist/*.whl
+
+      - name: Upload distributions and smoke test
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-distributions
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            tests/artifact_smoke_test.py
+          if-no-files-found: error
+          retention-days: 14
+
+  artifact-test:
+    name: Test ${{ matrix.kind }} on Python ${{ matrix.python-version }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: wheel
+            python-version: "3.10"
+            package: artifact/dist/*.whl
+          - kind: sdist
+            python-version: "3.10"
+            package: artifact/dist/*.tar.gz
+          - kind: wheel
+            python-version: "3.14"
+            package: artifact/dist/*.whl
+          - kind: sdist
+            python-version: "3.14"
+            package: artifact/dist/*.tar.gz
+    steps:
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.2"
+          python-version: ${{ matrix.python-version }}
+          no-project: true
+          enable-cache: false
+
+      - name: Download tested distributions and smoke test
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: release-distributions
+          path: artifact
+
+      - name: Create clean environment
+        run: uv venv --python ${{ matrix.python-version }} .artifact-venv
+
+      - name: Install exact ${{ matrix.kind }} artifact
+        run: uv pip install --python .artifact-venv/bin/python ${{ matrix.package }}
+
+      - name: Smoke-test installed package
+        run: .artifact-venv/bin/python artifact/tests/artifact_smoke_test.py
+
+  publish:
+    name: Publish to PyPI
+    needs: artifact-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/p/fastlmm
+    permissions:
+      id-token: write
+    steps:
+      - name: Download tested distributions
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: release-distributions
+          path: release-artifacts
+
+      - name: Publish distributions with Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: release-artifacts/dist/
+          attestations: true
