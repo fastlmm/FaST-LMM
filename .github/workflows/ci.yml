@@ -80,6 +80,9 @@ jobs:
           cache-suffix: minimum-${{ matrix.python-version }}
 
       - name: Install declared direct dependency minimums
+        env:
+          # cbgen's bundled zlib uses POSIX fileno in strict C mode.
+          CFLAGS: -D_POSIX_C_SOURCE=200809L
         run: |
           uv venv --python ${{ matrix.python-version }} .minimum-venv
           uv pip install --python .minimum-venv/bin/python --resolution lowest-direct --editable ".[bgen]"
@@ -109,6 +112,9 @@ jobs:
         run: uv lock --upgrade
 
       - name: Install the refreshed environment
+        env:
+          # cbgen's bundled zlib uses POSIX fileno in strict C mode.
+          CFLAGS: -D_POSIX_C_SOURCE=200809L
         run: uv sync --all-extras
 
       - name: Run the canonical suite
@@ -140,6 +146,9 @@ jobs:
           cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}
 
       - name: Install all test dependencies
+        env:
+          # cbgen's bundled zlib needs POSIX declarations on Linux.
+          CFLAGS: ${{ runner.os == 'Linux' && '-D_POSIX_C_SOURCE=200809L' || '' }}
         run: uv sync --frozen --all-extras
 
       - name: Run the canonical suite
