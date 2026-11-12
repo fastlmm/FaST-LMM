@@ -986,6 +986,7 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "six" },
     { name = "statsmodels" },
 ]
 
@@ -1046,6 +1047,7 @@ requires-dist = [
     { name = "scikit-learn", marker = "python_full_version >= '3.14'", specifier = ">=1.7.2" },
     { name = "scipy", marker = "python_full_version < '3.14'", specifier = ">=1.8.0" },
     { name = "scipy", marker = "python_full_version >= '3.14'", specifier = ">=1.16.1" },
+    { name = "six", specifier = ">=1.16.0" },
     { name = "sphinx", marker = "extra == 'dev'", specifier = ">=6.2.1" },
     { name = "sphinx-rtd-theme", marker = "extra == 'dev'", specifier = ">=0.4.3" },
     { name = "statsmodels", marker = "python_full_version < '3.14'", specifier = ">=0.14.2" },
