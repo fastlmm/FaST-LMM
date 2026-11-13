@@ -10,6 +10,7 @@ import fastlmm
 import fastlmm.association
 import fastlmm.inference
 from fastlmm.association import single_snp_linreg
+from fastlmm.inference import FastLMM
 
 
 def main():
@@ -45,6 +46,16 @@ def main():
     )
     assert set(result.SNP) == {"s0", "s1"}
     assert np.isfinite(result.PValue).all()
+
+    # A fixed variance ratio makes this artifact check deterministic; the
+    # canonical inference suite separately exercises parameter estimation.
+    model = FastLMM().fit(K0_train=test_snps, y=pheno, h2raw=0.5)
+    predicted, covariance = model.predict(K0_whole_test=test_snps)
+    assert predicted.val.shape == pheno.val.shape
+    assert covariance.val.shape == (len(iid), len(iid))
+    assert np.array_equal(predicted.iid, iid)
+    assert np.isfinite(predicted.val).all()
+    assert np.isfinite(covariance.val).all()
 
     print(f"Tested installed FaST-LMM from {fastlmm.__file__}")
 

@@ -8,11 +8,17 @@ The maintainer chooses the version and explicitly approves publication. A
 release must be built from a clean commit on the repository's default branch,
 and its `vX.Y.Z` tag must point to that exact commit.
 
+The default branch is `main`. Existing local clones should rename their
+branch with `git branch -m master main`, fetch `origin`, and set the upstream
+with `git branch --set-upstream-to=origin/main main`.
+
 ## Release order
 
-Publish and verify any required PySnpTools and `fastlmmclib` releases before
-final FaST-LMM qualification. Update FaST-LMM's minimum dependency versions to
-the first compatible published releases.
+Publish and verify required bed-reader, PySnpTools, and numerical-backend
+releases before final FaST-LMM qualification. Update FaST-LMM's minimum
+dependency versions to the first compatible published releases. When replacing
+fastlmmclib with fastlmmrslib, qualify numerical behavior and fault handling
+before changing the production backend.
 
 Final qualification must install those prerequisites from PyPI, not from
 sibling source checkouts, Git dependencies, or prereleases.
@@ -41,20 +47,21 @@ repository or GitHub Actions.
    that affects the release.
 3. Set the version in `pyproject.toml` and update the release notes with the
    release date, compatibility changes, deprecations, and user-visible fixes.
-4. Confirm that the required published PySnpTools and `fastlmmclib` versions
+4. Confirm that the required published PySnpTools and numerical-backend versions
    install on every supported Python version and platform.
 5. Confirm that dependency bounds and Python-version markers describe versions
    actually tested in CI. Exercise the declared direct minimums on the oldest
-   and newest supported Python versions:
+   and newest supported Python versions. Include the HDF5 extra when qualifying
+   legacy HDF5 workflows:
 
    ```console
-   uv venv --python 3.10 .minimum-310
-   uv pip install --python .minimum-310/bin/python --resolution lowest-direct --editable ".[bgen]"
+   uv venv --python 3.11 .minimum-311
+   uv pip install --python .minimum-311/bin/python --resolution lowest-direct --editable ".[hdf5,bgen]"
    cd tests
-   ../.minimum-310/bin/python test.py
+   ../.minimum-311/bin/python test.py
    cd ..
    uv venv --python 3.14 .minimum-314
-   uv pip install --python .minimum-314/bin/python --resolution lowest-direct --editable ".[bgen]"
+   uv pip install --python .minimum-314/bin/python --resolution lowest-direct --editable ".[hdf5,bgen]"
    cd tests
    ../.minimum-314/bin/python test.py
    cd ..
@@ -87,9 +94,12 @@ repository or GitHub Actions.
    UV_PROJECT_ENVIRONMENT=.venv-notebook314 uv sync --python 3.14 --frozen --all-extras --group notebook
    fastlmm_docs_output="$(mktemp -d)"
    UV_PROJECT_ENVIRONMENT=.venv-notebook314 uv run --frozen --no-sync sphinx-build -W --keep-going -E -a -d /tmp/fastlmm-doctrees -b html doc/source "$fastlmm_docs_output"
-   diff -ru --exclude=.nojekyll "$fastlmm_docs_output" docs
    UV_PROJECT_ENVIRONMENT=.venv-notebook314 uv run --frozen --no-sync sphinx-build -W --keep-going -E -a -b linkcheck doc/source doc/build/linkcheck
    ```
+
+   Documentation is deployed from the strict Sphinx build by the Pages artifact
+   workflow. Generated HTML is not checked into Git. Verify the deployed index,
+   search, API anchors, and static assets after changes to the deployment.
 
    The maintained public notebooks are the four linked from `README.md`.
    Record any deliberately skipped machine-specific or multi-hour example and
@@ -107,7 +117,7 @@ repository or GitHub Actions.
 12. Install and test the exact wheel and source distribution in clean
     environments on the oldest and newest supported Python versions, outside
     the source checkout and without the repository on `PYTHONPATH`.
-13. Verify the installed `fastlmmclib` native artifact on every supported
+13. Verify the installed numerical-backend native artifact on every supported
     operating-system and architecture combination.
 14. Wait for all required CI jobs to pass on every supported operating system
     and Python version. Resolve warnings that indicate a compatibility,
@@ -116,6 +126,17 @@ repository or GitHub Actions.
 If the repository does not yet have the locked `uv` workflow assumed above,
 finish that migration before releasing rather than substituting an unreviewed
 release path.
+
+## Python 3.15 qualification
+
+Core Python 3.15 jobs must install published binary prerequisites, with neither
+HDF5 nor BGEN installed. HDF5 and BGEN remain required optional-feature tests
+on Python 3.11 through 3.14. Do not infer their Python 3.15 support from a core
+suite pass. Qualify them separately when upstream binary support is available.
+
+Local prerequisite artifacts can diagnose integration problems, but cannot
+qualify a release. Choose and publish prerequisite versions before updating
+FaST-LMM's dependency minimums and performing final Python 3.15 acceptance.
 
 ## Publish
 

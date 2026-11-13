@@ -15,6 +15,7 @@ from pysnptools.standardizer import Unit
 
 from fastlmm.inference import getLMM
 import unittest
+from importlib.util import find_spec
 import os.path
 from unittest.mock import patch
 
@@ -153,6 +154,7 @@ class TestFeatureSelection(unittest.TestCase):
     def test_regression_bed(self):
         self.regression(self.snpreader_bed, self.regular_regression_answers)
 
+    @unittest.skipUnless(find_spec("h5py") is not None, "requires fastlmm[hdf5]")
     def test_regression_hdf5(self):
         self.regression(self.snpreader_hdf5, self.regular_regression_answers)
 
@@ -280,6 +282,7 @@ class TestFeatureSelection(unittest.TestCase):
             currentFolder + "/examples/toydata.5chrom.bed"
         )  # use string instead of reader, to test that strings work
 
+    @unittest.skipUnless(find_spec("h5py") is not None, "requires fastlmm[hdf5]")
     def test_blocking_hdf5(self):
         self.blocking(self.snpreader_hdf5)
 
@@ -599,6 +602,7 @@ class TestFeatureSelection(unittest.TestCase):
     def test_log_likelihood_bed(self):
         self.log_likelihood(self.snpreader_bed)
 
+    @unittest.skipUnless(find_spec("h5py") is not None, "requires fastlmm[hdf5]")
     def test_log_likelihood_hdf5(self):
         self.log_likelihood(self.snpreader_hdf5)
 

@@ -2,6 +2,7 @@ import re
 import os
 import os.path
 import unittest
+from importlib.util import find_spec
 import fastlmm.inference.tests.test
 import fastlmm.feature_selection.test
 import shutil
@@ -65,6 +66,8 @@ class WidgetTestCase(unittest.TestCase):
             return windows_fn
 
     def runTest(self):
+        if ".hdf5." in self._infile and find_spec("h5py") is None:
+            self.skipTest("requires fastlmm[hdf5]")
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
         tmpOutfile = self._tmpOutfile()
         referenceOutfile = self._referenceOutfile()
