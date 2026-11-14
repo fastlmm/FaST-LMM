@@ -28,19 +28,24 @@ def text(cell):
     return [line.rstrip() for line in s.splitlines() if line.strip()]
 
 
-repo, run = Path(sys.argv[1]), Path(sys.argv[2])
-for name in sys.argv[3:]:
-    committed = next(repo.rglob(f"{name}.ipynb"))
-    a = json.loads(committed.read_text(encoding="utf-8"))["cells"]
-    b = json.loads((run / f"{name}.executed.ipynb").read_text(encoding="utf-8"))["cells"]
-    changed = 0
-    for i, (ca, cb) in enumerate(zip(a, b)):
-        if ca["cell_type"] != "code":
-            continue
-        ta, tb = text(ca), text(cb)
-        if ta != tb:
-            changed += 1
-            print(f"--- {name} cell {i}")
-            for line in list(difflib.unified_diff(ta, tb, lineterm="", n=0))[2:14]:
-                print("   ", line[:160])
-    print(f"===== {name}: {changed} code cells with changed output\n")
+def main():
+    repo, run = Path(sys.argv[1]), Path(sys.argv[2])
+    for name in sys.argv[3:]:
+        committed = next(repo.rglob(f"{name}.ipynb"))
+        a = json.loads(committed.read_text(encoding="utf-8"))["cells"]
+        b = json.loads((run / f"{name}.executed.ipynb").read_text(encoding="utf-8"))["cells"]
+        changed = 0
+        for i, (ca, cb) in enumerate(zip(a, b)):
+            if ca["cell_type"] != "code":
+                continue
+            ta, tb = text(ca), text(cb)
+            if ta != tb:
+                changed += 1
+                print(f"--- {name} cell {i}")
+                for line in list(difflib.unified_diff(ta, tb, lineterm="", n=0))[2:14]:
+                    print("   ", line[:160])
+        print(f"===== {name}: {changed} code cells with changed output\n")
+
+
+if __name__ == "__main__":
+    main()
