@@ -60,6 +60,9 @@ dependencies = [
     "bed-reader>=1.0.6",
     "tabulate>=0.9.0",
     "pysnptools>=0.5.15",
+    # PySnpTools 0.5.15 imports six but omits it from its dependencies.
+    # Remove when the minimum becomes PySnpTools 1.0.0.
+    "six>=1.16.0",
     "fastlmmclib>=0.0.8",
 ]
 [project.urls]
