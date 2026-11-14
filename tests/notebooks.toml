@@ -1,0 +1,39 @@
+# Every tracked notebook has an explicit release qualification policy.
+# Saved output is evidence of past use, not a substitute for a fresh execution.
+
+[[notebook]]
+path = "doc/ipynb/FaST-LMM.ipynb"
+mode = "full"
+reason = "Public core workflow; qualify all active examples, including the slow two-kernel LRT and subsequent prediction."
+evidence = "Saved Python 3.14.5 execution counts run consecutively from 1 through 9, including the slow LRT cell and final prediction. No cell timestamps are recorded."
+
+[[notebook]]
+path = "doc/ipynb/fastlmm2021.ipynb"
+mode = "full"
+reason = "Public effect-size, multiple-phenotype, caching, multiprocessing, and epistasis examples."
+evidence = "All 13 code cells have consecutive execution counts and August 2026 timestamps, ending at the final epistasis example."
+
+[[notebook]]
+path = "doc/ipynb/heritability_si.ipynb"
+mode = "full"
+reason = "Execute the notebook as written, including the additional small analyses. Keep the large-study analysis explicitly disabled."
+evidence = "All 13 code cells have consecutive August 2026 timestamps. The large Full Run analysis is inside if False; that cell only executed its setup. The later N=50 additional tests were actually run."
+
+[[notebook]]
+path = "doc/ipynb/SingleSnpScale.ipynb"
+mode = "prefix"
+stop_before_heading = "### Larger Example"
+reason = "Qualify the public small-data, caching, multiprocessing, and distributed-file examples; exclude the 250,000-individual, 10,000-SNP benchmark whose data-generation comment estimates six hours. Portable cache paths must be restored before qualification."
+evidence = "Saved Python 3.7.10 metadata and out-of-order execution counts do not establish a fresh run during the last release. The bounded prefix is a restoration recommendation, not a claimed recent manual execution frontier."
+
+[[notebook]]
+path = "doc/ipynb/MatrixWork.ipynb"
+mode = "historical"
+reason = "Python 2 matrix exploration, not an advertised current user workflow. Preserve it without treating it as a release test."
+evidence = "Saved Python 2.7.16 kernel and Python 2 print syntax."
+
+[[notebook]]
+path = "doc/notes/h2_vs_logdelta.ipynb"
+mode = "historical"
+reason = "Old research note rather than a maintained release example. Preserve it without claiming current execution coverage."
+evidence = "Notebook format 3, a 2015 commit, and references to old local paths and PrecomputeLocoPcs."

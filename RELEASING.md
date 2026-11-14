@@ -85,8 +85,12 @@ repository or GitHub Actions.
 8. Run representative end-to-end association and inference tests. Investigate
    every change in numerical results, tolerances, ordering, dtypes, or result
    schemas before updating expected output.
-9. Execute the maintained notebooks from start to finish in clean environments
-   and inspect their results. Build the documentation from its sources and
+9. Execute notebooks according to `tests/notebooks.toml` in clean environments
+   and inspect their results. The policy records full runs, an explicit scaling
+   example cutoff, and historical exclusions, based on saved manual execution
+   evidence. Report the exact cells executed and omitted; cached output is not
+   qualification. Never enable the heritability notebook's guarded full-study
+   analysis automatically. Build the documentation from its sources and
    check links and examples. Create the locked Python 3.14 notebook environment
    with:
 
@@ -102,8 +106,11 @@ repository or GitHub Actions.
    search, API anchors, and static assets after changes to the deployment.
 
    The maintained public notebooks are the four linked from `README.md`.
-   Record any deliberately skipped machine-specific or multi-hour example and
-   why it was not part of the routine execution pass.
+   The core and 2021 notebooks run fully; heritability runs as written with its
+   existing large-study guard disabled; scaling stops before "Larger Example".
+   The core notebook's slow two-kernel LRT remains a release check even when
+   it is too expensive for routine PR CI. Historical notebooks are preserved
+   and reported as excluded, never as passing tests.
 10. Build the source distribution and wheel without local source overrides:
 
     ```console
