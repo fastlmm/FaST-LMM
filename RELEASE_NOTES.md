@@ -1,10 +1,8 @@
 # FaST-LMM release notes
 
-## 1.0.0 (unreleased)
+## 1.0.0 (2026-11-14)
 
-- Require Python 3.11.5 or later and prepare core Python 3.15 support while
-  retaining Python 3.11 through 3.14. Final acceptance requires the compatible
-  bed-reader, PySnpTools, and numerical-backend releases to be published first.
+- Require Python 3.11.5 or later and support Python 3.11 through 3.15.
 - Make HDF5 support optional. Existing HDF5 users must install
   `fastlmm[hdf5]`; install `fastlmm[hdf5,bgen]` for both optional formats.
   HDF5 and BGEN remain qualified on Python 3.11 through 3.14 while their
@@ -23,6 +21,8 @@
 - Replace fastlmmclib with fastlmmrslib, a Rust implementation of Davies'
   algorithm, for SNP-set score-test p-values. A Davies fault now raises
   `ArithmeticError` instead of returning an out-of-range p-value.
+- Refresh the saved outputs of the maintained notebooks, and make the
+  SingleSnpScale examples use a temporary folder instead of `c:\deldir`.
 - Deploy strict Sphinx builds through GitHub Pages artifacts. Remove tracked
   generated HTML after verifying the deployed pages and static assets.
 - Require NumPy 2.3.5 or newer and SciPy 1.16.1 or newer on Python 3.14 while
