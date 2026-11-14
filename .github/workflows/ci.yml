@@ -1,5 +1,8 @@
 name: CI
 
+# Full CI runs on pull requests and monthly. Pushes to main are not retested:
+# branch protection requires PRs to be up to date with main and to pass
+# "CI result" before merging. Documentation deployment is handled by docs.yml.
 on:
   pull_request:
   workflow_dispatch:
@@ -21,17 +24,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install stable Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.12.2"
-          python-version: "3.14"
+          version: "0.12.24"
           enable-cache: true
 
       - name: Ruff
-        run: uvx ruff@0.7.1 check
+        run: uvx ruff@0.17.5 check
 
   documentation:
     name: Documentation
@@ -39,13 +46,17 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install stable Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
 
       - name: Install uv and Python 3.14
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.12.2"
-          python-version: "3.14"
+          version: "0.12.24"
           enable-cache: true
           cache-suffix: documentation
 
@@ -55,27 +66,29 @@ jobs:
       - name: Build documentation from clean sources
         run: uv run --frozen --no-sync sphinx-build -W --keep-going -E -a -d "${{ runner.temp }}/doctrees" -b html doc/source "${{ runner.temp }}/generated-docs"
 
-      - name: Verify generated documentation is current
-        run: diff -ru --exclude=.nojekyll "${{ runner.temp }}/generated-docs" docs
-
   minimum-dependencies:
-    name: Minimum dependencies (Python ${{ matrix.python-version }})
+    name: Minimum dependencies (Python ${{ matrix.python-version }}, ${{ matrix.package }})
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
+        package: [".", ".[hdf5,bgen]"]
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install stable Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install uv and Python ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.12.2"
-          python-version: ${{ matrix.python-version }}
+          version: "0.12.24"
           enable-cache: true
           cache-suffix: minimum-${{ matrix.python-version }}
 
@@ -85,7 +98,7 @@ jobs:
           CFLAGS: -D_POSIX_C_SOURCE=200809L
         run: |
           uv venv --python ${{ matrix.python-version }} .minimum-venv
-          uv pip install --python .minimum-venv/bin/python --resolution lowest-direct --editable ".[bgen]"
+          uv pip install --python .minimum-venv/bin/python --resolution lowest-direct --editable "${{ matrix.package }}"
 
       - name: Run the canonical suite
         working-directory: tests
@@ -98,13 +111,17 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install stable Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
 
       - name: Install uv and Python 3.14
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.12.2"
-          python-version: "3.14"
+          version: "0.12.24"
           enable-cache: true
           cache-suffix: freshness-3.14
 
@@ -128,20 +145,24 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-2022, macos-15-intel, macos-15]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     env:
       UV_PYTHON: ${{ matrix.python-version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install stable Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install uv and Python ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.12.2"
-          python-version: ${{ matrix.python-version }}
+          version: "0.12.24"
           enable-cache: true
           cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}
 
@@ -155,6 +176,58 @@ jobs:
         working-directory: tests
         run: uv run --frozen --no-sync python test.py
 
+  core-python-315:
+    name: Core (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2022, macos-15-intel, macos-15]
+        python-version: ["3.15"]
+        # Windows ARM64 starts at Python 3.13: statsmodels publishes win_arm64
+        # wheels only from 0.15.0, for Python 3.13 and later.
+        include:
+          - {os: windows-11-arm, python-version: "3.13"}
+          - {os: windows-11-arm, python-version: "3.14"}
+          - {os: windows-11-arm, python-version: "3.15"}
+    env:
+      UV_PROJECT_ENVIRONMENT: .core-venv
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install stable Python ${{ matrix.python-version }}
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.24"
+
+      # Requires the compatible prerequisite releases to be published first.
+      # Resolve core separately because bgen-reader constrains pandas below 3.
+      - name: Install core with published binary dependencies
+        run: |
+          uv venv --python ${{ matrix.python-version }} .core-venv
+          uv pip install --python .core-venv --only-binary :all: --editable .
+
+      - name: Verify optional backends are absent
+        run: >-
+          uv run --no-sync python -c
+          "from importlib.util import find_spec;
+          assert find_spec('h5py') is None;
+          assert find_spec('bgen_reader') is None"
+
+      - name: Run the canonical core suite
+        shell: bash
+        run: |
+          cd tests
+          uv run --no-sync python test.py
+
   build:
     name: Build distributions
     if: github.event_name != 'schedule'
@@ -162,13 +235,17 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install stable Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.12.2"
-          python-version: "3.14"
+          version: "0.12.24"
           enable-cache: true
 
       - name: Verify the lockfile
@@ -185,7 +262,7 @@ jobs:
         run: cmp dist/*.whl sdist-dist/*.whl
 
       - name: Upload distributions and smoke test
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: distributions
           path: |
@@ -196,37 +273,70 @@ jobs:
           retention-days: 7
 
   artifact-test:
-    name: Artifact test (${{ matrix.kind }}, Python ${{ matrix.python-version }})
+    name: Artifact test (${{ matrix.os }}, ${{ matrix.kind }}, Python ${{ matrix.python-version }})
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         include:
-          - kind: wheel
-            python-version: "3.10"
+          - os: ubuntu-latest
+            kind: wheel
+            python-version: "3.11"
             package: artifact/dist/*.whl
-          - kind: sdist
-            python-version: "3.10"
+          - os: ubuntu-latest
+            kind: sdist
+            python-version: "3.11"
             package: artifact/dist/*.tar.gz
-          - kind: wheel
+          - os: ubuntu-latest
+            kind: wheel
             python-version: "3.14"
             package: artifact/dist/*.whl
-          - kind: sdist
+          - os: ubuntu-latest
+            kind: sdist
             python-version: "3.14"
+            package: artifact/dist/*.tar.gz
+          - os: ubuntu-latest
+            kind: wheel
+            python-version: "3.15"
+            package: artifact/dist/*.whl
+          - os: ubuntu-latest
+            kind: sdist
+            python-version: "3.15"
+            package: artifact/dist/*.tar.gz
+          - os: windows-11-arm
+            kind: wheel
+            python-version: "3.13"
+            package: artifact/dist/*.whl
+          - os: windows-11-arm
+            kind: sdist
+            python-version: "3.13"
+            package: artifact/dist/*.tar.gz
+          - os: windows-11-arm
+            kind: wheel
+            python-version: "3.15"
+            package: artifact/dist/*.whl
+          - os: windows-11-arm
+            kind: sdist
+            python-version: "3.15"
             package: artifact/dist/*.tar.gz
     steps:
-      - name: Install uv and Python ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - name: Install stable Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          version: "0.12.2"
           python-version: ${{ matrix.python-version }}
+          architecture: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
+
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.24"
           no-project: true
           enable-cache: false
 
       - name: Download distributions and smoke test
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: distributions
           path: artifact
@@ -235,7 +345,27 @@ jobs:
         run: uv venv --python ${{ matrix.python-version }} .artifact-venv
 
       - name: Install exact ${{ matrix.kind }} artifact
-        run: uv pip install --python .artifact-venv/bin/python ${{ matrix.package }}
+        shell: bash
+        run: uv pip install --python .artifact-venv ${{ matrix.package }}
 
       - name: Smoke-test installed package
-        run: .artifact-venv/bin/python artifact/tests/artifact_smoke_test.py
+        run: uv run --no-project --python .artifact-venv python artifact/tests/artifact_smoke_test.py
+
+  ci-result:
+    # The single required status check for branch protection. It runs even
+    # when other jobs fail, so a failure can never appear as a passing skip.
+    name: CI result
+    if: always()
+    needs: [lint, documentation, minimum-dependencies, dependency-freshness, test, core-python-315, build, artifact-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Some jobs run only on schedule or only on PRs, so "skipped" is allowed.
+      # A job skipped because a dependency failed is still caught, because the
+      # failed dependency is also listed in needs.
+      - name: Require every CI job to succeed or be skipped by design
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "$RESULTS"
+          jq -e 'all(.[]; . == "success" or . == "skipped")' <<< "$RESULTS"

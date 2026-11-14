@@ -1,14 +1,22 @@
-try:
-    import h5py
-except Exception:
-    pass
-
 import logging
 import numpy as np
 from fastlmm.pyplink.snpset import *
 from fastlmm.pyplink.altset_list import *
 
 #!!document the format
+
+
+def _require_h5py():
+    try:
+        import h5py
+    except ModuleNotFoundError as error:
+        if error.name != "h5py":
+            raise
+        raise ModuleNotFoundError(
+            "HDF5 support requires h5py. Install it with: pip install 'fastlmm[hdf5]'",
+            name="h5py",
+        ) from error
+    return h5py
 
 
 class Hdf5(object):
@@ -32,6 +40,7 @@ class Hdf5(object):
     def run_once(self):
         if self._ran_once:
             return
+        h5py = _require_h5py()
         self._ran_once = True
         try:
             self.h5 = h5py.File(self.filename, "r")

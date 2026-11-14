@@ -471,3 +471,6 @@ fastlmm/association/tests/test_gwas.py
 ignore.bat
 doc/ipynb/DebugApr2024.ipynb
 /specs/FaST-LMMPlus.code-workspace
+
+# Documentation is built and deployed by GitHub Pages Actions.
+/docs/

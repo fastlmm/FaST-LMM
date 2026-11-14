@@ -5,12 +5,20 @@
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
 
-See `FaST-LMM's README.md <https://github.com/fastlmm/FaST-LMM/blob/master/README.md>`_ for installation instructions, documentation, code, and a bibliography.
+See `FaST-LMM's README.md <https://github.com/fastlmm/FaST-LMM/blob/main/README.md>`_ for installation instructions, documentation, code, and a bibliography.
+
+
+HDF5 and BGEN support are optional. Install ``fastlmm[hdf5]``,
+``fastlmm[bgen]``, or ``fastlmm[hdf5,bgen]`` as needed.
+Existing HDF5 users upgrading from an earlier release must install the HDF5 extra.
+Core Python 3.15 qualification excludes both backends; HDF5 and BGEN remain
+covered by the Python 3.11 through 3.14 test matrix.
+
 
 :new:
 
 :func:`.single_snp` now supports effect size, multiple phenotypes, and related features (`notebook demonstrating new features
-<https://github.com/fastlmm/FaST-LMM/blob/master/doc/ipynb/fastlmm2021.ipynb>`_).
+<https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_).
 
 :Code:
 

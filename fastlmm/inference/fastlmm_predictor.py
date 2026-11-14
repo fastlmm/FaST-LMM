@@ -780,6 +780,8 @@ class FastLMM(object):
                 # low rank from Rasmussen  eq 2.9 + noise term added to covar
                 ###################################################
                 Gstar = self.mixer.g_mix(K0_train_test, K1_train_test)
+                # TODO: handle h2raw == 0 in this low-rank prediction path.
+                # The 1 / varg below fails; reproduced before the 2026 dependency update.
                 varg = self.h2raw * self.sigma2
                 vare = (1.0 - self.h2raw) * self.sigma2
                 Ainv = LA.inv(

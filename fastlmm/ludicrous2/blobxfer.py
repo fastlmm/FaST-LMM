@@ -66,10 +66,7 @@ import threading
 import time
 import traceback
 
-try:
-    from urllib.parse import quote as urlquote
-except ImportError:  # pramga: no cover
-    from six.moves.urllib.parse import quote as urlquote
+from urllib.parse import quote as urlquote
 import xml.etree.ElementTree as ET
 
 # non-stdlib imports

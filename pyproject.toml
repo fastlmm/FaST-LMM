@@ -1,13 +1,13 @@
 [build-system]
-requires = ["uv_build>=0.12.3,<0.13"]
+requires = ["uv_build==0.12.24"]
 build-backend = "uv_build"
 
 [project]
 name = "fastlmm"
-version = "0.6.13"
+version = "1.0.0"
 description = "Fast GWAS"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11.5"
 keywords = [
     "gwas",
     "bioinformatics",
@@ -24,18 +24,28 @@ license = "Apache-2.0"
 license-files = ["LICENSE.md"]
 classifiers = [
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
-    "numpy>=1.22.0; python_version < '3.14'",
-    "numpy>=2.3.5; python_version >= '3.14'",
-    "scipy>=1.8.0; python_version < '3.14'",
-    "scipy>=1.16.1; python_version >= '3.14'",
-    "pandas>=1.3.1,<4; python_version < '3.14'",
+    "numpy>=1.23.5; python_version < '3.12'",
+    "numpy>=1.26.0; python_version == '3.12'",
+    "numpy>=2.1.0; python_version == '3.13'",
+    "numpy>=2.3.5; python_version == '3.14'",
+    "numpy>=2.5.4; python_version >= '3.15'",
+    "scipy>=1.9.3; python_version < '3.12'",
+    "scipy>=1.11.3; python_version == '3.12'",
+    "scipy>=1.14.1; python_version == '3.13'",
+    "scipy>=1.16.1; python_version == '3.14'",
+    "scipy>=1.18.1; python_version >= '3.15'",
+    "pandas>=1.5.3,<4; python_version < '3.12'",
+    "pandas>=2.1.1,<4; python_version == '3.12'",
+    "pandas>=2.2.3,<4; python_version == '3.13'",
+    # BGEN currently constrains pandas below 3. Core 3.15 CI resolves and tests
+    # current binary dependencies separately from the optional-feature lock.
     "pandas>=2.3.3,<4; python_version >= '3.14'",
     "matplotlib>=3.8.0; python_version < '3.14'",
     "matplotlib>=3.10.5; python_version >= '3.14'",
@@ -47,10 +57,10 @@ dependencies = [
     "statsmodels>=0.14.5; python_version >= '3.14'",
     "psutil>=6.1.0; python_version < '3.14'",
     "psutil>=7.1.2; python_version >= '3.14'",
-    "pysnptools>=0.5.15",
-    # PySnpTools 0.5.15 imports six but omits it from its dependencies.
-    "six>=1.16.0",
-    "fastlmmclib>=0.0.8",
+    "bed-reader>=1.2.0",
+    "tabulate>=0.9.0",
+    "pysnptools>=1.0.0",
+    "fastlmmrslib>=0.1.0",
 ]
 [project.urls]
 Homepage = "https://fastlmm.github.io/"
@@ -59,6 +69,11 @@ Issues = "https://github.com/fastlmm/FaST-LMM/issues"
 Source = "https://github.com/fastlmm/FaST-LMM"
 
 [project.optional-dependencies]
+hdf5 = [
+    "h5py>=3.12.1; python_version < '3.14'",
+    # h5py 3.15.0 is the first release with Python 3.14 wheels.
+    "h5py>=3.15.0; python_version >= '3.14'",
+]
 bgen = ["cbgen>=1.0.6", "bgen-reader>=4.0.9"]
 dev = [
     "pytest",
