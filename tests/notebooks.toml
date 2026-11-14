@@ -23,8 +23,8 @@ evidence = "All 13 code cells have consecutive August 2026 timestamps. The large
 path = "doc/ipynb/SingleSnpScale.ipynb"
 mode = "prefix"
 stop_before_heading = "### Larger Example"
-reason = "Qualify the public small-data, caching, multiprocessing, and distributed-file examples; exclude the 250,000-individual, 10,000-SNP benchmark whose data-generation comment estimates six hours. Portable cache paths must be restored before qualification."
-evidence = "Saved Python 3.7.10 metadata and out-of-order execution counts do not establish a fresh run during the last release. The bounded prefix is a restoration recommendation, not a claimed recent manual execution frontier."
+reason = "Qualify the public small-data, caching, multiprocessing, and distributed-file examples; exclude the 250,000-individual, 10,000-SNP benchmark whose data-generation comment estimates six hours. Its cache paths use the system temporary folder."
+evidence = "The prefix was executed for the 1.0.0 release (November 2026); the Larger Example cells keep their earlier saved outputs."
 
 [[notebook]]
 path = "doc/ipynb/MatrixWork.ipynb"
