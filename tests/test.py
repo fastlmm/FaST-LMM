@@ -145,6 +145,7 @@ if __name__ == "__main__":
     import fastlmm.association.tests.test_single_snp_select
     import fastlmm.association.tests.test_single_snp_all_plus_select
     import fastlmm.association.tests.test_snp_set
+    import fastlmm.association.tests.test_davies
     import fastlmm.association.tests.test_gwas
     import fastlmm.association.tests.test_heritability_spatial_correction
     import fastlmm.association.tests.test_single_snp_scale
@@ -166,6 +167,7 @@ if __name__ == "__main__":
             fastlmm.inference.tests.test_fastlmm_predictor.getTestSuite(),
             fastlmm.association.tests.test_gwas.getTestSuite(),
             fastlmm.association.tests.test_snp_set.getTestSuite(),
+            fastlmm.association.tests.test_davies.getTestSuite(),
             fastlmm.inference.tests.test.getTestSuite(),
             fastlmm.association.tests.testepistasis.getTestSuite(),
             fastlmm.association.tests.test_heritability_spatial_correction.getTestSuite(),

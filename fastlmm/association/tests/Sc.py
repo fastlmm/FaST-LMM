@@ -96,13 +96,16 @@ class Sc(object):
 
     @staticmethod
     def pv_davies_eig(squaredform, eigvals):
-        import fastlmmclib.quadform as qf
+        """Return a p-value, raising ArithmeticError for Davies fault diagnostics."""
+        from fastlmmrslib import qf
 
         # result = qf.qf(squaredform, eigvals,acc=1e-04,lim=10000)    #settings to match R-based results
-        result = qf.qf(
+        probability, fault, trace = qf(
             squaredform, eigvals, acc=1e-07
         )  # decided on 1e-7 after experimentation between -4 and -12. Thresh on exp in QFC.C seems to have no effect
-        return result[0]
+        if fault != 0 or probability is None:
+            raise ArithmeticError(f"Davies calculation failed with fault {fault}; trace={trace}")
+        return probability
 
     @staticmethod
     def pv_davies(squaredform, expectationsqform, varsqform, GPG):
