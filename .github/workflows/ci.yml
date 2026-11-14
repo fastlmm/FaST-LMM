@@ -1,5 +1,8 @@
 name: CI
 
+# Full CI runs on pull requests and monthly. Pushes to main are not retested:
+# branch protection requires PRs to be up to date with main and to pass
+# "CI result" before merging. Documentation deployment is handled by docs.yml.
 on:
   pull_request:
   workflow_dispatch:
@@ -347,3 +350,22 @@ jobs:
 
       - name: Smoke-test installed package
         run: uv run --no-project --python .artifact-venv python artifact/tests/artifact_smoke_test.py
+
+  ci-result:
+    # The single required status check for branch protection. It runs even
+    # when other jobs fail, so a failure can never appear as a passing skip.
+    name: CI result
+    if: always()
+    needs: [lint, documentation, minimum-dependencies, dependency-freshness, test, core-python-315, build, artifact-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Some jobs run only on schedule or only on PRs, so "skipped" is allowed.
+      # A job skipped because a dependency failed is still caught, because the
+      # failed dependency is also listed in needs.
+      - name: Require every CI job to succeed or be skipped by design
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "$RESULTS"
+          jq -e 'all(.[]; . == "success" or . == "skipped")' <<< "$RESULTS"

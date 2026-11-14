@@ -129,6 +129,9 @@ repository or GitHub Actions.
 14. Wait for all required CI jobs to pass on every supported operating system
     and Python version. Resolve warnings that indicate a compatibility,
     packaging, numerical, or security problem.
+    Branch protection requires the PR to be up to date with `main` and to pass
+    the `CI result` check, so CI does not run again after merging; it reruns
+    monthly.
 
 If the repository does not yet have the locked `uv` workflow assumed above,
 finish that migration before releasing rather than substituting an unreviewed
