@@ -69,7 +69,11 @@ Issues = "https://github.com/fastlmm/FaST-LMM/issues"
 Source = "https://github.com/fastlmm/FaST-LMM"
 
 [project.optional-dependencies]
-hdf5 = ["h5py>=3.12.1"]
+hdf5 = [
+    "h5py>=3.12.1; python_version < '3.14'",
+    # h5py 3.15.0 is the first release with Python 3.14 wheels.
+    "h5py>=3.15.0; python_version >= '3.14'",
+]
 bgen = ["cbgen>=1.0.6", "bgen-reader>=4.0.9"]
 dev = [
     "pytest",

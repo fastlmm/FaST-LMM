@@ -17,6 +17,9 @@
   pytest collection.
 - Require bed-reader 1.2.0, PySnpTools 1.0.0, and fastlmmrslib 0.1.0 or later.
   PySnpTools 1.0 no longer needs `six`, so FaST-LMM no longer declares it.
+- Support Windows ARM64 on Python 3.13 and later. Python 3.11 and 3.12 are not
+  supported there because statsmodels publishes Windows ARM64 wheels only for
+  Python 3.13 and later.
 - Replace fastlmmclib with fastlmmrslib, a Rust implementation of Davies'
   algorithm, for SNP-set score-test p-values. A Davies fault now raises
   `ArithmeticError` instead of returning an out-of-range p-value.

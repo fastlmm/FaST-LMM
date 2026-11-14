@@ -185,9 +185,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-2022, macos-15-intel, macos-15]
         python-version: ["3.15"]
+        # Windows ARM64 starts at Python 3.13: statsmodels publishes win_arm64
+        # wheels only from 0.15.0, for Python 3.13 and later.
         include:
-          - {os: windows-11-arm, python-version: "3.11"}
-          - {os: windows-11-arm, python-version: "3.12"}
           - {os: windows-11-arm, python-version: "3.13"}
           - {os: windows-11-arm, python-version: "3.14"}
           - {os: windows-11-arm, python-version: "3.15"}
@@ -307,11 +307,11 @@ jobs:
             package: artifact/dist/*.tar.gz
           - os: windows-11-arm
             kind: wheel
-            python-version: "3.11"
+            python-version: "3.13"
             package: artifact/dist/*.whl
           - os: windows-11-arm
             kind: sdist
-            python-version: "3.11"
+            python-version: "3.13"
             package: artifact/dist/*.tar.gz
           - os: windows-11-arm
             kind: wheel
