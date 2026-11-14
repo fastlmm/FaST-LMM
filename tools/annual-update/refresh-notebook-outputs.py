@@ -5,12 +5,14 @@ Keeps each notebook's metadata and line endings. In SingleSnpScale, cells after 
 executed prefix keep their committed outputs, and verbose file-I/O stdout logging
 (which records local IPs and temp paths) is dropped, keeping the result tables.
 """
-import json, sys
+import json
+import sys
 from pathlib import Path
 repo, run = Path(sys.argv[1]), Path(sys.argv[2])
 for name in ["FaST-LMM", "fastlmm2021", "heritability_si", "SingleSnpScale"]:
     path = repo / "doc/ipynb" / f"{name}.ipynb"
-    raw = path.read_bytes(); crlf = b"\r\n" in raw
+    raw = path.read_bytes()
+    crlf = b"\r\n" in raw
     nb = json.loads(raw.decode("utf-8"))
     ex = json.loads((run / f"{name}.executed.ipynb").read_text(encoding="utf-8"))["cells"]
     for i, cb in enumerate(ex):
