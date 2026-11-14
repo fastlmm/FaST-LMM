@@ -15,12 +15,11 @@
 - Expand installed-artifact checks and stable-interpreter CI qualification;
   retain the canonical integration suite rather than substituting incomplete
   pytest collection.
-- Keep published prerequisite bounds during preparation. After publishing
-  bed-reader 1.2.0, PySnpTools 1.0.0, and the selected numerical backend, raise the
-  downstream minimums and regenerate locks before final acceptance.
-- Prepare fastlmmrslib 0.1.0 as the Rust successor to fastlmmclib. Production
-  migration remains gated on publication and final acceptance, including
-  explicit propagation of numerical fault diagnostics.
+- Require bed-reader 1.2.0, PySnpTools 1.0.0, and fastlmmrslib 0.1.0 or later.
+  PySnpTools 1.0 no longer needs `six`, so FaST-LMM no longer declares it.
+- Replace fastlmmclib with fastlmmrslib, a Rust implementation of Davies'
+  algorithm, for SNP-set score-test p-values. A Davies fault now raises
+  `ArithmeticError` instead of returning an out-of-range p-value.
 - Deploy strict Sphinx builds through GitHub Pages artifacts. Remove tracked
   generated HTML after verifying the deployed pages and static assets.
 - Require NumPy 2.3.5 or newer and SciPy 1.16.1 or newer on Python 3.14 while

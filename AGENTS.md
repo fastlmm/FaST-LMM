@@ -25,8 +25,8 @@ correctness unless the task explicitly changes those goals.
 
 ## Cross-Repository Release Coordination
 
-FaST-LMM depends on the separately released `pysnptools` and `fastlmmclib`
-projects. When a release changes their compatibility requirements, complete and
+FaST-LMM depends on the separately released `bed-reader`, `pysnptools`, and
+`fastlmmrslib` projects. When a release changes their compatibility requirements, complete and
 publish the prerequisite releases first, update FaST-LMM's dependency bounds,
 and perform final acceptance against the published artifacts rather than
 unpublished sibling checkouts.
