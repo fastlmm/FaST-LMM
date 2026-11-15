@@ -959,6 +959,31 @@ class TestSingleSnp(unittest.TestCase):
                 row = self._dtype_frame(dtype, force_low_rank, covar=covar).loc[sid]
                 assert row.PValue == 1.0 and row.SnpWeight == 0.0, (dtype, force_low_rank, row.PValue, row.SnpWeight)
 
+    def test_rotate_dispatches_on_result_dtype(self):
+        # rotate picks its explained-by-covariates cutoff from the regression result's dtype.
+        from fastlmm.inference.lmm_cov import LMM
+
+        rng = np.random.default_rng(0)
+        n = 50
+        X = np.c_[rng.standard_normal(n), np.ones(n)]
+        G = rng.standard_normal((n, 10))
+        lmm = LMM(X=X, Y=rng.standard_normal((n, 1)), G=G, K=None)
+        genotypes = rng.integers(0, 3, (n, 4))
+        genotypes[:, 1] = 1  # constant, so explained by the intercept: rotate zeroes it
+        # Integer input regresses to float64, so it must match float64 input exactly.
+        UA, UUA = lmm.rotate(genotypes)
+        for actual, expected in zip((UA, UUA), lmm.rotate(genotypes.astype(np.float64))):
+            np.testing.assert_array_equal(actual, expected)
+        assert not UA[:, 1].any() and not UUA[:, 1].any()
+        with self.assertRaisesRegex(TypeError, "float32 and float64"):
+            lmm.rotate(genotypes.astype(np.complex128))
+
+    def test_as_dtype_rejects_other_dtypes(self):
+        from fastlmm.association.single_snp import _as_dtype
+
+        with self.assertRaisesRegex(TypeError, "float32 or float64"):
+            _as_dtype(np, np.ones((3, 1)), np.float16, "covar")
+
     def test_dtype_float32_two_kernels(self):
         # Searching for the mix of two kernels must also run in float32.
         test_snps = Bed(self.bedbase, count_A1=False)

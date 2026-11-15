@@ -194,20 +194,25 @@ class LMM(object):
         N = A.shape[0]
         D = self.linreg.D
         # treat pathological case where a variable is explained by the covariates
-        # (std in float64: squaring float32 values can overflow or underflow to zero)
-        if A.dtype == np.float64:
-            A = self._xp.asarray(self.linreg.regress(A))
-            A_std = A.std(0, dtype=np.float64)
-            explained = A_std <= 1e-10
-        else:
+        # (std in float64: squaring float32 values can overflow or underflow to zero).
+        # The cutoff depends on the precision of the regression result (integer input
+        # becomes float64 there), not on the input's dtype.
+        regressed = self._xp.asarray(self.linreg.regress(A))
+        regressed_std = regressed.std(0, dtype=np.float64)
+        if regressed.dtype == np.float64:
+            explained = regressed_std <= 1e-10
+        elif regressed.dtype == np.float32:
             # float32 regression leaves roundoff residuals of about 1e-7 relative (1e-14 for
             # float64), above the absolute 1e-10 cutoff, so use a cutoff relative to each
             # column's std: about 1e3 above float32 roundoff, as 1e-10 is about 1e4 above
             # float64 roundoff for standardized SNPs.
             original_std = self._xp.asarray(A).std(0, dtype=np.float64)
-            A = self._xp.asarray(self.linreg.regress(A))
-            A_std = A.std(0, dtype=np.float64)
-            explained = A_std <= 1e-4 * original_std
+            explained = regressed_std <= 1e-4 * original_std
+        else:
+            raise TypeError(
+                f"rotate supports float32 and float64 data, not {regressed.dtype}"
+            )
+        A = regressed
         A[:, explained] = 0.0
         if S.shape[0] < N - D:  # lowrank case
             # A = self.linreg.regress(A)

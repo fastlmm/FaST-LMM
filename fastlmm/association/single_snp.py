@@ -763,7 +763,12 @@ class _Mixer(object):
                 _mix_from_Ks(K, K0.val, K1.val, mixer.mixing)
                 # Sum in float64; float32 rounds each diagonal entry by up to eps/2,
                 # so its tolerance grows with N. (For float64 the tolerance stays 1e-7.)
-                diag_tol = max(1e-7, 4 * K.shape[0] * np.finfo(K.dtype).eps)
+                if K.dtype == np.float64:
+                    diag_tol = 1e-7
+                elif K.dtype == np.float32:
+                    diag_tol = max(1e-7, 4 * K.shape[0] * np.finfo(np.float32).eps)
+                else:
+                    raise TypeError(f"Expect K to be float32 or float64, not {K.dtype}")
                 assert (
                     K.shape[0] == K.shape[1]
                     and abs(float(xp.diag(K).sum(dtype=np.float64)) - K.shape[0])
@@ -998,7 +1003,9 @@ def _as_dtype(xp, val, dtype, name):
     # values too large (so that a length-N sum could overflow) or nonzero but below
     # float32's normal range would otherwise silently become inf or lose precision.
     result = xp.asarray(val, dtype=dtype)
-    if result.dtype == np.float32:
+    if result.dtype == np.float64:
+        pass  # float64 holds any value the input can (unchanged behavior)
+    elif result.dtype == np.float32:
         magnitude = np.abs(pstutil.asnumpy(val))
         finfo = np.finfo(np.float32)
         out_of_range = np.isfinite(magnitude) & (
@@ -1010,6 +1017,8 @@ def _as_dtype(xp, val, dtype, name):
                 f"{name} has values (for example, {magnitude[out_of_range][0]:g}) outside the range "
                 "dtype 'float32' handles safely; rescale them or use dtype 'float64'"
             )
+    else:
+        raise TypeError(f"dtype must be float32 or float64, not {result.dtype}")
     return result
 
 
@@ -1415,7 +1424,7 @@ def _snp_tester(
         if xp is np:
             snps_read.standardize()
             val = xp.asarray(snps_read.val, dtype=lmm.X.dtype)
-        else:
+        elif xp.__name__ == "cupy":
             val = xp.asarray(snps_read.val, dtype=lmm.X.dtype)
             statsx = xp.empty(
                 [val.shape[1], 2],
@@ -1425,6 +1434,8 @@ def _snp_tester(
             Standardizer._standardize_unit_python(
                 val, apply_in_place=True, use_stats=False, stats=statsx
             )
+        else:
+            raise ValueError(f"single_snp supports numpy and cupy, not '{xp.__name__}'")
 
         if interact is not None:
             variables_to_test = val * interact[:, xp.newaxis]
