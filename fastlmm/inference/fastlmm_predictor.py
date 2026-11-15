@@ -525,6 +525,7 @@ class FastLMM(object):
                 force_low_rank=self.force_low_rank,
                 kernel_standardizer=self.kernel_standardizer,
                 block_size=block_size,
+                dtype=np.float64,  # this predictor computes in float64
             )
 
             # do final prediction using lmm.py

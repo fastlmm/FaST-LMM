@@ -631,6 +631,8 @@ class _Mixer(object):
         kernel_standardizer=None,
         block_size=None,
         xp=np,
+        *,
+        dtype,
     ):
         from pysnptools.kernelstandardizer import Identity as KS_Identity
 
@@ -694,9 +696,8 @@ class _Mixer(object):
                 K = K1
             else:
                 if mixer.do_g:
-                    # covar is the run's covar_val, so it carries the run's dtype.
                     G = xp.empty(
-                        (K0.iid_count, K0.sid_count + K1.sid_count), dtype=covar.dtype
+                        (K0.iid_count, K0.sid_count + K1.sid_count), dtype=dtype
                     )
                     if mixer.mixing is None:
                         assert (
@@ -753,8 +754,7 @@ class _Mixer(object):
                 mixer.mixing = mixer.mixing or 1
                 K = K1
             else:
-                # covar is the run's covar_val, so it carries the run's dtype.
-                K = xp.empty(K0.val.shape, dtype=covar.dtype)
+                K = xp.empty(K0.val.shape, dtype=dtype)
                 if mixer.mixing is None:
                     assert (
                         xp is np
@@ -931,8 +931,6 @@ def _internal_single(
     xp,
     dtype,
 ):
-    # covar_val (below) carries the run's dtype; code that follows reads it from there
-    # (covar_val.dtype or lmm.X.dtype) rather than taking another parameter.
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
     assert block_size is not None, "real assert"
@@ -978,6 +976,7 @@ def _internal_single(
         K1,
         cache_file,
         runner,
+        dtype,
     )
     assert lmm.Y.shape == pheno.shape, "expect pheno and lmm.Y to have the same shape"
 
@@ -995,6 +994,7 @@ def _internal_single(
         random_threshold,
         random_seed,
         show_snp_fract_var_exp,
+        dtype,
     )
 
     return frame
@@ -1046,17 +1046,17 @@ def save_cache(lmm_0, h2_0, mixing_0, cache_file, cache_file_extra, xp):
         os.unlink(cache_file_extra)
 
 
-def load_cache(covar_val, y_0, cache_file, xp):
+def load_cache(covar_val, y_0, cache_file, xp, dtype):
     lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
     # np.load keeps everything on the host; model arrays then move to xp, while the
     # h2 and mixing control parameters stay numpy, as when they are computed.
     with np.load(cache_file) as data:  #!! similar code in epistasis
         version = data["version"]
         assert version == cache_version, f"Expect cache version {cache_version}"
-        lmm_0.S = _cached_array(data, "S", covar_val.dtype, cache_file, xp)
-        lmm_0.U = _cached_array(data, "U", covar_val.dtype, cache_file, xp)
-        lmm_0.UY = _cached_array(data, "UY", covar_val.dtype, cache_file, xp)
-        lmm_0.UUY = _cached_array(data, "UUY", covar_val.dtype, cache_file, xp)
+        lmm_0.S = _cached_array(data, "S", dtype, cache_file, xp)
+        lmm_0.U = _cached_array(data, "U", dtype, cache_file, xp)
+        lmm_0.UY = _cached_array(data, "UY", dtype, cache_file, xp)
+        lmm_0.UUY = _cached_array(data, "UUY", dtype, cache_file, xp)
         h2_0 = data["h2_0"]
         mixing_0 = data["mixing_0"]
 
@@ -1101,12 +1101,11 @@ def save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp):
     )
 
 
-def load_cache_extra(lmm_multi, multi_y, cache_file_extra, xp):
+def load_cache_extra(lmm_multi, multi_y, cache_file_extra, xp, dtype):
     # See load_cache: model arrays move to xp; h2 and mixing stay numpy.
     with np.load(cache_file_extra) as data:  #!! similar code in epistasis
         version = data["version"]
         assert version == cache_version, f"Expect cache version {cache_version}"
-        dtype = lmm_multi.X.dtype
         lmm_multi.UY = _cached_array(data, "UY", dtype, cache_file_extra, xp)
         lmm_multi.UUY = _cached_array(data, "UUY", dtype, cache_file_extra, xp)
         h2_multi = data["h2"]
@@ -1135,6 +1134,7 @@ def _find_h2_s_u(
     K1,
     cache_file,
     runner,
+    dtype,
 ):
     assert multi_pheno.sid_count >= 1, "Expect at least one phenotype"
     assert (
@@ -1143,7 +1143,7 @@ def _find_h2_s_u(
 
     # view_ok because this code already did a fresh read to look for any missing values
     multi_y = _as_dtype(
-        xp, multi_pheno.read(view_ok=True, order="A").val, covar_val.dtype, "pheno"
+        xp, multi_pheno.read(view_ok=True, order="A").val, dtype, "pheno"
     )
 
     y_0 = multi_y[:, 0:1]
@@ -1151,7 +1151,7 @@ def _find_h2_s_u(
 
     logging.info("Finding SU and then h2 for first phenotype")
     if cache_file is not None and os.path.exists(cache_file):
-        lmm_0, h2_0, mixing_0 = load_cache(covar_val, y_0, cache_file, xp)
+        lmm_0, h2_0, mixing_0 = load_cache(covar_val, y_0, cache_file, xp, dtype)
         _check_cached_mixing(mixing, mixing_0, cache_file)
         # A given h2 wins: the cached S, U, and UY do not depend on h2. Without a given h2,
         # use the cached fit, or fit now if the cache was made with a given h2 (stored as NaN).
@@ -1175,6 +1175,7 @@ def _find_h2_s_u(
             None,
             None,
             xp,
+            dtype,
         )
 
         if cache_file is not None:
@@ -1191,7 +1192,7 @@ def _find_h2_s_u(
             cached_h2_is_fit = not np.isnan(data["h2"]).any()
         if h2 is not None or cached_h2_is_fit:
             lmm_multi, h2_multi, mixing_multi = load_cache_extra(
-                lmm_0, multi_y, cache_file_extra, xp
+                lmm_0, multi_y, cache_file_extra, xp, dtype
             )
             _check_cached_mixing(mixing, mixing_multi, cache_file_extra)
             return lmm_multi, (h2_multi if h2 is None else h2), mixing_multi
@@ -1208,6 +1209,7 @@ def _find_h2_s_u(
         force_low_rank,
         runner,
         xp,
+        dtype,
     )
     if cache_file_extra is not None:
         h2_to_cache = multi_h2 if h2 is None else np.full_like(multi_h2, np.nan)
@@ -1244,6 +1246,7 @@ def compute_extra(
     force_low_rank,
     runner,
     xp,
+    dtype,
 ):
     uy_list = [lmm_0.UY[:, 0]]
     if lmm_0.UUY is not None:
@@ -1268,6 +1271,7 @@ def compute_extra(
             S=lmm_0.S,
             U=lmm_0.U,
             xp=xp,
+            dtype=dtype,
         )
 
     result_list = map_reduce(
@@ -1311,6 +1315,7 @@ def _find_h2_s_u_for_one_pheno(
     S,
     U,
     xp,
+    dtype,
 ):
     if S is None:
         K, h2, mixer = _Mixer.combine_the_best_way(
@@ -1324,11 +1329,12 @@ def _find_h2_s_u_for_one_pheno(
             force_low_rank=force_low_rank,
             kernel_standardizer=DiagKtoN(),
             xp=xp,
+            dtype=dtype,
         )
         mixing = mixer.mixing
 
         if mixer.do_g:
-            G = xp.asarray(K.snpreader.val, dtype=covar_val.dtype)
+            G = xp.asarray(K.snpreader.val, dtype=dtype)
             lmm = lmm_cov(
                 X=covar_val,
                 regressX=regressX,
@@ -1348,7 +1354,7 @@ def _find_h2_s_u_for_one_pheno(
                 regressX=regressX,
                 linreg=linreg,
                 Y=y,
-                K=xp.asarray(K.val, dtype=covar_val.dtype),
+                K=xp.asarray(K.val, dtype=dtype),
                 G=None,
                 inplace=True,
                 S=None,
@@ -1396,6 +1402,7 @@ def _snp_tester(
     random_threshold,
     random_seed,
     show_snp_fract_var_exp,
+    dtype,
 ):
     work_count = -(
         test_snps.sid_count // -block_size
@@ -1422,12 +1429,12 @@ def _snp_tester(
         end = debatch_closure(work_index + 1)
 
         raw_snps = test_snps[:, start:end]
-        snps_read = raw_snps.read(dtype=lmm.X.dtype)
+        snps_read = raw_snps.read(dtype=dtype)
         if xp is np:
             snps_read.standardize()
-            val = xp.asarray(snps_read.val, dtype=lmm.X.dtype)
+            val = xp.asarray(snps_read.val, dtype=dtype)
         elif xp.__name__ == "cupy":
-            val = xp.asarray(snps_read.val, dtype=lmm.X.dtype)
+            val = xp.asarray(snps_read.val, dtype=dtype)
             statsx = xp.empty(
                 [val.shape[1], 2],
                 dtype=val.dtype,
