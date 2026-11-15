@@ -58,6 +58,7 @@ def single_snp(
     random_seed=0,
     xp=None,
     count_A1=None,
+    dtype="float64",
 ):
     r"""
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
@@ -194,6 +195,14 @@ def single_snp(
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
     :type count_A1: bool
 
+    :param dtype: The floating-point precision of the main linear algebra: 'float64' (default) or 'float32'.
+         With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
+         eigendecomposition/SVD and SNP rotations run in single precision; the per-SNP statistics are still
+         computed in float64. 'float32' is much faster on consumer GPUs (``xp='cupy'``), which have limited
+         float64 throughput, but gives slightly different p-values than 'float64'. It works with ``xp='numpy'``,
+         too, so its numerical effect can be checked without a GPU.
+    :type dtype: string or numpy dtype
+
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
 
     :Example:
@@ -222,6 +231,10 @@ def single_snp(
     if K1 or G1:  # If 2nd kernel given, use numpy
         xp = "numpy"
 
+    dtype = np.dtype(dtype)
+    if dtype not in (np.float64, np.float32):
+        raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
+
     if output_file_name is not None:
         os.makedirs(Path(output_file_name).parent, exist_ok=True)
 
@@ -230,7 +243,8 @@ def single_snp(
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
-        good_values_per_iid = (pheno.val == pheno.val).sum(axis=1)
+        # pheno.val may be a cupy array; PySnpTools indexing needs a numpy mask.
+        good_values_per_iid = pstutil.asnumpy((pheno.val == pheno.val).sum(axis=1))
         assert not np.any(
             (good_values_per_iid > 0) * (good_values_per_iid < pheno.sid_count)
         ), "With multiple phenotypes, an individual's values must either be all missing or have no missing."
@@ -284,6 +298,7 @@ def single_snp(
                 random_threshold=random_threshold,
                 random_seed=random_seed,
                 xp=xp,
+                dtype=dtype,
             )
             if pvalue_threshold is None and random_threshold is None:
                 sid_index_range = IntRangeSet(frame["sid_index"])
@@ -359,6 +374,7 @@ def single_snp(
                     random_threshold=random_threshold,
                     random_seed=random_seed,
                     xp=xp,
+                    dtype=dtype,
                 )
                 return distributable
 
@@ -889,7 +905,10 @@ def _internal_single(
     random_threshold,
     random_seed,
     xp,
+    dtype,
 ):
+    # covar_val (below) carries the run's dtype; code that follows reads it from there
+    # (covar_val.dtype or lmm.X.dtype) rather than taking another parameter.
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
     assert block_size is not None, "real assert"
@@ -906,9 +925,9 @@ def _internal_single(
     if h2 is not None and not isinstance(h2, np.ndarray):
         h2 = np.repeat(h2, pheno.shape[1])
 
-    covar_val = xp.asarray(covar.read(view_ok=True, order="A").val)
+    covar_val = xp.asarray(covar.read(view_ok=True, order="A").val, dtype=dtype)
     covar_val = xp.c_[
-        covar_val, xp.ones((test_snps.iid_count, 1))
+        covar_val, xp.ones((test_snps.iid_count, 1), dtype=dtype)
     ]  # view_ok because np.c_ will allocation new memory
 
     if interact_with_snp is not None:
@@ -983,10 +1002,15 @@ def load_cache(covar_val, y_0, cache_file, xp):
     with xp.load(cache_file) as data:  #!! similar code in epistasis
         version = data["version"]
         assert version == cache_version, f"Expect cache version {cache_version}"
+        if data["U"].dtype != covar_val.dtype:
+            raise ValueError(
+                f"cache_file '{cache_file}' was created with dtype {data['U'].dtype}, but this run uses {covar_val.dtype}"
+            )
         lmm_0.S = data["S"]
         lmm_0.U = data["U"]
         lmm_0.UY = data["UY"]
-        lmm_0.UUY = None if data["UUY"].dtype != "float64" else data["UUY"]
+        # save_cache stores a bool [False] placeholder when UUY is None.
+        lmm_0.UUY = None if data["UUY"].dtype == bool else data["UUY"]
         h2_0 = data["h2_0"]
         mixing_0 = data["mixing_0"]
 
@@ -1023,7 +1047,8 @@ def load_cache_extra(lmm_multi, multi_y, cache_file_extra, xp):
         version = data["version"]
         assert version == cache_version, f"Expect cache version {cache_version}"
         lmm_multi.UY = data["UY"]
-        lmm_multi.UUY = None if data["UUY"].dtype != "float64" else data["UUY"]
+        # save_cache_extra stores a bool [False] placeholder when UUY is None.
+        lmm_multi.UUY = None if data["UUY"].dtype == bool else data["UUY"]
         h2_multi = data["h2"]
         mixing_multi = data["mixing"]
     lmm_multi.Y = multi_y
@@ -1057,7 +1082,9 @@ def _find_h2_s_u(
     ), "When a 2nd kernel is given, only one phenotype is allowed."
 
     # view_ok because this code already did a fresh read to look for any missing values
-    multi_y = xp.asarray(multi_pheno.read(view_ok=True, order="A").val)
+    multi_y = xp.asarray(
+        multi_pheno.read(view_ok=True, order="A").val, dtype=covar_val.dtype
+    )
 
     y_0 = multi_y[:, 0:1]
     cache_file_extra = f"{cache_file}.extra.npz" if cache_file is not None else None
@@ -1203,7 +1230,7 @@ def _find_h2_s_u_for_one_pheno(
         mixing = mixer.mixing
 
         if mixer.do_g:
-            G = xp.asarray(K.snpreader.val)
+            G = xp.asarray(K.snpreader.val, dtype=covar_val.dtype)
             lmm = lmm_cov(
                 X=covar_val,
                 regressX=regressX,
@@ -1223,7 +1250,7 @@ def _find_h2_s_u_for_one_pheno(
                 regressX=regressX,
                 linreg=linreg,
                 Y=y,
-                K=K.val,
+                K=xp.asarray(K.val, dtype=covar_val.dtype),
                 G=None,
                 inplace=True,
                 S=None,
@@ -1296,12 +1323,12 @@ def _snp_tester(
         end = debatch_closure(work_index + 1)
 
         raw_snps = test_snps[:, start:end]
-        snps_read = raw_snps.read()
+        snps_read = raw_snps.read(dtype=lmm.X.dtype)
         if xp is np:
             snps_read.standardize()
-            val = xp.asarray(snps_read.val)
+            val = xp.asarray(snps_read.val, dtype=lmm.X.dtype)
         else:
-            val = xp.asarray(snps_read.val)
+            val = xp.asarray(snps_read.val, dtype=lmm.X.dtype)
             statsx = xp.empty(
                 [val.shape[1], 2],
                 dtype=val.dtype,
@@ -1409,7 +1436,7 @@ def _multi_compute_stats(
 
     g_var = np.nanvar(raw_snps.read().val, axis=0)
     p_var = lmm.Y.var(axis=0)
-    effect_size = multi_beta**2 * g_var[..., None] / p_var[None, ...]
+    effect_size = pstutil.asnumpy(multi_beta**2 * g_var[..., None] / p_var[None, ...])
 
     chi2stats = pstutil.asnumpy(multi_beta * multi_beta / multi_variance_beta)
     p_values = stats.f.sf(chi2stats, 1, lmm.U.shape[0] - (lmm.linreg.D + 1))

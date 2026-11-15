@@ -536,7 +536,8 @@ class LMM(object):
                         resmin[i] = res.copy()
                         resmin[i]["nLL"] = res["nLL"][i]
                 # logging.info("search\t{0}\t{1}".format(x,res['nLL']))
-                return res["nLL"]
+                # The grid search runs on the host, so return numpy even when nLL is on a GPU.
+                return pstutil.asnumpy(res["nLL"])
 
             (evalgrid, resultgrid) = evalgrid1D(
                 f,
@@ -574,7 +575,8 @@ class LMM(object):
                 res = self.nLLeval(h2=x, **kwargs)
                 if (resmin[0] is None) or (res["nLL"] < resmin[0]["nLL"]):
                     resmin[0] = res
-                return res["nLL"][0]
+                # The 1-D optimizer runs on the host, so return numpy even when nLL is on a GPU.
+                return pstutil.asnumpy(res["nLL"])[0]
 
             __min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
             return resmin[0]
@@ -861,9 +863,11 @@ class LMM(object):
         else:
             if not isinstance(h2, np.ndarray):
                 h2 = np.repeat(h2, 1)
-            Sbyh = self.S.reshape(-1, 1).dot(h2.reshape(1, -1))
-            Sd = (Sbyh + (1.0 - h2.reshape(-1))) * scale
-            denom = (1.0 - h2) * scale  # determine normalization factor
+            # h2 stays a host (numpy) array for callers; S may be on a GPU (cupy).
+            h2_xp = self._xp.asarray(h2)
+            Sbyh = self.S.reshape(-1, 1).dot(h2_xp.reshape(1, -1))
+            Sd = (Sbyh + (1.0 - h2_xp.reshape(-1))) * scale
+            denom = (1.0 - h2_xp) * scale  # determine normalization factor
         return Sd, denom, h2
 
     def nLLcore(
@@ -914,9 +918,7 @@ class LMM(object):
         N = self.Y.shape[0] - self.linreg.D
         if len(Sd.shape) == 1:
             Sd = Sd.reshape(-1, 1)
-        if not isinstance(denom, np.ndarray):
-            denom = np.array([denom])
-        denom = denom.reshape(-1)
+        denom = self._xp.asarray(denom).reshape(-1)
 
         S, U = self.getSU()  # not used, as provided from outside. Remove???
         k = S.shape[0]
@@ -925,7 +927,7 @@ class LMM(object):
         UY, UUY = self.getUY(idx_pheno=idx_pheno)
         P = UY.shape[1]  # number of phenotypes used
 
-        YKY = np.full(P, np.nan)
+        YKY = self._xp.full(P, np.nan)
         for pheno_index in range(P):
             YKY[pheno_index] = self.computeAKA(
                 Sd=Sd[:, pheno_index : pheno_index + 1],
@@ -940,8 +942,8 @@ class LMM(object):
             logdetK += (N - k) * np.log(denom)
 
         if Usnps is not None:
-            snpsKsnps = np.full((Usnps.shape[1], P), np.nan)
-            snpsKY = np.full((Usnps.shape[1], P), np.nan)
+            snpsKsnps = self._xp.full((Usnps.shape[1], P), np.nan)
+            snpsKY = self._xp.full((Usnps.shape[1], P), np.nan)
             for pheno_index in range(P):
                 snpsKsnps[:, pheno_index] = self.computeAKA(
                     Sd[:, pheno_index : pheno_index + 1],

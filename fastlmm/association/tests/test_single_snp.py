@@ -818,6 +818,79 @@ class TestSingleSnp(unittest.TestCase):
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 
+    def _dtype_frame(self, dtype, force_low_rank, xp="numpy", cache_file=None):
+        test_snps = Bed(self.bedbase, count_A1=False)
+        frame = single_snp(
+            test_snps=test_snps[:, :50],
+            pheno=self.phen_fn,
+            covar=self.cov_fn,
+            G0=test_snps[:, ::10] if force_low_rank else test_snps,
+            mixing=0,
+            leave_out_one_chrom=False,
+            force_low_rank=force_low_rank,
+            force_full_rank=not force_low_rank,
+            cache_file=cache_file,
+            count_A1=False,
+            xp=xp,
+            dtype=dtype,
+        )
+        return frame.set_index("SNP").sort_index()
+
+    @staticmethod
+    def _max_log10_pvalue_diff(frame_a, frame_b):
+        assert list(frame_a.index) == list(frame_b.index)
+        return np.max(np.abs(np.log10(frame_a.PValue) - np.log10(frame_b.PValue)))
+
+    # TODO0 Tighten these tolerances to measured values (plus margin) before merging. (may no longer apply: tightened 2026-11-14)
+    # Max |Δlog10 p| measured on this data (full rank / low rank), RTX 3060, cupy 14.2:
+    #   numpy float32 vs float64: 5.2e-7 / 4.7e-7
+    #   cupy vs numpy, float64:   2.5e-14 / 8.9e-10
+    #   cupy vs numpy, float32:   2.3e-6 / 1.3e-6 (two independent float32 roundoffs)
+    # Each tolerance is about 20x the larger measurement.
+    FLOAT32_VS_FLOAT64_LOG10P_TOL = 1e-5
+    CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL = 2e-8
+    CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL = 5e-5
+
+    def test_dtype_float32_matches_float64(self):
+        for force_low_rank in [False, True]:
+            frame64 = self._dtype_frame("float64", force_low_rank)
+            frame32 = self._dtype_frame("float32", force_low_rank)
+            diff = self._max_log10_pvalue_diff(frame64, frame32)
+            assert diff < self.FLOAT32_VS_FLOAT64_LOG10P_TOL, (force_low_rank, diff)
+            assert abs(frame64.Nullh2.iloc[0] - frame32.Nullh2.iloc[0]) < 1e-4
+
+    def test_dtype_float32_cache(self):
+        # Low rank keeps UUY, which the cache must round-trip for float32, too.
+        for force_low_rank in [False, True]:
+            cache_file = self.file_name(f"dtype32_cache_{force_low_rank}") + ".npz"
+            for p in Path(cache_file).parent.glob(Path(cache_file).name + "*"):
+                p.unlink()
+            first = self._dtype_frame("float32", force_low_rank, cache_file=cache_file)
+            second = self._dtype_frame("float32", force_low_rank, cache_file=cache_file)
+            pd.testing.assert_frame_equal(first, second)
+            with self.assertRaises(ValueError):
+                self._dtype_frame("float64", force_low_rank, cache_file=cache_file)
+
+    def test_dtype_invalid(self):
+        with self.assertRaises(ValueError):
+            self._dtype_frame("float16", force_low_rank=True)
+
+    def test_cupy_matches_numpy(self):
+        # cupy is optional; this test needs it and a GPU.
+        try:
+            import cupy  # noqa: F401
+        except ModuleNotFoundError:
+            raise unittest.SkipTest("cupy is not installed")
+        for dtype, tol in [
+            ("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL),
+            ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL),
+        ]:
+            for force_low_rank in [False, True]:
+                frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy")
+                frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
+                diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
+                assert diff < tol, (dtype, force_low_rank, diff)
+
 
 class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
     @classmethod
