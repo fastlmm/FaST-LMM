@@ -9,7 +9,9 @@ from fastlmm.association.heritability_spatial_correction import (
     heritability_spatial_correction,
 )
 from pysnptools.snpreader import Bed, Pheno, SnpData
-from fastlmm.feature_selection.test import TestFeatureSelection
+# Import the module, not the class: pytest would collect (and rerun) any TestCase class
+# imported into this module's namespace.
+from fastlmm.feature_selection import test as feature_selection_test
 
 
 tolerance = 1e-4
@@ -71,7 +73,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         )
 
         dataframe.to_csv(tmpOutfile, sep="\t", index=False)
-        referenceOutfile = TestFeatureSelection.reference_file(
+        referenceOutfile = feature_selection_test.TestFeatureSelection.reference_file(
             "heritability_spatial_correction/" + fn
         )
         out, msg = ut.compare_files(tmpOutfile, referenceOutfile, tolerance)
@@ -108,7 +110,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         )
 
         dataframe.to_csv(tmpOutfile, sep="\t", index=False)
-        referenceOutfile = TestFeatureSelection.reference_file(
+        referenceOutfile = feature_selection_test.TestFeatureSelection.reference_file(
             "heritability_spatial_correction/" + fn
         )
         out, msg = ut.compare_files(tmpOutfile, referenceOutfile, tolerance)
@@ -145,7 +147,7 @@ class TestHeritabilitySpatialCorrection(unittest.TestCase):
         )
 
         dataframe.to_csv(tmpOutfile, sep="\t", index=False)
-        referenceOutfile = TestFeatureSelection.reference_file(
+        referenceOutfile = feature_selection_test.TestFeatureSelection.reference_file(
             "heritability_spatial_correction/" + fn
         )
         out, msg = ut.compare_files(tmpOutfile, referenceOutfile, tolerance)

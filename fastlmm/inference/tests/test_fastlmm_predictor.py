@@ -10,7 +10,9 @@ from unittest.mock import patch
 from fastlmm.inference import FastLMM
 from fastlmm.inference.fastlmm_predictor import _SnpWholeTest
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
-from fastlmm.feature_selection.test import TestFeatureSelection
+# Import the module, not the class: pytest would collect (and rerun) any TestCase class
+# imported into this module's namespace.
+from fastlmm.feature_selection import test as feature_selection_test
 from pysnptools.standardizer import Unit
 from pysnptools.standardizer import Identity as SS_Identity
 from pysnptools.kernelstandardizer import Identity as KS_Identity
@@ -1329,7 +1331,7 @@ class TestFastLMM(unittest.TestCase):
         self.compare_files(predicted_pheno, "one")  # Expect same results as SNPs "one"
 
     def compare_files(self, answer, ref_base):
-        reffile = TestFeatureSelection.reference_file("fastlmm/" + ref_base + ".dat")
+        reffile = feature_selection_test.TestFeatureSelection.reference_file("fastlmm/" + ref_base + ".dat")
         reference = Dat(reffile).read()
         assert np.array_equal(
             answer.col, reference.col
