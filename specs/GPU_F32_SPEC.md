@@ -110,8 +110,10 @@ Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup ve
 - `single_snp` switches `xp` to numpy when a second kernel (`K1`/`G1`) is given; it now warns when
   a GPU module was requested (it used to switch silently). Possible later work: support CuPy when
   `mixing` is given, so only the mixing search needs numpy.
-- Pre-existing, not changed: `cache_file` with a given `h2` or `log_delta` fails in `save_cache` (S and U
-  are never computed); `lmm_cov.nLLcore`'s second-kernel (`UW`) path uses numpy-only calls, so it would
+- Fixed on its own branch (`fix-cache-given-h2`, merged here): `cache_file` with a given `h2` or
+  `log_delta` failed in `save_cache`; a given `h2` was replaced by the cached one; a different given
+  `mixing` silently reused the cache; multiple phenotypes with a given `h2` failed.
+- Pre-existing, not changed: `lmm_cov.nLLcore`'s second-kernel (`UW`) path uses numpy-only calls, so it would
   fail on CuPy (single_snp does not use it).
 - Release PySnpTools with the fixes, raise FaST-LMM's lower bound, and document the GPU workflow
   (including the CuPy install: for example, `cupy-cuda13x[ctk]`).
