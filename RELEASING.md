@@ -17,8 +17,9 @@ with `git branch --set-upstream-to=origin/main main`.
 Publish and verify required bed-reader, PySnpTools, and numerical-backend
 releases before final FaST-LMM qualification. Update FaST-LMM's minimum
 dependency versions to the first compatible published releases. When replacing
-fastlmmclib with fastlmmrslib, qualify numerical behavior and fault handling
-before changing the production backend.
+a numerical backend, qualify probability accuracy and diagnostic handling
+before changing the production backend. The SNP-set score test uses gx2;
+its bounded acceptance policy must be exercised in installed-artifact tests.
 
 Final qualification must install those prerequisites from PyPI, not from
 sibling source checkouts, Git dependencies, or prereleases.

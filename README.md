@@ -34,6 +34,11 @@ HDF5 support is optional. To read or write HDF5 files, install:
 Existing HDF5 users upgrading from an earlier release should install this extra.
 Install `fastlmm[hdf5,bgen]` to enable both optional formats.
 
+SNP-set score tests (`test="sc_davies"`) use gx2 rather than fastlmmrslib.
+The test name and `1e-7` absolute p-value accuracy target are unchanged.
+Very small tails may return zero when an independent bound proves this
+accuracy; unverified numerical results raise `ArithmeticError`.
+
 *If you need support for BGEN files, instead do:*
 
     pip install fastlmm[bgen]
