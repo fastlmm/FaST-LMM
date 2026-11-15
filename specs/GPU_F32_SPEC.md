@@ -71,7 +71,8 @@ The review found bugs in three patterns; each fix was followed by a search for t
 ## Results (2026-11-15, Ryzen 9 7950X + RTX 3060, end-to-end `single_snp`)
 
 Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup versus CPU float64
-(32 threads), full rank / low rank:
+(32 threads), full rank / low rank. These timings predate the review fixes (float64 promotion of the
+low-rank statistics, float32 range checks, explicit dtype); low-rank GPU float32 should be re-measured.
 
 | N | CPU f32 | GPU f64 | GPU f32 |
 |---|---|---|---|
@@ -115,6 +116,20 @@ Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup ve
   low-level bindings. Option for later: wrap `syevj`, or refine the decomposition in float64.
 - Two kernels: run on numpy (now with a warning when a GPU module was requested).
 
+## AMD laptop GPU (2026-11-15)
+
+Tried on an HP ZBook Ultra G1a (Ryzen AI Max+ PRO 395; Radeon 8060S integrated, gfx1151; WSL2).
+ROCm 10.1 for gfx1151 from AMD's `rocmradeon` apt repository (it includes `librocdxg` for WSL) was
+unpacked user-locally into `~/.local/opt/rocm-10.1-gfx1151`, with `cupy-rocm-7-0` 14.2.0 in
+`~/.cache/fastlmm-rocm/venv` (needs `ROCM_HOME`, ROCm `bin` on `PATH`, and `LD_LIBRARY_PATH`). CuPy saw
+the GPU (116.6 GB addressable) and gave correct results, but it is not usable for FaST-LMM today:
+
+- matmul 4000^2: float32 2.3 TFLOPS on the GPU vs 1.4 on the laptop CPU; float64 0.25 vs 0.37 (GPU slower).
+- `eigh` (CuPy uses the Jacobi solver on ROCm): 10-25x slower than the laptop CPU (n=800), and a GPU
+  queue fault at n=1200 float32; a later run apparently reset the machine.
+
+The laptop CPU (16 Zen 5 cores) is a good CPU-only test machine.
+
 ## Remaining work
 
 - Build the kernel in the run's dtype (about 12× instead of 8.7× at N=10k). Needs a `dtype` argument on
@@ -126,6 +141,7 @@ Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup ve
   float32, roundoff singular values are about 1e-6 relative, so near-null directions are kept.
   Measured effect is small, but a dtype-relative threshold may be more principled.
 - The legacy `tests/test.py` path has not been tried with `dtype="float32"`.
+- Re-measure the speed table (especially low-rank GPU float32) after the review fixes.
 - `single_snp` switches `xp` to numpy when a second kernel (`K1`/`G1`) is given; it now warns when
   a GPU module was requested (it used to switch silently). Possible later work: support CuPy when
   `mixing` is given, so only the mixing search needs numpy.
