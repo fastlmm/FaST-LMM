@@ -334,7 +334,8 @@ class TestFeatureSelection(unittest.TestCase):
     def blocking_cov_pcs(self, strategy):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
         cov_fn = currentFolder + "/examples/toydata.cov"
-        output_dir = "tmp"
+        # Next to this file (an ignored folder), not relative to the current directory.
+        output_dir = os.path.join(currentFolder, "tmp")
         try:
             os.mkdir(output_dir)
         except Exception:

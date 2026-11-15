@@ -13,7 +13,9 @@ from pathlib import Path
 from fastlmm.association import single_snp
 from fastlmm.association import single_snp_linreg
 import pysnptools.util.pheno as pstpheno
-from fastlmm.feature_selection.test import TestFeatureSelection
+# Import the module, not the class: pytest would collect (and rerun) any TestCase class
+# imported into this module's namespace.
+from fastlmm.feature_selection import test as feature_selection_test
 from pysnptools.util.mapreduce1.runner import LocalMultiProc
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.standardizer import Unit
@@ -141,7 +143,7 @@ class TestSingleSnp(unittest.TestCase):
                 count_A1=False,
             )
             for frame in [frame_h2, frame_log_delta]:
-                referenceOutfile = TestFeatureSelection.reference_file(
+                referenceOutfile = feature_selection_test.TestFeatureSelection.reference_file(
                     "single_snp/topsnps.single.txt"
                 )
                 reference = pd.read_csv(
@@ -336,7 +338,7 @@ class TestSingleSnp(unittest.TestCase):
         pheno = self.phen_fn
         covar = self.cov_fn
 
-        reffile = TestFeatureSelection.reference_file("single_snp/one.txt")
+        reffile = feature_selection_test.TestFeatureSelection.reference_file("single_snp/one.txt")
         reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
 
         for random_seed in [0, 1]:
@@ -788,7 +790,7 @@ class TestSingleSnp(unittest.TestCase):
         self.compare_files(frame, "one")
 
     def compare_files(self, frame, ref_base, columns=["PValue"]):
-        reffile = TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
+        reffile = feature_selection_test.TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
 
         # sid_list,pvalue_list = frame['SNP'].values,frame['Pvalue'].values
 
@@ -1350,7 +1352,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
         self.compare_files(frame, "covar_by_chrom_mixing")
 
     def compare_files(self, frame, ref_base):
-        reffile = TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
+        reffile = feature_selection_test.TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
 
         # sid_list,pvalue_list = frame['SNP'].values,frame['Pvalue'].values
 
@@ -1382,7 +1384,7 @@ class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
             )
 
     def compare_files_effect_size(self, frame, ref_base):
-        reffile = TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
+        reffile = feature_selection_test.TestFeatureSelection.reference_file("single_snp/" + ref_base + ".txt")
         reference = pd.read_csv(reffile, delimiter=r"\s", comment=None, engine="python")
         self.compare_df_effect_size(frame, reference, reffile)
 

@@ -9,7 +9,9 @@ import sys
 from fastlmm.inference import LinearRegression
 # from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.snpreader import Dat, Bed, Pheno, SnpData
-from fastlmm.feature_selection.test import TestFeatureSelection
+# Import the module, not the class: pytest would collect (and rerun) any TestCase class
+# imported into this module's namespace.
+from fastlmm.feature_selection import test as feature_selection_test
 # from pysnptools.kernelreader import Identity as KernelIdentity
 
 
@@ -202,7 +204,7 @@ class TestLinRegTrain(unittest.TestCase):
             self.compare_files(covar2, "lr2b.cov_" + first_name)
 
     def compare_files(self, answer, ref_base):
-        reffile = TestFeatureSelection.reference_file(
+        reffile = feature_selection_test.TestFeatureSelection.reference_file(
             "fastlmm/" + ref_base + ".dat"
         )  # Uses same results folder as lmm_train
         reference = Dat(reffile).read()

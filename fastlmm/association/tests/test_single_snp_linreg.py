@@ -6,7 +6,9 @@ import doctest
 import pandas as pd
 
 from fastlmm.association import single_snp_linreg
-from fastlmm.feature_selection.test import TestFeatureSelection
+# Import the module, not the class: pytest would collect (and rerun) any TestCase class
+# imported into this module's namespace.
+from fastlmm.feature_selection import test as feature_selection_test
 from pysnptools.util.mapreduce1.runner import Local
 from pysnptools.snpreader import Bed
 
@@ -68,7 +70,7 @@ class TestSingleSnpLinReg(unittest.TestCase):
         self.compare_files(frame2, "linreg")
 
     def compare_files(self, frame, ref_base):
-        reffile = TestFeatureSelection.reference_file(
+        reffile = feature_selection_test.TestFeatureSelection.reference_file(
             "single_snp/" + ref_base + ".txt"
         )  # Results are in single_snp, not single_snp_lin_reg
 

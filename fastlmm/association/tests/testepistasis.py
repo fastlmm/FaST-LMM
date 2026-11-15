@@ -8,7 +8,9 @@ import doctest
 from fastlmm.association import epistasis
 from fastlmm.association.epistasis import write
 import pysnptools.util.pheno as pstpheno
-from fastlmm.feature_selection.test import TestFeatureSelection
+# Import the module, not the class: pytest would collect (and rerun) any TestCase class
+# imported into this module's namespace.
+from fastlmm.feature_selection import test as feature_selection_test
 # from pysnptools.util.mapreduce1.runner import Local
 
 
@@ -121,7 +123,7 @@ class TestEpistasis(unittest.TestCase):
             np.array(frame["PValue"]),
         )
 
-        referenceOutfile = TestFeatureSelection.reference_file(
+        referenceOutfile = feature_selection_test.TestFeatureSelection.reference_file(
             "epistasis/topsnps.pairs.txt"
         )
 
@@ -529,7 +531,7 @@ class TestEpistasis(unittest.TestCase):
         self.compare_files(sid0, sid1, pvalue_list, "one")
 
     def compare_files(self, sid0_list, sid1_list, pvalue_list, ref_base):
-        reffile = TestFeatureSelection.reference_file("epistasis/" + ref_base + ".txt")
+        reffile = feature_selection_test.TestFeatureSelection.reference_file("epistasis/" + ref_base + ".txt")
 
         pair_to_pvalue = {}
         for index, sid0 in enumerate(sid0_list):

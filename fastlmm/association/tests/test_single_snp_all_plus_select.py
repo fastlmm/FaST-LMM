@@ -9,7 +9,9 @@ from unittest.mock import patch
 
 from pysnptools.snpreader import Bed, Pheno
 from fastlmm.association import single_snp_all_plus_select,single_snp
-from fastlmm.feature_selection.test import TestFeatureSelection
+# Import the module, not the class: pytest would collect (and rerun) any TestCase class
+# imported into this module's namespace.
+from fastlmm.feature_selection import test as feature_selection_test
 import multiprocessing
 from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
 
@@ -198,7 +200,7 @@ class TestSingleSnpAllPlusSelect(unittest.TestCase):
 
 
     def compare_files(self,frame,ref_base):
-        reffile = TestFeatureSelection.reference_file("single_snp_all_plus_select/"+ref_base+".txt")
+        reffile = feature_selection_test.TestFeatureSelection.reference_file("single_snp_all_plus_select/"+ref_base+".txt")
 
         #sid_list,pvalue_list = frame['SNP'].values,frame['Pvalue'].values
 
