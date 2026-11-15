@@ -230,6 +230,14 @@ def single_snp(
         raise Exception("Can't force both full rank and low rank")
 
     if K1 or G1:  # If 2nd kernel given, use numpy
+        # The two-kernel code (including the search for the best mixing) supports only numpy.
+        # Say so, rather than silently running on the CPU when a GPU module was requested.
+        if pstutil.array_module(xp) is not np:
+            warnings.warn(
+                "single_snp supports only numpy when a second kernel (K1 or G1) is given, "
+                "so it will run with numpy rather than the requested array module.",
+                UserWarning,
+            )
         xp = "numpy"
 
     dtype = np.dtype(dtype)

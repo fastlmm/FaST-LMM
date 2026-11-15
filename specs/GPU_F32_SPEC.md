@@ -107,8 +107,10 @@ Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup ve
   float32, roundoff singular values are about 1e-6 relative, so near-null directions are kept.
   Measured effect is small, but a dtype-relative threshold may be more principled.
 - The legacy `tests/test.py` path has not been tried with `dtype="float32"`.
-- Pre-existing, not changed: `single_snp` silently switches `xp` to numpy when a second kernel
-  (`K1`/`G1`) is given; `cache_file` with a given `h2` or `log_delta` fails in `save_cache` (S and U
+- `single_snp` switches `xp` to numpy when a second kernel (`K1`/`G1`) is given; it now warns when
+  a GPU module was requested (it used to switch silently). Possible later work: support CuPy when
+  `mixing` is given, so only the mixing search needs numpy.
+- Pre-existing, not changed: `cache_file` with a given `h2` or `log_delta` fails in `save_cache` (S and U
   are never computed); `lmm_cov.nLLcore`'s second-kernel (`UW`) path uses numpy-only calls, so it would
   fail on CuPy (single_snp does not use it).
 - Release PySnpTools with the fixes, raise FaST-LMM's lower bound, and document the GPU workflow

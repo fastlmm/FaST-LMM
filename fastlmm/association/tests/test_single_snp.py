@@ -1008,6 +1008,23 @@ class TestSingleSnp(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self._dtype_frame("float32", force_low_rank, pheno=pheno, cache_file=cache32)
 
+    def test_cupy_two_kernels_warns(self):
+        # Two kernels run only on numpy; asking for cupy must warn rather than switch silently.
+        try:
+            import cupy  # noqa: F401
+        except ModuleNotFoundError:
+            raise unittest.SkipTest("cupy is not installed")
+        import warnings
+
+        test_snps = Bed(self.bedbase, count_A1=False)
+        kernels = dict(G0=test_snps[:, ::20], G1=test_snps[:, 5::20], mixing=0.5)
+        with self.assertWarnsRegex(UserWarning, "second kernel"):
+            frame_cp = self._dtype_frame("float64", True, xp="cupy", **kernels)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", message=".*second kernel.*")
+            frame_np = self._dtype_frame("float64", True, xp="numpy", **kernels)
+        pd.testing.assert_frame_equal(frame_np, frame_cp, check_exact=True)
+
     def test_cupy_options_match_numpy(self):
         # GPU runs of options beyond the basic case: multiple phenotypes, log_delta,
         # and a cache reused by a second run. (Two kernels always run on numpy.)
