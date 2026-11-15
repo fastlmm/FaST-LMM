@@ -1072,6 +1072,92 @@ class TestSingleSnp(unittest.TestCase):
             assert S.dtype == dtype and U.dtype == dtype
 
 
+    def _h2_frame(self, force_low_rank, **kwargs):
+        # Small single_snp run; kwargs override the defaults below.
+        test_snps = Bed(self.bedbase, count_A1=False)
+        options = dict(
+            test_snps=test_snps[:, :30],
+            pheno=self.phen_fn,
+            covar=self.cov_fn,
+            G0=test_snps[:, ::10] if force_low_rank else test_snps,
+            leave_out_one_chrom=False,
+            force_low_rank=force_low_rank,
+            force_full_rank=not force_low_rank,
+            count_A1=False,
+        )
+        options.update(kwargs)
+        frame = single_snp(**options)
+        index = ["Pheno", "SNP"] if "Pheno" in frame.columns else "SNP"
+        return frame.set_index(index).sort_index()
+
+    def _h2_two_phenos(self):
+        pheno = Pheno(self.phen_fn).read()
+        rng = np.random.default_rng(0)
+        second = -0.5 * pheno.val[:, 0] + rng.standard_normal(pheno.iid_count)
+        return SnpData(iid=pheno.iid, sid=["pheno0", "pheno1"], val=np.c_[pheno.val, second])
+
+    def _fresh_cache(self, name):
+        cache_file = self.file_name(name) + ".npz"
+        for p in Path(cache_file).parent.glob(Path(cache_file).name + "*"):
+            p.unlink()
+        return cache_file
+
+    # A run that reuses a cache is not bit-identical to one that does not: at full rank the
+    # first run rotates with a non-contiguous view of U and a cached run with a contiguous
+    # copy, so BLAS rounds differently (about 1e-15 relative). 1e-10 in log10 p allows that.
+    CACHE_LOG10P_TOL = 1e-10
+    # Fitting h2 from a cache vs fitting it fresh: the optimizer stops within its tolerance, and
+    # BLAS rounding (which depends on the thread count) moves where. Measured, second of two
+    # phenotypes at full rank: h2 3.6e-8 relative and log10 p 3.4e-8 apart with 4 threads,
+    # 2.7e-12 with 32 threads. 1e-6 is about 30x the larger.
+    REFIT_TOL = 1e-6
+
+    def _assert_frames_close(self, frame_a, frame_b, tol=CACHE_LOG10P_TOL):
+        assert list(frame_a.index) == list(frame_b.index)
+        diff = np.max(np.abs(np.log10(frame_a.PValue) - np.log10(frame_b.PValue)))
+        assert diff < tol, diff
+
+    def test_cache_with_given_h2(self):
+        # cache_file with a given h2 used to fail in save_cache (S and U were never computed).
+        for pheno in [self.phen_fn, self._h2_two_phenos()]:
+            for force_low_rank in [False, True]:
+                reference = self._h2_frame(force_low_rank, pheno=pheno, h2=0.3)
+                assert (reference.Nullh2 == 0.3).all()
+                cache_file = self._fresh_cache(f"given_h2_{force_low_rank}")
+                for _ in range(2):  # creates the cache, then reuses it
+                    frame = self._h2_frame(force_low_rank, pheno=pheno, h2=0.3, cache_file=cache_file)
+                    self._assert_frames_close(reference, frame)
+                    assert (frame.Nullh2 == 0.3).all()
+
+                # The cache stores no fitted h2, so a run without h2 fits it.
+                fitted = self._h2_frame(force_low_rank, pheno=pheno)
+                frame = self._h2_frame(force_low_rank, pheno=pheno, cache_file=cache_file)
+                self._assert_frames_close(fitted, frame, tol=self.REFIT_TOL)
+                np.testing.assert_allclose(frame.Nullh2, fitted.Nullh2, rtol=self.REFIT_TOL)
+
+    def test_cache_given_h2_overrides_cached_fit(self):
+        # A given h2 used to be silently replaced by the h2 fitted when the cache was made.
+        for pheno in [self.phen_fn, self._h2_two_phenos()]:
+            for force_low_rank in [False, True]:
+                cache_file = self._fresh_cache(f"override_h2_{force_low_rank}")
+                self._h2_frame(force_low_rank, pheno=pheno, cache_file=cache_file)
+                reference = self._h2_frame(force_low_rank, pheno=pheno, h2=0.3)
+                frame = self._h2_frame(force_low_rank, pheno=pheno, h2=0.3, cache_file=cache_file)
+                self._assert_frames_close(reference, frame)
+                assert (frame.Nullh2 == 0.3).all()
+
+    def test_cache_mixing_mismatch(self):
+        # The cached S and U depend on mixing, so a different given mixing must not reuse them.
+        test_snps = Bed(self.bedbase, count_A1=False)
+        kernels = dict(G0=test_snps[:, ::20], G1=test_snps[:, 5::20])
+        cache_file = self._fresh_cache("mixing_mismatch")
+        self._h2_frame(True, mixing=0.25, cache_file=cache_file, **kernels)
+        self._h2_frame(True, mixing=0.25, cache_file=cache_file, **kernels)  # same mixing is fine
+        self._h2_frame(True, cache_file=cache_file, **kernels)  # no given mixing uses the cache
+        with self.assertRaises(ValueError):
+            self._h2_frame(True, mixing=0.75, cache_file=cache_file, **kernels)
+
+
 class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):
     @classmethod
     def setUpClass(self):

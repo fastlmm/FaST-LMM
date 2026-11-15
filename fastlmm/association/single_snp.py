@@ -1141,6 +1141,13 @@ def _find_h2_s_u(
     logging.info("Finding SU and then h2 for first phenotype")
     if cache_file is not None and os.path.exists(cache_file):
         lmm_0, h2_0, mixing_0 = load_cache(covar_val, y_0, cache_file, xp)
+        _check_cached_mixing(mixing, mixing_0, cache_file)
+        # A given h2 wins: the cached S, U, and UY do not depend on h2. Without a given h2,
+        # use the cached fit, or fit now if the cache was made with a given h2 (stored as NaN).
+        if h2 is not None:
+            h2_0 = h2[0:1]
+        elif np.isnan(h2_0).any():
+            h2_0 = _fit_h2(lmm_0)
     else:
         lmm_0, h2_0, mixing_0 = _find_h2_s_u_for_one_pheno(
             K0,
@@ -1150,7 +1157,7 @@ def _find_h2_s_u(
             None,
             y_0,
             mixing,
-            h2,
+            None if h2 is None else h2[0:1],
             force_full_rank,
             force_low_rank,
             None,
@@ -1160,29 +1167,58 @@ def _find_h2_s_u(
         )
 
         if cache_file is not None:
-            save_cache(lmm_0, h2_0, mixing_0, cache_file, cache_file_extra, xp)
+            # Store NaN for a given h2, so the cache never presents it as a fitted h2.
+            h2_to_cache = h2_0 if h2 is None else np.full_like(h2_0, np.nan)
+            save_cache(lmm_0, h2_to_cache, mixing_0, cache_file, cache_file_extra, xp)
 
     if multi_pheno.sid_count == 1:
         return lmm_0, h2_0, mixing_0
-    elif cache_file_extra is not None and os.path.exists(cache_file_extra):
-        return load_cache_extra(lmm_0, multi_y, cache_file_extra, xp)
-    else:
-        lmm_multi, multi_h2, multi_mixing = compute_extra(
-            lmm_0,
-            h2,
-            h2_0,
-            mixing_0,
-            multi_y,
-            multi_pheno,
-            cache_file_extra,
-            force_full_rank,
-            force_low_rank,
-            runner,
-            xp,
+    if cache_file_extra is not None and os.path.exists(cache_file_extra):
+        # Reuse the extra cache unless it was made with a given h2 (stored as NaN) and this
+        # run must fit h2; then fall through and fit h2 for every phenotype.
+        with np.load(cache_file_extra) as data:
+            cached_h2_is_fit = not np.isnan(data["h2"]).any()
+        if h2 is not None or cached_h2_is_fit:
+            lmm_multi, h2_multi, mixing_multi = load_cache_extra(
+                lmm_0, multi_y, cache_file_extra, xp
+            )
+            _check_cached_mixing(mixing, mixing_multi, cache_file_extra)
+            return lmm_multi, (h2_multi if h2 is None else h2), mixing_multi
+
+    lmm_multi, multi_h2, multi_mixing = compute_extra(
+        lmm_0,
+        h2,
+        h2_0,
+        mixing_0,
+        multi_y,
+        multi_pheno,
+        cache_file_extra,
+        force_full_rank,
+        force_low_rank,
+        runner,
+        xp,
+    )
+    if cache_file_extra is not None:
+        h2_to_cache = multi_h2 if h2 is None else np.full_like(multi_h2, np.nan)
+        save_cache_extra(lmm_multi, h2_to_cache, multi_mixing, cache_file_extra, xp)
+    return lmm_multi, multi_h2, multi_mixing
+
+
+def _check_cached_mixing(mixing, cached_mixing, cache_file):
+    # The cached S and U depend on the mixing of the two kernels, so a different given
+    # mixing cannot reuse them.
+    if mixing is not None and not np.all(np.asarray(cached_mixing) == mixing):
+        raise ValueError(
+            f"cache_file '{cache_file}' was created with mixing {cached_mixing}, but this run gives mixing {mixing}"
         )
-        if cache_file_extra is not None:
-            save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp)
-        return lmm_multi, multi_h2, multi_mixing
+
+
+def _fit_h2(lmm):
+    logging.info("Starting findH2")
+    result = lmm.findH2()
+    if not isinstance(result, list):
+        result = [result]
+    return np.array([item["h2"] for item in result])
 
 
 def compute_extra(
@@ -1214,7 +1250,7 @@ def compute_extra(
             linreg=lmm_0.linreg,
             y=multi_y[:, pheno_index : pheno_index + 1],
             mixing=mixing_0,
-            h2=h2,
+            h2=None if h2 is None else h2[pheno_index : pheno_index + 1],
             force_full_rank=force_full_rank,
             force_low_rank=force_low_rank,
             K=lmm_0.K,
@@ -1323,11 +1359,12 @@ def _find_h2_s_u_for_one_pheno(
         )
 
     if h2 is None:
-        logging.info("Starting findH2")
-        result = lmm.findH2()
-        if not isinstance(result, list):
-            result = [result]
-        h2 = np.array([item["h2"] for item in result])
+        h2 = _fit_h2(lmm)
+    else:
+        # findH2 would compute these lazily; with a given h2, compute them now, because
+        # callers (caching, multiple phenotypes) read lmm.S, lmm.U, and lmm.UY directly.
+        lmm.getSU()
+        lmm.getUY()
 
     logging.info("h2={0}".format(h2))
 
