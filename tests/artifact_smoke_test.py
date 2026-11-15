@@ -1,5 +1,7 @@
 """Smoke-test an installed FaST-LMM distribution outside its source tree."""
 
+import math
+from importlib.metadata import metadata
 from importlib.resources import files
 from pathlib import Path
 
@@ -10,6 +12,7 @@ import fastlmm
 import fastlmm.association
 import fastlmm.inference
 from fastlmm.association import single_snp_linreg
+from fastlmm.association.tests.Sc import Sc
 from fastlmm.inference import FastLMM
 
 
@@ -17,6 +20,17 @@ def main():
     installed_package = Path(fastlmm.__file__).resolve()
     source_package = Path(__file__).resolve().parents[1] / "fastlmm"
     assert source_package.resolve() not in installed_package.parents
+
+    requirements = metadata("fastlmm").get_all("Requires-Dist")
+    assert any(requirement.startswith("gx2") for requirement in requirements)
+    assert not any(requirement.startswith("fastlmmrslib") for requirement in requirements)
+    # Exercise the installed score-test adapter against an elementary tail.
+    probability = Sc.pv_davies_eig(20, np.array([.001, .001, 1., 1.]))
+    assert abs(probability - math.exp(-10) / .999) <= 1e-7
+    # A flagged, very small tail must pass the independent absolute bound.
+    probability = Sc.pv_davies_eig(100, np.array([.001, .001, 1., 1.]))
+    assert abs(probability - math.exp(-50) / .999) <= 1e-7
+    assert Sc.pv_davies_eig(0, np.zeros(2)) == 1.
 
     package = files("fastlmm")
     required_data = [

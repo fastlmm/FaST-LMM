@@ -45,7 +45,10 @@ def snp_set(
     :param G0: Training SNPs from which to construct a similarity kernel. It should be the base name of files in PLINK Bed or Ped format.
     :type G0: a string
 
-    :param test: 'lrt' (default) or 'sc_davies'
+    :param test: 'lrt' (default) or 'sc_davies'. The score test uses gx2 with
+        an absolute p-value accuracy target of 1e-7. Very small tails may be
+        returned as zero when an independent bound establishes this accuracy.
+        Numerical failures without a validated result raise ArithmeticError.
     :type test: a string
 
     :param write_lrtperm: (default: False) If True, write the lrtperm vector (dictated by seed) to a file.
