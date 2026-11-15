@@ -198,10 +198,12 @@ def single_snp(
     :param dtype: The floating-point precision of the main linear algebra: 'float64' (default) or 'float32'.
          With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
          eigendecomposition/SVD and SNP rotations run in single precision; the per-SNP statistics are still
-         computed in float64. 'float32' is much faster on consumer GPUs (``xp='cupy'``), which have limited
-         float64 throughput, but gives slightly different p-values than 'float64'. It works with ``xp='numpy'``,
-         too, so its numerical effect can be checked without a GPU. With 'float32', covariate and phenotype
-         values too large or too small (but nonzero) for float32 to handle safely raise a ValueError.
+         computed in float64. 'float32' gives slightly different p-values than 'float64'. It is much faster on
+         consumer GPUs (``xp='cupy'``), which have limited float64 throughput; on data-center GPUs with fast
+         float64 (for example, NVIDIA A100 or H100), 'float64' is fast, too. 'float32' works with
+         ``xp='numpy'``, so its numerical effect can be checked without a GPU. With 'float32', covariate and
+         phenotype values too large or too small (but nonzero) for float32 to handle safely raise a ValueError.
+         A ``cache_file`` created with one dtype raises a ValueError if used with the other.
     :type dtype: string or numpy dtype
 
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
