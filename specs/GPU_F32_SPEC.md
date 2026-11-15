@@ -96,6 +96,25 @@ Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup ve
 - PySnpTools legacy suite (`tests/test.py`) on `cupy-sub-matrix`: 744 tests OK, 3 skipped (the new cupy
   tests; no cupy in that venv). The new cupy tests pass in the GPU venv and fail without the fixes.
 
+## CPU/GPU discrepancies checked (2026-11-15)
+
+- Standardization: numpy uses PySnpTools' Rust standardizer; CuPy uses the Python one. They agree
+  to 1-2 ulp, with the same missing-value pattern, including constant and single-value SNPs. Fixed in
+  PySnpTools PR #25: an all-missing SNP raised on CPU but became zeros on GPU (now raises on both);
+  Beta standardization failed on CuPy (SciPy received a CuPy array).
+- PstData dtype: values moved between numpy and CuPy now keep the dtype same-module input keeps
+  (int8 with `_require_float32_64=False` used to become float64 on CuPy; CuPy input under numpy
+  raised). PySnpTools PR #25.
+- Low rank, CuPy vs numpy float64 differ by 8.9e-10 in log10 p (full rank 2.5e-14). Not a GPU effect:
+  numpy at 1 vs 32 BLAS threads differs by the same 8.9e-10. Likely cancellation in the low-rank
+  remainder for test SNPs that are also kernel SNPs (as in the test data).
+- float32 eigh: cuSOLVER (`syevd`, CuPy's default) is about 10-25x less accurate than LAPACK on a
+  2,000-individual kernel with duplicates (orthogonality 1.7e-6 vs 6.6e-8; y'V^-1y at h2=0.99 6e-6 vs
+  3e-7 relative), which explains GPU float32 being less accurate than CPU float32 in the hard case.
+  cuSOLVER's Jacobi solver (`syevj`) may be more accurate but CuPy 14 exposes it only through
+  low-level bindings. Option for later: wrap `syevj`, or refine the decomposition in float64.
+- Two kernels: run on numpy (now with a warning when a GPU module was requested).
+
 ## Remaining work
 
 - Build the kernel in the run's dtype (about 12× instead of 8.7× at N=10k). Needs a `dtype` argument on
