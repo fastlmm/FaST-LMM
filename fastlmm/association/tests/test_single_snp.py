@@ -818,9 +818,10 @@ class TestSingleSnp(unittest.TestCase):
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 
-    def _dtype_frame(self, dtype, force_low_rank, xp="numpy", cache_file=None):
+    def _dtype_frame(self, dtype, force_low_rank, xp="numpy", **kwargs):
+        # Small single_snp run; kwargs override the defaults below.
         test_snps = Bed(self.bedbase, count_A1=False)
-        frame = single_snp(
+        options = dict(
             test_snps=test_snps[:, :50],
             pheno=self.phen_fn,
             covar=self.cov_fn,
@@ -829,12 +830,40 @@ class TestSingleSnp(unittest.TestCase):
             leave_out_one_chrom=False,
             force_low_rank=force_low_rank,
             force_full_rank=not force_low_rank,
-            cache_file=cache_file,
             count_A1=False,
-            xp=xp,
-            dtype=dtype,
         )
-        return frame.set_index("SNP").sort_index()
+        options.update(kwargs)
+        frame = single_snp(**options, xp=xp, dtype=dtype)
+        index = ["Pheno", "SNP"] if "Pheno" in frame.columns else "SNP"
+        return frame.set_index(index).sort_index()
+
+    def _two_phenos(self):
+        pheno = Pheno(self.phen_fn).read()
+        rng = np.random.default_rng(0)
+        second = -0.5 * pheno.val[:, 0] + rng.standard_normal(pheno.iid_count)
+        return SnpData(iid=pheno.iid, sid=["pheno0", "pheno1"], val=np.c_[pheno.val, second])
+
+    def _scaled_pheno(self, factor):
+        pheno = Pheno(self.phen_fn).read()
+        return SnpData(iid=pheno.iid, sid=pheno.sid, val=pheno.val * factor)
+
+    @staticmethod
+    def _decomposition_dtypes(run):
+        # Record the dtype of every eigh/svd that lmm_cov runs (through np.linalg).
+        dtypes = []
+        real_eigh, real_svd = np.linalg.eigh, np.linalg.svd
+
+        def eigh(a, *args, **kwargs):
+            dtypes.append(a.dtype)
+            return real_eigh(a, *args, **kwargs)
+
+        def svd(a, *args, **kwargs):
+            dtypes.append(a.dtype)
+            return real_svd(a, *args, **kwargs)
+
+        with patch.object(np.linalg, "eigh", eigh), patch.object(np.linalg, "svd", svd):
+            frame = run()
+        return frame, dtypes
 
     @staticmethod
     def _max_log10_pvalue_diff(frame_a, frame_b):
@@ -850,6 +879,11 @@ class TestSingleSnp(unittest.TestCase):
     FLOAT32_VS_FLOAT64_LOG10P_TOL = 1e-5
     CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL = 2e-8
     CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL = 5e-5
+    # Two kernels with mixing=None, float32 vs float64 (full rank / low rank): the mixing search
+    # lands about 1e-4 apart (mixing 6e-5 / 9e-5), giving max |Δlog10 p| 8.0e-5 / 1.2e-4.
+    # With mixing and h2 pinned, the difference is 9.6e-7 / 3.9e-7 (within the tolerance above).
+    FLOAT32_VS_FLOAT64_MIXING_TOL = 2e-3
+    FLOAT32_VS_FLOAT64_MIXING_SEARCH_LOG10P_TOL = 2.5e-3
 
     def test_dtype_float32_matches_float64(self):
         for force_low_rank in [False, True]:
@@ -890,6 +924,135 @@ class TestSingleSnp(unittest.TestCase):
                 frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
                 diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
                 assert diff < tol, (dtype, force_low_rank, diff)
+
+
+    def test_dtype_float32_large_phenotype(self):
+        # Squaring residuals of a 1e20-scale phenotype overflows float32, so the
+        # statistics after rotation must be computed in float64.
+        for force_low_rank in [False, True]:
+            frame64 = self._dtype_frame("float64", force_low_rank)
+            frame32 = self._dtype_frame("float32", force_low_rank, pheno=self._scaled_pheno(1e20))
+            diff = self._max_log10_pvalue_diff(frame64, frame32)
+            assert diff < self.FLOAT32_VS_FLOAT64_LOG10P_TOL, (force_low_rank, diff)
+            np.testing.assert_allclose(frame32.EffectSize, frame64.EffectSize, rtol=1e-4)
+
+    def test_dtype_float32_out_of_range_input(self):
+        # Values that float32 cannot hold (or that could overflow a length-N sum)
+        # must raise rather than silently become inf or zero.
+        covar = Pheno(self.cov_fn).read()
+        tiny_covar = SnpData(iid=covar.iid, sid=covar.sid, val=covar.val * 1e-40)
+        for kwargs in [dict(pheno=self._scaled_pheno(1e36)), dict(covar=tiny_covar)]:
+            with self.assertRaises(ValueError):
+                self._dtype_frame("float32", force_low_rank=True, **kwargs)
+        # float64 accepts the same inputs.
+        self._dtype_frame("float64", force_low_rank=True, covar=tiny_covar)
+
+    def test_dtype_float32_snp_explained_by_covariates(self):
+        # A test SNP that a covariate explains gets PValue 1 and SnpWeight 0 in float64.
+        # float32 regression leaves roundoff residuals that must not be tested as signal.
+        covar = Pheno(self.cov_fn).read()
+        snps = Bed(self.bedbase, count_A1=False)[:, :1].read()
+        sid = snps.sid[0]
+        covar = SnpData(iid=covar.iid, sid=list(covar.sid) + ["dup"], val=np.c_[covar.val, snps.val[:, 0] * 3 + 1])
+        for force_low_rank in [False, True]:
+            for dtype in ["float64", "float32"]:
+                row = self._dtype_frame(dtype, force_low_rank, covar=covar).loc[sid]
+                assert row.PValue == 1.0 and row.SnpWeight == 0.0, (dtype, force_low_rank, row.PValue, row.SnpWeight)
+
+    def test_dtype_float32_two_kernels(self):
+        # Searching for the mix of two kernels must also run in float32.
+        test_snps = Bed(self.bedbase, count_A1=False)
+        kernels = dict(G0=test_snps[:, ::20], G1=test_snps[:, 5::20], mixing=None)
+        for force_low_rank in [False, True]:
+            frame64 = self._dtype_frame("float64", force_low_rank, **kernels)
+            frame32, dtypes = self._decomposition_dtypes(
+                lambda: self._dtype_frame("float32", force_low_rank, **kernels)
+            )
+            assert len(dtypes) > 1 and all(dtype == np.float32 for dtype in dtypes), dtypes
+            diff = self._max_log10_pvalue_diff(frame64, frame32)
+            assert diff < self.FLOAT32_VS_FLOAT64_MIXING_SEARCH_LOG10P_TOL, (force_low_rank, diff)
+            mixing64, mixing32 = frame64.Mixing.iloc[0], frame32.Mixing.iloc[0]
+            assert abs(mixing64 - mixing32) < self.FLOAT32_VS_FLOAT64_MIXING_TOL
+
+            # With the search results pinned, only precision differs.
+            pinned = dict(kernels, mixing=mixing64, h2=frame64.Nullh2.iloc[0])
+            frame64 = self._dtype_frame("float64", force_low_rank, **pinned)
+            frame32 = self._dtype_frame("float32", force_low_rank, **pinned)
+            diff = self._max_log10_pvalue_diff(frame64, frame32)
+            assert diff < self.FLOAT32_VS_FLOAT64_LOG10P_TOL, (force_low_rank, diff)
+
+    def test_dtype_cache_checks_every_array(self):
+        for force_low_rank in [False, True]:
+            # A base cache whose UY dtype disagrees with the run must be rejected.
+            cache_file = self.file_name(f"dtype_check_base_{force_low_rank}") + ".npz"
+            for p in Path(cache_file).parent.glob(Path(cache_file).name + "*"):
+                p.unlink()
+            self._dtype_frame("float32", force_low_rank, cache_file=cache_file)
+            with np.load(cache_file) as data:
+                arrays = dict(data)
+            arrays["UY"] = arrays["UY"].astype(np.float64)
+            np.savez(cache_file, **arrays)
+            with self.assertRaises(ValueError):
+                self._dtype_frame("float32", force_low_rank, cache_file=cache_file)
+
+            # So must an extra-phenotype cache from a float64 run.
+            cache64 = self.file_name(f"dtype_check_64_{force_low_rank}") + ".npz"
+            cache32 = self.file_name(f"dtype_check_32_{force_low_rank}") + ".npz"
+            for cache in [cache64, cache32]:
+                for p in Path(cache).parent.glob(Path(cache).name + "*"):
+                    p.unlink()
+            pheno = self._two_phenos()
+            self._dtype_frame("float64", force_low_rank, pheno=pheno, cache_file=cache64)
+            self._dtype_frame("float32", force_low_rank, pheno=pheno, cache_file=cache32)
+            Path(cache32 + ".extra.npz").write_bytes(Path(cache64 + ".extra.npz").read_bytes())
+            with self.assertRaises(ValueError):
+                self._dtype_frame("float32", force_low_rank, pheno=pheno, cache_file=cache32)
+
+    def test_cupy_options_match_numpy(self):
+        # GPU runs of options beyond the basic case: multiple phenotypes, log_delta,
+        # and a cache reused by a second run. (Two kernels always run on numpy.)
+        try:
+            import cupy as cp
+        except ModuleNotFoundError:
+            raise unittest.SkipTest("cupy is not installed")
+        option_list = [
+            ("two phenos", dict(pheno=self._two_phenos())),
+            ("log_delta", dict(log_delta=1.0)),
+        ]
+        for dtype, tol in [
+            ("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL),
+            ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL),
+        ]:
+            for force_low_rank in [False, True]:
+                for name, kwargs in option_list:
+                    frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy", **kwargs)
+                    frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy", **kwargs)
+                    diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
+                    assert diff < tol, (name, dtype, force_low_rank, diff)
+                    assert (frame_np.Mixing == frame_cp.Mixing).all(), name
+                    assert np.allclose(frame_np.Nullh2, frame_cp.Nullh2), name
+
+                cache_file = self.file_name(f"cupy_cache_{dtype}_{force_low_rank}") + ".npz"
+                for p in Path(cache_file).parent.glob(Path(cache_file).name + "*"):
+                    p.unlink()
+                pheno = self._two_phenos()
+                first = self._dtype_frame(dtype, force_low_rank, xp="cupy", pheno=pheno, cache_file=cache_file)
+                second = self._dtype_frame(dtype, force_low_rank, xp="cupy", pheno=pheno, cache_file=cache_file)
+                # Not bit-identical at full rank: the first run rotates with a non-contiguous view
+                # of U and the second with the contiguous cached U, so BLAS rounds differently
+                # (measured 1.5e-7 in SnpWeight for float32; 2e-16 for float64, as on numpy).
+                diff = self._max_log10_pvalue_diff(first, second)
+                assert diff < tol, ("cache", dtype, force_low_rank, diff)
+                assert (first.Nullh2 == second.Nullh2).all() and (first.Mixing == second.Mixing).all()
+
+        # A rank-0 kernel (no kernel SNPs) keeps the array module and dtype.
+        from fastlmm.inference.lmm_cov import LMM
+
+        for dtype in [np.float64, np.float32]:
+            lmm = LMM(X=cp.ones((5, 1), dtype=dtype), Y=cp.ones((5, 1), dtype=dtype), G=cp.zeros((5, 0), dtype=dtype), K=None, xp="cupy")
+            S, U = lmm.getSU()
+            assert isinstance(S, cp.ndarray) and isinstance(U, cp.ndarray)
+            assert S.dtype == dtype and U.dtype == dtype
 
 
 class TestSingleSnpLeaveOutOneChrom(unittest.TestCase):

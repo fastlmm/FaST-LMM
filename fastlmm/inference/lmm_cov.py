@@ -159,8 +159,9 @@ class LMM(object):
                 self.setSU_fromK()
             pass
         else:  # rank of kernel = 0 (linear regression case)
-            self.S = np.zeros((0))
-            self.U = np.zeros_like(self.G)
+            # Keep G's array module and dtype.
+            self.S = self._xp.zeros((0), dtype=self.G.dtype)
+            self.U = self._xp.zeros_like(self.G)
 
     def getSU(self):
         """
@@ -192,10 +193,22 @@ class LMM(object):
         S, U = self.getSU()
         N = A.shape[0]
         D = self.linreg.D
-        A = self._xp.asarray(self.linreg.regress(A))
         # treat pathological case where a variable is explained by the covariates
-        A_std = A.std(0)
-        A[:, A_std <= 1e-10] = 0.0
+        # (std in float64: squaring float32 values can overflow or underflow to zero)
+        if A.dtype == np.float64:
+            A = self._xp.asarray(self.linreg.regress(A))
+            A_std = A.std(0, dtype=np.float64)
+            explained = A_std <= 1e-10
+        else:
+            # float32 regression leaves roundoff residuals of about 1e-7 relative (1e-14 for
+            # float64), above the absolute 1e-10 cutoff, so use a cutoff relative to each
+            # column's std: about 1e3 above float32 roundoff, as 1e-10 is about 1e4 above
+            # float64 roundoff for standardized SNPs.
+            original_std = self._xp.asarray(A).std(0, dtype=np.float64)
+            A = self._xp.asarray(self.linreg.regress(A))
+            A_std = A.std(0, dtype=np.float64)
+            explained = A_std <= 1e-4 * original_std
+        A[:, explained] = 0.0
         if S.shape[0] < N - D:  # lowrank case
             # A = self.linreg.regress(A)
             UA = U.T.dot(A)
@@ -916,6 +929,10 @@ class LMM(object):
         """
         # logging.info("Starting self.nLLcore")
         N = self.Y.shape[0] - self.linreg.D
+        # The statistics after rotation are float64 even when the rotated data are float32:
+        # dividing by the float64 Sd promotes the U parts; computeAKA and computeAKB promote
+        # the UU (low-rank) parts explicitly. (No copy when Sd is already float64.)
+        Sd = Sd.astype(np.float64, copy=False)
         if len(Sd.shape) == 1:
             Sd = Sd.reshape(-1, 1)
         denom = self._xp.asarray(denom).reshape(-1)
@@ -1115,6 +1132,9 @@ class LMM(object):
         UAS = UA / Sd.reshape(-1, 1)
         AKB = UAS.T.dot(UB)
         if UUA is not None:
+            # float64, so float32 products and sums cannot overflow (no copy if already float64).
+            UUA = UUA.astype(np.float64, copy=False)
+            UUB = UUB.astype(np.float64, copy=False)
             AKB += UUA.T.dot(UUB) / denom
         return AKB
 
@@ -1141,7 +1161,9 @@ class LMM(object):
             start0 = end0
             if UUA is not None:
                 end1 = UUA.shape[0] * (piece_index + 1) // piece_count
-                AKA += (UUA[start1:end1, :] * UUA[start1:end1, :]).sum(0) / denom
+                # float64, so float32 squares and sums cannot overflow (no copy if already float64).
+                UUA_piece = UUA[start1:end1, :].astype(np.float64, copy=False)
+                AKA += (UUA_piece * UUA_piece).sum(0) / denom
                 start1 = end1
         return AKA
 

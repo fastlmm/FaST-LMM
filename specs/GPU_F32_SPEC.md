@@ -41,6 +41,33 @@ and measure whether GPU float32 is worth recommending.
 - Cache: the "UUY is None" placeholder is detected as a bool array (the old `!= "float64"` test
   silently dropped a float32 `UUY`), and a cache made with a different dtype raises `ValueError`.
 
+### Review fixes (Codex review, 2026-11-15)
+
+The review found bugs in three patterns; each fix was followed by a search for the same pattern.
+
+- **Host/device boundary.** Control parameters (`h2`, `mixing`, `log_delta`, the optimizer's nLL) stay
+  numpy; model arrays live on `xp`. Fixed: `log_delta` computed `h2` with `xp.exp`; caches loaded with
+  `xp.load` put `h2`/`mixing` on the GPU (now `np.load`, then model arrays move to `xp`); multiple
+  phenotypes were stacked with `np.r_` (now `xp.stack`); a rank-0 `G` made numpy float64 `S`/`U`.
+  PySnpTools: CuPy indexing wraps negative and out-of-range indexes, so `sub_matrix` checks them.
+- **float64 statistics after rotation.** This relied on accidental promotion by the float64 `Sd`; the
+  low-rank `UU` parts squared and summed float32 values (overflow at phenotype scale 1e20), as did the
+  phenotype variance for `EffectSize` and `rotate`'s column std (which could also underflow to zero).
+  All are now explicitly float64. float32 inputs that cannot be held safely (above `max/N`, or nonzero
+  below float32's normal range) raise `ValueError`.
+- **Precision applied everywhere.** The two-kernel mixing buffers were float64, so the mixing search ran
+  in float64 even with `dtype="float32"`; they now use the run's dtype (with a dtype-aware check of the
+  mixed kernel's diagonal). Caches now check every model array's dtype, including the extra-phenotype
+  cache.
+- **Thresholds tuned for float64.** `rotate` zeroed columns explained by covariates using an absolute
+  1e-10 cutoff, below float32 regression roundoff (about 1e-7 relative), so float32 tested roundoff
+  as signal (p 0.72, SnpWeight 5e10). float32 now uses a cutoff relative to each column's std; float64
+  is unchanged. `setSU_fromG`'s 1e-10 singular-value cutoff was examined and left alone: a kept
+  near-zero direction has `Sd ≈ 1 - h2`, the same as the low-rank remainder, so results are unaffected.
+- The numpy/float64 path was checked against `origin/main` for exact equality on 15 small cases
+  (full and low rank, leave-out-one-chrom, two phenotypes, two kernels, `log_delta`,
+  `interact_with_snp`, and cache reuse).
+
 ## Results (2026-11-15, Ryzen 9 7950X + RTX 3060, end-to-end `single_snp`)
 
 Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup versus CPU float64
@@ -79,7 +106,10 @@ Full detail and conclusions are in `specs/experiments/gpu_f32.ipynb`. Speedup ve
 - Consider: `lmm_cov.setSU_fromG` drops singular values below the absolute threshold `1e-10`; in
   float32, roundoff singular values are about 1e-6 relative, so near-null directions are kept.
   Measured effect is small, but a dtype-relative threshold may be more principled.
-- The legacy `tests/test.py` path and the two-kernel (`K1`) mixing search have not been tried with
-  `dtype="float32"` (`K1` forces numpy; the mixing search asserts numpy).
+- The legacy `tests/test.py` path has not been tried with `dtype="float32"`.
+- Pre-existing, not changed: `single_snp` silently switches `xp` to numpy when a second kernel
+  (`K1`/`G1`) is given; `cache_file` with a given `h2` or `log_delta` fails in `save_cache` (S and U
+  are never computed); `lmm_cov.nLLcore`'s second-kernel (`UW`) path uses numpy-only calls, so it would
+  fail on CuPy (single_snp does not use it).
 - Release PySnpTools with the fixes, raise FaST-LMM's lower bound, and document the GPU workflow
   (including the CuPy install: for example, `cupy-cuda13x[ctk]`).

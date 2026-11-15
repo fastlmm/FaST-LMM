@@ -200,7 +200,8 @@ def single_snp(
          eigendecomposition/SVD and SNP rotations run in single precision; the per-SNP statistics are still
          computed in float64. 'float32' is much faster on consumer GPUs (``xp='cupy'``), which have limited
          float64 throughput, but gives slightly different p-values than 'float64'. It works with ``xp='numpy'``,
-         too, so its numerical effect can be checked without a GPU.
+         too, so its numerical effect can be checked without a GPU. With 'float32', covariate and phenotype
+         values too large or too small (but nonzero) for float32 to handle safely raise a ValueError.
     :type dtype: string or numpy dtype
 
     :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
@@ -683,7 +684,10 @@ class _Mixer(object):
                 K = K1
             else:
                 if mixer.do_g:
-                    G = xp.empty((K0.iid_count, K0.sid_count + K1.sid_count))
+                    # covar is the run's covar_val, so it carries the run's dtype.
+                    G = xp.empty(
+                        (K0.iid_count, K0.sid_count + K1.sid_count), dtype=covar.dtype
+                    )
                     if mixer.mixing is None:
                         assert (
                             xp is np
@@ -739,7 +743,8 @@ class _Mixer(object):
                 mixer.mixing = mixer.mixing or 1
                 K = K1
             else:
-                K = xp.empty(K0.val.shape)
+                # covar is the run's covar_val, so it carries the run's dtype.
+                K = xp.empty(K0.val.shape, dtype=covar.dtype)
                 if mixer.mixing is None:
                     assert (
                         xp is np
@@ -748,9 +753,13 @@ class _Mixer(object):
                         K, covar, K0.val, K1.val, h2, y, xp
                     )
                 _mix_from_Ks(K, K0.val, K1.val, mixer.mixing)
+                # Sum in float64; float32 rounds each diagonal entry by up to eps/2,
+                # so its tolerance grows with N. (For float64 the tolerance stays 1e-7.)
+                diag_tol = max(1e-7, 4 * K.shape[0] * np.finfo(K.dtype).eps)
                 assert (
                     K.shape[0] == K.shape[1]
-                    and abs(xp.diag(K).sum() - K.shape[0]) < 1e-7
+                    and abs(float(xp.diag(K).sum(dtype=np.float64)) - K.shape[0])
+                    < diag_tol
                 ), "Expect mixed K to be standardized"
                 K = KernelData(val=K, iid=K0.iid, xp=xp)
 
@@ -920,12 +929,13 @@ def _internal_single(
         h2 is None or log_delta is None
     ), "if h2 is specified, log_delta may not be specified"
     if log_delta is not None:
-        h2 = 1.0 / (xp.exp(log_delta) + 1)
+        # h2 is a control parameter, so it stays on the host (numpy) even when xp is cupy.
+        h2 = 1.0 / (np.exp(log_delta) + 1)
 
     if h2 is not None and not isinstance(h2, np.ndarray):
         h2 = np.repeat(h2, pheno.shape[1])
 
-    covar_val = xp.asarray(covar.read(view_ok=True, order="A").val, dtype=dtype)
+    covar_val = _as_dtype(xp, covar.read(view_ok=True, order="A").val, dtype, "covar")
     covar_val = xp.c_[
         covar_val, xp.ones((test_snps.iid_count, 1), dtype=dtype)
     ]  # view_ok because np.c_ will allocation new memory
@@ -975,6 +985,26 @@ def _internal_single(
     return frame
 
 
+def _as_dtype(xp, val, dtype, name):
+    # Cast covariate or phenotype values (user scale) to the run's dtype. In float32,
+    # values too large (so that a length-N sum could overflow) or nonzero but below
+    # float32's normal range would otherwise silently become inf or lose precision.
+    result = xp.asarray(val, dtype=dtype)
+    if result.dtype == np.float32:
+        magnitude = np.abs(pstutil.asnumpy(val))
+        finfo = np.finfo(np.float32)
+        out_of_range = np.isfinite(magnitude) & (
+            (magnitude > finfo.max / max(1, magnitude.shape[0]))
+            | ((magnitude > 0) & (magnitude < finfo.tiny))
+        )
+        if out_of_range.any():
+            raise ValueError(
+                f"{name} has values (for example, {magnitude[out_of_range][0]:g}) outside the range "
+                "dtype 'float32' handles safely; rescale them or use dtype 'float64'"
+            )
+    return result
+
+
 cache_version = 3
 
 
@@ -999,18 +1029,15 @@ def save_cache(lmm_0, h2_0, mixing_0, cache_file, cache_file_extra, xp):
 
 def load_cache(covar_val, y_0, cache_file, xp):
     lmm_0 = lmm_cov(X=covar_val, Y=y_0, G=None, K=None, xp=xp)
-    with xp.load(cache_file) as data:  #!! similar code in epistasis
+    # np.load keeps everything on the host; model arrays then move to xp, while the
+    # h2 and mixing control parameters stay numpy, as when they are computed.
+    with np.load(cache_file) as data:  #!! similar code in epistasis
         version = data["version"]
         assert version == cache_version, f"Expect cache version {cache_version}"
-        if data["U"].dtype != covar_val.dtype:
-            raise ValueError(
-                f"cache_file '{cache_file}' was created with dtype {data['U'].dtype}, but this run uses {covar_val.dtype}"
-            )
-        lmm_0.S = data["S"]
-        lmm_0.U = data["U"]
-        lmm_0.UY = data["UY"]
-        # save_cache stores a bool [False] placeholder when UUY is None.
-        lmm_0.UUY = None if data["UUY"].dtype == bool else data["UUY"]
+        lmm_0.S = _cached_array(data, "S", covar_val.dtype, cache_file, xp)
+        lmm_0.U = _cached_array(data, "U", covar_val.dtype, cache_file, xp)
+        lmm_0.UY = _cached_array(data, "UY", covar_val.dtype, cache_file, xp)
+        lmm_0.UUY = _cached_array(data, "UUY", covar_val.dtype, cache_file, xp)
         h2_0 = data["h2_0"]
         mixing_0 = data["mixing_0"]
 
@@ -1025,6 +1052,19 @@ def load_cache(covar_val, y_0, cache_file, xp):
     ), "Expect lmm_0.UUY to have dimension 1"
 
     return lmm_0, h2_0, mixing_0
+
+
+def _cached_array(data, key, dtype, cache_file, xp):
+    # Every model array in a cache must match the run's dtype, not just one of them.
+    # save_cache and save_cache_extra store a bool [False] placeholder when UUY is None.
+    value = data[key]
+    if key == "UUY" and value.dtype == bool:
+        return None
+    if value.dtype != dtype:
+        raise ValueError(
+            f"cache_file '{cache_file}' has {key} with dtype {value.dtype}, but this run uses {dtype}"
+        )
+    return xp.asarray(value)
 
 
 def save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp):
@@ -1043,12 +1083,13 @@ def save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp):
 
 
 def load_cache_extra(lmm_multi, multi_y, cache_file_extra, xp):
-    with xp.load(cache_file_extra) as data:  #!! similar code in epistasis
+    # See load_cache: model arrays move to xp; h2 and mixing stay numpy.
+    with np.load(cache_file_extra) as data:  #!! similar code in epistasis
         version = data["version"]
         assert version == cache_version, f"Expect cache version {cache_version}"
-        lmm_multi.UY = data["UY"]
-        # save_cache_extra stores a bool [False] placeholder when UUY is None.
-        lmm_multi.UUY = None if data["UUY"].dtype == bool else data["UUY"]
+        dtype = lmm_multi.X.dtype
+        lmm_multi.UY = _cached_array(data, "UY", dtype, cache_file_extra, xp)
+        lmm_multi.UUY = _cached_array(data, "UUY", dtype, cache_file_extra, xp)
         h2_multi = data["h2"]
         mixing_multi = data["mixing"]
     lmm_multi.Y = multi_y
@@ -1082,8 +1123,8 @@ def _find_h2_s_u(
     ), "When a 2nd kernel is given, only one phenotype is allowed."
 
     # view_ok because this code already did a fresh read to look for any missing values
-    multi_y = xp.asarray(
-        multi_pheno.read(view_ok=True, order="A").val, dtype=covar_val.dtype
+    multi_y = _as_dtype(
+        xp, multi_pheno.read(view_ok=True, order="A").val, covar_val.dtype, "pheno"
     )
 
     y_0 = multi_y[:, 0:1]
@@ -1186,9 +1227,11 @@ def compute_extra(
         mixing_list.append(mixing_p)
 
     lmm_0.Y = multi_y
-    lmm_0.UY = np.r_[uy_list].T
+    # The rotated phenotypes are model arrays, so stack them with xp (they may be on a GPU).
+    # stack(...).T gives the same layout as the former np.r_[...].T.
+    lmm_0.UY = xp.stack(uy_list).T
     if lmm_0.UUY is not None:
-        lmm_0.UUY = np.r_[uuy_list].T
+        lmm_0.UUY = xp.stack(uuy_list).T
         assert (
             lmm_0.UUY.shape == multi_pheno.shape
         ), "expect pheno and lmm.UUY to have the same shape"
@@ -1435,7 +1478,8 @@ def _multi_compute_stats(
     ), "expect beta, and fraction_variance_explained_beta to agree on shape"
 
     g_var = np.nanvar(raw_snps.read().val, axis=0)
-    p_var = lmm.Y.var(axis=0)
+    # float64: squaring float32 phenotype values can overflow.
+    p_var = lmm.Y.var(axis=0, dtype=np.float64)
     effect_size = pstutil.asnumpy(multi_beta**2 * g_var[..., None] / p_var[None, ...])
 
     chi2stats = pstutil.asnumpy(multi_beta * multi_beta / multi_variance_beta)
