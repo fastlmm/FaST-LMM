@@ -253,6 +253,8 @@ def single_snp(
     with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__}) as _:
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
+        # On a GPU, test-SNP blocks of a .bed file can be read and standardized there by bed-reader.
+        bed = _underlying_bed(test_snps)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
         # pheno.val may be a cupy array; PySnpTools indexing needs a numpy mask.
         good_values_per_iid = pstutil.asnumpy((pheno.val == pheno.val).sum(axis=1))
@@ -310,6 +312,7 @@ def single_snp(
                 random_seed=random_seed,
                 xp=xp,
                 dtype=dtype,
+                bed=bed,
             )
             if pvalue_threshold is None and random_threshold is None:
                 sid_index_range = IntRangeSet(frame["sid_index"])
@@ -386,6 +389,7 @@ def single_snp(
                     random_seed=random_seed,
                     xp=xp,
                     dtype=dtype,
+                    bed=bed,
                 )
                 return distributable
 
@@ -930,6 +934,7 @@ def _internal_single(
     random_seed,
     xp,
     dtype,
+    bed,
 ):
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
@@ -995,6 +1000,7 @@ def _internal_single(
         random_seed,
         show_snp_fract_var_exp,
         dtype,
+        bed,
     )
 
     return frame
@@ -1403,6 +1409,7 @@ def _snp_tester(
     random_seed,
     show_snp_fract_var_exp,
     dtype,
+    bed,
 ):
     work_count = -(
         test_snps.sid_count // -block_size
@@ -1429,11 +1436,18 @@ def _snp_tester(
         end = debatch_closure(work_index + 1)
 
         raw_snps = test_snps[:, start:end]
-        snps_read = raw_snps.read(dtype=dtype)
-        if xp is np:
+        bed_reader_gpu = _bed_reader_gpu() if bed is not None and xp.__name__ == "cupy" else None
+        if bed_reader_gpu is not None:
+            # Read and standardize on the GPU, then wrap without a copy. `raw_snps` supplies the
+            # SNP metadata that `snps_read` provides on the other paths.
+            snps_read = raw_snps
+            val = _read_standardized_on_gpu(bed_reader_gpu, bed, raw_snps, dtype, xp)
+        elif xp is np:
+            snps_read = raw_snps.read(dtype=dtype)
             snps_read.standardize()
             val = xp.asarray(snps_read.val, dtype=dtype)
         elif xp.__name__ == "cupy":
+            snps_read = raw_snps.read(dtype=dtype)
             val = xp.asarray(snps_read.val, dtype=dtype)
             statsx = xp.empty(
                 [val.shape[1], 2],
@@ -1511,6 +1525,39 @@ def _snp_tester(
         runner=runner,
     )
     return frame
+
+
+def _underlying_bed(snps):
+    # The Bed that `snps` is (or is a subset view of), else None. Views are PySnpTools
+    # `_PstSubset` chains linked by `_internal`.
+    # TODO Replace these PySnpTools private details with a public PySnpTools method.
+    from pysnptools.pstreader._subset import _PstSubset
+
+    while isinstance(snps, _PstSubset):
+        snps = snps._internal
+    return snps if isinstance(snps, Bed) else None
+
+
+def _bed_reader_gpu():
+    # bed-reader's compiled module, if it was built with GPU support (the `gpu-cuda` feature).
+    try:
+        from bed_reader import bed_reader as bed_reader_rust
+    except ImportError:
+        return None
+    return bed_reader_rust if hasattr(bed_reader_rust, "read_gpu") else None
+
+
+def _read_standardized_on_gpu(bed_reader_gpu, bed, snps, dtype, xp):
+    # Reads `snps` (a view of `bed`) into GPU memory and standardizes it there, as
+    # `snps.read(dtype).standardize()` does on the CPU (the results are identical), then wraps it.
+    iid_index = np.asarray(bed.iid_to_index(snps.iid), dtype=np.intp)
+    sid_index = np.asarray(bed.sid_to_index(snps.sid), dtype=np.intp)
+    # `Bed.filename` is the .bed file's path (PySnpTools adds the suffix when constructing).
+    array = bed_reader_gpu.read_gpu(
+        str(bed.filename), bed.iid_count, bed.sid_count, bed.count_A1, iid_index, sid_index, np.dtype(dtype).name, True
+    )
+    bed_reader_gpu.standardize_gpu(array, False, 1.0, 25.0)
+    return xp.asarray(array)
 
 
 def _multi_compute_stats(

@@ -1033,6 +1033,37 @@ class TestSingleSnp(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self._dtype_frame("float32", force_low_rank, pheno=pheno, cache_file=cache32)
 
+    def test_cupy_reads_bed_on_gpu(self):
+        # With bed-reader built with GPU support, test-SNP blocks of a .bed file are read and
+        # standardized on the GPU (no host copy); results must match numpy as the other GPU paths do.
+        try:
+            import cupy  # noqa: F401
+        except ModuleNotFoundError:
+            raise unittest.SkipTest("cupy is not installed")
+        import importlib
+
+        # The module, not the function `fastlmm.association` exports under the same name.
+        single_snp_module = importlib.import_module("fastlmm.association.single_snp")
+
+        if single_snp_module._bed_reader_gpu() is None:
+            raise unittest.SkipTest("bed-reader was built without GPU support")
+        calls = []
+        real = single_snp_module._read_standardized_on_gpu
+
+        def spy(*args, **kwargs):
+            calls.append(args[2].sid_count)  # args: (bed_reader_gpu, bed, snps, dtype, xp)
+            return real(*args, **kwargs)
+
+        for dtype, tol in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL), ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
+            for force_low_rank in [False, True]:
+                frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy")
+                calls.clear()
+                with patch.object(single_snp_module, "_read_standardized_on_gpu", spy):
+                    frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
+                assert sum(calls) == frame_cp.shape[0], (calls, frame_cp.shape)
+                diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
+                assert diff < tol, (dtype, force_low_rank, diff)
+
     def test_cupy_two_kernels_warns(self):
         # Two kernels run only on numpy; asking for cupy must warn rather than switch silently.
         try:
