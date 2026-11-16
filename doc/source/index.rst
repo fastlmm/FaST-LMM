@@ -20,6 +20,11 @@ covered by the Python 3.11 through 3.14 test matrix.
 :func:`.single_snp` now supports effect size, multiple phenotypes, and related features (`notebook demonstrating new features
 <https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_).
 
+.. toctree::
+   :maxdepth: 2
+
+   gpu
+
 :Code:
 
 * `PyPi <https://pypi.org/project/fastlmm/>`_

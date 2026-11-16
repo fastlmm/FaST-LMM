@@ -142,6 +142,10 @@ def single_snp(
                 The file contains the S and U from the decomposition of the training matrix and other values.
                 It is in Python's np.savez (\*.npz) format.
                 Calls using the same cache file should have the same inputs (pheno, K0, K1, covar) but test_snps can differ.
+                Model arrays must match the requested dtype; otherwise ValueError is raised.
+                An explicit h2 overrides the cached fit. If a cache was created with a given h2,
+                omitting h2 in a later call fits it. An explicit mixing that disagrees with
+                the cached mixing raises ValueError. See :doc:`/gpu` for a cache example.
     :type cache_file: file name
 
     :param GB_goal: gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
@@ -187,9 +191,9 @@ def single_snp(
                from the ARRAY_MODULE environment variable. If not given and ARRAY_MODULE is not set,
                will use numpy. If 'cupy' is requested, will
                try to 'import cupy'. If that import fails, will revert to numpy.
-               If two kernels are given, will ignore this and use 'numpy'
+               If two kernels are given, will warn and use 'numpy'. See :doc:`/gpu`
+               for a complete example, GPU BED prerequisites, and memory limitations.
     :type xp: string or Python module
-    :rtype: Python module
 
     :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
