@@ -1070,7 +1070,11 @@ class TestSingleSnp(unittest.TestCase):
                     frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy", **kwargs)
                     frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy", **kwargs)
                     diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
-                    assert diff < tol, (name, dtype, force_low_rank, diff)
+                    # With two phenotypes, h2 is fitted separately for the second, and the optimizer's
+                    # stopping point moves with BLAS rounding (thread count): float64 full rank measured
+                    # 1.9e-8 (32 threads) and 6.7e-8 (4 threads), so use the refit tolerance there.
+                    case_tol = max(tol, self.REFIT_TOL) if name == "two phenos" else tol
+                    assert diff < case_tol, (name, dtype, force_low_rank, diff)
                     assert (frame_np.Mixing == frame_cp.Mixing).all(), name
                     assert np.allclose(frame_np.Nullh2, frame_cp.Nullh2), name
 
