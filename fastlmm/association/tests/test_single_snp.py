@@ -874,11 +874,13 @@ class TestSingleSnp(unittest.TestCase):
     # Max |Δlog10 p| measured on this data (full rank / low rank), RTX 3060, cupy 14.2:
     #   numpy float32 vs float64: 5.2e-7 / 4.7e-7
     #   cupy vs numpy, float64:   2.5e-14 / 8.9e-10
-    #   cupy vs numpy, float32:   2.3e-6 / 1.3e-6 (two independent float32 roundoffs)
+    #   cupy vs numpy, float32:   2.3e-6 / 1.3e-6 (two independent float32 roundoffs);
+    #     7.6e-6 / 3.2e-6 when bed-reader builds the kernel on the GPU in float32 (a third roundoff;
+    #     otherwise the float64 kernel from PySnpTools is cast to float32)
     # Each tolerance is about 20x the larger measurement.
     FLOAT32_VS_FLOAT64_LOG10P_TOL = 1e-5
     CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL = 2e-8
-    CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL = 5e-5
+    CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL = 1.5e-4
     # Two kernels with mixing=None, float32 vs float64 (full rank / low rank): the mixing search
     # lands about 1e-4 apart (mixing 6e-5 / 9e-5), giving max |Δlog10 p| 8.0e-5 / 1.2e-4.
     # With mixing and h2 pinned, the difference is 9.6e-7 / 3.9e-7 (within the tolerance above).
@@ -1070,6 +1072,31 @@ class TestSingleSnp(unittest.TestCase):
                     np.testing.assert_allclose(cupy.asnumpy(g_var), expected, rtol=1e-14, atol=0)
                 if dtype == "float64":
                     np.testing.assert_allclose(frame_cp.EffectSize, frame_np.EffectSize, rtol=1e-8)
+
+    def test_cupy_builds_kernel_on_gpu(self):
+        # With bed-reader built with GPU support, the kernel (or low-rank G) is read, standardized,
+        # and built on the GPU, never by PySnpTools on the CPU; results must still match numpy.
+        try:
+            import cupy  # noqa: F401
+        except ModuleNotFoundError:
+            raise unittest.SkipTest("cupy is not installed")
+        import importlib
+
+        single_snp_module = importlib.import_module("fastlmm.association.single_snp")
+        if single_snp_module._bed_reader_gpu() is None:
+            raise unittest.SkipTest("bed-reader was built without GPU support")
+
+        def cpu_kernel(*args, **kwargs):
+            raise AssertionError("PySnpTools built the kernel on the CPU")
+
+        for dtype, tol in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL), ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
+            for force_low_rank in [False, True]:
+                frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy")
+                with patch.object(SnpKernel, "_read_with_standardizing", cpu_kernel):
+                    frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
+                diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
+                assert diff < tol, (dtype, force_low_rank, diff)
+                assert abs(frame_np.Nullh2.iloc[0] - frame_cp.Nullh2.iloc[0]) < 1e-6
 
     def test_cupy_two_kernels_warns(self):
         # Two kernels run only on numpy; asking for cupy must warn rather than switch silently.

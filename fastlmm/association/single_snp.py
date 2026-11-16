@@ -21,7 +21,7 @@ from fastlmm.inference.lmm_cov import LMM as lmm_cov
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData, SnpKernel
 from pysnptools.snpreader import Bed, Pheno, SnpData
-from pysnptools.standardizer import DiagKtoN
+from pysnptools.standardizer import DiagKtoN, DiagKtoNTrained, UnitTrained
 from pysnptools.standardizer import Identity as SS_Identity
 from pysnptools.standardizer import Standardizer, Unit
 from pysnptools.util import create_directory_if_necessary
@@ -676,20 +676,24 @@ class _Mixer(object):
                     K0,
                     mixer.snp_trained0,
                     mixer.kernel_trained0,
-                ) = K0._read_with_standardizing(
+                ) = _read_with_standardizing(
+                    K0,
                     to_kerneldata=not mixer.do_g,
                     kernel_standardizer=kernel_standardizer,
-                    return_trained=True,
+                    dtype=dtype,
+                    xp=xp,
                 )
             if sid_count_1 > 0:
                 (
                     K1,
                     mixer.snp_trained1,
                     mixer.kernel_trained1,
-                ) = K1._read_with_standardizing(
+                ) = _read_with_standardizing(
+                    K1,
                     to_kerneldata=not mixer.do_g,
                     kernel_standardizer=kernel_standardizer,
-                    return_trained=True,
+                    dtype=dtype,
+                    xp=xp,
                 )
 
             if sid_count_1 == 0:
@@ -740,8 +744,8 @@ class _Mixer(object):
                     K0,
                     mixer.snp_trained0,
                     mixer.kernel_trained0,
-                ) = K0._read_with_standardizing(
-                    to_kerneldata=True, return_trained=True
+                ) = _read_with_standardizing(
+                    K0, to_kerneldata=True, kernel_standardizer=DiagKtoN(), dtype=dtype, xp=xp
                 )  #!!!pass in a new argument, the kernel_standardizer(???)
 
             if sid_count_1 > 0:
@@ -749,7 +753,9 @@ class _Mixer(object):
                     K1,
                     mixer.snp_trained1,
                     mixer.kernel_trained1,
-                ) = K1._read_with_standardizing(to_kerneldata=True, return_trained=True)
+                ) = _read_with_standardizing(
+                    K1, to_kerneldata=True, kernel_standardizer=DiagKtoN(), dtype=dtype, xp=xp
+                )
 
             if sid_count_1 == 0:
                 mixer.mixing = mixer.mixing or 0
@@ -1539,6 +1545,64 @@ def _underlying_bed(snps):
     while isinstance(snps, _PstSubset):
         snps = snps._internal
     return snps if isinstance(snps, Bed) else None
+
+
+def _read_with_standardizing(kernel, to_kerneldata, kernel_standardizer, dtype, xp):
+    # As `kernel._read_with_standardizing(to_kerneldata, kernel_standardizer, return_trained=True)`.
+    # When xp is cupy, bed-reader has GPU support, and `kernel` is a Unit-standardized SnpKernel of a
+    # .bed file with DiagKtoN kernel standardization (what single_snp builds), the SNPs are read and
+    # standardized on the GPU and the kernel is built there in the run's dtype (PySnpTools builds it
+    # in float64 on the CPU). Otherwise, PySnpTools does the work.
+    bed_reader_gpu = _bed_reader_gpu() if xp.__name__ == "cupy" else None
+    bed = _underlying_bed(kernel.snpreader) if isinstance(kernel, SnpKernel) else None
+    if (
+        bed_reader_gpu is None
+        or bed is None
+        or type(kernel.standardizer) is not Unit
+        or not isinstance(kernel_standardizer, DiagKtoN)
+    ):
+        return kernel._read_with_standardizing(
+            to_kerneldata=to_kerneldata, kernel_standardizer=kernel_standardizer, return_trained=True
+        )
+
+    snps = kernel.snpreader
+    iid_count = snps.iid_count
+    if to_kerneldata:
+        # K = sum over SNP blocks of G_block G_block^T, then scaled so diag(K) sums to iid_count.
+        block_size = kernel.block_size or snps.sid_count
+        kernel_val = xp.zeros((iid_count, iid_count), dtype=dtype)
+        stats_list = []
+        for start in range(0, snps.sid_count, block_size):
+            block, stats = _gpu_read_standardized(bed_reader_gpu, bed, snps[:, start : start + block_size], dtype, xp)
+            kernel_val += block @ block.T
+            stats_list.append(stats)
+        factor = float(iid_count) / float(xp.diag(kernel_val).sum(dtype=xp.float64))
+        if abs(factor - 1.0) > 1e-15:  # as DiagKtoN does
+            kernel_val *= factor
+        result = KernelData(iid=snps.iid, val=kernel_val, name=str(kernel), xp=xp)
+    else:
+        # G scaled so that G G^T's diagonal sums to iid_count.
+        val, stats = _gpu_read_standardized(bed_reader_gpu, bed, snps, dtype, xp)
+        stats_list = [stats]
+        factor = float(iid_count) / float(xp.sum(xp.square(val.astype(xp.float64))))
+        if abs(factor - 1.0) > 1e-15:  # as DiagKtoN does
+            val *= np.sqrt(factor)
+        result = SnpKernel(SnpData(iid=snps.iid, sid=snps.sid, val=val, pos=snps.pos, name=str(snps), xp=xp), SS_Identity())
+    snp_trained = UnitTrained(snps.sid, np.concatenate(stats_list).astype(np.float64))
+    return result, snp_trained, DiagKtoNTrained(factor)
+
+
+def _gpu_read_standardized(bed_reader_gpu, bed, snps, dtype, xp):
+    # Reads `snps` (a view of `bed`) into GPU memory, Unit-standardizes it there (as the CPU does,
+    # exactly), and returns it wrapped by xp without a copy, with each SNP's (mean, std).
+    iid_index = np.asarray(bed.iid_to_index(snps.iid), dtype=np.intp)
+    sid_index = np.asarray(bed.sid_to_index(snps.sid), dtype=np.intp)
+    # `Bed.filename` is the .bed file's path (PySnpTools adds the suffix when constructing).
+    array = bed_reader_gpu.read_gpu(
+        str(bed.filename), bed.iid_count, bed.sid_count, bed.count_A1, iid_index, sid_index, np.dtype(dtype).name, True
+    )
+    stats = bed_reader_gpu.standardize_gpu(array, False, 1.0, 25.0)
+    return xp.asarray(array), stats
 
 
 def _bed_reader_gpu():
