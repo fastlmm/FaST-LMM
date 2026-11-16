@@ -1051,8 +1051,9 @@ class TestSingleSnp(unittest.TestCase):
         real = single_snp_module._read_standardized_on_gpu
 
         def spy(*args, **kwargs):
-            calls.append(args[2].sid_count)  # args: (bed_reader_gpu, bed, snps, dtype, xp)
-            return real(*args, **kwargs)
+            val, g_var = real(*args, **kwargs)
+            calls.append((args[2], g_var))  # args: (bed_reader_gpu, bed, snps, dtype, xp)
+            return val, g_var
 
         for dtype, tol in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL), ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
             for force_low_rank in [False, True]:
@@ -1060,9 +1061,15 @@ class TestSingleSnp(unittest.TestCase):
                 calls.clear()
                 with patch.object(single_snp_module, "_read_standardized_on_gpu", spy):
                     frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
-                assert sum(calls) == frame_cp.shape[0], (calls, frame_cp.shape)
+                assert sum(snps.sid_count for snps, _ in calls) == frame_cp.shape[0], frame_cp.shape
                 diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
                 assert diff < tol, (dtype, force_low_rank, diff)
+                # The genotype variance for EffectSize comes from the GPU block (no second read).
+                for snps, g_var in calls:
+                    expected = np.nanvar(snps.read().val, axis=0)
+                    np.testing.assert_allclose(cupy.asnumpy(g_var), expected, rtol=1e-14, atol=0)
+                if dtype == "float64":
+                    np.testing.assert_allclose(frame_cp.EffectSize, frame_np.EffectSize, rtol=1e-8)
 
     def test_cupy_two_kernels_warns(self):
         # Two kernels run only on numpy; asking for cupy must warn rather than switch silently.

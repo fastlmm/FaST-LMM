@@ -1441,12 +1441,14 @@ def _snp_tester(
             # Read and standardize on the GPU, then wrap without a copy. `raw_snps` supplies the
             # SNP metadata that `snps_read` provides on the other paths.
             snps_read = raw_snps
-            val = _read_standardized_on_gpu(bed_reader_gpu, bed, raw_snps, dtype, xp)
+            val, g_var = _read_standardized_on_gpu(bed_reader_gpu, bed, raw_snps, dtype, xp)
         elif xp is np:
+            g_var = None  # _multi_compute_stats computes it
             snps_read = raw_snps.read(dtype=dtype)
             snps_read.standardize()
             val = xp.asarray(snps_read.val, dtype=dtype)
         elif xp.__name__ == "cupy":
+            g_var = None  # _multi_compute_stats computes it
             snps_read = raw_snps.read(dtype=dtype)
             val = xp.asarray(snps_read.val, dtype=dtype)
             statsx = xp.empty(
@@ -1497,6 +1499,7 @@ def _snp_tester(
             random_seed=random_seed,
             pvalue_count=pvalue_count,
             xp=xp,
+            g_var=g_var,
         )
 
         logging.info("time={0}".format(time.time() - do_work_time))
@@ -1550,14 +1553,21 @@ def _bed_reader_gpu():
 def _read_standardized_on_gpu(bed_reader_gpu, bed, snps, dtype, xp):
     # Reads `snps` (a view of `bed`) into GPU memory and standardizes it there, as
     # `snps.read(dtype).standardize()` does on the CPU (the results are identical), then wraps it.
+    # Also returns each SNP's genotype variance (as `np.nanvar` of the raw values, in float64), which
+    # `EffectSize` needs, so the block need not be read again.
     iid_index = np.asarray(bed.iid_to_index(snps.iid), dtype=np.intp)
     sid_index = np.asarray(bed.sid_to_index(snps.sid), dtype=np.intp)
     # `Bed.filename` is the .bed file's path (PySnpTools adds the suffix when constructing).
     array = bed_reader_gpu.read_gpu(
         str(bed.filename), bed.iid_count, bed.sid_count, bed.count_A1, iid_index, sid_index, np.dtype(dtype).name, True
     )
+    raw = xp.asarray(array)  # waits for the read; same GPU memory, no copy
+    # Genotypes (0, 1, 2) convert to float64 exactly, so this matches the CPU's np.nanvar closely.
+    g_var = xp.nanvar(raw.astype(xp.float64), axis=0)
+    # CuPy and bed-reader use different GPU streams: finish CuPy's reads before standardizing in place.
+    xp.cuda.get_current_stream().synchronize()
     bed_reader_gpu.standardize_gpu(array, False, 1.0, 25.0)
-    return xp.asarray(array)
+    return xp.asarray(array), g_var
 
 
 def _multi_compute_stats(
@@ -1577,6 +1587,7 @@ def _multi_compute_stats(
     random_seed,
     pvalue_count,
     xp,
+    g_var=None,
 ):
     assert len(multi_beta.reshape(-1)) == (end - start) * len(
         pheno_sid
@@ -1589,7 +1600,8 @@ def _multi_compute_stats(
         or multi_beta.shape == multi_fraction_variance_explained_beta_or_none.shape
     ), "expect beta, and fraction_variance_explained_beta to agree on shape"
 
-    g_var = np.nanvar(raw_snps.read().val, axis=0)
+    if g_var is None:
+        g_var = np.nanvar(raw_snps.read().val, axis=0)
     # float64: squaring float32 phenotype values can overflow.
     p_var = lmm.Y.var(axis=0, dtype=np.float64)
     effect_size = pstutil.asnumpy(multi_beta**2 * g_var[..., None] / p_var[None, ...])
