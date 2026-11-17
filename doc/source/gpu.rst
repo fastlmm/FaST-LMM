@@ -15,17 +15,57 @@ and compare p-values and effect sizes against float64 on representative data.
 Float32 can change results, especially for poorly conditioned problems.
 
 CPU float64 does not trigger this notice. Float32 specifies the main linear
-algebra; auxiliary float64 arrays can still trigger their allocation warning,
-while internal high-precision reductions do not. Python's default warning filter
+algebra; internal reductions and likelihood statistics deliberately retain
+higher precision and do not trigger user-storage warnings. Raw phenotype and
+covariate values are validated at full precision on the CPU before narrowing
+and GPU transfer, avoiding unnecessary float64 GPU intermediates. Python's default warning filter
 avoids repeated identical notices at one user call site. With older dependencies,
 the notice is a ``UserWarning``. See the dtype documentation below for numerical
 safeguards and cache compatibility.
+
+Workflow-wide precision defaults
+--------------------------------
+
+An explicit ``single_snp(dtype=...)`` overrides ``ARRAY_DTYPE``. None or omission
+uses that environment variable, then float64. Only float32/float64 are accepted.
+FaST-LMM establishes the resolved precision alongside ``ARRAY_MODULE`` under its
+workflow lock, so nested reads and workers share the default. Both settings are
+restored on success or failure. Worker-specific ARRAY_DTYPE overrides must agree
+with the workflow precision; conflicting settings raise ValueError.
+Conflicting simultaneous workflows remain
+serialized; direct environment changes outside the workflow are process-wide.
+
+A standalone NumPy/CuPy function does not read these settings: numerical
+allocations still specify dtype where needed. Existing arrays retain their
+dtype; standardizers follow those arrays. The CPU's established float64 kernel
+formation and explicit higher-precision statistics remain unchanged.
+
+For example, using the existing sample files::
+
+    from unittest.mock import patch
+    from fastlmm.association import single_snp
+    from fastlmm.util import example_file
+    from pysnptools.snpreader import Bed
+
+    snps = Bed(example_file("fastlmm/feature_selection/examples/toydata.5chrom.*", "*.bed"),
+               count_A1=False)[:40, :60]
+    pheno = example_file("fastlmm/feature_selection/examples/toydata.phe")
+    with patch.dict("os.environ", {"ARRAY_MODULE": "cupy", "ARRAY_DTYPE": "float32"}):
+        results = single_snp(snps, pheno, leave_out_one_chrom=False)
+    # Omitted xp/dtype use the shared defaults. Explicit arguments override them.
+
+This policy requires matching development dependencies. Older PySnpTools or
+bed-reader versions preserve legacy defaults/explicit dtype behavior but reject
+ARRAY_DTYPE if they do not support it. Publish the prerequisite releases and
+update dependency bounds before release acceptance; these examples do not claim
+compatibility with older published artifacts.
 
 Run a small association study
 -----------------------------
 
 ``single_snp`` accepts ``xp="numpy"`` or ``xp="cupy"`` and
-``dtype="float64"`` (the default) or ``dtype="float32"``. NumPy runs on the CPU;
+``dtype="float64"`` or ``dtype="float32"``. None or omission uses
+``ARRAY_DTYPE``, then float64. NumPy runs on the CPU;
 CuPy requires a working GPU installation. A missing CuPy installation raises
 ``ImportError``; requesting it does not silently select NumPy. Import CuPy
 explicitly and check the device before requesting it. A successful import alone

@@ -19,7 +19,7 @@ def _record(path, kind, backend):
     expected = os.environ["ARRAY_MODULE"]
     assert backend == expected, (kind, backend, expected)
     with open(f"{path}.{os.getpid()}.jsonl", "a") as stream:
-        stream.write(json.dumps({"kind": kind, "backend": backend, "pid": os.getpid()}) + "\n")
+        stream.write(json.dumps({"kind": kind, "backend": backend, "precision": os.environ.get("ARRAY_DTYPE"), "pid": os.getpid()}) + "\n")
 
 
 class _TracingBed(Bed):
@@ -102,12 +102,14 @@ def test_mixed_workers_select_environment_and_restore(tmp_path, monkeypatch, out
     with patch.object(LMM, "nLLeval", LMM.nLLeval), \
          patch.object(cp.linalg, "eigh", cp.linalg.eigh), \
          patch.object(module, "_set_block_size", small_blocks), \
-         patch.dict("os.environ", {"ARRAY_MODULE": "before-call"}):
+         patch.dict("os.environ", {"ARRAY_MODULE": "before-call", "ARRAY_DTYPE": "before-precision"}):
         actual = single_snp(reader, pheno, leave_out_one_chrom=outer,
                             h2=0.3, force_full_rank=True, xp=cp, runner=runner, dtype=dtype)
         assert os.environ["ARRAY_MODULE"] == "before-call"
+        assert os.environ["ARRAY_DTYPE"] == "before-precision"
     records = [json.loads(line) for file in tmp_path.glob("backend.*.jsonl") for line in file.read_text().splitlines()]
     workers = [record for record in records if record["pid"] != os.getpid()]
+    assert {record["precision"] for record in workers} == {dtype}
     assert {record["backend"] for record in workers if record["kind"] == "evaluate"} == {"numpy", "cupy"}
     assert {record["backend"] for record in workers if record["kind"] == "read"} == {"numpy", "cupy"}
     assert any(record["kind"] == "native_gpu_read" for record in workers)

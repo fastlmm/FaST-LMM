@@ -44,6 +44,7 @@ GPU and precision features (development branch)
 =================================
 
 `single_snp` supports NumPy/CuPy backends and float32/float64 linear algebra.
+Explicit `xp`/`dtype` override the `ARRAY_MODULE`/`ARRAY_DTYPE` environment defaults.
 GPU BED reads require a CUDA-enabled bed-reader build. See the
 [GPU guide](doc/source/gpu.rst) for prerequisites, options, and complete examples.
 These development features are not necessarily in the published packages.

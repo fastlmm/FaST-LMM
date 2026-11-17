@@ -20,6 +20,7 @@ from fastlmm.inference.fastlmm_predictor import (
     _SnpTrainTest,
 )
 from fastlmm.inference.lmm_cov import LMM as lmm_cov
+from fastlmm.util._precision import array_dtype, dtype_environment
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData, SnpKernel
 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -65,7 +66,7 @@ def single_snp(
     random_seed=0,
     xp=None,
     count_A1=None,
-    dtype="float64",
+    dtype=None,
 ):
     r"""
     Function performing single SNP GWAS using cross validation over the chromosomes and REML. Will reorder and intersect IIDs as needed.
@@ -216,7 +217,8 @@ def single_snp(
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
     :type count_A1: bool
 
-    :param dtype: The floating-point precision of the main linear algebra: 'float64' (default) or 'float32'.
+    :param dtype: The floating-point precision of the main linear algebra: 'float64' or 'float32'.
+         None (default) uses ARRAY_DTYPE, then float64.
          With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
          eigendecomposition/SVD and SNP rotations run in single precision; the per-SNP statistics are still
          computed in float64, but input/decomposition rounding remains. CPU kernel/factor
@@ -228,7 +230,10 @@ def single_snp(
          phenotype values too large or too small (but nonzero) for float32 to handle safely raise a ValueError.
          A ``cache_file`` created with one dtype raises a ValueError if used with the other.
          GPU float64 emits bed-reader's GpuFloat64Warning about potentially much slower
-         arithmetic on consumer GPUs. Precision and defaults are unchanged. See :doc:`/gpu`.
+         arithmetic on consumer GPUs. The warning does not change precision. See :doc:`/gpu`.
+         An explicit dtype overrides the environment.
+         The resolved precision is the default for nested reads and workers and is restored
+         after the workflow. Raw covariates/phenotypes are validated before narrowing.
     :type dtype: string or numpy dtype
 
     :returns: CPU pandas DataFrame sorted by PValue, with one row per retained
@@ -263,8 +268,8 @@ def single_snp(
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
 
-    with _workflow_array_module(xp, has_second_kernel=bool(K1 or G1)) as xp:
-        dtype = np.dtype(dtype)
+    with _workflow_array_module(xp, has_second_kernel=bool(K1 or G1), dtype=dtype) as xp:
+        dtype = array_dtype(dtype)
         if dtype not in (np.float64, np.float32):
             raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
 
@@ -276,8 +281,8 @@ def single_snp(
 
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
-        pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
-        # pheno.val may be a cupy array; PySnpTools indexing needs a numpy mask.
+        pheno = _cpu_user_data(_pheno_fixup(pheno, count_A1=count_A1))
+        # Keep raw phenotype precision on the CPU until range validation.
         good_values_per_iid = pstutil.asnumpy((pheno.val == pheno.val).sum(axis=1))
         assert not np.any(
             (good_values_per_iid > 0) * (good_values_per_iid < pheno.sid_count)
@@ -285,7 +290,7 @@ def single_snp(
         pheno = pheno[
             good_values_per_iid > 0, :
         ]  # drop individuals with no good pheno values.
-        covar = _pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1)
+        covar = _cpu_user_data(_pheno_fixup(covar, iid_if_none=pheno.iid, count_A1=count_A1))
 
         if not leave_out_one_chrom:
             assert (
@@ -361,6 +366,7 @@ def single_snp(
                     input_files.append(Ki)
 
             def nested_closure(chrom):
+                _check_worker_dtype(dtype)
                 logging.info(f"working on chrom {chrom}")
                 test_snps_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
@@ -438,11 +444,14 @@ def single_snp(
 
 
 @contextmanager
-def _workflow_array_module(xp, has_second_kernel):
+def _workflow_array_module(xp, has_second_kernel, dtype=None):
     # Resolve defaults only after any preceding workflow restores its environment.
     # Keep selection, two-kernel coercion, and restoration under the same lock.
     with _array_module_lock:
         xp = pstutil.array_module(xp)
+        dtype = array_dtype(dtype)
+        if dtype not in (np.dtype("float32"), np.dtype("float64")):
+            raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
         if has_second_kernel:
             # The two-kernel code (including the search for the best mixing) supports only numpy.
             # Say so, rather than silently running on the CPU when a GPU module was requested.
@@ -453,7 +462,7 @@ def _workflow_array_module(xp, has_second_kernel):
                     UserWarning,
                 )
             xp = np
-        with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__}):
+        with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__, **dtype_environment(dtype)}):
             yield xp
 
 
@@ -1004,7 +1013,7 @@ def _internal_single(
     if h2 is not None and not isinstance(h2, np.ndarray):
         h2 = np.repeat(h2, pheno.shape[1])
 
-    covar_val = _as_dtype(xp, covar.read(view_ok=True, order="A").val, dtype, "covar")
+    covar_val = _read_user_values(covar, xp, dtype, "covar")
     covar_val = xp.c_[
         covar_val, xp.ones((test_snps.iid_count, 1), dtype=dtype)
     ]  # view_ok because np.c_ will allocation new memory
@@ -1056,14 +1065,31 @@ def _internal_single(
     return frame
 
 
+def _cpu_user_data(reader):
+    # Phenotypes/covariates need their raw values for missingness and safe-range
+    # checks. Transfer existing GPU values before widening, not via a float64
+    # GPU read. SNP matrices keep their independent GPU read path.
+    if isinstance(reader, SnpData):
+        values = pstutil.asnumpy(reader.val).astype(np.float64, copy=False)
+        return SnpData(iid=reader.iid, sid=reader.sid, pos=reader.pos,
+                       val=values, xp=np, name=str(reader))
+    return reader.read(dtype=np.float64, xp=np)
+
+
+def _read_user_values(reader, xp, dtype, name):
+    # Preserve raw precision on the CPU until range validation. Reading directly
+    # as float32 could hide overflow/underflow before _as_dtype can reject it.
+    if isinstance(reader, SnpData):
+        values = pstutil.asnumpy(reader.val)
+    else:
+        values = reader.read(dtype=np.float64, xp=np, view_ok=True, order="A").val
+    return _as_dtype(xp, values, dtype, name)
+
+
 def _as_dtype(xp, val, dtype, name):
-    # Cast covariate or phenotype values (user scale) to the run's dtype. In float32,
-    # values too large (so that a length-N sum could overflow) or nonzero but below
-    # float32's normal range would otherwise silently become inf or lose precision.
-    result = _worker_array(val, xp).astype(dtype, copy=False)
-    if result.dtype == np.float64:
-        pass  # float64 holds any value the input can (unchanged behavior)
-    elif result.dtype == np.float32:
+    dtype = np.dtype(dtype)
+    if dtype == np.float32:
+        # Reject unsafe length-N sums and nonzero subnormals before narrowing.
         magnitude = np.abs(pstutil.asnumpy(val))
         finfo = np.finfo(np.float32)
         out_of_range = np.isfinite(magnitude) & (
@@ -1075,9 +1101,12 @@ def _as_dtype(xp, val, dtype, name):
                 f"{name} has values (for example, {magnitude[out_of_range][0]:g}) outside the range "
                 "dtype 'float32' handles safely; rescale them or use dtype 'float64'"
             )
-    else:
-        raise TypeError(f"dtype must be float32 or float64, not {result.dtype}")
-    return result
+    elif dtype != np.float64:
+        raise TypeError(f"dtype must be float32 or float64, not {dtype}")
+    # Cast on the source device before transfer. CPU float64 input must not
+    # allocate a float64 GPU intermediate when the workflow requests float32.
+    converted = pstutil.get_array_module(val).asarray(val, dtype=dtype)
+    return _worker_array(converted, xp)
 
 
 cache_version = 3
@@ -1201,9 +1230,7 @@ def _find_h2_s_u(
     ), "When a 2nd kernel is given, only one phenotype is allowed."
 
     # view_ok because this code already did a fresh read to look for any missing values
-    multi_y = _as_dtype(
-        xp, multi_pheno.read(view_ok=True, order="A").val, dtype, "pheno"
-    )
+    multi_y = _read_user_values(multi_pheno, xp, dtype, "pheno")
 
     y_0 = multi_y[:, 0:1]
     cache_file_extra = f"{cache_file}.extra.npz" if cache_file is not None else None
@@ -1293,13 +1320,23 @@ def _fit_h2(lmm):
     return np.array([item["h2"] for item in result])
 
 
-def _worker_array(value, xp):
+def _check_worker_dtype(dtype):
+    # CPU/GPU task placement may vary, but every task must use the workflow's
+    # selected precision. Do not let a worker silently choose different defaults.
+    configured = os.environ.get("ARRAY_DTYPE")
+    if configured is not None and array_dtype() != np.dtype(dtype):
+        raise ValueError(
+            f"worker ARRAY_DTYPE={configured!r} disagrees with workflow dtype {np.dtype(dtype).name!r}"
+        )
+
+
+def _worker_array(value, xp, *, warn_float64=True):
     """Transfer arrays at a process boundary, preserving dtype and None."""
     if value is None:
         return None
     if xp is np and hasattr(value, "get"):
         value = value.get()
-    if xp is not np:
+    if xp is not np and not isinstance(value, xp.ndarray) and warn_float64:
         from fastlmm.util._gpu_warnings import warn_gpu_float64
         warn_gpu_float64(value.dtype, xp)
     return xp.asarray(value)
@@ -1345,6 +1382,7 @@ def compute_extra(
     phenotype_count = multi_pheno.sid_count
 
     def mapper(pheno_index):
+        _check_worker_dtype(dtype)
         logging.info(f"working on pheno_index {pheno_index} of {phenotype_count}")
         worker_xp = pstutil.array_module()
         model = _worker_lmm(model_payload, worker_xp)
@@ -1525,10 +1563,13 @@ def _snp_tester(
         return test_snps.sid_count * work_index // work_count
 
     def mapper_closure(work_index):
+        _check_worker_dtype(dtype)
         xp = pstutil.array_module()
         worker_lmm = _worker_lmm(model_payload, xp)
-        worker_sd = _worker_array(sd_payload, xp)
-        worker_denom = _worker_array(denom_payload, xp)
+        # These internal statistical arrays deliberately retain float64. They
+        # are not user storage whose precision should follow ARRAY_DTYPE.
+        worker_sd = _worker_array(sd_payload, xp, warn_float64=False)
+        worker_denom = _worker_array(denom_payload, xp, warn_float64=False)
         worker_interact = _worker_array(interact_payload, xp)
         assert worker_lmm._xp is xp
         if work_count > 1:
@@ -1713,20 +1754,21 @@ def _multi_compute_stats(
 def _create_covar_chrom(covar, covar_by_chrom, chrom, count_A1=None):
     if covar_by_chrom is not None:
         covar_by_chrom_chrom = covar_by_chrom[chrom]
-        covar_by_chrom_chrom = _pheno_fixup(
+        covar_by_chrom_chrom = _cpu_user_data(_pheno_fixup(
             covar_by_chrom_chrom, iid_if_none=covar, count_A1=count_A1
-        )
+        ))
         covar_after, covar_by_chrom_chrom = pstutil.intersect_apply(
             [covar, covar_by_chrom_chrom]
         )
         xp = pstutil.array_module()
+        dtype = array_dtype()
         ret = SnpData(
             iid=covar_after.iid,
             sid=np.r_[covar_after.sid, covar_by_chrom_chrom.sid],
             # Numerical values follow the workflow backend; IDs stay on the CPU.
             val=xp.c_[
-                covar_after.read(order="A", view_ok=True).val,
-                covar_by_chrom_chrom.read(order="A", view_ok=True).val,
+                _read_user_values(covar_after, xp, dtype, "covar"),
+                _read_user_values(covar_by_chrom_chrom, xp, dtype, "covar_by_chrom"),
             ],
             xp=xp,
         )  # view_ok because xp.c_ will allocate new memory.
