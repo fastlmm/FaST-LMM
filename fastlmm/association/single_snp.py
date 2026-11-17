@@ -112,9 +112,10 @@ def single_snp(
            The covariate information
            can be any `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_.
            If given, leave_out_one_chrom must be True.
-           Both covar and covar_by_chrom can be given.
+           Both covar and covar_by_chrom can be given. Sample IDs are aligned before
+           combining their values on the backend selected by xp.
            Missing values are not supported.
-    :type covar_by_chrom: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`_ or a string
+    :type covar_by_chrom: dict mapping chromosome numbers to covariate readers
 
     :param leave_out_one_chrom: Perform single SNP GWAS via cross validation over the chromosomes. Default to True.
            (Warning: setting False can cause proximal contamination.)
@@ -226,6 +227,8 @@ def single_snp(
          ``xp='numpy'``, so its numerical effect can be checked without a GPU. With 'float32', covariate and
          phenotype values too large or too small (but nonzero) for float32 to handle safely raise a ValueError.
          A ``cache_file`` created with one dtype raises a ValueError if used with the other.
+         GPU float64 emits bed-reader's GpuFloat64Warning about potentially much slower
+         arithmetic on consumer GPUs. Precision and defaults are unchanged. See :doc:`/gpu`.
     :type dtype: string or numpy dtype
 
     :returns: CPU pandas DataFrame sorted by PValue, with one row per retained
@@ -264,6 +267,9 @@ def single_snp(
         dtype = np.dtype(dtype)
         if dtype not in (np.float64, np.float32):
             raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
+
+        from fastlmm.util._gpu_warnings import warn_gpu_float64
+        warn_gpu_float64(dtype, xp)
 
         if output_file_name is not None:
             os.makedirs(Path(output_file_name).parent, exist_ok=True)
@@ -1133,6 +1139,9 @@ def _cached_array(data, key, dtype, cache_file, xp):
         raise ValueError(
             f"cache_file '{cache_file}' has {key} with dtype {value.dtype}, but this run uses {dtype}"
         )
+    if xp is not np:
+        from fastlmm.util._gpu_warnings import warn_gpu_float64
+        warn_gpu_float64(value.dtype, xp)
     return xp.asarray(value)
 
 
@@ -1290,6 +1299,9 @@ def _worker_array(value, xp):
         return None
     if xp is np and hasattr(value, "get"):
         value = value.get()
+    if xp is not np:
+        from fastlmm.util._gpu_warnings import warn_gpu_float64
+        warn_gpu_float64(value.dtype, xp)
     return xp.asarray(value)
 
 
@@ -1707,14 +1719,17 @@ def _create_covar_chrom(covar, covar_by_chrom, chrom, count_A1=None):
         covar_after, covar_by_chrom_chrom = pstutil.intersect_apply(
             [covar, covar_by_chrom_chrom]
         )
+        xp = pstutil.array_module()
         ret = SnpData(
             iid=covar_after.iid,
             sid=np.r_[covar_after.sid, covar_by_chrom_chrom.sid],
-            val=np.c_[
+            # Numerical values follow the workflow backend; IDs stay on the CPU.
+            val=xp.c_[
                 covar_after.read(order="A", view_ok=True).val,
                 covar_by_chrom_chrom.read(order="A", view_ok=True).val,
             ],
-        )  # view_ok because np.c_ will allocate new memory.
+            xp=xp,
+        )  # view_ok because xp.c_ will allocate new memory.
         return ret
     else:
         return covar

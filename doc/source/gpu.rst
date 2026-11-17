@@ -5,6 +5,22 @@ These features are under development on the GPU branches; installing the latest
 published package does not necessarily provide them. The examples below target
 this branch's API.
 
+Float64 arithmetic can be much slower than float32 on consumer GPUs. Some
+data-center GPUs have high float64 throughput, so this is device-dependent.
+Float64 arrays also use twice the storage. GPU float64 workflows emit
+bed-reader's ``GpuFloat64Warning``; this includes cached models and GPU workers.
+The warning does not change precision or defaults. Choose
+``single_snp(..., xp="cupy", dtype="float32")`` only when its precision is adequate,
+and compare p-values and effect sizes against float64 on representative data.
+Float32 can change results, especially for poorly conditioned problems.
+
+CPU float64 does not trigger this notice. Float32 specifies the main linear
+algebra; auxiliary float64 arrays can still trigger their allocation warning,
+while internal high-precision reductions do not. Python's default warning filter
+avoids repeated identical notices at one user call site. With older dependencies,
+the notice is a ``UserWarning``. See the dtype documentation below for numerical
+safeguards and cache compatibility.
+
 Run a small association study
 -----------------------------
 

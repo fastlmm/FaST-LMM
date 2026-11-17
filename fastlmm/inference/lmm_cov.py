@@ -118,6 +118,8 @@ class LMM(object):
         """
         compute the spectral decomposition from full kernel (full rank computations).
         """
+        from fastlmm.util._gpu_warnings import warn_gpu_float64
+        warn_gpu_float64(self.K.dtype, self._xp)
         N = self.K.shape[0]
         D = self.linreg.D
         self.K.flat[:: N + 1] += 1.0
@@ -135,6 +137,8 @@ class LMM(object):
         compute the spectral decomposition from design matrix G for linear kernel
                 (allows low rank computations, if G has more rows than columns)
         """
+        from fastlmm.util._gpu_warnings import warn_gpu_float64
+        warn_gpu_float64(self.G.dtype, self._xp)
         N = self.G.shape[0]
         k = self.G.shape[1]
         if k:
