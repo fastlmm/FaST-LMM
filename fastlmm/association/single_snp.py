@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+from threading import RLock
 # flake8: noqa: E501
 
 import logging
@@ -21,9 +23,9 @@ from fastlmm.inference.lmm_cov import LMM as lmm_cov
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData, SnpKernel
 from pysnptools.snpreader import Bed, Pheno, SnpData
-from pysnptools.standardizer import DiagKtoN, DiagKtoNTrained, UnitTrained
+from pysnptools.standardizer import DiagKtoN
 from pysnptools.standardizer import Identity as SS_Identity
-from pysnptools.standardizer import Standardizer, Unit
+from pysnptools.standardizer import Unit
 from pysnptools.util import create_directory_if_necessary
 from pysnptools.util.intrangeset import IntRangeSet
 from pysnptools.util.mapreduce1 import map_reduce
@@ -31,6 +33,11 @@ warnings.filterwarnings("ignore", message="Input line .* contained no data and w
 
 # !!!LATER add warning here (and elsewhere) K0 or K1.sid_count < test_snps.sid_count,
 #  might be a covar mix up.(but only if a SnpKernel
+# ARRAY_MODULE is process-wide. Serialize overlapping workflows so one call
+# cannot restore the environment while another call still depends on it.
+_array_module_lock = RLock()
+
+
 def single_snp(
     test_snps,
     pheno,
@@ -116,15 +123,17 @@ def single_snp(
     :param output_file_name: Name of file to write results to, optional. If not given, no output file will be created. The output format is tab-delimited text.
     :type output_file_name: file name
 
-    :param h2: A parameter to LMM learning, optional
-            If not given will search for best value.
+    :param h2: Heritability parameter, optional. If not given, searches for the best
+            value. A scalar is repeated for every phenotype; a NumPy array supplies
+            one value per phenotype.
             If mixing is unspecified, then h2 must also be unspecified.
-    :type h2: number
+    :type h2: number or numpy.ndarray
 
     :param log_delta: a re-parameterization of h2 provided for backwards compatibility. h2 is 1./(exp(log_delta)+1)
     :type log_delta: number
 
-    :param show_snp_fract_var_exp: The output will always show 'EffectSize'. If show_snp_fract_var_exp is True, then the output will also show 'SnpFractVarExp'.
+    :param show_snp_fract_var_exp: The output always includes 'EffectSize'. If True,
+            also includes the column 'SnpFractVarExpl'.
             EffectSize and SnpFractVarExp are different measures of fraction of variance explained.
             The first uses all variance of the phenotype in the denominator, whereas the second uses variance of the phenotype after
             removing the effects of population structure and family relatedness. Specifically,
@@ -148,8 +157,11 @@ def single_snp(
                 the cached mixing raises ValueError. See :doc:`/gpu` for a cache example.
     :type cache_file: file name
 
-    :param GB_goal: gigabytes of memory the run should use, optional. If not given, will read the test_snps in blocks the same size as the kernel,
-        which is memory efficient with little overhead on computation time.
+    :param GB_goal: Optional blocking memory target in GiB, not a hard GPU limit.
+        Estimates assume eight bytes per value even for float32, include fixed
+        overhead, and can increase the requested target with a warning to maintain
+        the minimum block size. Without a target, uses the kernel/factor size to
+        choose test SNP blocks. See :doc:`/gpu` for allocation limits.
     :type GB_goal: number
 
     :param interact_with_snp: index of a covariate to perform an interaction test with.
@@ -181,18 +193,22 @@ def single_snp(
     :type random_threshold: number between 0 and 1
 
     :param random_seed: Seed used to assign a random values to rows. Used with random_threshold.
-    :type random_threshold: integer
+    :type random_seed: integer
 
     :param map_reduce_outer: If true (default), divides work by chromosome. If false, divides test_snp work into chunks.
     :type map_reduce_outer: bool
 
-    :param xp: The array module to use (optional), for example, 'numpy' (normal CPU-based module)
-               or 'cupy' (GPU-based module). If not given, will try to read
-               from the ARRAY_MODULE environment variable. If not given and ARRAY_MODULE is not set,
-               will use numpy. If 'cupy' is requested, will
-               try to 'import cupy'. If that import fails, will revert to numpy.
-               If two kernels are given, will warn and use 'numpy'. See :doc:`/gpu`
-               for a complete example, GPU BED prerequisites, and memory limitations.
+    :param xp: NumPy or CuPy module or name. An explicit value overrides ARRAY_MODULE;
+        otherwise the environment selects the backend, with NumPy as the default.
+        Requesting CuPy requires it to be installed; a missing installation raises ImportError.
+        Establishes ARRAY_MODULE for this workflow and restores it on success or failure.
+        Workers resolve their backend from their own environment, including runner overrides.
+        Backend selection, workflow execution, and environment restoration are serialized
+        between single_snp calls in one process. With xp=None, selection occurs after
+        preceding calls restore their environment. Standalone reader xp arguments
+        still override their environment. If two kernels are
+        given, warns and uses NumPy. See :doc:`/gpu` for a complete example, GPU BED
+        prerequisites, and memory limitations.
     :type xp: string or Python module
 
     :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
@@ -202,7 +218,9 @@ def single_snp(
     :param dtype: The floating-point precision of the main linear algebra: 'float64' (default) or 'float32'.
          With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
          eigendecomposition/SVD and SNP rotations run in single precision; the per-SNP statistics are still
-         computed in float64. 'float32' gives slightly different p-values than 'float64'. It is much faster on
+         computed in float64, but input/decomposition rounding remains. CPU kernel/factor
+         formation retains float64 before conversion to the LMM dtype; GPU formation uses
+         the requested dtype. 'float32' gives different p-values and can be faster on
          consumer GPUs (``xp='cupy'``), which have limited float64 throughput; on data-center GPUs with fast
          float64 (for example, NVIDIA A100 or H100), 'float64' is fast, too. 'float32' works with
          ``xp='numpy'``, so its numerical effect can be checked without a GPU. With 'float32', covariate and
@@ -210,7 +228,14 @@ def single_snp(
          A ``cache_file`` created with one dtype raises a ValueError if used with the other.
     :type dtype: string or numpy dtype
 
-    :rtype: Pandas dataframe with one row per test SNP. Columns include "PValue"
+    :returns: CPU pandas DataFrame sorted by PValue, with one row per retained
+        SNP/phenotype pair. Multiple phenotypes add Pheno and PhenoCount. Optional
+        filters can remove rows. Columns and complete examples are in :doc:`/gpu`.
+    :rtype: pandas.DataFrame
+    :raises ValueError: Unsupported dtype, unsafe float32 covariate/phenotype
+        magnitude, or cached model dtype/explicit mixing mismatch.
+    :raises ImportError: CuPy requested but not installed.
+    :raises RuntimeError: BED GPU reads requested without native GPU support.
 
     :Example:
 
@@ -235,30 +260,16 @@ def single_snp(
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
 
-    if K1 or G1:  # If 2nd kernel given, use numpy
-        # The two-kernel code (including the search for the best mixing) supports only numpy.
-        # Say so, rather than silently running on the CPU when a GPU module was requested.
-        if pstutil.array_module(xp) is not np:
-            warnings.warn(
-                "single_snp supports only numpy when a second kernel (K1 or G1) is given, "
-                "so it will run with numpy rather than the requested array module.",
-                UserWarning,
-            )
-        xp = "numpy"
+    with _workflow_array_module(xp, has_second_kernel=bool(K1 or G1)) as xp:
+        dtype = np.dtype(dtype)
+        if dtype not in (np.float64, np.float32):
+            raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
 
-    dtype = np.dtype(dtype)
-    if dtype not in (np.float64, np.float32):
-        raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
+        if output_file_name is not None:
+            os.makedirs(Path(output_file_name).parent, exist_ok=True)
 
-    if output_file_name is not None:
-        os.makedirs(Path(output_file_name).parent, exist_ok=True)
-
-    xp = pstutil.array_module(xp)
-    with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__}) as _:
         assert test_snps is not None, "test_snps must be given as input"
         test_snps = _snps_fixup(test_snps, count_A1=count_A1)
-        # On a GPU, test-SNP blocks of a .bed file can be read and standardized there by bed-reader.
-        bed = _underlying_bed(test_snps)
         pheno = _pheno_fixup(pheno, count_A1=count_A1).read()
         # pheno.val may be a cupy array; PySnpTools indexing needs a numpy mask.
         good_values_per_iid = pstutil.asnumpy((pheno.val == pheno.val).sum(axis=1))
@@ -314,9 +325,7 @@ def single_snp(
                 pvalue_threshold=pvalue_threshold,
                 random_threshold=random_threshold,
                 random_seed=random_seed,
-                xp=xp,
                 dtype=dtype,
-                bed=bed,
             )
             if pvalue_threshold is None and random_threshold is None:
                 sid_index_range = IntRangeSet(frame["sid_index"])
@@ -347,7 +356,6 @@ def single_snp(
 
             def nested_closure(chrom):
                 logging.info(f"working on chrom {chrom}")
-                xp = pstutil.array_module()
                 test_snps_chrom = test_snps[:, test_snps.pos[:, 0] == chrom]
                 covar_chrom = _create_covar_chrom(covar, covar_by_chrom, chrom)
                 cache_file_chrom = (
@@ -391,9 +399,7 @@ def single_snp(
                     pvalue_threshold=pvalue_threshold,
                     random_threshold=random_threshold,
                     random_seed=random_seed,
-                    xp=xp,
                     dtype=dtype,
-                    bed=bed,
                 )
                 return distributable
 
@@ -423,6 +429,26 @@ def single_snp(
             )
 
     return frame
+
+
+@contextmanager
+def _workflow_array_module(xp, has_second_kernel):
+    # Resolve defaults only after any preceding workflow restores its environment.
+    # Keep selection, two-kernel coercion, and restoration under the same lock.
+    with _array_module_lock:
+        xp = pstutil.array_module(xp)
+        if has_second_kernel:
+            # The two-kernel code (including the search for the best mixing) supports only numpy.
+            # Say so, rather than silently running on the CPU when a GPU module was requested.
+            if xp is not np:
+                warnings.warn(
+                    "single_snp supports only numpy when a second kernel (K1 or G1) is given, "
+                    "so it will run with numpy rather than the requested array module.",
+                    UserWarning,
+                )
+            xp = np
+        with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__}):
+            yield xp
 
 
 overhead_gig = 0.127
@@ -675,16 +701,18 @@ class _Mixer(object):
             mixer.do_g = True
             #!!!there is no need for block_size here because we want G0 in full. But if starting with SNPs and not low-rank then batches are needed and the two standardizers must be remembered for use later
 
+            # Preserve the CPU path's float64 kernel formation before the LMM
+            # casts to the run dtype. GPU formation stays in the requested dtype.
             if sid_count_0 > 0:
                 (
                     K0,
                     mixer.snp_trained0,
                     mixer.kernel_trained0,
-                ) = _read_with_standardizing(
-                    K0,
+                ) = K0._read_with_standardizing(
+                    return_trained=True,
                     to_kerneldata=not mixer.do_g,
                     kernel_standardizer=kernel_standardizer,
-                    dtype=dtype,
+                    dtype=np.float64 if xp is np else dtype,
                     xp=xp,
                 )
             if sid_count_1 > 0:
@@ -692,11 +720,11 @@ class _Mixer(object):
                     K1,
                     mixer.snp_trained1,
                     mixer.kernel_trained1,
-                ) = _read_with_standardizing(
-                    K1,
+                ) = K1._read_with_standardizing(
+                    return_trained=True,
                     to_kerneldata=not mixer.do_g,
                     kernel_standardizer=kernel_standardizer,
-                    dtype=dtype,
+                    dtype=np.float64 if xp is np else dtype,
                     xp=xp,
                 )
 
@@ -748,8 +776,12 @@ class _Mixer(object):
                     K0,
                     mixer.snp_trained0,
                     mixer.kernel_trained0,
-                ) = _read_with_standardizing(
-                    K0, to_kerneldata=True, kernel_standardizer=DiagKtoN(), dtype=dtype, xp=xp
+                ) = K0._read_with_standardizing(
+                    return_trained=True,
+                    to_kerneldata=True,
+                    kernel_standardizer=DiagKtoN(),
+                    dtype=np.float64 if xp is np else dtype,
+                    xp=xp,
                 )  #!!!pass in a new argument, the kernel_standardizer(???)
 
             if sid_count_1 > 0:
@@ -757,8 +789,12 @@ class _Mixer(object):
                     K1,
                     mixer.snp_trained1,
                     mixer.kernel_trained1,
-                ) = _read_with_standardizing(
-                    K1, to_kerneldata=True, kernel_standardizer=DiagKtoN(), dtype=dtype, xp=xp
+                ) = K1._read_with_standardizing(
+                    return_trained=True,
+                    to_kerneldata=True,
+                    kernel_standardizer=DiagKtoN(),
+                    dtype=np.float64 if xp is np else dtype,
+                    xp=xp,
                 )
 
             if sid_count_1 == 0:
@@ -942,10 +978,9 @@ def _internal_single(
     pvalue_threshold,
     random_threshold,
     random_seed,
-    xp,
     dtype,
-    bed,
 ):
+    xp = pstutil.array_module()
     assert K0 is not None, "real assert"
     assert K1 is not None, "real assert"
     assert block_size is not None, "real assert"
@@ -1010,7 +1045,6 @@ def _internal_single(
         random_seed,
         show_snp_fract_var_exp,
         dtype,
-        bed,
     )
 
     return frame
@@ -1020,7 +1054,7 @@ def _as_dtype(xp, val, dtype, name):
     # Cast covariate or phenotype values (user scale) to the run's dtype. In float32,
     # values too large (so that a length-N sum could overflow) or nonzero but below
     # float32's normal range would otherwise silently become inf or lose precision.
-    result = xp.asarray(val, dtype=dtype)
+    result = _worker_array(val, xp).astype(dtype, copy=False)
     if result.dtype == np.float64:
         pass  # float64 holds any value the input can (unchanged behavior)
     elif result.dtype == np.float32:
@@ -1192,7 +1226,7 @@ def _find_h2_s_u(
             None,
             xp,
             dtype,
-        )
+    )
 
         if cache_file is not None:
             # Store NaN for a given h2, so the cache never presents it as a fitted h2.
@@ -1250,6 +1284,29 @@ def _fit_h2(lmm):
     return np.array([item["h2"] for item in result])
 
 
+def _worker_array(value, xp):
+    """Transfer arrays at a process boundary, preserving dtype and None."""
+    if value is None:
+        return None
+    if xp is np and hasattr(value, "get"):
+        value = value.get()
+    return xp.asarray(value)
+
+
+def _worker_lmm(lmm, xp):
+    """Recreate a decomposed model on the worker's backend without decomposing again."""
+    if lmm._xp is xp:
+        return lmm
+    assert lmm.S is not None and lmm.U is not None
+    result = lmm_cov(
+        X=_worker_array(lmm.X, xp), Y=_worker_array(lmm.Y, xp),
+        S=_worker_array(lmm.S, xp), U=_worker_array(lmm.U, xp),
+        regressX=lmm.regressX, forcefullrank=lmm.forcefullrank, xp=xp)
+    for name in ("UY", "UUY", "UX", "UUX"):
+        setattr(result, name, _worker_array(getattr(lmm, name), xp))
+    return result
+
+
 def compute_extra(
     lmm_0,
     h2,
@@ -1270,34 +1327,44 @@ def compute_extra(
     h2_list = [h2_0]
     mixing_list = [mixing_0]
 
+    model_payload = _worker_lmm(lmm_0, np) if runner is not None else lmm_0
+    phenotype_payload = _worker_array(multi_y, np) if runner is not None else multi_y
+
+    phenotype_count = multi_pheno.sid_count
+
     def mapper(pheno_index):
-        logging.info(f"working on pheno_index {pheno_index} of {multi_pheno.sid_count}")
-        return _find_h2_s_u_for_one_pheno(
+        logging.info(f"working on pheno_index {pheno_index} of {phenotype_count}")
+        worker_xp = pstutil.array_module()
+        model = _worker_lmm(model_payload, worker_xp)
+        result = _find_h2_s_u_for_one_pheno(
             K0=None,
             K1=None,
-            covar_val=lmm_0.X,
-            regressX=lmm_0.regressX,
-            linreg=lmm_0.linreg,
-            y=multi_y[:, pheno_index : pheno_index + 1],
+            covar_val=model.X,
+            regressX=model.regressX,
+            linreg=model.linreg,
+            y=_worker_array(phenotype_payload[:, pheno_index : pheno_index + 1], worker_xp),
             mixing=mixing_0,
             h2=None if h2 is None else h2[pheno_index : pheno_index + 1],
             force_full_rank=force_full_rank,
             force_low_rank=force_low_rank,
-            K=lmm_0.K,
-            S=lmm_0.S,
-            U=lmm_0.U,
-            xp=xp,
+            K=model.K,
+            S=model.S,
+            U=model.U,
+            xp=worker_xp,
             dtype=dtype,
         )
+
+        model, fitted_h2, fitted_mixing = result
+        return (_worker_lmm(model, np) if runner is not None else model), fitted_h2, fitted_mixing
 
     result_list = map_reduce(
         range(1, multi_pheno.col_count), mapper=mapper, runner=runner
     )
     # could do this with runner
     for lmm_p, h2_p, mixing_p in result_list:
-        uy_list.append(lmm_p.UY[:, 0])
+        uy_list.append(_worker_array(lmm_p.UY[:, 0], xp))
         if lmm_p.UUY is not None:
-            uuy_list.append(lmm_p.UUY[:, 0])
+            uuy_list.append(_worker_array(lmm_p.UUY[:, 0], xp))
         h2_list.append(h2_p)
         mixing_list.append(mixing_p)
 
@@ -1333,6 +1400,7 @@ def _find_h2_s_u_for_one_pheno(
     xp,
     dtype,
 ):
+    assert xp is pstutil.array_module(), "model backend disagrees with worker ARRAY_MODULE"
     if S is None:
         K, h2, mixer = _Mixer.combine_the_best_way(
             K0,
@@ -1350,6 +1418,7 @@ def _find_h2_s_u_for_one_pheno(
         mixing = mixer.mixing
 
         if mixer.do_g:
+            assert pstutil.get_array_module(K.snpreader.val) is xp
             G = xp.asarray(K.snpreader.val, dtype=dtype)
             lmm = lmm_cov(
                 X=covar_val,
@@ -1365,6 +1434,7 @@ def _find_h2_s_u_for_one_pheno(
             )
         else:
             # print(covar_val.sum(),y.sum(),K.val.sum(),covar_val[0],y[0],K.val[0,0])
+            assert pstutil.get_array_module(K.val) is xp
             lmm = lmm_cov(
                 X=covar_val,
                 regressX=regressX,
@@ -1419,16 +1489,24 @@ def _snp_tester(
     random_seed,
     show_snp_fract_var_exp,
     dtype,
-    bed,
 ):
     work_count = -(
         test_snps.sid_count // -block_size
     )  # Find the work count based on batch size (rounding up)
-    pvalue_count = test_snps.sid_count * pheno.sid_count
+    phenotype_sid = pheno.sid
+    phenotype_count = len(phenotype_sid)
+    pvalue_count = test_snps.sid_count * phenotype_count
 
     Sd, denom, h2 = lmm.get_Sd_etc(
         Sd=None, denom=None, h2=h2, logdelta=None, delta=None, scale=1, weightW=None
     )
+
+    # Serialize model arrays on the host so workers select their backend
+    # independently of the parent's cached LMM.
+    model_payload = _worker_lmm(lmm, np) if runner is not None else lmm
+    sd_payload = _worker_array(Sd, np) if runner is not None else Sd
+    denom_payload = _worker_array(denom, np) if runner is not None else denom
+    interact_payload = _worker_array(interact, np) if runner is not None else interact
 
     # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
     def debatch_closure(work_index):
@@ -1436,6 +1514,11 @@ def _snp_tester(
 
     def mapper_closure(work_index):
         xp = pstutil.array_module()
+        worker_lmm = _worker_lmm(model_payload, xp)
+        worker_sd = _worker_array(sd_payload, xp)
+        worker_denom = _worker_array(denom_payload, xp)
+        worker_interact = _worker_array(interact_payload, xp)
+        assert worker_lmm._xp is xp
         if work_count > 1:
             logging.info(
                 f"single_snp: Working on snp block {work_index} of {work_count}"
@@ -1446,50 +1529,33 @@ def _snp_tester(
         end = debatch_closure(work_index + 1)
 
         raw_snps = test_snps[:, start:end]
-        bed_reader_gpu = _bed_reader_gpu() if bed is not None and xp.__name__ == "cupy" else None
-        if bed_reader_gpu is not None:
-            # Read and standardize on the GPU, then wrap without a copy. `raw_snps` supplies the
-            # SNP metadata that `snps_read` provides on the other paths.
-            snps_read = raw_snps
-            val, g_var = _read_standardized_on_gpu(bed_reader_gpu, bed, raw_snps, dtype, xp)
-        elif xp is np:
-            g_var = None  # _multi_compute_stats computes it
-            snps_read = raw_snps.read(dtype=dtype)
-            snps_read.standardize()
-            val = xp.asarray(snps_read.val, dtype=dtype)
-        elif xp.__name__ == "cupy":
-            g_var = None  # _multi_compute_stats computes it
-            snps_read = raw_snps.read(dtype=dtype)
-            val = xp.asarray(snps_read.val, dtype=dtype)
-            statsx = xp.empty(
-                [val.shape[1], 2],
-                dtype=val.dtype,
-                order="F" if val.flags["F_CONTIGUOUS"] else "C",
-            )
-            Standardizer._standardize_unit_python(
-                val, apply_in_place=True, use_stats=False, stats=statsx
-            )
-        else:
-            raise ValueError(f"single_snp supports numpy and cupy, not '{xp.__name__}'")
+        snps_read, trained = raw_snps._read_with_standardizing(
+            Unit(), dtype=dtype, return_trained=True)
+        val = snps_read.val
+        assert pstutil.get_array_module(val) is xp
+        # Unit stores infinity for constant SNPs; their raw variance is zero.
+        # Form the square in float64 to avoid extra float32 rounding/overflow.
+        deviation = xp.asarray(trained.stats[:, 1], dtype=np.float64)
+        g_var = xp.where(xp.isinf(deviation), 0.0, deviation * deviation)
 
-        if interact is not None:
-            variables_to_test = val * interact[:, xp.newaxis]
+        if worker_interact is not None:
+            variables_to_test = val * worker_interact[:, xp.newaxis]
         else:
             variables_to_test = val
 
-        res = lmm.nLLeval(
+        res = worker_lmm.nLLeval(
             h2=h2,
             dof=None,
             scale=1.0,
             penalty=0.0,
             snps=variables_to_test,
-            Sd=Sd,
-            denom=denom,
+            Sd=worker_sd,
+            denom=worker_denom,
         )
 
-        assert test_snps.iid_count == lmm.U.shape[0]
+        assert test_snps.iid_count == worker_lmm.U.shape[0]
         assert (
-            res["beta"].size == (end - start) * pheno.sid_count
+            res["beta"].size == (end - start) * phenotype_count
         ), "Expect multi_beta to be (end-start)x phenos"
 
         df = _multi_compute_stats(
@@ -1500,10 +1566,10 @@ def _snp_tester(
             end,
             raw_snps,
             snps_read,
-            pheno.sid,
+            phenotype_sid,
             mixing,
             h2,
-            lmm,
+            worker_lmm,
             pvalue_threshold=pvalue_threshold,
             random_threshold=random_threshold,
             random_seed=random_seed,
@@ -1540,102 +1606,9 @@ def _snp_tester(
     return frame
 
 
-def _underlying_bed(snps):
-    # The Bed that `snps` is (or is a subset view of), else None. Views are PySnpTools
-    # `_PstSubset` chains linked by `_internal`.
-    # TODO Replace these PySnpTools private details with a public PySnpTools method.
-    from pysnptools.pstreader._subset import _PstSubset
-
-    while isinstance(snps, _PstSubset):
-        snps = snps._internal
-    return snps if isinstance(snps, Bed) else None
-
-
-def _read_with_standardizing(kernel, to_kerneldata, kernel_standardizer, dtype, xp):
-    # As `kernel._read_with_standardizing(to_kerneldata, kernel_standardizer, return_trained=True)`.
-    # When xp is cupy, bed-reader has GPU support, and `kernel` is a Unit-standardized SnpKernel of a
-    # .bed file with DiagKtoN kernel standardization (what single_snp builds), the SNPs are read and
-    # standardized on the GPU and the kernel is built there in the run's dtype (PySnpTools builds it
-    # in float64 on the CPU). Otherwise, PySnpTools does the work.
-    bed_reader_gpu = _bed_reader_gpu() if xp.__name__ == "cupy" else None
-    bed = _underlying_bed(kernel.snpreader) if isinstance(kernel, SnpKernel) else None
-    if (
-        bed_reader_gpu is None
-        or bed is None
-        or type(kernel.standardizer) is not Unit
-        or not isinstance(kernel_standardizer, DiagKtoN)
-    ):
-        return kernel._read_with_standardizing(
-            to_kerneldata=to_kerneldata, kernel_standardizer=kernel_standardizer, return_trained=True
-        )
-
-    snps = kernel.snpreader
-    iid_count = snps.iid_count
-    if to_kerneldata:
-        # K = sum over SNP blocks of G_block G_block^T, then scaled so diag(K) sums to iid_count.
-        block_size = kernel.block_size or snps.sid_count
-        kernel_val = xp.zeros((iid_count, iid_count), dtype=dtype)
-        stats_list = []
-        for start in range(0, snps.sid_count, block_size):
-            block, stats = _gpu_read_standardized(bed_reader_gpu, bed, snps[:, start : start + block_size], dtype, xp)
-            kernel_val += block @ block.T
-            stats_list.append(stats)
-        factor = float(iid_count) / float(xp.diag(kernel_val).sum(dtype=xp.float64))
-        if abs(factor - 1.0) > 1e-15:  # as DiagKtoN does
-            kernel_val *= factor
-        result = KernelData(iid=snps.iid, val=kernel_val, name=str(kernel), xp=xp)
-    else:
-        # G scaled so that G G^T's diagonal sums to iid_count.
-        val, stats = _gpu_read_standardized(bed_reader_gpu, bed, snps, dtype, xp)
-        stats_list = [stats]
-        factor = float(iid_count) / float(xp.sum(xp.square(val.astype(xp.float64))))
-        if abs(factor - 1.0) > 1e-15:  # as DiagKtoN does
-            val *= np.sqrt(factor)
-        result = SnpKernel(SnpData(iid=snps.iid, sid=snps.sid, val=val, pos=snps.pos, name=str(snps), xp=xp), SS_Identity())
-    snp_trained = UnitTrained(snps.sid, np.concatenate(stats_list).astype(np.float64))
-    return result, snp_trained, DiagKtoNTrained(factor)
-
-
-def _gpu_read_standardized(bed_reader_gpu, bed, snps, dtype, xp):
-    # Reads `snps` (a view of `bed`) into GPU memory, Unit-standardizes it there (as the CPU does,
-    # exactly), and returns it wrapped by xp without a copy, with each SNP's (mean, std).
-    iid_index = np.asarray(bed.iid_to_index(snps.iid), dtype=np.intp)
-    sid_index = np.asarray(bed.sid_to_index(snps.sid), dtype=np.intp)
-    # `Bed.filename` is the .bed file's path (PySnpTools adds the suffix when constructing).
-    array = bed_reader_gpu.read_gpu(
-        str(bed.filename), bed.iid_count, bed.sid_count, bed.count_A1, iid_index, sid_index, np.dtype(dtype).name, True
-    )
-    stats = bed_reader_gpu.standardize_gpu(array, False, 1.0, 25.0)
-    return xp.asarray(array), stats
-
-
-def _bed_reader_gpu():
-    # bed-reader's compiled module, if it was built with GPU support (the `gpu-cuda` feature).
-    try:
-        from bed_reader import bed_reader as bed_reader_rust
-    except ImportError:
-        return None
-    return bed_reader_rust if hasattr(bed_reader_rust, "read_gpu") else None
-
-
-def _read_standardized_on_gpu(bed_reader_gpu, bed, snps, dtype, xp):
-    # Reads `snps` (a view of `bed`) into GPU memory and standardizes it there, as
-    # `snps.read(dtype).standardize()` does on the CPU (the results are identical), then wraps it.
-    # Also returns each SNP's genotype variance (as `np.nanvar` of the raw values, in float64), which
-    # `EffectSize` needs, so the block need not be read again.
-    iid_index = np.asarray(bed.iid_to_index(snps.iid), dtype=np.intp)
-    sid_index = np.asarray(bed.sid_to_index(snps.sid), dtype=np.intp)
-    # `Bed.filename` is the .bed file's path (PySnpTools adds the suffix when constructing).
-    array = bed_reader_gpu.read_gpu(
-        str(bed.filename), bed.iid_count, bed.sid_count, bed.count_A1, iid_index, sid_index, np.dtype(dtype).name, True
-    )
-    raw = xp.asarray(array)  # waits for the read; same GPU memory, no copy
-    # Genotypes (0, 1, 2) convert to float64 exactly, so this matches the CPU's np.nanvar closely.
-    g_var = xp.nanvar(raw.astype(xp.float64), axis=0)
-    # CuPy and bed-reader use different GPU streams: finish CuPy's reads before standardizing in place.
-    xp.cuda.get_current_stream().synchronize()
-    bed_reader_gpu.standardize_gpu(array, False, 1.0, 25.0)
-    return xp.asarray(array), g_var
+# TODO Replace these PySnpTools private details with a public PySnpTools method.
+# (may no longer apply): reading and standardization now live in PySnpTools;
+# FaST-LMM uses its existing private read-and-standardize extension point.
 
 
 def _multi_compute_stats(

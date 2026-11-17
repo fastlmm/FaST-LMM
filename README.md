@@ -43,15 +43,10 @@ For best performance, be sure your Python distribution includes a fast version o
 GPU and precision features (development branch)
 =================================
 
-`single_snp` supports `xp="cupy"` for GPU computation and `dtype="float32"`
-for single-precision linear algebra; the default remains float64. Per-SNP
-statistics use float64. A GPU-enabled bed-reader build can also decode and
-standardize BED blocks on the GPU. Two-kernel analyses use NumPy and warn when
-a GPU was requested.
-
-See the [GPU guide](doc/source/gpu.rst) for a complete example, prerequisites,
-precision comparisons, memory limitations, and cache rules. These branch
-features are not necessarily available in the latest published package.
+`single_snp` supports NumPy/CuPy backends and float32/float64 linear algebra.
+GPU BED reads require a CUDA-enabled bed-reader build. See the
+[GPU guide](doc/source/gpu.rst) for prerequisites, options, and complete examples.
+These development features are not necessarily in the published packages.
 
 Documentation
 =================================

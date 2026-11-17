@@ -326,6 +326,10 @@ def _kernel_fixup(
 
 class FastLMM(object):
     """
+    This predictor's fit and predict workflows explicitly use NumPy. The CuPy
+    and dtype options documented for :func:`fastlmm.association.single_snp`
+    do not apply to this class. See :doc:`/gpu` for GPU association examples.
+
     A predictor, somewhat in the style of scikit-learn, for learning and predicting with linear mixed models.
 
 **Constructor:**

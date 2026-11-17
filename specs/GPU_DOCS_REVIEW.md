@@ -2,6 +2,192 @@
 
 <!-- TODO0 consider deleting this spec once the work below is implemented and released. -->
 
+## Handoff: current working-tree changes
+
+The latest edits are uncommitted in `/home/carlk/programs/PySnpTools` and
+`/home/carlk/programs/FaST-LMM`. The older `docs/gpu-features` worktrees do not
+contain these implementation fixes. Preserve the existing GPU implementation
+and documentation changes when reviewing or integrating this work.
+
+All three audit findings now have implementation fixes:
+
+- Python CPU Beta constant columns: zero their weights before multiplication.
+- FaST-LMM concurrent backend selection: resolve under the workflow lock.
+- Blocked BetaTrained kernels: validate the full SNP order and reuse each
+  block's corresponding moments without refitting or relaxing public checks.
+
+All three fixes passed relevant validation. The latest full canonical
+PySnpTools run passed all 750 tests on CPython 3.13 with the matching development
+CUDA environment. The third fix also passes CPU/GPU regressions, Python 3.14
+CPU checks, native BED integration checks, all guide examples, strict Sphinx
+builds, and Ruff. The durable full-suite output is
+`~/.cache/python-docs-audit/trained-beta-canonical.log`. No checks remain running.
+
+## Current-source Python documentation audit (November 16, 2026)
+
+This audit reads the primary PySnpTools and FaST-LMM source checkouts, including
+uncommitted GPU implementation work. The historical review below is not the
+source of truth for the current API. Runtime Python ASTs are checked against a
+snapshot taken at the start of this audit; changes made by this audit are
+restricted to documentation and docstrings, preserving existing line endings.
+No bed-reader implementation, dependency bounds, lockfiles, or release artifacts
+are changed.
+
+### Documentation changes
+
+- Keep README GPU sections brief and link to one complete guide per project.
+  The earlier preview URL remains a short pointer to the current PySnpTools
+  guide; it no longer describes an unimplemented or separate API.
+- Correct landing pages, default/option tables, and generated signatures, and
+  link reader, standardizer, trained-standardizer, and association references
+  to the full examples. Register FaST-LMM's documented package with Sphinx so
+  its module-index link points to an emitted page, and fix its issue-tracker URL.
+- Explain explicit `xp` versus `ARRAY_MODULE`, strict missing-CuPy errors,
+  actual-device standardization, per-read dtype/order choices, CPU-only versus
+  GPU-ignored arguments, and native GPU BED build/runtime requirements.
+- Correct BED's float64 default and unsupported float16 claim. Document the
+  int8 opt-in and missing sentinel, which do not make int8 standardizable.
+- Explain observed population variance, post-imputation variance, constant and
+  wholly missing columns, applying versus fitting moments, host trained stats,
+  UnitTrained ID remapping, and BetaTrained's exact alignment requirement.
+- Correct the claim that CuPy Beta evaluates the density on the GPU: the current
+  code transfers per-SNP means to SciPy on CPU and then returns weights to CuPy.
+- Explain float64 CPU training-kernel formation even for float32 LMMs,
+  float32 rounding in EffectSize moments, GPU indexing/memory limits, cache
+  input responsibilities, result columns/row counts, and worker placement.
+
+### Implementation/API findings
+
+1. **Pure Python CPU Beta can turn constant columns into NaN (fixed November 16, 2026).**
+   `SnpData` with constant zero/two columns standardized by `Beta(0.5, 0.5)`
+   yields zeros with the native implementation and NaNs with
+   `force_python_only=True`. The singular endpoint PDF is multiplied by the
+   centered zero, and fresh Python training does not zero the constant columns
+   afterward. This also affects automatic Python fallback cases. The fix sets
+   constant-column weights to zero before multiplication, avoiding invalid
+   operations during fitting and trained application. A regression in the
+   canonical PySnpTools suite (TestBetaPython) covers both float dtypes, C/F orders, singular
+   and nonsingular Beta parameters, missing values, trained constants with
+   varying new values, and automatic fallback from a larger contiguous buffer.
+   The regression failed on the original code and passes with the fix. This is
+   a long-standing defect: the same logic exists in June 2015 commit 8dbe18d3.
+   The earlier docstring-only audit statement above predates this authorized fix.
+   Follow-up validation passed: canonical PySnpTools suite, 748 tests; the
+   regression with 16 parameter subtests on Python 3.13 and 3.14; 22 focused
+   CPU/native/GPU standardization tests with 16 subtests; and the strict Sphinx
+   HTML build. The standalone in-memory regression is registered in both
+   canonical unittest and pytest paths without depending on BED fixture setup.
+2. **Implicit workflow backend resolution races with a concurrent workflow (fixed November 16, 2026).**
+   `single_snp` resolves `xp` before acquiring `_array_module_lock`. With an
+   initial `ARRAY_MODULE=numpy`, a first explicit CuPy call can establish its
+   temporary environment while a second `xp=None` call resolves to CuPy. The
+   second call runs after the lock is released but retains that selection.
+   Reproduced deterministically using event signals, with the existing
+   implementation and a stub for expensive numerical work. Explicit `xp`
+   avoids this ambiguity; restoration itself succeeds in the reproduction.
+   This is long-standing process-wide environment behavior, present on main and
+   in October 2020 commit e882912. The earlier lock improved coordination but
+   left selection outside its protected region. The fix moves backend selection,
+   two-kernel NumPy coercion, and the temporary environment into one private
+   context manager holding the same lock throughout. Omitted xp now resolves
+   after preceding workflows restore the environment. Four event-coordinated
+   regressions cover NumPy/CuPy first calls and second calls with/without a
+   second kernel; three failed on the original code and all pass with the fix.
+   CPU-only cases also pass on Python 3.14 without requiring native GPU setup.
+   Final validation passed: all 86 tests in the complete single_snp suite plus
+   worker/environment and new backend-selection tests on CPython 3.13 with
+   CUDA; both CPU-only regressions on CPython 3.14; and the strict Sphinx HTML
+   build. Existing deprecation, memory-target, and complex-cast warnings were
+   reported without adding suppression rules.
+3. **Blocked kernels fail with BetaTrained despite matching full SNP IDs (fixed November 16, 2026).**
+   Training `Beta(1, 25)` on six SNPs and then using
+   `fresh.read_kernel(trained, block_size=2)` raises the trained-ID assertion;
+   the unblocked call succeeds. Each block contains only a subset of IDs, but
+   BetaTrained requires the entire training list. The fix validates that full
+   list and the stats shape before blocking, then constructs a block-local
+   BetaTrained from positional slices of the matching IDs and moments. This
+   preserves distinct moments even for repeated IDs. The public standardizer's
+   strict alignment checks are unchanged, no moments are refitted, and internal
+   return_trained calls return the original trained object rather than attempting
+   an unsupported merge. The guide now includes a tested blocked/unblocked
+   trained-kernel example. The defect was reproduced before applying the fix.
+   Final validation passed: 750 canonical PySnpTools tests on CPython 3.13;
+   three focused CPU/GPU tests with 64 parameter subtests; the CPU tests on
+   CPython 3.14 with 40 subtests; all 21 GPU API tests including eight new native
+   BED cases; seven complete guide examples; strict Sphinx builds; and Ruff.
+   Tight blocked/unblocked comparisons use floating-point roundoff bounds.
+   A separate independent reference check allows the measured pre-existing
+   native statrs versus SciPy Beta(1,25) PDF difference (about 1.5e-13 relative
+   for the selected mean), verified against the analytic 25*(1-p)**24 density.
+   No existing numerical expected results were changed.
+
+The former missing-CuPy fallback, reader-`xp` omission, Unit device mismatch,
+and fractional-index truncation findings in the historical review have already
+been addressed by the existing uncommitted implementation. They are not
+reported as remaining bugs by this audit.
+
+### Current audit validation
+
+- Seven independent, self-contained guide examples passed on the local CUDA
+  GPU with CPython 3.13. They create their own synthetic data and verify actual
+  NumPy/CuPy array types, dtype/order, trained moments and alignment, native
+  BED results, blocked kernels, cache reuse, and real worker-process reads.
+  FaST-LMM's BED example observes the actual CuPy eigensolver input.
+- Relevant existing tests passed: PySnpTools 41 tests plus 992 subtests;
+  FaST-LMM 31 tests, including all 11 real backend/environment tests. This is
+  a focused selection, not a claim that the full suites were rerun.
+- API doctests passed: 38 in edited PySnpTools modules and one FaST-LMM module
+  doctest. Precision, raw-array-deprecation, and existing numerical-cast warnings
+  were reported without introducing warning filters.
+- Both complete Sphinx HTML builds pass with `-W --keep-going -E -a` on
+  CPython 3.14. Generated guide tables, code blocks, and navigation were visually
+  inspected in Chromium; rendered reader/association signatures and all local
+  links/fragments from the landing pages and guides were checked against current
+  source. No documentation is published.
+- Reusable runners and deterministic bug reproductions are in
+  `/mnt/c/deldir/python-docs-audit/`. The example runner executes each block in
+  an independent namespace so missing imports or dependencies on earlier
+  examples cannot be hidden.
+- Generated HTML and test outputs are under
+  `~/.cache/python-docs-audit/{PySnpTools,FaST-LMM}/html` and adjacent cache
+  directories. Repository-generated HTML is not edited or checked in.
+- Not qualified here: the complete Python/OS matrix, HIP, other GPU hardware,
+  near-capacity/large-matrix performance, release wheels/sdists, published
+  dependency acceptance, or external-link availability. Native GPU examples
+  intentionally use the existing matching development artifact environment.
+
+## Earlier integration status
+
+The documentation commits `62f2476` and `0d74f4a` have been cherry-picked into
+the primary development checkouts alongside their existing GPU API changes.
+The guides now describe explicit reader backends, standardization on the actual
+array device, native GPU BED reads, strict missing-CuPy/build errors, and worker
+backend handling. The duplicate `single_snp` backend parameter documentation is
+consolidated. The former preview is now labeled as implemented development API
+examples, with published-release availability still explicitly qualified.
+
+Integration validation on CPython 3.13 passed both complete Sphinx HTML builds
+with `-W --keep-going -E -a` and all ten GPU guide examples against the primary
+source checkouts. The BED/phenotype examples used synthetic local data on the
+NVIDIA CUDA GPU. Python runtime ASTs match the saved pre-merge implementation;
+source line endings and all previously untracked files are preserved. The
+expected float64-to-float32 warnings were reported. This is documentation
+integration validation, not published-artifact or full-platform acceptance.
+
+The review below records findings against the earlier committed implementations.
+Findings 1 and 2 are addressed by the concurrent implementation; finding 4's
+fallback behavior is replaced by an ImportError, and workflow serialization is
+implemented. Finding 3 (fractional low-level indices being cast before validation)
+was subsequently fixed in PySnpTools: both NumPy and CuPy now validate integer
+index types, shape, and bounds before converting to the native index dtype.
+Regression coverage includes floating-point, Boolean, nonfinite, oversized, and
+negative indices, plus valid duplicates and empty selections. The full canonical
+PySnpTools suite passed all 747 tests. Five focused CPU/CUDA subsetting tests also
+passed against the installed wheel without source imports, and the updated
+index-rejection doctest and strict Sphinx build passed.
+
+## Original review
+
 Reviewed November 16, 2026, against FaST-LMM `e0f81a9` (`gpu-bed-reader`)
 and PySnpTools `d647dbc` (`cupy-sub-matrix`), including their changes since local
 `main`. Documentation edits are isolated on `docs/gpu-features` in each repository.

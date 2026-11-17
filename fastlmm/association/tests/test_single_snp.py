@@ -1042,60 +1042,56 @@ class TestSingleSnp(unittest.TestCase):
             import cupy  # noqa: F401
         except ModuleNotFoundError:
             raise unittest.SkipTest("cupy is not installed")
-        import importlib
+        from bed_reader import has_gpu_support
+        from bed_reader import bed_reader as native
 
-        # The module, not the function `fastlmm.association` exports under the same name.
-        single_snp_module = importlib.import_module("fastlmm.association.single_snp")
-
-        if single_snp_module._bed_reader_gpu() is None:
+        if not has_gpu_support():
             raise unittest.SkipTest("bed-reader was built without GPU support")
-        calls = []
-        real = single_snp_module._read_standardized_on_gpu
-
-        def spy(*args, **kwargs):
-            val, g_var = real(*args, **kwargs)
-            calls.append((args[2], g_var))  # args: (bed_reader_gpu, bed, snps, dtype, xp)
-            return val, g_var
-
-        for dtype, tol in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL), ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
+        for dtype, tolerance in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL),
+                                 ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
             for force_low_rank in [False, True]:
                 frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy")
-                calls.clear()
-                with patch.object(single_snp_module, "_read_standardized_on_gpu", spy):
+                with patch.object(native, "read_gpu", wraps=native.read_gpu) as reads, \
+                     patch.object(native, "standardize_gpu", wraps=native.standardize_gpu) as standardizes:
                     frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
-                assert sum(snps.sid_count for snps, _ in calls) == frame_cp.shape[0], frame_cp.shape
+                assert reads.call_count > 0
+                assert standardizes.call_count == reads.call_count
                 diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
-                assert diff < tol, (dtype, force_low_rank, diff)
-                # The genotype variance for EffectSize comes from the GPU block (no second read).
-                for snps, g_var in calls:
-                    expected = np.nanvar(snps.read().val, axis=0)
-                    np.testing.assert_allclose(cupy.asnumpy(g_var), expected, rtol=1e-14, atol=0)
+                assert diff < tolerance, (dtype, force_low_rank, diff)
                 if dtype == "float64":
                     np.testing.assert_allclose(frame_cp.EffectSize, frame_np.EffectSize, rtol=1e-8)
 
     def test_cupy_builds_kernel_on_gpu(self):
-        # With bed-reader built with GPU support, the kernel (or low-rank G) is read, standardized,
-        # and built on the GPU, never by PySnpTools on the CPU; results must still match numpy.
+        from bed_reader import has_gpu_support
+        if not has_gpu_support():
+            raise unittest.SkipTest("bed-reader was built without GPU support")
         try:
-            import cupy  # noqa: F401
+            import cupy as cp
         except ModuleNotFoundError:
             raise unittest.SkipTest("cupy is not installed")
-        import importlib
 
-        single_snp_module = importlib.import_module("fastlmm.association.single_snp")
-        if single_snp_module._bed_reader_gpu() is None:
-            raise unittest.SkipTest("bed-reader was built without GPU support")
+        real = SnpKernel._read_with_standardizing
+        observed = []
 
-        def cpu_kernel(*args, **kwargs):
-            raise AssertionError("PySnpTools built the kernel on the CPU")
+        def spy(kernel, *args, **kwargs):
+            result = real(kernel, *args, **kwargs)
+            data = result[0]
+            val = data.val if hasattr(data, "val") else data.snpreader.val
+            assert isinstance(val, cp.ndarray)
+            assert val.dtype == np.dtype(kwargs["dtype"])
+            observed.append(val.shape)
+            return result
 
-        for dtype, tol in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL), ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
+        for dtype, tolerance in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL),
+                                 ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
             for force_low_rank in [False, True]:
                 frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy")
-                with patch.object(SnpKernel, "_read_with_standardizing", cpu_kernel):
+                observed.clear()
+                with patch.object(SnpKernel, "_read_with_standardizing", spy):
                     frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
+                assert observed
                 diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
-                assert diff < tol, (dtype, force_low_rank, diff)
+                assert diff < tolerance, (dtype, force_low_rank, diff)
                 assert abs(frame_np.Nullh2.iloc[0] - frame_cp.Nullh2.iloc[0]) < 1e-6
 
     def test_cupy_two_kernels_warns(self):

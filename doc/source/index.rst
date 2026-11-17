@@ -2,6 +2,8 @@
 :mod:`fastlmm` Documentation
 ################################
 
+.. py:module:: fastlmm
+
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing both
 single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large data sets.
 
@@ -15,10 +17,11 @@ Core Python 3.15 qualification excludes both backends; HDF5 and BGEN remain
 covered by the Python 3.11 through 3.14 test matrix.
 
 
-:new:
-
-:func:`.single_snp` now supports effect size, multiple phenotypes, and related features (`notebook demonstrating new features
-<https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_).
+The development :func:`.single_snp` API supports NumPy/CuPy backends and
+float32/float64 linear algebra. See :doc:`gpu` for GPU prerequisites, option
+semantics, tested examples, cache rules, and worker execution. Effect size and
+multiple phenotypes are illustrated in the `multiple-phenotype notebook
+<https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_.
 
 .. toctree::
    :maxdepth: 2
@@ -35,7 +38,7 @@ covered by the Python 3.11 through 3.14 test matrix.
 * Email the developers at `fastlmm-dev@python.org <mailto:fastlmm-dev@python.org>`_.
 * `Join <mailto:fastlmm-user-join@python.org?subject=Subscribe>`_ the user discussion and announcements
   list (or use `web sign up <https://mail.python.org/mailman3/lists/fastlmm-user.python.org>`_).
-* `Open an issue <https://github.com/fastlmm/PySnpTools/issues>`_ on GitHub.
+* `Open an issue <https://github.com/fastlmm/FaST-LMM/issues>`_ on GitHub.
 * `Project Home <https://fastlmm.github.io/>`_ (including bibliography).
 
 
