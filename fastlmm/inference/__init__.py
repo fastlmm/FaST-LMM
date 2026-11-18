@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 from fastlmm.inference.fastlmm_predictor import FastLMM  # noqa: F401
 from fastlmm.inference.linear_regression import LinearRegression  # noqa: F401
 
@@ -19,6 +20,7 @@ the number of snps.
 """
 
 
+@cpu64
 def getGLMM(approx, link, y, G0, G1, penalty=None, penalizeBias=False, debug=False):
     k = 0
     if G0 is not None:
@@ -50,5 +52,6 @@ def getGLMM(approx, link, y, G0, G1, penalty=None, penalizeBias=False, debug=Fal
     assert False, "Unkown approximation."
 
 
+@cpu64
 def getLMM(forcefullrank=False):
     return LMM(forcefullrank=forcefullrank)

@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import numpy as np
 import scipy.linalg as LA
 import scipy.special as SS
@@ -86,6 +87,7 @@ class LMM(object):
         self.UUKstar = None
         self.Gstar = None
 
+    @cpu64
     def setX(self, X):
         """
         set the fixed effects X (covariates).
@@ -102,6 +104,7 @@ class LMM(object):
         if k < N:
             self.UUX = X - self.U.dot(self.UX)
 
+    @cpu64
     def setX2(self, X):
         """
         a version of setX that doesn't assume that Eigenvalue decomposition has been done.
@@ -109,6 +112,7 @@ class LMM(object):
         self.X = X
         # N = self.X.shape[0]
 
+    @cpu64
     def sety(self, y):
         """
         set the phenotype y.
@@ -126,6 +130,7 @@ class LMM(object):
         if k < N:
             self.UUy = y - self.U.dot(self.Uy)
 
+    @cpu64
     def sety2(self, y):
         """
         a version of sety that doesn't assume that Eigenvalue decomposition has been done.
@@ -134,6 +139,7 @@ class LMM(object):
         self.y = y
         # N = self.y.shape[0]
 
+    @cpu64
     def setG(self, G0=None, G1=None, a2=0.0, K0=None, K1=None):
         """
         set the Kernel (1-a2)*K0 and a2*K1 from G0 and G1.
@@ -216,6 +222,7 @@ class LMM(object):
             self.S = np.zeros((0))
             self.U = np.zeros_like(self.G)
 
+    @cpu64
     def setK(self, K0, K1=None, a2=0.0):
         """
         set the Kernel (1-a2)*K0 and a2*K1.
@@ -244,6 +251,7 @@ class LMM(object):
         self.S = S  # *(S.shape[0]/S.sum())
         self.a2 = a2
 
+    @cpu64
     def setK2(self, K0, K1=None, a2=0.0):
         """
         a version of setK that doesn't do Eigenvalue decomposition.
@@ -257,6 +265,7 @@ class LMM(object):
             self.K = (1.0 - a2) * K0 + a2 * K1
         self.a2 = a2
 
+    @cpu64
     def set_exclude_idx(self, idx):
         """
 
@@ -268,6 +277,7 @@ class LMM(object):
 
         self.exclude_idx = idx
 
+    @cpu64
     def innerLoopTwoKernel(
         self, a2=0.5, nGridH2=10, minH2=0.0, maxH2=0.99999, **kwargs
     ):
@@ -293,6 +303,7 @@ class LMM(object):
         self.sety(self.y)
         return self.findH2(nGridH2=nGridH2, minH2=minH2, maxH2=maxH2, **kwargs)
 
+    @cpu64
     def findA2(
         self,
         nGridA2=10,
@@ -346,6 +357,7 @@ class LMM(object):
         # print "numcalls to innerLoopTwoKernel= " + str(self.numcalls)
         return resmin[0]
 
+    @cpu64
     def findH2(self, nGridH2=10, minH2=0.0, maxH2=0.99999, REML=True, **kwargs):
         """
         Find the optimal h2 for a given K. Note that this is the single kernel case. So there is no a2.
@@ -373,6 +385,7 @@ class LMM(object):
         __min = minimize1D(f=f, nGrid=nGridH2, minval=minH2, maxval=maxH2)
         return resmin[0]
 
+    @cpu64
     def find_log_delta(
         self,
         sid_count,
@@ -406,6 +419,7 @@ class LMM(object):
         res["log_delta"] = ln_external_delta
         return res
 
+    @cpu64
     def nLLeval(
         self,
         h2=0.0,
@@ -628,6 +642,7 @@ class LMM(object):
             del result["variance_beta"]
         return result
 
+    @cpu64
     def getPosteriorWeights(self, beta, h2=0.0, logdelta=None, delta=None, scale=1.0):
         """
         compute posterior mean over the feature weights (effect sizes of SNPs in the kernel, not the SNPs being tested):
@@ -675,6 +690,7 @@ class LMM(object):
 
         return weights
 
+    @cpu64
     def setTestData(self, Xstar, K0star=None, K1star=None, G0star=None, G1star=None):
         """
         set data for predicting
@@ -722,6 +738,7 @@ class LMM(object):
                 # see e.g. Equation 3.17 in Supplement of FaST LMM paper
                 self.UUKstar = self.Kstar.T - np.dot(self.U, self.UKstar)
 
+    @cpu64
     def setTestData2(self, Xstar, K0star=None, K1star=None):
         """
         a version of setTestData that doesn't assume that Eigenvalue decomposition has been done.
@@ -734,6 +751,7 @@ class LMM(object):
         else:
             self.Kstar = (1.0 - self.a2) * K0star + self.a2 * K1star
 
+    @cpu64
     def predictMean(self, beta, h2=0.0, logdelta=None, delta=None, scale=1.0):
         """
         mean prediction for the linear mixed model on unobserved data:
@@ -847,6 +865,7 @@ class LMM(object):
         ystar = yfixed + yrandom
         return ystar
 
+    @cpu64
     def predict_mean_and_variance(lmm, beta, sigma2, h2, Kstar_star):
         assert 0 <= h2 <= 1, "By definition, h2 must be between 0 and 1 (inclusive)"
         varg = h2 * sigma2
@@ -876,6 +895,7 @@ class LMM(object):
         )
         return y_star, var_star
 
+    @cpu64
     def nLL(lmm, beta, sigma2, h2, y_actual):
         from scipy.stats import multivariate_normal
 
@@ -885,6 +905,7 @@ class LMM(object):
         var = multivariate_normal(mean=y_star.reshape(-1), cov=var_star)
         return -np.log(var.pdf(y_actual.reshape(-1)))
 
+    @cpu64
     def predictVariance(
         self, h2=0.0, logdelta=None, delta=None, sigma2=1.0, Kstar_star=None
     ):
@@ -984,6 +1005,7 @@ class LMM(object):
 
         return Var_star
 
+    @cpu64
     def nLLeval_test(
         self,
         y_test,

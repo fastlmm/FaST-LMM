@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from threading import RLock
 # flake8: noqa: E501
 
 import logging
@@ -21,6 +20,7 @@ from fastlmm.inference.fastlmm_predictor import (
 )
 from fastlmm.inference.lmm_cov import LMM as lmm_cov
 from fastlmm.util._precision import array_dtype, dtype_environment
+from fastlmm.util._backend import workflow_lock, cpu64_scope, cpu64_if, cpu64_required
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData, SnpKernel
 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore", message="Input line .* contained no data and w
 #  might be a covar mix up.(but only if a SnpKernel
 # ARRAY_MODULE is process-wide. Serialize overlapping workflows so one call
 # cannot restore the environment while another call still depends on it.
-_array_module_lock = RLock()
+_array_module_lock = workflow_lock
 
 
 def single_snp(
@@ -202,14 +202,14 @@ def single_snp(
 
     :param xp: NumPy or CuPy module or name. An explicit value overrides ARRAY_MODULE;
         otherwise the environment selects the backend, with NumPy as the default.
-        Requesting CuPy requires it to be installed; a missing installation raises ImportError.
+        Single-kernel CuPy execution requires it to be installed; a missing installation raises ImportError.
         Establishes ARRAY_MODULE for this workflow and restores it on success or failure.
         Workers resolve their backend from their own environment, including runner overrides.
         Backend selection, workflow execution, and environment restoration are serialized
         between single_snp calls in one process. With xp=None, selection occurs after
         preceding calls restore their environment. Standalone reader xp arguments
         still override their environment. If two kernels are
-        given, warns and uses NumPy. See :doc:`/gpu` for a complete example, GPU BED
+        given, unsupported requests warn and use NumPy/float64. See :doc:`/gpu` for a complete example, GPU BED
         prerequisites, and memory limitations.
     :type xp: string or Python module
 
@@ -218,16 +218,22 @@ def single_snp(
     :type count_A1: bool
 
     :param dtype: The floating-point precision of the main linear algebra: 'float64' or 'float32'.
-         None (default) uses ARRAY_DTYPE, then float64.
+         None (default) uses ARRAY_DTYPE, then float64. Two-kernel calls use
+         float64, with a warning for a requested float32 configuration.
          With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
-         eigendecomposition/SVD and SNP rotations run in single precision; the per-SNP statistics are still
-         computed in float64, but input/decomposition rounding remains. CPU kernel/factor
+         decomposition outputs and SNP rotations use single precision; internal solver precision depends
+         on the backend. The per-SNP statistics are still computed in float64, but input/decomposition
+         rounding remains. CPU kernel/factor
          formation retains float64 before conversion to the LMM dtype; GPU formation uses
          the requested dtype. 'float32' gives different p-values and can be faster on
          consumer GPUs (``xp='cupy'``), which have limited float64 throughput; on data-center GPUs with fast
          float64 (for example, NVIDIA A100 or H100), 'float64' is fast, too. 'float32' works with
          ``xp='numpy'``, so its numerical effect can be checked without a GPU. With 'float32', covariate and
          phenotype values too large or too small (but nonzero) for float32 to handle safely raise a ValueError.
+         GPU float32 can be less accurate than CPU float32. In the 1,940-sample mouse example,
+         CPU float64 P=2.0918834e-87 versus GPU float32 P=2.0899597e-87 at the same h2,
+         about 0.092% relative error. This is a measured example, not a universal error bound;
+         use float64 when closer agreement is required. See :doc:`/gpu` for the precision warning.
          A ``cache_file`` created with one dtype raises a ValueError if used with the other.
          GPU float64 emits bed-reader's GpuFloat64Warning about potentially much slower
          arithmetic on consumer GPUs. The warning does not change precision. See :doc:`/gpu`.
@@ -268,8 +274,10 @@ def single_snp(
     if force_full_rank and force_low_rank:
         raise Exception("Can't force both full rank and low rank")
 
-    with _workflow_array_module(xp, has_second_kernel=bool(K1 or G1), dtype=dtype) as xp:
-        dtype = array_dtype(dtype)
+    has_second_kernel = K1 is not None or G1 is not None
+    cpu_only = has_second_kernel or cpu64_required()
+    with _workflow_array_module(xp, has_second_kernel=has_second_kernel, dtype=dtype) as xp:
+        dtype = array_dtype() if cpu_only else array_dtype(dtype)
         if dtype not in (np.float64, np.float32):
             raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
 
@@ -365,6 +373,7 @@ def single_snp(
                 else:
                     input_files.append(Ki)
 
+            @cpu64_if(cpu_only)
             def nested_closure(chrom):
                 _check_worker_dtype(dtype)
                 logging.info(f"working on chrom {chrom}")
@@ -448,22 +457,25 @@ def _workflow_array_module(xp, has_second_kernel, dtype=None):
     # Resolve defaults only after any preceding workflow restores its environment.
     # Keep selection, two-kernel coercion, and restoration under the same lock.
     with _array_module_lock:
-        xp = pstutil.array_module(xp)
         dtype = array_dtype(dtype)
         if dtype not in (np.dtype("float32"), np.dtype("float64")):
             raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
-        if has_second_kernel:
-            # The two-kernel code (including the search for the best mixing) supports only numpy.
-            # Say so, rather than silently running on the CPU when a GPU module was requested.
-            if xp is not np:
-                warnings.warn(
-                    "single_snp supports only numpy when a second kernel (K1 or G1) is given, "
-                    "so it will run with numpy rather than the requested array module.",
-                    UserWarning,
-                )
-            xp = np
-        with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__, **dtype_environment(dtype)}):
-            yield xp
+        if has_second_kernel or cpu64_required():
+            # Unsupported GPU requests do not require importing CuPy before
+            # selecting the declared CPU fallback. Explicit arguments still
+            # override environment defaults, including invalid old defaults.
+            requested_module = os.environ.get("ARRAY_MODULE", "numpy") if xp is None else (
+                xp if isinstance(xp, str) else getattr(xp, "__name__", None)
+            )
+            if requested_module not in ("numpy", "cupy"):
+                raise ValueError(f"invalid array module {requested_module!r}; expected numpy or cupy")
+            api = "single_snp (two kernels); second kernel K1 or G1" if has_second_kernel else "single_snp (CPU64 workflow)"
+            with cpu64_scope(api, backend=requested_module, dtype=dtype):
+                yield np
+        else:
+            xp = pstutil.array_module(xp)
+            with patch.dict("os.environ", {"ARRAY_MODULE": xp.__name__, **dtype_environment(dtype)}):
+                yield xp
 
 
 overhead_gig = 0.127
@@ -1060,6 +1072,7 @@ def _internal_single(
         random_seed,
         show_snp_fract_var_exp,
         dtype,
+        cpu_only=not isinstance(K1, KernelIdentity) or cpu64_required(),
     )
 
     return frame
@@ -1539,6 +1552,7 @@ def _snp_tester(
     random_seed,
     show_snp_fract_var_exp,
     dtype,
+    cpu_only=False,
 ):
     work_count = -(
         test_snps.sid_count // -block_size
@@ -1562,6 +1576,7 @@ def _snp_tester(
     def debatch_closure(work_index):
         return test_snps.sid_count * work_index // work_count
 
+    @cpu64_if(cpu_only, api="single_snp")
     def mapper_closure(work_index):
         _check_worker_dtype(dtype)
         xp = pstutil.array_module()

@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import logging
 import numpy as np
 from pysnptools.util.mapreduce1 import map_reduce
@@ -8,6 +9,7 @@ from pysnptools.snpreader import SnpMemMap
 from bed_reader import file_dot_piece, file_b_less_aatbx, get_num_threads
 
 
+@cpu64
 def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_only=False):
     sid_count = len(sid)
     piece_count = work_count * 2
@@ -16,6 +18,7 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
     def debatch_closure(piece_index):
         return sid_count * piece_index // piece_count
 
+    @cpu64
     def mapper_closure(work_index):
         memmap = memmap_lambda()
         piece_index0 = work_index
@@ -24,6 +27,7 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
         gtg_piece1 = mmultfile_ata_piece(memmap.filename,memmap.offset,piece_index1,piece_count,log_frequency=log_frequency,force_python_only=force_python_only)
         return [[piece_index0, gtg_piece0],[piece_index1, gtg_piece1]]
 
+    @cpu64
     def reducer_closure(result_result_sequence):
         logging.info("starting ata reducer")
         iid = [[value, value] for value in sid]
@@ -47,6 +51,7 @@ def mmultfile_ata(memmap_lambda,writer,sid,work_count,name,runner,force_python_o
                output_files=[]
                )
 
+@cpu64
 def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequency=-1, force_python_only=False):
     t0_gtg = time.time()
     if log_frequency > 0:
@@ -94,6 +99,7 @@ def mmultfile_ata_piece(a_filename, offset, work_index=0, work_count=1,log_frequ
         logging.info("ata_piece {0} of {1}: clocktime {2}".format(work_index, work_count,format_delta(time.time()-t0_gtg)))
     return ata_piece
 
+@cpu64
 def mmultfile_b_less_aatb(a_snp_mem_map, b, log_frequency=0, force_python_only=False):
 
     # Without memory efficiency

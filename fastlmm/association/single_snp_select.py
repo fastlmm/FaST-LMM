@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import warnings
 import numpy as np
 import logging
@@ -26,6 +27,7 @@ def _fixup(test_snps, G, pheno, covar, count_A1=None):
     return test_snps, G, pheno, covar
 
 
+@cpu64
 def single_snp_select(
     test_snps,
     pheno,
@@ -145,6 +147,7 @@ def single_snp_select(
 
         k_list_in = [0] + [int(k) for k in k_list if 0 < k <= G.sid_count]
 
+        @cpu64
         def top_snps_for_each_fold_nested(kfold_item):
             fold_index, (train_idx, test_idx) = kfold_item
             _, G_in, pheno_in, covar_in = _fixup(
@@ -183,6 +186,7 @@ def single_snp_select(
         # =================================================
         # Start of definition of inner functions
         # =================================================
+        @cpu64
         def k_index_to_nLL_mapper(k):
             _, G_in, pheno_in, covar_in = _fixup(
                 test_snps, G, pheno, covar, count_A1=count_A1

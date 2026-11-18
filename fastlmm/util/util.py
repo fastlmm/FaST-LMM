@@ -541,6 +541,11 @@ def manhattan_plot(
     """
     import matplotlib.pyplot as plt
 
+    if type(chr_pos_pvalue_array).__module__.split(".")[0] == "cupy":
+        raise TypeError("manhattan_plot requires host data; transfer CuPy arrays with cupy.asnumpy first")
+    if type(chromosome_starts).__module__.split(".")[0] == "cupy":
+        raise TypeError("manhattan_plot chromosome_starts requires a NumPy array")
+
     # create a copy of the data and sort it by chrom and then position
     array = np.array(chr_pos_pvalue_array)
     if plot_threshold:

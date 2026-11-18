@@ -1,5 +1,7 @@
+from fastlmm.util._backend import cpu64
 from pysnptools.util.mapreduce1.runner import *
 import logging
+import os
 import pysnptools.util as pstutil
 import pysnptools.util.pheno as pstpheno
 import numpy as np
@@ -11,6 +13,7 @@ import pandas as pd
 from unittest.mock import patch
 
 
+@cpu64
 def epistasis(
     test_snps,
     pheno,
@@ -31,6 +34,15 @@ def epistasis(
     r"""
     Function performing epistasis GWAS.  See http://www.nature.com/srep/2013/130122/srep01099/full/srep01099.html.
     REML is used to optimize H2 and beta is always estimated via ML (maximum likelihood, see https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1681/MediaObjects/41592_2011_BFnmeth1681_MOESM290_ESM.pdf).
+
+    .. warning::
+
+       Epistasis requires NumPy float64 computation. A different ARRAY_MODULE or
+       ARRAY_DTYPE setting emits a UserWarning and uses CPU float64 for this call,
+       including reader operations in workers. Caller settings are restored on
+       success or failure. Float32 input arrays are widened, but their original
+       quantization cannot be undone. Float32 eigen caches are rejected; use a
+       new cache path or remove the old cache to recompute in float64.
 
     :param test_snps: SNPs from which to test pairs. If you give a string, it should be the base name of a set of PLINK Bed-formatted files.
     :type test_snps: a `SnpReader <http://fastlmm.github.io/PySnpTools/#snpreader-snpreader>`__ or a string
@@ -118,7 +130,7 @@ def epistasis(
     1_12 1_9 0.07779 85
 
     """
-    with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
+    with patch.dict("os.environ", {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float64"}):
         if runner is None:
             runner = Local()
 
@@ -241,6 +253,7 @@ class _Epistasis(object):  # implements IDistributable
             [self.test_snps, self.pheno, self.covar, self.G0, self.G1_or_none]
         )  # should put G0 and G1 first
 
+    @cpu64
     def _run_once(self):
         if self._ran_once:
             return
@@ -303,7 +316,7 @@ class _Epistasis(object):  # implements IDistributable
         self._run_once()
 
         lmm = self.lmm_from_cache_file()
-        lmm.sety(self.pheno["vals"])
+        lmm.sety(np.asarray(self.pheno["vals"], dtype=np.float64))
 
         for sid0_list, sid1_list in self.pair_block_sequence_range(start, end):
             yield lambda lmm=lmm, sid0_list=sid0_list, sid1_list=sid1_list: self.do_work(
@@ -501,8 +514,16 @@ class _Epistasis(object):  # implements IDistributable
         with np.load(self.cache_file) as data:
             lmm.U = data["arr_0"]
             lmm.S = data["arr_1"]
+            # The cache is model state, not raw input. Widening a float32
+            # decomposition cannot recover its lost accuracy; require a fresh fit.
+            if lmm.U.dtype != np.float64 or lmm.S.dtype != np.float64:
+                raise ValueError(
+                    "epistasis requires a numpy/float64 cache; remove the cache_file "
+                    "or use a new path to recompute it with float64."
+                )
         return lmm
 
+    @cpu64
     def fill_in_cache_file(self):
         self._run_once()
 
@@ -511,7 +532,7 @@ class _Epistasis(object):  # implements IDistributable
         if self.G1_or_none is None:
             self.G1val_or_none = None
         else:
-            self.G1val_or_none = self.G1_or_none.read().standardize().val
+            self.G1val_or_none = self.G1_or_none.read(dtype="float64", xp=np).standardize().val
 
         # The S and U are always cached, in case they are needed for the cluster or for multi-threaded runs
         if self.cache_file is None:
@@ -525,7 +546,7 @@ class _Epistasis(object):  # implements IDistributable
         if not os.path.exists(self.cache_file):
             logging.info("Precomputing eigen")
             lmm = LMM()
-            G0_standardized = self.G0.read().standardize()
+            G0_standardized = self.G0.read(dtype="float64", xp=np).standardize()
             lmm.setG(G0_standardized.val, self.G1val_or_none, a2=self.mixing)
             logging.info("Saving precomputation to {0}".format(self.cache_file))
             pstutil.create_directory_if_necessary(self.cache_file)
@@ -539,7 +560,7 @@ class _Epistasis(object):  # implements IDistributable
 
             logging.info("searching for internal delta")
             lmm.setX(self.covar)
-            lmm.sety(self.pheno["vals"])
+            lmm.sety(np.asarray(self.pheno["vals"], dtype=np.float64))
             # log delta is used here. Might be better to use findH2, but if so will need to normalized G so that its K's diagonal would sum to iid_count
 
             # As per the paper, we optimized delta with REML=True, but
@@ -559,6 +580,7 @@ class _Epistasis(object):  # implements IDistributable
     do_pair_count = 0
     do_pair_time = time.time()
 
+    @cpu64
     def do_work(self, lmm, sid0_list, sid1_list):
         dataframe = pd.DataFrame(
             index=np.arange(len(sid0_list)),
@@ -604,13 +626,17 @@ class _Epistasis(object):  # implements IDistributable
 
         sid_union = set(sid0_list).union(sid1_list)
         sid_union_index_list = sorted(self.test_snps.sid_to_index(sid_union))
-        snps_read = self.test_snps[:, sid_union_index_list].read().standardize()
+        snps_read = self.test_snps[:, sid_union_index_list].read(dtype="float64", xp=np).standardize()
 
         sid0_index_list = snps_read.sid_to_index(sid0_list)
         sid1_index_list = snps_read.sid_to_index(sid1_list)
 
+        # X is float64 because covariates are float64. Promote before multiplying:
+        # float32 product roundoff can break exact dependence on the additive
+        # columns, creating a spurious likelihood gain for a redundant interaction.
+        snp_values = snps_read.val.astype(np.float64, copy=False)
         products = (
-            snps_read.val[:, sid0_index_list] * snps_read.val[:, sid1_index_list]
+            snp_values[:, sid0_index_list] * snp_values[:, sid1_index_list]
         )  # in the products matrix, each column i is the elementwise product of sid i in each list
         X = np.hstack((self.covar, snps_read.val, products))
         UX = lmm.U.T.dot(X)
