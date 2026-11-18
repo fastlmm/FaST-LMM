@@ -2,8 +2,9 @@
 
 # GPU alpha release checklist
 
-This checklist records the remaining decisions and actions. No new design
-decision is required from Carl now. Publication remains a maintainer action.
+All three coordinated alphas are published. This checklist records their
+validation and the remaining platform limitations. No new design decision or
+publication action is required from Carl now.
 
 ## Upload order
 
@@ -17,13 +18,14 @@ decision is required from Carl now. Publication remains a maintainer action.
    204 tests with no failures or skips. Refreshed CPU CI passed: 39 PySnpTools
    jobs and 41 FaST-LMM jobs. FaST-LMM's monthly-only freshness job was skipped
    by its existing schedule condition.
-4. **Ready for Carl:** publish FaST-LMM `1.1.0a1` using the command below.
+4. **Done:** Carl published FaST-LMM `1.1.0a1` on November 18, 2026. Both
+   PyPI hashes match the qualified artifacts.
 
 The first two upload sets remain under `~/.cache/gpu-alpha-20261117/ready`
 as a record; do not re-upload them. FaST-LMM's final files are under
-`ready/fastlmm`; their acceptance is complete and publication is pending.
+`ready/fastlmm`; acceptance and publication are complete. Do not re-upload them.
 
-All final CI gates passed. Carl runs:
+All final CI gates passed. The completed upload command is retained as a record:
 
 ```bash
 cd /home/carlk/.cache/gpu-alpha-20261117
@@ -34,10 +36,11 @@ uv tool run --from twine==6.2.0 twine upload \
   ready/fastlmm/*.whl ready/fastlmm/*.tar.gz
 ```
 
-After publication, verify PyPI hashes and repeat clean installed CPU/GPU
-acceptance against all three published alphas. Confirm default installs still
-select stable releases. Do not push a release tag or merge into main as part
-of this alpha handoff.
+**Done:** verified PyPI hashes and a fresh installation of all three published
+alphas. CPU/GPU reads, kernels, and LOCO association passed for float32/float64
+under WSL2 and native Windows; all 142 installed regression tests passed again
+under WSL2. Default installs still select bed-reader 1.2.1, PySnpTools 1.0.1,
+and FaST-LMM 1.0.0. No release tag was pushed and nothing was merged into main.
 
 ## Validation already completed
 

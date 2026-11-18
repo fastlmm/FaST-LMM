@@ -1,6 +1,6 @@
 # FaST-LMM release notes
 
-## 1.1.0a1 (2026-11-17, alpha preparation)
+## 1.1.0a1 (2026-11-18, alpha)
 
 - Add the `cupy` extra and require the coordinated PySnpTools 1.1.0a1 and
   bed-reader 1.3.0a1 alphas. CPU execution remains the default.
@@ -14,8 +14,9 @@
 - Initial GPU scope is NVIDIA Windows/Linux x86-64, including WSL2, on Python
   3.11–3.14. Python 3.15 remains CPU-only pending CuPy support. Native Linux
   GPU validation is still needed; local Linux GPU testing uses WSL2.
-- Publication is pending. Dependencies now resolve against the published
-  PySnpTools alpha; the development-only Git source has been removed.
+- All three coordinated alphas are published on PyPI. Dependencies resolve
+  against the published PySnpTools and bed-reader alphas; the development-only
+  Git source has been removed.
 
 ## 1.0.0 (2026-11-14)
 

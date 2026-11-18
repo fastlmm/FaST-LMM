@@ -45,7 +45,7 @@ GPU and precision features (experimental alpha)
 
 `single_snp` supports NumPy/CuPy backends and float32/float64 linear algebra.
 Explicit `xp`/`dtype` override the `ARRAY_MODULE`/`ARRAY_DTYPE` environment defaults.
-After `1.1.0a1` is published, install it with `pip install "fastlmm[cupy]==1.1.0a1"`.
+Install the published `1.1.0a1` alpha with `pip install "fastlmm[cupy]==1.1.0a1"`.
 The extra uses PySnpTools and bed-reader's GPU support and follows CuPy's NVIDIA
 CUDA prerequisites. CPU remains the default; Python 3.15 is currently CPU-only.
 See the [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/gpu-bed-reader/doc/source/gpu.rst)

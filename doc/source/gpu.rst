@@ -7,8 +7,8 @@ GPU support uses PySnpTools 1.1.0a1 and bed-reader 1.3.0a1 or later.
 Installing the alpha
 --------------------
 
-FaST-LMM alpha publication is pending; its prerequisite alphas are on PyPI.
-After FaST-LMM's alpha is published, explicitly select it:
+All three coordinated alphas are published on PyPI. Explicitly select the
+FaST-LMM alpha:
 
 .. code-block:: bash
 
@@ -293,9 +293,9 @@ their own environment, including explicit runner overrides; model arrays move to
 the worker's backend. A parent CuPy call alone therefore does not prove every
 worker ran on the GPU. Two-kernel analyses continue to use NumPy.
 
-These APIs are present in the development checkout. Published dependency bounds
-and acceptance against published artifacts still require coordinated release
-work.
+These APIs are included in the published alpha. Its dependency bounds select
+the coordinated PySnpTools and bed-reader alphas. Installed CPU/GPU workflows
+were validated against all three published packages.
 
 
 This complete worker example checks array types inside real subprocesses and
