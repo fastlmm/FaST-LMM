@@ -50,7 +50,7 @@ jobs:
         env:
           # cbgen's bundled zlib uses POSIX fileno in strict C mode.
           CFLAGS: -D_POSIX_C_SOURCE=200809L
-        run: uv sync --frozen --all-extras
+        run: uv sync --frozen --extra dev --extra hdf5 --extra bgen
 
       - name: Run the canonical suite
         working-directory: tests

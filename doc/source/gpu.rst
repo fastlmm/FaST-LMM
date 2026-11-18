@@ -1,9 +1,45 @@
 GPU association and floating-point precision
 ============================================
 
-These features are under development on the GPU branches; installing the latest
-published package does not necessarily provide them. The examples below target
-this branch's API.
+This guide describes the ``1.1.0a1`` alpha. NumPy remains the default backend.
+GPU support uses PySnpTools 1.1.0a1 and bed-reader 1.3.0a1 or later.
+
+Installing the alpha
+--------------------
+
+Publication is pending. After PySnpTools and FaST-LMM's alphas are published,
+explicitly select FaST-LMM's alpha:
+
+.. code-block:: bash
+
+    pip install "fastlmm[cupy]==1.1.0a1"
+    # Or, in an existing uv environment:
+    uv pip install "fastlmm[cupy]==1.1.0a1"
+
+The ``cupy`` extra follows the dependency chain through ``pysnptools[cupy]``
+and ``bed-reader[cupy]``. It follows CuPy's NVIDIA CUDA 13 driver/toolkit
+prerequisites; a prebuilt bed-reader wheel does not require Rust or Maturin.
+See `bed-reader's GPU guide <https://github.com/fastlmm/bed-reader/blob/gpu-cubecl/doc/source/gpu.rst>`_
+for system-toolkit and pip-managed CUDA options.
+
+Initial GPU support targets Python 3.11 through 3.14 on Windows/Linux x86-64,
+including WSL2. CuPy 14.2 has no Python 3.15 wheel, so Python 3.15 is currently
+CPU-only. Linux GPU wheels require glibc 2.35 or later; native Linux GPU testing
+remains outstanding because local Linux validation uses WSL2. Other CPU
+platforms may need a source build of bed-reader until their alpha wheels are
+available. Omit ``[cupy]`` for CPU-only use. Normal unpinned installations still
+select stable releases.
+
+Set the defaults once for a workflow::
+
+    import os
+
+    os.environ["ARRAY_MODULE"] = "cupy"
+    os.environ["ARRAY_DTYPE"] = "float32"
+
+Explicit ``xp`` and ``dtype`` still take precedence. These defaults are
+process-wide. Follow the function-specific limitations below; selecting CuPy
+for ``single_snp`` does not extend GPU support to every FaST-LMM function.
 
 Float64 arithmetic can be much slower than float32 on consumer GPUs. Some
 data-center GPUs have high float64 throughput, so this is device-dependent.

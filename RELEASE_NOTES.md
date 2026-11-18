@@ -1,5 +1,22 @@
 # FaST-LMM release notes
 
+## 1.1.0a1 (2026-11-17, alpha preparation)
+
+- Add the `cupy` extra and require the coordinated PySnpTools 1.1.0a1 and
+  bed-reader 1.3.0a1 alphas. CPU execution remains the default.
+- Add `single_snp` NumPy/CuPy selection and float32/float64 workflow precision
+  through explicit arguments or `ARRAY_MODULE` and `ARRAY_DTYPE`. Propagate
+  defaults to workers and restore the environment on success or failure.
+- Preserve CubeCL-backed GPU SNP storage where supported; fix chromosome
+  covariate alignment and validate raw values before narrowing or transfer.
+- Report consumer-GPU float64 arithmetic costs without changing precision.
+  Retain higher precision for internal reductions and likelihood statistics.
+- Initial GPU scope is NVIDIA Windows/Linux x86-64, including WSL2, on Python
+  3.11–3.14. Python 3.15 remains CPU-only pending CuPy support. Native Linux
+  GPU validation is still needed; local Linux GPU testing uses WSL2.
+- Publication is pending. Remove the development-only PySnpTools Git source
+  and re-lock against its published alpha before uploading FaST-LMM.
+
 ## 1.0.0 (2026-11-14)
 
 - Require Python 3.11.5 or later and support Python 3.11 through 3.15.

@@ -40,14 +40,16 @@ Install `fastlmm[hdf5,bgen]` to enable both optional formats.
 
 For best performance, be sure your Python distribution includes a fast version of NumPy. We use Anaconda's [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
-GPU and precision features (development branch)
+GPU and precision features (experimental alpha)
 =================================
 
 `single_snp` supports NumPy/CuPy backends and float32/float64 linear algebra.
 Explicit `xp`/`dtype` override the `ARRAY_MODULE`/`ARRAY_DTYPE` environment defaults.
-GPU BED reads require a CUDA-enabled bed-reader build. See the
-[GPU guide](doc/source/gpu.rst) for prerequisites, options, and complete examples.
-These development features are not necessarily in the published packages.
+After `1.1.0a1` is published, install it with `pip install "fastlmm[cupy]==1.1.0a1"`.
+The extra uses PySnpTools and bed-reader's GPU support and follows CuPy's NVIDIA
+CUDA prerequisites. CPU remains the default; Python 3.15 is currently CPU-only.
+See the [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/gpu-bed-reader/doc/source/gpu.rst)
+for platform limits and complete examples.
 
 Documentation
 =================================
@@ -74,7 +76,7 @@ The project uses [uv](https://docs.astral.sh/uv/) for reproducible development
 environments, dependency locking, testing, and builds:
 
 ```console
-uv sync --frozen --all-extras
+uv sync --frozen --extra dev --extra hdf5 --extra bgen
 cd tests
 uv run --frozen --no-sync python test.py
 cd ..
