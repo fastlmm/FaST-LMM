@@ -24,8 +24,10 @@ for system-toolkit and pip-managed CUDA options.
 
 Initial GPU support targets Python 3.11 through 3.14 on Windows/Linux x86-64,
 including WSL2. CuPy 14.2 has no Python 3.15 wheel, so Python 3.15 is currently
-CPU-only. Linux GPU wheels require glibc 2.35 or later; native Linux GPU testing
-remains outstanding because local Linux validation uses WSL2. Other CPU
+CPU-only. Linux GPU wheels require glibc 2.35 or later. The published alpha
+stack passed native Linux GPU integration tests on Ubuntu 24.04 x86-64 with
+an RTX 3060, Python 3.11, and CUDA toolkit 13.3, in addition to Windows and
+WSL2 testing. Other CPU
 platforms can use bed-reader's CPU wheels, subject to FaST-LMM's existing
 dependency limits; Windows ARM64 requires Python 3.13 or later. Omit ``[cupy]``
 for CPU-only use. Normal unpinned installations still

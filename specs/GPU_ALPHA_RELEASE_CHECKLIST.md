@@ -74,8 +74,16 @@ and FaST-LMM 1.0.0. No release tag was pushed and nothing was merged into main.
 - Explicit completion records confirm 262 distribution/BGEN tests and 204
   broad FaST-LMM canonical tests passed. The final published-prerequisite
   installation passed all 142 installed integration tests as well.
-- Native Linux GPU execution remains unverified; local Linux GPU checks use
-  WSL2. Initial Python GPU support is NVIDIA x86-64, Python 3.11–3.14. Python
+- **Done:** native Linux GPU acceptance passed on November 18, 2026 using
+  a rented Vast.ai RTX 3060, Ubuntu 24.04 x86-64, Python 3.11.17, NVIDIA driver
+  610.57.04, CUDA toolkit 13.3, and CuPy 14.2. The environment reported CUDA
+  runtime 13.2 and driver API 13.3. Installed all three alphas from PyPI; CPU/GPU
+  reads, kernels, and LOCO association agreed for float32/float64, the installed
+  artifact smoke test passed, and all 142 regression tests passed in 65.26
+  seconds. No runtime code changes were needed. Logs and environment metadata
+  are saved under `~/.cache/gpu-alpha-20261117/native-linux-vast/`. This validates
+  one native Linux host and Python version; additional hardware reports remain
+  useful. Initial Python GPU support is NVIDIA x86-64, Python 3.11–3.14. Python
   3.15 is CPU-only pending CuPy wheels. Linux GPU wheels require glibc 2.35+.
 - CuPy's driver/toolkit prerequisites remain external; `[cupy]` selects the
   Python dependency chain. Pip-managed CUDA components are an optional CuPy

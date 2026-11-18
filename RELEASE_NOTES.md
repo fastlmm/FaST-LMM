@@ -12,8 +12,9 @@
 - Report consumer-GPU float64 arithmetic costs without changing precision.
   Retain higher precision for internal reductions and likelihood statistics.
 - Initial GPU scope is NVIDIA Windows/Linux x86-64, including WSL2, on Python
-  3.11–3.14. Python 3.15 remains CPU-only pending CuPy support. Native Linux
-  GPU validation is still needed; local Linux GPU testing uses WSL2.
+  3.11–3.14. Python 3.15 remains CPU-only pending CuPy support. Published-alpha
+  integration tests passed on native Ubuntu 24.04 with an RTX 3060 and Python
+  3.11, in addition to Windows and WSL2 validation.
 - All three coordinated alphas are published on PyPI. Dependencies resolve
   against the published PySnpTools and bed-reader alphas; the development-only
   Git source has been removed.
