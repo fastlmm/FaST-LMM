@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import numpy as np
 import logging
 import scipy.linalg as LA
@@ -402,6 +403,7 @@ class FastLMM(object):
         self.is_fitted = False
 
     #!!!update doc to explain h2raw w.r.t h2
+    @cpu64
     def fit(
         self,
         X=None,
@@ -596,6 +598,7 @@ class FastLMM(object):
                 return np.r_[snpreader.sid, [new_snp]]
             new_snp += "_"
 
+    @cpu64
     def score(
         self,
         X=None,
@@ -691,6 +694,7 @@ class FastLMM(object):
             kernel.iid0_count >= kernel.iid1_count
         ), "Expect iid0 to be at least as long as iid1"
 
+    @cpu64
     def predict(
         self,
         X=None,

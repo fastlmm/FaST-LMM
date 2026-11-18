@@ -1,7 +1,9 @@
+from fastlmm.util._backend import cpu64
 from pysnptools.util.mapreduce1.runner import *
 import pandas as pd
 
 
+@cpu64
 def snp_set(
     test_snps,
     set_list,

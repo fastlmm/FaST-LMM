@@ -130,3 +130,38 @@ pysnptools = { git = "https://github.com/fastlmm/PySnpTools", rev = "5ff6a0ee95c
 ```
 
 Completed after PySnpTools 1.1.0a1 publication (may no longer apply).
+
+## Post-alpha numerical investigation
+
+The [integrated numerical record](GPU_NUMERICAL_CORRECTNESS.md) reproduces all
+three earlier findings against the development heads. The epistasis product
+rounding correction has a regression that fails before the fix. Follow-up
+investigation found 11 additional legacy float32 fixture failures, so epistasis
+now explicitly requires CPU float64 computation, warns on other requested
+defaults, enforces worker precision, and rejects float32 eigen caches. This
+qualifies CPU float64, not native float32; the original failures remain evidence.
+
+Independent float64 h2 variation is explained by likelihood rounding. A
+long-double derivative reference bounds the observed parameter error below
+`4.982e-8` and maximum relative P error at about `0.000031%`. Recommendation:
+retain the optimizer and document the precision limitation. The original
+strict diagnostic exceedances remain recorded; no tolerance or expected output
+was changed and no additional human approval is implied.
+
+On November 18, 2026, Carl accepted the mouse GPU32 precision tradeoff for the
+alpha with a warning and concrete P-value example in the guide and dtype docs.
+This is an approved precision exception, not a passing strict comparison or
+completion of Carl's broader review. Full notebook runs, CPU thread benchmarks,
+installed-artifact acceptance, human review, and the next release remain open.
+
+## Canonical combined development state
+
+The API policy and numerical changes are combined in `investigate/gpu-alpha-numerics`.
+[Combined status](GPU_API_POLICY_STATUS.md) records the passing 227-case canonical
+run, separate completion of its five HDF5 skips, 60 combined regression tests,
+Python boundary checks, and exact source/evidence hashes. No tolerance or
+expected output was widened. This does not qualify a new published artifact.
+The stopped policy chat's four completed notebook executions are preserved;
+their numerical cross-comparison and final-source reconciliation remain next.
+CPU thread benchmarks, Carl's review, platform/artifact qualification, and
+release preparation remain open. Nothing was published or merged into main.

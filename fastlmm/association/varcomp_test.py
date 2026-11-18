@@ -1,9 +1,11 @@
+from fastlmm.util._backend import cpu64
 import numpy as np
 
 
 class varcomp_test(object):
     __slots__ = ["Y", "X"]
 
+    @cpu64
     def __init__(self, Y, X=None, appendbias=False):
         self.Y = Y
 
@@ -23,6 +25,7 @@ class varcomp_test(object):
         self.Y = Y
         self.X = X
 
+    @cpu64
     def hasBias(self):
 
         for i in range(self.X.shape[1]):
@@ -31,6 +34,7 @@ class varcomp_test(object):
 
         return False
 
+    @cpu64
     def testG(self, G1, type=None, i_exclude=None):
         raise NotImplementedError
         pv = None

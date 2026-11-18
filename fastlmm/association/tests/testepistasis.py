@@ -34,6 +34,174 @@ class TestEpistasis(unittest.TestCase):
 
     tempout_dir = "tempout/epistasis"
 
+    def test_redundant_float32_interaction(self):
+        """An interaction in the additive column space has no likelihood gain."""
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        from pysnptools.snpreader import Bed, SnpReader
+
+        dataset = Path(self.pythonpath) / "tests/datasets/synth"
+        reader = Bed(dataset / "all.bed", count_A1=True)
+        pair = ["snp626_m0_.01m1_", "snp1626_m0_.52m1_.17"]
+        # This pair has a redundant product even though both SNPs vary.
+        values = reader[:, reader.sid_to_index(pair)].read(dtype="float64", xp=np).val
+        additive = np.column_stack((np.ones(reader.iid_count), values))
+        product = values[:, 0] * values[:, 1]
+        coefficients = np.linalg.lstsq(additive, product, rcond=None)[0]
+        np.testing.assert_allclose(additive @ coefficients, product, rtol=0, atol=1e-12)
+
+        original_read = SnpReader.read
+        with TemporaryDirectory() as directory:
+            for dtype in ("float32", "float64"):
+                observed = []
+
+                def read(snp_reader, *args, **kwargs):
+                    # Exercise the internal product correction independently of
+                    # the public CPU/float64 fallback. Only this SNP pair is
+                    # supplied to the internal design at the test precision.
+                    if snp_reader.sid_count == 2 and set(snp_reader.sid) == set(pair):
+                        kwargs.update(dtype=dtype, xp=np)
+                        observed.append(dtype)
+                    return original_read(snp_reader, *args, **kwargs)
+
+                with self.subTest(dtype=dtype), patch.dict(
+                    os.environ, {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": dtype}
+                ), patch.object(SnpReader, "read", read):
+                    result = epistasis(
+                        reader,
+                        str(dataset / "pheno_10_causals.txt"),
+                        G0=reader[:, reader.pos[:, 0] != 1],
+                        covar=str(dataset / "cov.txt"),
+                        sid_list_0=pair[:1],
+                        sid_list_1=pair[1:],
+                        log_delta=0,
+                        cache_file=str(Path(directory) / (dtype + ".npz")),
+                    )
+                    self.assertEqual(observed, [dtype])
+                    # Retain the legacy fixture's absolute P-value bound. Before
+                    # promotion, float32 products give P=0.9999730973442345.
+                    np.testing.assert_allclose(result.PValue, 1.0, rtol=0, atol=1e-5)
+
+    def test_cpu_float64_precision_policy(self):
+        """Caller defaults cannot select an unqualified epistasis computation."""
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        import warnings
+        import pandas as pd
+        from fastlmm.inference import LMM
+        from pysnptools.snpreader import Bed
+
+        reader = Bed(self.bedbase, count_A1=False)
+        original_setG = LMM.setG
+        original_evaluate = LMM.nLLeval
+        observed = []
+
+        def setG(model, G0=None, G1=None, **kwargs):
+            for values in (G0, G1):
+                if values is not None:
+                    self.assertEqual(values.dtype, np.dtype("float64"))
+            return original_setG(model, G0=G0, G1=G1, **kwargs)
+
+        def evaluate(model, *args, **kwargs):
+            for values in (model.S, model.U, model.X, model.y):
+                self.assertEqual(values.dtype, np.dtype("float64"))
+            observed.append(model.S.dtype)
+            return original_evaluate(model, *args, **kwargs)
+
+        reference = None
+        with TemporaryDirectory() as directory:
+            for backend in ("numpy", "cupy"):
+                for dtype in ("float64", "float32"):
+                    for in_memory in (False, True):
+                        with self.subTest(backend=backend, dtype=dtype, in_memory=in_memory):
+                            source_reader = reader.read(dtype="float32", xp=np) if in_memory else reader
+                            environment = {"ARRAY_MODULE": backend, "ARRAY_DTYPE": dtype}
+                            with patch.dict(os.environ, environment), warnings.catch_warnings(record=True) as caught:
+                                warnings.simplefilter("always")
+                                with patch.object(LMM, "setG", setG), patch.object(LMM, "nLLeval", evaluate):
+                                    result = epistasis(
+                                        source_reader, self.phen_fn, G0=source_reader, covar=self.cov_fn,
+                                        sid_list_0=reader.sid[:10], sid_list_1=reader.sid[5:15],
+                                        cache_file=str(Path(directory) / f"{backend}-{dtype}-{in_memory}.npz"),
+                                    )
+                                self.assertEqual(os.environ["ARRAY_MODULE"], backend)
+                                self.assertEqual(os.environ["ARRAY_DTYPE"], dtype)
+                            notices = [item for item in caught if "epistasis is qualified only" in str(item.message)]
+                            self.assertEqual(len(notices), int(backend != "numpy" or dtype != "float64"))
+                            if reference is None:
+                                reference = result
+                            else:
+                                pd.testing.assert_frame_equal(result, reference, check_exact=True)
+        self.assertTrue(observed)
+
+    def test_float64_policy_restores_settings_on_failure(self):
+        from unittest.mock import patch
+        import warnings
+        from fastlmm.association.epistasis import _Epistasis
+        from pysnptools.snpreader import Bed
+
+        reader = Bed(self.bedbase, count_A1=False)
+        environment = {"ARRAY_MODULE": "cupy", "ARRAY_DTYPE": "float32"}
+        failure = RuntimeError("epistasis computation failed")
+        with patch.dict(os.environ, environment), warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with patch.object(_Epistasis, "fill_in_cache_file", side_effect=failure):
+                with self.assertRaises(RuntimeError) as raised:
+                    epistasis(reader, self.phen_fn, G0=reader,
+                              sid_list_0=reader.sid[:1], sid_list_1=reader.sid[1:2])
+            self.assertIs(raised.exception, failure)
+            self.assertEqual(os.environ["ARRAY_MODULE"], "cupy")
+            self.assertEqual(os.environ["ARRAY_DTYPE"], "float32")
+        self.assertEqual(sum("epistasis is qualified only" in str(item.message) for item in caught), 1)
+
+    def test_float32_eigen_cache_requires_recomputation(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        from pysnptools.snpreader import Bed
+
+        reader = Bed(self.bedbase, count_A1=False)
+        with TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float64"}
+        ):
+            for vectors_dtype, values_dtype in (("float32", "float64"), ("float64", "float32")):
+                with self.subTest(vectors_dtype=vectors_dtype, values_dtype=values_dtype):
+                    cache = Path(directory) / "old-cache.npz"
+                    np.savez(cache, np.eye(reader.iid_count, dtype=vectors_dtype),
+                             np.ones(reader.iid_count, dtype=values_dtype))
+                    with self.assertRaisesRegex(ValueError, "requires a numpy/float64 cache"):
+                        epistasis(reader, self.phen_fn, G0=reader,
+                                  sid_list_0=reader.sid[:1], sid_list_1=reader.sid[1:2],
+                                  cache_file=str(cache))
+
+    def test_worker_defaults_cannot_narrow_epistasis(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        import pandas as pd
+        from pysnptools.snpreader import Bed
+        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+
+        reader = Bed(self.bedbase, count_A1=False)
+        arguments = dict(test_snps=reader, pheno=self.phen_fn, G0=reader, covar=self.cov_fn,
+                         sid_list_0=reader.sid[:10], sid_list_1=reader.sid[5:15])
+        with TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float64"}
+        ):
+            expected = epistasis(cache_file=str(Path(directory) / "reference.npz"),
+                                 runner=Local(), **arguments)
+            # Explicit task environments override parent defaults after worker
+            # imports. Reader arguments must still enforce the qualified dtype.
+            runner = LocalMultiProc(
+                taskcount=1, num_threads=1,
+                taskindex_to_environ=lambda task_index: {"ARRAY_MODULE": "cupy", "ARRAY_DTYPE": "float32"},
+            )
+            actual = epistasis(cache_file=str(Path(directory) / "worker.npz"),
+                               runner=runner, **arguments)
+            pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+
     def test_match_cpp(self):
         r"""
         match

@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import numpy as np
 import logging
 from sklearn.utils import safe_sqr, check_array
@@ -50,6 +51,7 @@ class LinearRegression(object):
         self.covariate_standardizer = covariate_standardizer
         self.is_fitted = False
 
+    @cpu64
     def fit(
         self,
         X=None,
@@ -134,6 +136,7 @@ class LinearRegression(object):
             self.pheno_sid = y.sid
             return self
 
+    @cpu64
     def predict(
         self,
         X=None,
@@ -205,6 +208,7 @@ class LinearRegression(object):
             )
             return ret0, ret1
 
+    @cpu64
     def score(
         self,
         X=None,

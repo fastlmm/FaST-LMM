@@ -15,11 +15,11 @@ from fastlmm.association import single_snp
 from fastlmm.inference.lmm_cov import LMM
 
 
-def _record(path, kind, backend):
+def _record(path, kind, backend, dtype=None):
     expected = os.environ["ARRAY_MODULE"]
     assert backend == expected, (kind, backend, expected)
     with open(f"{path}.{os.getpid()}.jsonl", "a") as stream:
-        stream.write(json.dumps({"kind": kind, "backend": backend, "precision": os.environ.get("ARRAY_DTYPE"), "pid": os.getpid()}) + "\n")
+        stream.write(json.dumps({"kind": kind, "backend": backend, "precision": os.environ.get("ARRAY_DTYPE"), "actual_dtype": None if dtype is None else str(dtype), "pid": os.getpid()}) + "\n")
 
 
 class _TracingBed(Bed):
@@ -36,9 +36,9 @@ class _TracingBed(Bed):
             original_evaluate = LMM.nLLeval
 
             def evaluate(model, *arguments, **keywords):
-                _record(trace, "evaluate", model._xp.__name__)
+                _record(trace, "evaluate", model._xp.__name__, model.Y.dtype)
                 if keywords.get("snps") is not None:
-                    _record(trace, "test_snps", get_array_module(keywords["snps"]).__name__)
+                    _record(trace, "test_snps", get_array_module(keywords["snps"]).__name__, keywords["snps"].dtype)
                 return original_evaluate(model, *arguments, **keywords)
 
             evaluate._environment_trace = True
@@ -53,7 +53,7 @@ class _TracingBed(Bed):
                 original_eigh = cp.linalg.eigh
 
                 def eigh(values, *arguments, **keywords):
-                    _record(trace, "eigh", get_array_module(values).__name__)
+                    _record(trace, "eigh", get_array_module(values).__name__, values.dtype)
                     return original_eigh(values, *arguments, **keywords)
 
                 eigh._environment_trace = True
@@ -61,7 +61,7 @@ class _TracingBed(Bed):
         with patch.object(native, "read_gpu", wraps=native.read_gpu) as gpu_read:
             result = super()._read_with_standardizing(*args, **kwargs)
         data = result[0] if isinstance(result, tuple) else result
-        _record(trace, "read", get_array_module(data.val).__name__)
+        _record(trace, "read", get_array_module(data.val).__name__, data.val.dtype)
         if backend == "cupy":
             assert gpu_read.call_count > 0
             _record(trace, "native_gpu_read", backend)
@@ -110,6 +110,7 @@ def test_mixed_workers_select_environment_and_restore(tmp_path, monkeypatch, out
     records = [json.loads(line) for file in tmp_path.glob("backend.*.jsonl") for line in file.read_text().splitlines()]
     workers = [record for record in records if record["pid"] != os.getpid()]
     assert {record["precision"] for record in workers} == {dtype}
+    assert {record["actual_dtype"] for record in workers if record["kind"] in ("evaluate", "test_snps")} == {dtype}
     assert {record["backend"] for record in workers if record["kind"] == "evaluate"} == {"numpy", "cupy"}
     assert {record["backend"] for record in workers if record["kind"] == "read"} == {"numpy", "cupy"}
     assert any(record["kind"] == "native_gpu_read" for record in workers)

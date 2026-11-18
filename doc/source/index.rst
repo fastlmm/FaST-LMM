@@ -17,8 +17,9 @@ Core Python 3.15 qualification excludes both backends; HDF5 and BGEN remain
 covered by the Python 3.11 through 3.14 test matrix.
 
 
-The development :func:`.single_snp` API supports NumPy/CuPy backends and
-float32/float64 linear algebra. See :doc:`gpu` for GPU prerequisites, option
+The development single-kernel :func:`.single_snp` API supports NumPy/CuPy backends and
+float32/float64 linear algebra. See :doc:`api_backend_precision` for the complete
+public API support matrix and fallback policy. See :doc:`gpu` for GPU prerequisites, option
 semantics, tested examples, cache rules, and worker execution. Effect size and
 multiple phenotypes are illustrated in the `multiple-phenotype notebook
 <https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_.
@@ -27,6 +28,7 @@ multiple phenotypes are illustrated in the `multiple-phenotype notebook
    :maxdepth: 2
 
    gpu
+   api_backend_precision
 
 :Code:
 

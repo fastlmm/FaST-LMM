@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import pysnptools.util as pstutil
@@ -12,6 +13,7 @@ import fastlmm.inference.linear_regression as lin_reg
 from unittest.mock import patch
 
 
+@cpu64
 def single_snp_linreg(
     test_snps,
     pheno,
@@ -106,6 +108,7 @@ def single_snp_linreg(
             view_ok=True, order="A"
         ).val  # view_ok because this code already did a fresh read to look for any missing values
 
+        @cpu64
         def mapper(start):
             logging.info(
                 "single_snp_linereg reading start={0},block_size={1}".format(

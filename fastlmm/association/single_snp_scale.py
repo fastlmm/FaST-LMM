@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import os
 import logging
 import shutil
@@ -34,6 +35,7 @@ from fastlmm.util.matrix.mmultfile import mmultfile_b_less_aatb, mmultfile_ata
 from unittest.mock import patch
 
 
+@cpu64
 def single_snp_scale(
     test_snps,
     pheno,
@@ -636,6 +638,7 @@ def get_G0_memmap(G0, file_cache_parent, X, Xdagger, memory_factor):
     )  # Find the work count based on batch size (rounding up)
     work_count2 = max(work_count2, 2)  # Just to test it
 
+    @cpu64
     def debatch_closure2(work_index2):
         return G0.sid_count * work_index2 // work_count2
 
@@ -744,6 +747,7 @@ def get_gtg(
     fn_done = "done.txt"
     fn_gtg = "gtg.npz"
 
+    @cpu64
     def reader_closure():
         with common_cache.open_read(fn_gtg) as local_fn_gtg:
             gtg_npz = KernelNpz(local_fn_gtg)
@@ -755,6 +759,7 @@ def get_gtg(
     common_cache.rmtree("")
     G0_sid_count = len(G0_sid)
 
+    @cpu64
     def writer_closure(gtg_data):
         with common_cache.open_write(fn_gtg, gtg_data.iid_count**2 * 8) as local_gtg:
             gtg_npz = KernelNpz.write(local_gtg, gtg_data)
@@ -916,6 +921,7 @@ def svd(
     if not needed_chrom_list:
         return []
 
+    @cpu64
     def mapper_closure(chrom):
         logging.info("Caching chrom {0}".format(chrom))
         gtg_npz = gtg_npz_lambda()
@@ -1078,6 +1084,7 @@ def postsvd(
     G0_iid_count = len(G0_iid)
     G0_sid_count = len(G0_sid)
 
+    @cpu64
     def mapper_closure(chrom):
         chrom = int(chrom)
         chrom_storage = cache_dict[chrom].join(sub_dir)
@@ -1097,6 +1104,7 @@ def postsvd(
         )  # Find the work count based on batch size (rounding up)
         work_count = max(work_count, min_work_count)
 
+        @cpu64
         def mapper_closure_inner(work_index):
             SVinv_etc_fn = "2_SVD/SVinv_etc{0}.npz".format(chrom)
             with cache_dict[0].open_read(SVinv_etc_fn) as handle_local:
@@ -1163,6 +1171,7 @@ def postsvd(
                 S if work_index == 0 else None,
             )
 
+        @cpu64
         def reducer_closure_inner(fn_U_piece_sequence):
             if clear_local_lambda is not None:
                 logging.info(
@@ -1450,6 +1459,7 @@ def do_test_snps(
 
     results_storage = cache_dict[0].join("4_TestSNPs")
 
+    @cpu64
     def mapper_closure2(chrom):
         chrom_list.index(chrom)
         chrom = int(chrom)
@@ -1474,6 +1484,7 @@ def do_test_snps(
         )  # Don't divide the work more than the number of test SNPs
         logging.info("work_count = {0}".format(work_count))
 
+        @cpu64
         def mapper_closure(work_index):
             done_file = "chrom{0}/done.{1}of{2}.txt".format(
                 chrom, work_index, work_count
@@ -1670,6 +1681,7 @@ def do_test_snps(
 
             return dataframe
 
+        @cpu64
         def reducer_closure(result_list):
             frame = pd.concat(result_list)
             frame.sort_values(by="PValue", inplace=True)
@@ -1686,6 +1698,7 @@ def do_test_snps(
         )
         return frame
 
+    @cpu64
     def reducer_closure2(result_list2):
         frame = pd.concat(result_list2)
         frame.sort_values(by="PValue", inplace=True)

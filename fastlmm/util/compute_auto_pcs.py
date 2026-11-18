@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import warnings
 import numpy as np
 import sys
@@ -8,6 +9,7 @@ from pysnptools.snpreader import Bed
 from unittest.mock import patch
 
 
+@cpu64
 def compute_auto_pcs(
     snpreader, cutoff=0.1, k_values=np.arange(11), output_file_name=None, count_A1=None
 ):

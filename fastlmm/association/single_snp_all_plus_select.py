@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import numpy as np
 import logging
 from fastlmm.association import single_snp
@@ -190,6 +191,7 @@ def _kfold(iid_count, n_folds, seed, end_with_all=False, iid_to_index=None):
 
 
 #!!!This doesn't (and shouldn't) work when everything is from the same chrom, right? Add a better error message for that case.
+@cpu64
 def single_snp_all_plus_select(
     test_snps,
     pheno,
@@ -324,9 +326,11 @@ def single_snp_all_plus_select(
                 G.iid, covar.iid
             ), "real assert"
 
+            @cpu64
             def mapper_find_best_given_chrom(test_chr):
                 G_for_chrom = _K_per_chrom(G, test_chr, G.iid).snpreader
 
+                @cpu64
                 def mapper_gather_lots(i_fold_and_pair):
                     i_fold, (train_idx, test_idx) = i_fold_and_pair
                     logging.info(
@@ -500,6 +504,7 @@ def single_snp_all_plus_select(
                 "Doing GWAS_2K for each chrom. Work_count={0}".format(len(chrom_list))
             )
 
+            @cpu64
             def mapper_single_snp_2K_given_chrom(test_chr):
                 logging.info("Working on chr={0}".format(test_chr))
                 test_snps_chrom = test_snps[:, test_snps.pos[:, 0] == test_chr]

@@ -140,6 +140,7 @@ if __name__ == "__main__":
     removeTmpFiles()
 
     import fastlmm.association.tests.testepistasis
+    import fastlmm.association.tests.test_api_policy
     import fastlmm.association.tests.test_single_snp
     import fastlmm.association.tests.test_single_snp_linreg
     import fastlmm.association.tests.test_single_snp_select
@@ -159,6 +160,7 @@ if __name__ == "__main__":
         [
             # for debugging getDebugTestSuite(),
             getTestSuiteX(),
+            fastlmm.association.tests.test_api_policy.getTestSuite(),
             fastlmm.inference.tests.test_linear_regression.getTestSuite(),
             fastlmm.association.tests.test_single_snp_scale.getTestSuite(),
             fastlmm.pyplink.test.getTestSuite(),

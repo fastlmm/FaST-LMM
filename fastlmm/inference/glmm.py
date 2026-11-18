@@ -1,3 +1,4 @@
+from fastlmm.util._backend import cpu64
 import scipy.optimize as opt
 import numpy as NP
 from numpy import dot
@@ -63,6 +64,7 @@ class GLMM(object):
         self._updateConstantsCount = 1
         self._updateApproximationCount = 1
 
+    @cpu64
     def setX(self, X):
         """
         set the fixed effects X (covariates).
@@ -86,6 +88,7 @@ class GLMM(object):
                 self._biasIndex = i
                 break
 
+    @cpu64
     def sety(self, y):
         """
         set the phenotype y.
@@ -112,6 +115,7 @@ class GLMM(object):
 
         self._updateConstantsCount += 1
 
+    @cpu64
     def setG(self, G0, G1=None):
         """
         set the kernels K0 and K1 from G0 and G1.
@@ -201,10 +205,12 @@ class GLMM(object):
         self._sign2 = v
 
     @property
+    @cpu64
     def beta(self):
         return self._beta.copy()
 
     @beta.setter
+    @cpu64
     def beta(self, v):
         assert NP.all(NP.isfinite(v))
         if self._beta is not None and NP.all(self._beta == v):
@@ -264,6 +270,7 @@ class GLMM(object):
     def _predict(self, xmean, xK01, xkk, prob):
         pass
 
+    @cpu64
     def predict(self, xX, xG0, xG1=None, prob=True):
         """
         Compute the probability of y=1.0, for each provided latent variable.
@@ -319,6 +326,7 @@ class GLMM(object):
     def _updateApproximation(self):
         pass
 
+    @cpu64
     def optimize(self, optSig02=True, optSig12=True, optSign2=True, optBeta=True):
         """
         Minimize the cost, which is the negative of marginal loglikelihood plus the
@@ -459,6 +467,7 @@ class GLMM(object):
     def _is_kernel_zero(self):
         return self._sig02 == 0.0 and self._sig12 == 0.0 and self._sign2 == 0.0
 
+    @cpu64
     def marginal_loglikelihood(self):
         """
         Returns (regular marginal loglikelihood) - penalty
@@ -585,6 +594,7 @@ class GLMM_N3K1(GLMM):
         self._K0 = None
         self._K1 = None
 
+    @cpu64
     def setK(self, K0, K1=None):
         """
         set the Kernels K0 and K1.

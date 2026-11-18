@@ -1,5 +1,7 @@
+from fastlmm.util._backend import cpu64
 from pysnptools.util.mapreduce1.runner import *
 import logging
+import cloudpickle
 import pysnptools.util as pstutil
 import numpy as np
 import scipy.stats as stats
@@ -45,10 +47,19 @@ def spatial_similarity(spatial_coor, alpha, power):  # scale spatial coordinates
     )
 
 
+class _WorkItem(tuple):
+    # Readers carry their array-module object. Standard multiprocessing pickle
+    # cannot serialize modules, while the project's existing cloudpickle can.
+    # Local mapping still sees a tuple; only cross-process transport is encoded.
+    def __reduce__(self):
+        return cloudpickle.loads, (cloudpickle.dumps(tuple(self)),)
+
+
 def work_item(arg_tuple):
     return work_item2(*arg_tuple)
 
 
+@cpu64(api="heritability_spatial_correction")
 def work_item2(
     pheno,
     G_kernel,
@@ -260,6 +271,7 @@ def work_item2(
     return ret
 
 
+@cpu64
 def heritability_spatial_correction(
     G_kernel,
     spatial_coor,
@@ -397,7 +409,7 @@ def heritability_spatial_correction(
                         True and allow_gxe2,
                         None,
                     )
-                    arg_list.append(arg_tuple)
+                    arg_list.append(_WorkItem(arg_tuple))
 
             # Run "run_line" on each set of arguments and save to file
             return_list = (
@@ -471,7 +483,7 @@ def heritability_spatial_correction(
                             do_gxe2,
                             None,
                         )
-                        arg_list.append(arg_tuple)
+                        arg_list.append(_WorkItem(arg_tuple))
 
             # Run "run_line" on each set of arguments and save to file
             return_list = (
@@ -657,7 +669,7 @@ def heritability_spatial_correction(
                         False,
                         None,
                     )
-                    arg_list.append(arg_tuple)
+                    arg_list.append(_WorkItem(arg_tuple))
 
             # Run "run_line" on each set of arguments and save to file
             return_list = (
@@ -743,7 +755,7 @@ def heritability_spatial_correction(
                         allow_gxe2,
                         a2,
                     )
-                    arg_list.append(arg_tuple)
+                    arg_list.append(_WorkItem(arg_tuple))
 
                 # Run "run_line" on each set of arguments and save to file
                 return_list = (

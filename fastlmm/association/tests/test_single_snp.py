@@ -987,24 +987,28 @@ class TestSingleSnp(unittest.TestCase):
             _as_dtype(np, np.ones((3, 1)), np.float16, "covar")
 
     def test_dtype_float32_two_kernels(self):
-        # Searching for the mix of two kernels must also run in float32.
+        # Two-kernel mixing uses the agreed CPU/float64 fallback, with a warning.
         test_snps = Bed(self.bedbase, count_A1=False)
         kernels = dict(G0=test_snps[:, ::20], G1=test_snps[:, 5::20], mixing=None)
         for force_low_rank in [False, True]:
             frame64 = self._dtype_frame("float64", force_low_rank, **kernels)
-            frame32, dtypes = self._decomposition_dtypes(
-                lambda: self._dtype_frame("float32", force_low_rank, **kernels)
-            )
-            assert len(dtypes) > 1 and all(dtype == np.float32 for dtype in dtypes), dtypes
+            with self.assertWarnsRegex(UserWarning, "single_snp.*numpy/float64"):
+                frame32, dtypes = self._decomposition_dtypes(
+                    lambda: self._dtype_frame("float32", force_low_rank, **kernels)
+                )
+            assert len(dtypes) > 1 and all(dtype == np.float64 for dtype in dtypes), dtypes
+            np.testing.assert_array_equal(frame32.PValue, frame64.PValue)
             diff = self._max_log10_pvalue_diff(frame64, frame32)
             assert diff < self.FLOAT32_VS_FLOAT64_MIXING_SEARCH_LOG10P_TOL, (force_low_rank, diff)
             mixing64, mixing32 = frame64.Mixing.iloc[0], frame32.Mixing.iloc[0]
             assert abs(mixing64 - mixing32) < self.FLOAT32_VS_FLOAT64_MIXING_TOL
 
-            # With the search results pinned, only precision differs.
+            # Pinned search parameters also use the same warned CPU/float64 path.
             pinned = dict(kernels, mixing=mixing64, h2=frame64.Nullh2.iloc[0])
             frame64 = self._dtype_frame("float64", force_low_rank, **pinned)
-            frame32 = self._dtype_frame("float32", force_low_rank, **pinned)
+            with self.assertWarnsRegex(UserWarning, "single_snp.*numpy/float64"):
+                frame32 = self._dtype_frame("float32", force_low_rank, **pinned)
+            np.testing.assert_array_equal(frame32.PValue, frame64.PValue)
             diff = self._max_log10_pvalue_diff(frame64, frame32)
             assert diff < self.FLOAT32_VS_FLOAT64_LOG10P_TOL, (force_low_rank, diff)
 
@@ -1059,7 +1063,17 @@ class TestSingleSnp(unittest.TestCase):
                 diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
                 assert diff < tolerance, (dtype, force_low_rank, diff)
                 if dtype == "float64":
-                    np.testing.assert_allclose(frame_cp.EffectSize, frame_np.EffectSize, rtol=1e-8)
+                    # Retain the independent-fit P-value comparison above. Effect
+                    # sizes here must compare the same model: tiny fitted-h2
+                    # differences near a likelihood plateau can otherwise exceed
+                    # this relative bound for near-zero effects (about 1e-14
+                    # absolute). Pin both backends to the CPU fit without changing
+                    # the effect-size tolerance.
+                    fitted_h2 = frame_np.Nullh2.unique()
+                    self.assertEqual(len(fitted_h2), 1)
+                    frame_np_fixed = self._dtype_frame(dtype, force_low_rank, xp="numpy", h2=fitted_h2[0])
+                    frame_cp_fixed = self._dtype_frame(dtype, force_low_rank, xp="cupy", h2=fitted_h2[0])
+                    np.testing.assert_allclose(frame_cp_fixed.EffectSize, frame_np_fixed.EffectSize, rtol=1e-8)
 
     def test_cupy_builds_kernel_on_gpu(self):
         from bed_reader import has_gpu_support
