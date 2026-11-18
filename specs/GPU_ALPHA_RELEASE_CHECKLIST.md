@@ -96,6 +96,28 @@ CI runs: [bed-reader](https://github.com/fastlmm/bed-reader/actions/runs/4423169
 [refreshed PySnpTools](https://github.com/fastlmm/PySnpTools/actions/runs/44240946747),
 [final FaST-LMM](https://github.com/fastlmm/FaST-LMM/actions/runs/44241263702).
 
+## Post-alpha runner and notebook integration
+
+- Integrated PySnpTools commit `050fcbf` into `cupy-sub-matrix` as `75652ce`.
+  Retained the published `bed-reader>=1.3.0a1` bounds and verified `uv lock --check`.
+  The new direct threadpoolctl dependency and its Python-version bounds remain.
+- Ported the three source edits from FaST-LMM commit `d539ccc` into the primary
+  notebook. Preserved all 35 cells, metadata, and saved outputs, including Carl's
+  separate review edits. A backup is under
+  `/mnt/c/deldir/fastlmm-gpu-alpha-sync-20261118/FaST-LMM-before-integration.ipynb`.
+- Combined Python 3.13 runner/GPU tests: 157 passed, 44 subtests passed. Both
+  runner doctests passed. Runner tests also passed on Python 3.11 with
+  threadpoolctl 3.5.0 and Python 3.15 with threadpoolctl 3.8.0: 15 tests and
+  44 subtests on each. Ruff and notebook syntax checks passed. The two notebook
+  NumPy scopes were executed under a CuPy/float32 default and restored it.
+- The full notebook was not rerun during integration; preserved outputs are
+  earlier evaluation results. The older worktree benchmark is not a new
+  benchmark of this combined state.
+- TODO0 Before the next alpha, release the updated PySnpTools runner and qualify
+  the notebook against that published package. Published 1.1.0a1 has no
+  `num_threads` keyword; the revised notebook requires the development checkout
+  until the next alpha. Do not republish the existing alpha version.
+
 ## Completed development-source cleanup
 
 The original reminder is retained here after removing its configuration:
