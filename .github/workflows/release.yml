@@ -43,6 +43,20 @@ jobs:
           assert os.environ['RELEASE_TAG'] == expected,
           f'tag {os.environ[\"RELEASE_TAG\"]!r} does not match package version {version!r}'"
 
+      - name: Require published dependency sources
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import tomllib
+
+          configuration = tomllib.loads(Path("pyproject.toml").read_text())
+          sources = configuration.get("tool", {}).get("uv", {}).get("sources", {})
+          assert not sources, (
+              "Publish prerequisite alphas, remove development-only uv sources, "
+              "and refresh uv.lock against PyPI before releasing FaST-LMM."
+          )
+          PY
+
       - name: Verify the lockfile
         run: uv lock --check
 

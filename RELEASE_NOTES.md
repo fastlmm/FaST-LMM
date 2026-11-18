@@ -14,8 +14,8 @@
 - Initial GPU scope is NVIDIA Windows/Linux x86-64, including WSL2, on Python
   3.11–3.14. Python 3.15 remains CPU-only pending CuPy support. Native Linux
   GPU validation is still needed; local Linux GPU testing uses WSL2.
-- Publication is pending. Remove the development-only PySnpTools Git source
-  and re-lock against its published alpha before uploading FaST-LMM.
+- Publication is pending. Dependencies now resolve against the published
+  PySnpTools alpha; the development-only Git source has been removed.
 
 ## 1.0.0 (2026-11-14)
 

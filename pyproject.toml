@@ -89,11 +89,6 @@ dev = [
 ]
 
 
-# TODO0 After PySnpTools 1.1.0a1 is published, remove this development-only
-# source and refresh uv.lock against PyPI before publishing FaST-LMM's alpha.
-[tool.uv.sources]
-pysnptools = { git = "https://github.com/fastlmm/PySnpTools", rev = "5ff6a0ee95c3881fef1d77a7e89a0a0da4313f78" }
-
 [tool.ruff]
 line-length = 250
 exclude = [

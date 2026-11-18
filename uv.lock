@@ -1083,8 +1083,8 @@ requires-dist = [
     { name = "pandas", marker = "python_full_version >= '3.14'", specifier = ">=2.3.3,<4" },
     { name = "psutil", marker = "python_full_version < '3.14'", specifier = ">=6.1.0" },
     { name = "psutil", marker = "python_full_version >= '3.14'", specifier = ">=7.1.2" },
-    { name = "pysnptools", git = "https://github.com/fastlmm/PySnpTools?rev=5ff6a0ee95c3881fef1d77a7e89a0a0da4313f78" },
-    { name = "pysnptools", extras = ["cupy"], marker = "extra == 'cupy'", git = "https://github.com/fastlmm/PySnpTools?rev=5ff6a0ee95c3881fef1d77a7e89a0a0da4313f78" },
+    { name = "pysnptools", specifier = ">=1.1.0a1" },
+    { name = "pysnptools", extras = ["cupy"], marker = "extra == 'cupy'", specifier = ">=1.1.0a1" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pytest-datadir", marker = "extra == 'dev'" },
@@ -2685,7 +2685,7 @@ wheels = [
 [[package]]
 name = "pysnptools"
 version = "1.1.0a1"
-source = { git = "https://github.com/fastlmm/PySnpTools?rev=5ff6a0ee95c3881fef1d77a7e89a0a0da4313f78#5ff6a0ee95c3881fef1d77a7e89a0a0da4313f78" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bed-reader", extra = ["samples"] },
     { name = "cloudpickle" },
@@ -2696,6 +2696,10 @@ dependencies = [
     { name = "psutil" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e4/3b/ba148b36843df5a0901dd9079ade2f239556b7efeda5f9d6c8627160f713/pysnptools-1.1.0a1.tar.gz", hash = "sha256:525f914ebeaf7202d97eced20d698dddc56814ffc310fef09caab59813eb7309", size = 251530, upload-time = "2026-11-18T04:51:53.78Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ba/09/0105235996b30a8890853f1664b79578b1f5a29e2163013f42bb236bf589/pysnptools-1.1.0a1-py3-none-any.whl", hash = "sha256:330ab3c07c2a710545ed9e34b978fe521f29ef84919021cfad8bce87f529e63a", size = 317720, upload-time = "2026-11-18T04:51:52.053Z" },
 ]
 
 [package.optional-dependencies]

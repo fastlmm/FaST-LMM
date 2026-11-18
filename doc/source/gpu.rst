@@ -7,8 +7,8 @@ GPU support uses PySnpTools 1.1.0a1 and bed-reader 1.3.0a1 or later.
 Installing the alpha
 --------------------
 
-Publication is pending. After PySnpTools and FaST-LMM's alphas are published,
-explicitly select FaST-LMM's alpha:
+FaST-LMM alpha publication is pending; its prerequisite alphas are on PyPI.
+After FaST-LMM's alpha is published, explicitly select it:
 
 .. code-block:: bash
 
@@ -26,8 +26,9 @@ Initial GPU support targets Python 3.11 through 3.14 on Windows/Linux x86-64,
 including WSL2. CuPy 14.2 has no Python 3.15 wheel, so Python 3.15 is currently
 CPU-only. Linux GPU wheels require glibc 2.35 or later; native Linux GPU testing
 remains outstanding because local Linux validation uses WSL2. Other CPU
-platforms may need a source build of bed-reader until their alpha wheels are
-available. Omit ``[cupy]`` for CPU-only use. Normal unpinned installations still
+platforms can use bed-reader's CPU wheels, subject to FaST-LMM's existing
+dependency limits; Windows ARM64 requires Python 3.13 or later. Omit ``[cupy]``
+for CPU-only use. Normal unpinned installations still
 select stable releases.
 
 Set the defaults once for a workflow::
