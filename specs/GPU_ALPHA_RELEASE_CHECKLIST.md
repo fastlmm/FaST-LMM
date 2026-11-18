@@ -11,13 +11,33 @@ decision is required from Carl now. Publication remains a maintainer action.
    Apple silicon, Linux ARM64, and Windows ARM64, Python 3.11–3.15. These have
    distinct filenames and do not replace the published NVIDIA x86-64 wheels.
 2. **Done:** published PySnpTools `1.1.0a1` (one wheel and one source archive).
-3. **In progress:** published hashes match all 22 files and both development
-   lockfiles now use PyPI. Rerun PySnpTools CI and finish FaST-LMM acceptance.
-4. Publish FaST-LMM `1.1.0a1` after its final published-dependency check.
+3. **Done:** published hashes match all 22 files and
+   both development lockfiles use PyPI. Fresh pip/uv installations with the
+   published prerequisites passed; the full FaST-LMM canonical suite passed
+   204 tests with no failures or skips. Refreshed CPU CI passed: 39 PySnpTools
+   jobs and 41 FaST-LMM jobs. FaST-LMM's monthly-only freshness job was skipped
+   by its existing schedule condition.
+4. **Ready for Carl:** publish FaST-LMM `1.1.0a1` using the command below.
 
 The first two upload sets remain under `~/.cache/gpu-alpha-20261117/ready`
 as a record; do not re-upload them. FaST-LMM's final files are under
-`ready/fastlmm`; their publication is still pending acceptance.
+`ready/fastlmm`; their acceptance is complete and publication is pending.
+
+All final CI gates passed. Carl runs:
+
+```bash
+cd /home/carlk/.cache/gpu-alpha-20261117
+sha256sum -c fastlmm-SHA256SUMS
+uv tool run --from twine==6.2.0 twine upload \
+  --config-file ~/.pypirc --repository pypi \
+  --username __token__ --non-interactive \
+  ready/fastlmm/*.whl ready/fastlmm/*.tar.gz
+```
+
+After publication, verify PyPI hashes and repeat clean installed CPU/GPU
+acceptance against all three published alphas. Confirm default installs still
+select stable releases. Do not push a release tag or merge into main as part
+of this alpha handoff.
 
 ## Validation already completed
 
@@ -41,16 +61,16 @@ as a record; do not re-upload them. FaST-LMM's final files are under
 - **Done:** removed FaST-LMM's temporary Git source and refreshed `uv.lock`
   against published PyPI packages. The tag-release workflow rejects any
   remaining development source overrides.
-- Previous PySnpTools CI: 31 jobs passed; seven Mac/ARM binary-only jobs failed
-  because the additional bed-reader wheels were not published yet. A refreshed
-  run follows publication; record its final result before closing this item.
+- **Done:** refreshed PySnpTools CPU CI passed all 39 jobs after publication,
+  including the seven Mac/ARM configurations previously blocked by missing
+  bed-reader wheels. FaST-LMM CPU CI passed all 41 applicable jobs.
 - bed-reader CI: 56 jobs passed. Rust all-features checks failed on Linux ARM
   (CubeCL HIP `Vec<u8>`/`Vec<i8>` mismatch), Windows ARM and Intel Mac (LLVM
   bundle download returns 404). Keep these failures visible; no lint or feature
   coverage was suppressed. These are separate from the passing Python wheels.
-- The separate distribution/BGEN suite now has an explicit completion record:
-  262 tests passed. The broad FaST-LMM canonical suite is running again with
-  per-test progress and a completion record; do not count it as passed early.
+- Explicit completion records confirm 262 distribution/BGEN tests and 204
+  broad FaST-LMM canonical tests passed. The final published-prerequisite
+  installation passed all 142 installed integration tests as well.
 - Native Linux GPU execution remains unverified; local Linux GPU checks use
   WSL2. Initial Python GPU support is NVIDIA x86-64, Python 3.11–3.14. Python
   3.15 is CPU-only pending CuPy wheels. Linux GPU wheels require glibc 2.35+.
@@ -61,7 +81,9 @@ as a record; do not re-upload them. FaST-LMM's final files are under
   uncommitted `doc/ipynb/FaST-LMM.ipynb` edits; they are not part of these commits.
 
 CI runs: [bed-reader](https://github.com/fastlmm/bed-reader/actions/runs/44231693545),
-[PySnpTools](https://github.com/fastlmm/PySnpTools/actions/runs/44232241233).
+[original PySnpTools](https://github.com/fastlmm/PySnpTools/actions/runs/44232241233),
+[refreshed PySnpTools](https://github.com/fastlmm/PySnpTools/actions/runs/44240946747),
+[final FaST-LMM](https://github.com/fastlmm/FaST-LMM/actions/runs/44241263702).
 
 ## Completed development-source cleanup
 
