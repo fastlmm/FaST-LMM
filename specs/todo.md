@@ -4,15 +4,21 @@ todo000 This is the main todo. Only the human can remove this opening instructio
 
 Items are ordered by what to do next. Agents may maintain the task list, moving completed work to the Done section and removing its original entry.
 
-Review one layer at a time, starting with bed-reader (branch `gpu-cubecl`), then PySnpTools, then FaST-LMM. Carl's four bed-reader review tasks, docs first because they stand in for the API:
+Review Rust bed-reader code (branch `gpu-cubecl`), section by section:
 
-- Python: review docs.
-- Rust: review docs.
-- Python: review code.
-- Rust: review code.
+- `src/backend.rs`: always-present backend API (`Backend` trait, `Cpu`, `Error`, module docs).
+- `src/backend/cubecl.rs`: `CubeCl` client and `memory_cleanup`, `CubeClMatrix` (`dim`, `is_f`, `to_cpu`, `tensor_handle`, `client`, `cuda_pointer`), `read_cubecl` and the `decode` kernel, size helpers (`to_u32`, `element_count`), dedicated allocations, pinned-memory CUDA upload (`upload_pinned_cuda`, `cuda_staging`), and the GPU tests.
+- `src/backend/cubecl/standardize.rs`: GPU standardizer, `snp_sums` kernel (0/1/2/NaN detection and integer sums), per-SNP statistics, and the `apply` kernel.
+- `src/backend/cubecl/standardize/general.rs`: fractional-value statistics (`centered` kernel, parallel two-pass f64) and `mean_std`.
+- `src/lib.rs`: `ReadOptions` backend type parameter, builder methods for every backend (`f`, `c`, `count_a1/a2`, `i8/f32/f64`), `cpu()`, `cubecl()`, the GPU `read`, `BedErrorPlus::GpuError`.
+- `src/python_module.rs` (`gpu_python`): `GpuArray` ownership, `Drop` (memory release, unraisable errors), `__cuda_array_interface__`, `read_gpu`, `allocate_gpu`, `standardize_gpu`, and GPU errors mapped to `RuntimeError`.
+- `Cargo.toml`: `cubecl-cuda` feature (`cubecl-hip` removed), docs.rs metadata, version 1.3.0-beta.1.
 
-Agent pre-review of bed-reader (November 18, 2026): CUDA upload errors now return errors instead of panicking (uncommitted). Python `read()` keeps its float32 default; the float64 warning's stack walk stays as is. Dead fallbacks for bed-reader versions older than 1.3.0a1 were removed from PySnpTools and FaST-LMM (uncommitted). Python docs rewritten for a 1.3.0b1 beta; `empty_gpu`, `is_cubecl_backed`, `gpu_memory_cleanup`, and `array_dtype` are now internal. GPU read results now return their memory to CUDA on drop (CubeCL dedicated allocations), and PySnpTools kernels use CuPy's pool; benchmark script: `/mnt/c/deldir/bed-reader-gpu-memory/bench_memory.py`.
+Review Python bed-reader code: `bed_reader/_gpu.py`, the GPU parts of `bed_reader/_open_bed.py`, `bed_reader/_array_module.py`, and `bed_reader/__init__.py`.
 
+Paused November 18, 2026. bed-reader Python and Rust docs are reviewed and committed (`4fa5dcd`). The agent's Rust code pre-review fixes are committed in bed-reader: checked packed-input u32 indexing, `Drop` reports CUDA errors as unraisable instead of aborting Python, GPU failures raise `RuntimeError`, the CUDA context is retained once, dead code removed, and fractional-value standardization is a parallel two-pass f64 reduction (about 6–22 times faster, identical float32 results). All GPU tests passed (Rust 8, bed-reader 111, PySnpTools 104, FaST-LMM 61).
+
+- Open decision: accumulate fractional-value statistics in f32 instead of f64 for float32 data? Measured on 250,000 x 1,000 float32: f32 accumulation took 17 ms versus 27–42 ms, with maximum relative error of the mean and standard deviation 1.3e-7 to 2.8e-7 (about 1–2 float32 epsilons) versus 3e-8 to 6e-8 for f64. The code keeps f64. For context, the CPU float32 standardizer (E[x*x]-E[x]**2 in float32) on the same data has maximum relative error 2.7e-5 (mean) and 1.7e-4 (std) near 1, and near 1000 it silently returns an infinite std (a zeroed column) for at least one SNP; even f32 GPU accumulation is about 600 times more accurate. Scripts: `/mnt/c/deldir/bed-reader-gpu-memory/accuracy_fractional.py`, `accuracy_cpu.py`, and `bench_fractional.py`.
 - PySnpTools no longer calls `gpu_memory_cleanup`, so its bed-reader lower bound must rise to the beta that returns memory on drop before release.
 
 bed-reader CPU reads are slower with the default thread count (all 32 threads) than with 8: 1.3–3 times slower for 250,000 x 1,000–4,000 SNP blocks, and on small files (2K x 10K) one thread is fastest. It looks like a thread pool is created on every read. This predates the GPU work; investigate separately. Benchmark script: `/mnt/c/deldir/bed-reader-gpu-memory/bench_read.py`.
