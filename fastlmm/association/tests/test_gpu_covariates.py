@@ -44,7 +44,7 @@ def test_loco_covariates_and_native_test_snps(tmp_path, dtype, in_memory):
     if not has_gpu_support():
         pytest.skip("requires bed-reader built with the cubecl-cuda Cargo feature")
     cupy = pytest.importorskip("cupy")
-    from bed_reader import is_cubecl_backed
+    from bed_reader._gpu import is_cubecl_backed
     rng = np.random.default_rng(42)
     path = tmp_path / "covariates.bed"
     to_bed(path, rng.integers(0, 3, size=(40, 24), dtype=np.int8),

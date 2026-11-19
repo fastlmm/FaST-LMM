@@ -67,8 +67,8 @@ algebra; internal reductions and likelihood statistics deliberately retain
 higher precision and do not trigger user-storage warnings. Raw phenotype and
 covariate values are validated at full precision on the CPU before narrowing
 and GPU transfer, avoiding unnecessary float64 GPU intermediates. Python's default warning filter
-avoids repeated identical notices at one user call site. With older dependencies,
-the notice is a ``UserWarning``. See the dtype documentation below for numerical
+avoids repeated identical notices at one user call site. The notice is
+bed-reader's ``GpuFloat64Warning``. See the dtype documentation below for numerical
 safeguards and cache compatibility.
 
 Workflow-wide precision defaults
@@ -102,11 +102,8 @@ For example, using the existing sample files::
         results = single_snp(snps, pheno, leave_out_one_chrom=False)
     # Omitted xp/dtype use the shared defaults. Explicit arguments override them.
 
-This policy requires matching development dependencies. Older PySnpTools or
-bed-reader versions preserve legacy defaults/explicit dtype behavior but reject
-ARRAY_DTYPE if they do not support it. Publish the prerequisite releases and
-update dependency bounds before release acceptance; these examples do not claim
-compatibility with older published artifacts.
+This policy is implemented by the PySnpTools and bed-reader versions that
+FaST-LMM requires.
 
 Run a small association study
 -----------------------------

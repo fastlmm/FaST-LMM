@@ -66,18 +66,6 @@ def test_float32_workflow_avoids_float64_gpu_allocations(tmp_path, monkeypatch, 
     np.testing.assert_allclose(np.log10(actual.PValue), np.log10(expected.PValue), rtol=0, atol=1.5e-4)
 
 
-def test_legacy_pysnptools_default_without_new_policy(monkeypatch):
-    import pysnptools.util as pstutil
-    from fastlmm.util._precision import array_dtype
-    monkeypatch.delattr(pstutil, "array_dtype")
-    monkeypatch.delenv("ARRAY_DTYPE", raising=False)
-    assert array_dtype() == np.float64
-    assert array_dtype("float32") == np.float32
-    monkeypatch.setenv("ARRAY_DTYPE", "float32")
-    with pytest.raises(RuntimeError, match="PySnpTools"):
-        array_dtype()
-
-
 def test_concurrent_default_precision_resolves_after_restoration(monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
     from threading import Event
@@ -109,19 +97,6 @@ def test_concurrent_default_precision_resolves_after_restoration(monkeypatch):
         second_result.result(timeout=10)
     assert observed == ["float32", "float64"]
     assert os.environ["ARRAY_DTYPE"] == "float64"
-
-
-def test_legacy_dependency_does_not_receive_new_environment_policy(monkeypatch):
-    import bed_reader
-    import pysnptools.util as pstutil
-
-    monkeypatch.delenv("ARRAY_DTYPE", raising=False)
-    for owner in (bed_reader, pstutil):
-        with monkeypatch.context() as context:
-            context.delattr(owner, "array_dtype")
-            with _workflow_array_module(np, False, dtype="float32"):
-                assert "ARRAY_DTYPE" not in os.environ
-            assert "ARRAY_DTYPE" not in os.environ
 
 
 def test_gpu_user_values_are_validated_before_widening_or_narrowing(monkeypatch):

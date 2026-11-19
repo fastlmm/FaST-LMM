@@ -4,6 +4,19 @@ todo000 This is the main todo. Only the human can remove this opening instructio
 
 Items are ordered by what to do next. Agents may maintain the task list, moving completed work to the Done section and removing its original entry.
 
+Review one layer at a time, starting with bed-reader (branch `gpu-cubecl`), then PySnpTools, then FaST-LMM. Carl's four bed-reader review tasks, docs first because they stand in for the API:
+
+- Python: review docs.
+- Rust: review docs.
+- Python: review code.
+- Rust: review code.
+
+Agent pre-review of bed-reader (November 18, 2026): CUDA upload errors now return errors instead of panicking (uncommitted). Python `read()` keeps its float32 default; the float64 warning's stack walk stays as is. Dead fallbacks for bed-reader versions older than 1.3.0a1 were removed from PySnpTools and FaST-LMM (uncommitted). Python docs rewritten for a 1.3.0b1 beta; `empty_gpu`, `is_cubecl_backed`, `gpu_memory_cleanup`, and `array_dtype` are now internal. GPU read results now return their memory to CUDA on drop (CubeCL dedicated allocations), and PySnpTools kernels use CuPy's pool; benchmark script: `/mnt/c/deldir/bed-reader-gpu-memory/bench_memory.py`.
+
+- PySnpTools no longer calls `gpu_memory_cleanup`, so its bed-reader lower bound must rise to the beta that returns memory on drop before release.
+
+bed-reader CPU reads are slower with the default thread count (all 32 threads) than with 8: 1.3–3 times slower for 250,000 x 1,000–4,000 SNP blocks, and on small files (2K x 10K) one thread is fastest. It looks like a thread pool is created on every read. This predates the GPU work; investigate separately. Benchmark script: `/mnt/c/deldir/bed-reader-gpu-memory/bench_read.py`.
+
 Validate and review the canonical combined API-policy and numerical changes before making performance claims. Preserve existing tolerances unless a separately justified accuracy decision is approved; do not widen them merely to pass.
 
 - Review the committed canonical combined change in `investigate/gpu-alpha-numerics`, including the reconciled `implement/gpu-api-policy` edits. Combined validation passes; see [combined status](GPU_API_POLICY_STATUS.md). Preserve the original numerical failures and accepted precision exceptions as evidence.
