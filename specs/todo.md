@@ -22,10 +22,6 @@ Paused November 18, 2026. bed-reader Python and Rust docs are reviewed and commi
 - GPU read and standardization tradeoffs (where read time goes, allocation cost, decode kernel, possible speedups): [ALGORITHM_TRADEOFFS.md](/mnt/c/deldir/bed-reader-gpu-memory/ALGORITHM_TRADEOFFS.md).
 - PySnpTools no longer calls `gpu_memory_cleanup`, so its bed-reader lower bound must rise to the beta that returns memory on drop before release.
 
-bed-reader CI wheels do not include GPU support: `pyproject.toml` builds with only `extension-module`, and no workflow adds `cubecl-cuda`, so the beta's documented `pip install "bed-reader[cupy]"` would get a CPU-only wheel. Decide how release wheels get `cubecl-cuda` (Linux x86_64/aarch64 and Windows x64 only: CubeCL 0.11's prebuilt LLVM does not exist for Windows ARM or Intel macOS) and test a CI-built wheel on the GPU before the beta. Also say in the Rust docs which platforms `cubecl-cuda` builds on.
-
-bed-reader CPU reads are slower with the default thread count (all 32 threads) than with 8: 1.3–3 times slower for 250,000 x 1,000–4,000 SNP blocks, and on small files (2K x 10K) one thread is fastest. It looks like a thread pool is created on every read. This predates the GPU work; investigate separately. Benchmark script: `/mnt/c/deldir/bed-reader-gpu-memory/bench_read.py`.
-
 Validate and review the canonical combined API-policy and numerical changes before making performance claims. Preserve existing tolerances unless a separately justified accuracy decision is approved; do not widen them merely to pass.
 
 - Review the committed canonical combined change in `investigate/gpu-alpha-numerics`, including the reconciled `implement/gpu-api-policy` edits. Combined validation passes; see [combined status](GPU_API_POLICY_STATUS.md). Preserve the original numerical failures and accepted precision exceptions as evidence.
@@ -76,6 +72,7 @@ Maintain one qualification record linking exact commits, artifact hashes, enviro
 
 # Done
 
+- November 19, 2026: bed-reader CI builds GPU wheels for Linux x86_64 (manylinux_2_34, alongside CPU-only manylinux2014 wheels for older glibc) and Windows x64; other platforms stay CPU-only, and every installed wheel is checked for the expected GPU support (`40bc892`, `49b670b`, CI 73 of 73). The CI-built Linux wheel passed 111 GPU tests on WSL2 with Python 3.13; native Linux and Windows GPU runs and a real old-glibc host are untested.
 - November 19, 2026: bed-reader CI runs the CubeCL kernel tests on CubeCL's CPU runtime (internal `_cubecl-cpu-test` feature, `ee33633`); the `snp_sums` plane and tree reductions are tested against each other on CUDA. Rust CI lints `cubecl-cuda` only where it can build (`0001b2a`).
 - November 19, 2026: PySnpTools runner thread tests accept the missing BLAS pool on macOS (Accelerate) and Windows ARM while still checking runner limits and environment variables; Linux and Windows x86 still require a pool. Commit `238aae1` on `cupy-sub-matrix`; CI passed 39 of 39 (run 44551444730).
 - November 18, 2026: reproduced all three numerical findings against explicitly identified integrated development code in isolated branch `investigate/gpu-alpha-numerics`. Preserved the original worktrees, opening todo000 instruction, and notebook outputs.
