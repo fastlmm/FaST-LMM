@@ -4,15 +4,23 @@ todo000 This is the main todo. Only the human can remove this opening instructio
 
 Items are ordered by what to do next. Agents may maintain the task list, moving completed work to the Done section and removing its original entry.
 
-Review Rust bed-reader code (branch `gpu-cubecl`), section by section:
+Every code review (bed-reader Rust and Python, PySnpTools, FaST-LMM) also checks safety and ownership:
 
-- `src/backend.rs`: always-present backend API (`Backend` trait, `Cpu`, `Error`, module docs).
-- `src/backend/cubecl.rs`: `CubeCl` client and `memory_cleanup`, `CubeClMatrix` (`dim`, `is_f`, `to_cpu`, `tensor_handle`, `client`, `cuda_pointer`), `read_cubecl` and the `decode` kernel, size helpers (`to_u32`, `element_count`), dedicated allocations, pinned-memory CUDA upload (`upload_pinned_cuda`, `cuda_staging`), and the GPU tests.
-- `src/backend/cubecl/standardize.rs`: GPU standardizer, `snp_sums` kernel (0/1/2/NaN detection and integer sums), per-SNP statistics, and the `apply` kernel.
-- `src/backend/cubecl/standardize/general.rs`: fractional-value statistics (`centered` kernel, parallel two-pass f64) and `mean_std`.
-- `src/lib.rs`: `ReadOptions` backend type parameter, builder methods for every backend (`f`, `c`, `count_a1/a2`, `i8/f32/f64`), `cpu()`, `cubecl()`, the GPU `read`, `BedErrorPlus::GpuError`.
-- `src/python_module.rs` (`gpu_python`): `GpuArray` ownership, `Drop` (memory release, unraisable errors), `__cuda_array_interface__`, `read_gpu`, `allocate_gpu`, `standardize_gpu`, and GPU errors mapped to `RuntimeError`.
-- `Cargo.toml`: `cubecl-cuda` feature (`cubecl-hip` removed), docs.rs metadata, version 1.3.0-beta.1.
+- User-supplied indexes and sizes: negative, repeated, out-of-range, empty, and huge values; u32 and usize overflow; and whether every value that reaches a `launch_unchecked` kernel or raw pointer was validated first.
+- Every `unsafe` block: it has a `SAFETY` comment, and the stated invariant really holds on every path, including error paths.
+- Ownership: no double free, use after free, or leak on error paths; GPU memory outlives every CuPy view and `__cuda_array_interface__` pointer; cloned handles; `Drop` order; `Send` impls and mutexes across threads.
+- Python inputs passed into Rust: wrong dtype, shape, strides, memory order, or device.
+
+Review Rust bed-reader code (branch `gpu-cubecl`), one batch at a time, in this order:
+
+1. Public API: `src/backend.rs` (149 lines: `Backend` trait, `Cpu`, `Error`, module docs), the `src/lib.rs` changes (`ReadOptions` backend type parameter, builder methods for every backend, `cpu()`, `cubecl()`, the GPU `read`, `BedErrorPlus::GpuError`), and `Cargo.toml` (`cubecl-cuda`, the internal `_cubecl-cpu-test` feature, docs.rs metadata, version 1.3.0-beta.1).
+2. GPU matrix type, `src/backend/cubecl.rs` lines 1–160 and 284–517: `CubeCl` client and `memory_cleanup`, `CubeClVal`, `CubeClMatrix` (`dim`, `is_f`, `to_cpu`, `client`, `tensor_handle`, `cuda_pointer`), `CudaPointer`, size helpers (`to_u32`, `element_count`), dedicated allocations.
+3. GPU read, `src/backend/cubecl.rs` lines 161–283 and 518–560: `read_cubecl` (index resolution, reading the file into the packed buffer, size checks, the unchecked launch) and the `decode` kernel.
+4. Raw CUDA upload, `src/backend/cubecl.rs` lines 561–664: `upload_pinned_cuda` and `cuda_staging` (pinned buffers, streams, events, the retained context; six `unsafe` blocks).
+5. GPU standardizer, `src/backend/cubecl/standardize.rs` (423 lines): `snp_sums` (0/1/2/NaN detection, plane and tree reductions), per-SNP statistics, the `apply` kernel, and the plane-versus-tree test.
+6. Fractional-value statistics, `src/backend/cubecl/standardize/general.rs` (182 lines): the `centered` kernel (parallel two-pass f64) and `mean_std`.
+7. Python bindings, `src/python_module.rs` `gpu_python` (lines 822 to the end): `GpuArray` ownership, `Drop` (memory release, unraisable errors), `__cuda_array_interface__`, `read_gpu`, `allocate_gpu`, `standardize_gpu`, and GPU errors mapped to `RuntimeError`.
+8. Tests and CI: `src/backend/cubecl.rs` tests (lines 665 to the end), the CPU-runtime test feature, and the CI jobs for kernel tests and GPU wheels.
 
 Review Python bed-reader code: `bed_reader/_gpu.py`, the GPU parts of `bed_reader/_open_bed.py`, `bed_reader/_array_module.py`, and `bed_reader/__init__.py`.
 
