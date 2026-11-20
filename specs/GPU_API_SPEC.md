@@ -22,15 +22,21 @@ The decisions below consolidate Claude Code session
   detection, tags, speculative copy branch, or foreign-memory adoption is needed.
 - PySnpTools builds kernels in blocks through that helper. FaST-LMM calls the
   SNP and kernel helpers rather than maintaining its own native GPU pipeline.
-- Rust keeps the CPU API unchanged without a CubeCL Cargo feature. With a
-  CubeCL Cargo feature enabled, `ReadOptions<TVal, TBackend=Cpu>` has independent
-  numeric and backend parameters. The `backend` module and `Backend` trait are
-  absent in CPU-only builds.
-  `.cubecl().read(...)` returns `backend::CubeClMatrix<TVal>`; CPU is the default.
-  GPU supports `i8`, `f32`, and `f64`. The wrapper exposes its CubeCL client and
-  tensor handle. Standardization is internal; `read_and_fill` remains CPU-only.
-- Cargo features `cubecl-cuda` and `cubecl-hip` select the experimental CubeCL runtimes. Python HIP,
-  GPU package distribution, and workshop examples remain deferred.
+- Rust shares `ReadOptions<TVal>` and `ReadOptionsBuilder<TVal>` between CPU,
+  cloud, and GPU reads, with the same CPU signatures as 1.2. With `cubecl-cuda`,
+  `.read_cubecl(&mut bed)` returns `gpu::CubeClMatrix<TVal>`;
+  `Bed::read_cubecl_with_options` accepts built options. GPU calls return
+  `Box<gpu::Error>`, whose `Bed` variant wraps ordinary read errors without
+  changing the seven-variant `BedErrorPlus` from 1.2. The `gpu` module compiles
+  only with `cubecl-cuda`; docs.rs marks the module and both read methods with
+  feature badges. GPU supports `i8`, `f32`, and `f64`; the wrapper exposes its
+  CubeCL client and tensor handle. Standardization and its invalid-variance
+  diagnostic remain internal; `read_and_fill` remains CPU-only.
+- CPU-only builds support Rust 1.85; GPU support needs Rust 1.95, enforced by
+  CubeCL. The project uses MSRV-aware dependency resolution and a tested CPU
+  lockfile. One ndarray 0.16.1 is shared with numpy; CubeCL pins remain unchanged.
+- Cargo feature `cubecl-cuda` selects the beta CUDA runtime. Python GPU wheels
+  target Linux x86-64 and Windows x86-64. HIP and workshop examples remain deferred.
 
 ## Implementation invariants
 
