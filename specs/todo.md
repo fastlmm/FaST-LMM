@@ -86,6 +86,11 @@ Reconcile notebook documentation and dependency requirements with the next PySnp
 - Review dependency bounds, direct threadpoolctl requirements, installation instructions, GPU platform limits, and precision guidance together.
 - Reference: [release checklist](GPU_ALPHA_RELEASE_CHECKLIST.md).
 
+Decide whether CPU float32 `single_snp` should build the kernel in float32, as the GPU path does. Today the CPU path builds it in float64 and then casts it (`dtype=np.float64 if xp is np else dtype` in `single_snp.py`). That's deliberate and documented, not a bug: it kept CPU kernels unchanged when float32 support arrived. It costs about 12 bytes per kernel entry at peak instead of 4 (about 4.8 GB against 1.6 GB at 20,000 individuals) and runs the kernel matrix multiply at float64 speed, and the CPU and GPU float32 paths round differently. Changing it is a behavior change (CPU float32 p-values shift slightly), so it is not part of the GPU-only beta.
+
+- If changed: update the code and its comment in `single_snp.py`, the `dtype` docstring ("CPU kernel/factor formation retains float64"), `doc/source/gpu.rst` (two places: "The CPU's established float64 kernel formation" and "CPU kernel formation and its intermediate memory can remain float64"), `doc/source/api_backend_precision.rst` ("CPU kernel formation"), and the tolerance comments in `test_single_snp.py` ("the float64 kernel from PySnpTools is cast to float32"), `test_backend_environment.py`, and `test_gpu_covariates.py`. Check other entry points that form kernels for the same pattern.
+- Re-measure the CPU float32 versus float64 tolerances rather than widening them, and add a test that CPU float32 kernel formation stays float32.
+
 Prepare the next coordinated alpha and its artifact validation plan. Do not publish, push release tags, or merge into main without explicit human authorization.
 
 - Prepare the updated PySnpTools alpha first. Determine whether bed-reader needs another release based on required changes rather than automatically bumping all three projects.
