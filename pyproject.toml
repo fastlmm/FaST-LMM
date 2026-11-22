@@ -103,6 +103,7 @@ ignore = ["F403", "F405"]
 
 
 [tool.pytest.ini_options]
+testpaths = ["fastlmm"]
 addopts = "--doctest-modules --doctest-glob=*.rst --doctest-glob=*.md"
 doctest_optionflags = ["ELLIPSIS", "NORMALIZE_WHITESPACE"]
 filterwarnings = [

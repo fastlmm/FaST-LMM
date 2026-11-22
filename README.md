@@ -83,6 +83,13 @@ cd ..
 uv build --no-sources
 ```
 
+Testing has two supported runners. `pytest` collects Python tests and module,
+reStructuredText, and Markdown doctests under `fastlmm/`; it is useful for
+focused tests and editor integration. The canonical `tests/test.py` runner also
+executes the input-based expected-output cases in `tests/inputs` and assembles
+the project's legacy unittest suites. The runners overlap but cover different
+workflows, so pytest collection does not replace the canonical runner.
+
 See [RELEASING.md](RELEASING.md) for lower-bound, artifact, notebook, and
 release qualification.
 
