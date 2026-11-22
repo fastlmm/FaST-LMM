@@ -2,6 +2,12 @@
 
 # GPU alpha release checklist
 
+Historical alpha record. On November 21, 2026, bed-reader returned to a
+CPU-only release path and withdrew its GPU API. The bed-reader GPU wheel and
+runtime checks below describe the earlier alpha and are not current support
+claims. Current GPU support is implemented in PySnpTools and FaST-LMM; see
+`todo.md` for current review and qualification work.
+
 All three coordinated alphas are published. This checklist records their
 validation and the remaining platform limitations. No new design decision or
 publication action is required from Carl now.
@@ -151,17 +157,23 @@ was changed and no additional human approval is implied.
 On November 18, 2026, Carl accepted the mouse GPU32 precision tradeoff for the
 alpha with a warning and concrete P-value example in the guide and dtype docs.
 This is an approved precision exception, not a passing strict comparison or
-completion of Carl's broader review. Full notebook runs, CPU thread benchmarks,
+completion of Carl's broader review. Current-head notebook runs,
 installed-artifact acceptance, human review, and the next release remain open.
+The synthetic benchmark now compares CPU configured for 32 BLAS threads with
+GPU at the same float32 precision; the separate mouse thread-count comparison
+is no longer needed for the current performance claim.
 
 ## Canonical combined development state
 
-The API policy and numerical changes are combined in `investigate/gpu-alpha-numerics`.
-[Combined status](GPU_API_POLICY_STATUS.md) records the passing 227-case canonical
-run, separate completion of its five HDF5 skips, 60 combined regression tests,
-Python boundary checks, and exact source/evidence hashes. No tolerance or
-expected output was widened. This does not qualify a new published artifact.
+The API policy and numerical changes were combined in
+`investigate/gpu-alpha-numerics` and merged into `gpu-bed-reader`. The
+[numerical correctness record](GPU_NUMERICAL_CORRECTNESS.md) summarizes the
+227-case canonical run, separate completion of its five HDF5 skips, 60 combined
+regression tests, Python boundary checks, and exact source/evidence hashes. No
+tolerance or expected output was widened. This does not qualify the current
+CPU-read/CuPy-transfer path or a new published artifact.
 The stopped policy chat's four completed notebook executions are preserved;
-their numerical cross-comparison and final-source reconciliation remain next.
-CPU thread benchmarks, Carl's review, platform/artifact qualification, and
+they used bed-reader's previous GPU path and remain historical evidence.
+Rerun notebook configurations against the current development heads as tracked
+in [todo.md](todo.md). Carl's review, platform/artifact qualification, and
 release preparation remain open. Nothing was published or merged into main.

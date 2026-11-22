@@ -2,12 +2,13 @@
 
 <!-- TODO0 consider deleting this spec once the work below is implemented and released. -->
 
-## Handoff: current working-tree changes
+## Handoff: November 16 development snapshot
 
-The latest edits are uncommitted in `/home/carlk/programs/PySnpTools` and
-`/home/carlk/programs/FaST-LMM`. The older `docs/gpu-features` worktrees do not
-contain these implementation fixes. Preserve the existing GPU implementation
-and documentation changes when reviewing or integrating this work.
+This section records the November 16 development snapshot; its checkout and
+working-tree status are historical. bed-reader switched to CPU-only on
+November 21, so this audit covers the PySnpTools and FaST-LMM GPU APIs. The
+current review heads and remaining notebook qualification are tracked in
+`todo.md` and `REVIEW_INVENTORY.md`.
 
 All three audit findings now have implementation fixes:
 

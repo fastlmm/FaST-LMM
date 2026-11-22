@@ -4,6 +4,9 @@
 
 Investigated November 18, 2026 in `investigate/gpu-alpha-numerics`, based on
 FaST-LMM `d37dccf`, PySnpTools `75652ce`, and bed-reader `71f62e4`.
+The bed-reader reference was the earlier GPU implementation; bed-reader is now
+CPU-only, so this record is historical numerical evidence rather than
+qualification of the current CPU-read/CuPy-transfer path.
 The explicitly identified development imports, binary provenance, exact commands,
 full comparisons, tests, and unresolved failures are recorded in the
 [qualification report](/mnt/c/deldir/fastlmm-correctness-20261118/REPORT.md).
@@ -59,9 +62,11 @@ epistasis uses CPU float64. Full notebook qualification, CPU thread benchmarks,
 Carl's broader review, installed-artifact checks, and release preparation remain
 open in [todo.md](todo.md). No publication or merge is authorized here.
 
-The numerical worktree is now the canonical combined API-policy change. Final
-canonical validation runs 227 tests with no failures; the five optional HDF5
-skips all pass separately. Combined regressions pass 60 tests and 94 subtests.
-See [the combined status](GPU_API_POLICY_STATUS.md) for final boundary checks,
-source hashes, and the preserved four-notebook handoff. Numerical comparison of
-those saved notebook runs remains subsequent work; Carl's review is not complete.
+The numerical worktree's combined API-policy change was merged into
+`gpu-bed-reader`. Its canonical validation ran 227 tests with no failures; the
+five optional HDF5 skips all passed separately. Combined regressions passed 60
+tests and 94 subtests. These results validate that historical development
+snapshot, not the current CPU-read/CuPy-transfer path. The four saved notebook
+runs used bed-reader's previous GPU path and are historical evidence; rerun the
+configurations against current heads as tracked in [todo.md](todo.md). Carl's
+review remains open.
