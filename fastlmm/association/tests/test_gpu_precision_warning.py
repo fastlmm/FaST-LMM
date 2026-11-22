@@ -2,15 +2,15 @@
 
 import warnings
 
-import bed_reader
 import numpy as np
 import pytest
+from pysnptools.util.gpu import GpuFloat64Warning
 
 from fastlmm.association.single_snp import _worker_array, _workflow_array_module
 from fastlmm.inference.lmm_cov import LMM
 from fastlmm.util._gpu_warnings import warn_gpu_float64
 
-WarningType = bed_reader.GpuFloat64Warning
+WarningType = GpuFloat64Warning
 
 
 def test_cpu_and_two_kernel_coercion_do_not_warn_about_fp64():

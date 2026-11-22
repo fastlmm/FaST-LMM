@@ -6,7 +6,8 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from bed_reader import has_gpu_support, to_bed
+from bed_reader import to_bed
+from pysnptools.util.gpu import has_gpu_support
 from pysnptools.snpreader import Bed, SnpData
 from pysnptools.util import get_array_module
 from pysnptools.util.mapreduce1.runner import LocalMultiProc
@@ -28,7 +29,6 @@ class _TracingBed(Bed):
         self.trace = str(trace)
 
     def _read_with_standardizing(self, *args, **kwargs):
-        from bed_reader import bed_reader as native
         from fastlmm.inference.lmm_cov import LMM
 
         trace = self.trace
@@ -58,15 +58,9 @@ class _TracingBed(Bed):
 
                 eigh._environment_trace = True
                 cp.linalg.eigh = eigh
-        with patch.object(native, "read_gpu", wraps=native.read_gpu) as gpu_read:
-            result = super()._read_with_standardizing(*args, **kwargs)
+        result = super()._read_with_standardizing(*args, **kwargs)
         data = result[0] if isinstance(result, tuple) else result
         _record(trace, "read", get_array_module(data.val).__name__, data.val.dtype)
-        if backend == "cupy":
-            assert gpu_read.call_count > 0
-            _record(trace, "native_gpu_read", backend)
-        else:
-            assert gpu_read.call_count == 0
         return result
 
 
@@ -79,7 +73,7 @@ def _worker_environment(task_index):
 @pytest.mark.parametrize("dtype", ["float64", "float32"])
 def test_mixed_workers_select_environment_and_restore(tmp_path, monkeypatch, outer, phenotype_count, dtype):
     if not has_gpu_support():
-        pytest.skip("requires bed-reader built with the cubecl-cuda Cargo feature")
+        pytest.skip("requires CuPy and a usable CUDA device")
     cp = pytest.importorskip("cupy")
     monkeypatch.chdir(tmp_path)
     rng = np.random.default_rng(31)
@@ -113,7 +107,6 @@ def test_mixed_workers_select_environment_and_restore(tmp_path, monkeypatch, out
     assert {record["actual_dtype"] for record in workers if record["kind"] in ("evaluate", "test_snps")} == {dtype}
     assert {record["backend"] for record in workers if record["kind"] == "evaluate"} == {"numpy", "cupy"}
     assert {record["backend"] for record in workers if record["kind"] == "read"} == {"numpy", "cupy"}
-    assert any(record["kind"] == "native_gpu_read" for record in workers)
     assert any(record["kind"] == "eigh" for record in records)
     columns = ["sid_index"] + (["Pheno"] if phenotype_count > 1 else [])
     actual = actual.sort_values(columns)
@@ -188,7 +181,7 @@ class _FailingBed(_TracingBed):
 
 def test_environment_restored_after_worker_failure(tmp_path, monkeypatch):
     if not has_gpu_support():
-        pytest.skip("requires bed-reader built with the cubecl-cuda Cargo feature")
+        pytest.skip("requires CuPy and a usable CUDA device")
     pytest.importorskip("cupy")
     monkeypatch.chdir(tmp_path)
     path = tmp_path / "failure.bed"

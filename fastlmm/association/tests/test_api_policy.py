@@ -8,7 +8,8 @@ from unittest.mock import patch
 import warnings
 
 import numpy as np
-from bed_reader import to_bed, has_gpu_support
+from bed_reader import to_bed
+from pysnptools.util.gpu import has_gpu_support
 from pysnptools.snpreader import Bed, SnpData, SnpReader
 from pysnptools.util import get_array_module
 from pysnptools.util.filecache import LocalCache
@@ -626,11 +627,11 @@ class TestApiPolicy(unittest.TestCase):
     def test_single_kernel_numpy_matrix(self):
         self._single_kernel_matrix("numpy")
 
-    @unittest.skipUnless(has_gpu_support() and find_spec("cupy"), "requires CUDA bed-reader and CuPy")
+    @unittest.skipUnless(has_gpu_support() and find_spec("cupy"), "requires CuPy and a usable CUDA device")
     def test_single_kernel_cupy_matrix(self):
         self._single_kernel_matrix("cupy")
 
-    @unittest.skipUnless(has_gpu_support() and find_spec("cupy"), "requires CUDA bed-reader and CuPy")
+    @unittest.skipUnless(has_gpu_support() and find_spec("cupy"), "requires CuPy and a usable CUDA device")
     def test_gpu_input_and_plot_contract(self):
         import cupy as cp
         original = self.reader.read(xp=cp, dtype=np.float32)

@@ -235,7 +235,7 @@ def single_snp(
          about 0.092% relative error. This is a measured example, not a universal error bound;
          use float64 when closer agreement is required. See :doc:`/gpu` for the precision warning.
          A ``cache_file`` created with one dtype raises a ValueError if used with the other.
-         GPU float64 emits bed-reader's GpuFloat64Warning about potentially much slower
+         GPU float64 emits PySnpTools' GpuFloat64Warning about potentially much slower
          arithmetic on consumer GPUs. The warning does not change precision. See :doc:`/gpu`.
          An explicit dtype overrides the environment.
          The resolved precision is the default for nested reads and workers and is restored
@@ -249,7 +249,6 @@ def single_snp(
     :raises ValueError: Unsupported dtype, unsafe float32 covariate/phenotype
         magnitude, or cached model dtype/explicit mixing mismatch.
     :raises ImportError: CuPy requested but not installed.
-    :raises RuntimeError: BED GPU reads requested without native GPU support.
 
     :Example:
 

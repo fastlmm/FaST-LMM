@@ -4,7 +4,8 @@ import warnings
 
 import numpy as np
 import pytest
-from bed_reader import GpuFloat64Warning, has_gpu_support, to_bed
+from bed_reader import to_bed
+from pysnptools.util.gpu import GpuFloat64Warning, has_gpu_support
 from pysnptools.snpreader import Bed, SnpData
 from fastlmm.association import single_snp
 from fastlmm.association.single_snp import _as_dtype, _workflow_array_module
@@ -39,7 +40,7 @@ def test_range_validation_precedes_narrowing(unsafe, backend):
 @pytest.mark.parametrize("chromosome_covariates", [False, True])
 def test_float32_workflow_avoids_float64_gpu_allocations(tmp_path, monkeypatch, explicit, chromosome_covariates):
     if not has_gpu_support():
-        pytest.skip("requires the cubecl-cuda Cargo feature")
+        pytest.skip("requires CuPy and a usable CUDA device")
     cupy = pytest.importorskip("cupy")
     monkeypatch.setenv("ARRAY_DTYPE", "float32" if explicit is None else "float64")
     rng = np.random.default_rng(123)
