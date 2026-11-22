@@ -1,6 +1,7 @@
 # flake8: noqa: E501
 
 import numpy as np
+import scipy.linalg
 # import scipy.optimize as opt
 # import scipy.stats as st
 import scipy.special as ss
@@ -125,7 +126,10 @@ class LMM(object):
         self.K.flat[:: N + 1] += 1.0
         K_ = self.linreg.regress(Y=self.K)
         K_ = self.linreg.regress(Y=K_.T)
-        [self.S, self.U] = self._xp.linalg.eigh(K_)
+        if self._xp is np and K_.dtype == np.float32:
+            [self.S, self.U] = scipy.linalg.eigh(K_, driver="evd")
+        else:
+            [self.S, self.U] = self._xp.linalg.eigh(K_)
         if np.any(self.S < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
 
@@ -146,9 +150,17 @@ class LMM(object):
                 PxG = self.linreg.regress(Y=self.G)
                 # was
                 logging.info("Starting SVD")
-                [self.U, self.S, V] = self._xp.linalg.svd(
-                    PxG, full_matrices=False, compute_uv=True
-                )  # , N x min, min, min x k
+                if self._xp is np and PxG.dtype == np.float32:
+                    [self.U, self.S, V] = scipy.linalg.svd(
+                        PxG,
+                        full_matrices=False,
+                        compute_uv=True,
+                        lapack_driver="gesdd",
+                    )
+                else:
+                    [self.U, self.S, V] = self._xp.linalg.svd(
+                        PxG, full_matrices=False, compute_uv=True
+                    )  # , N x min, min, min x k
                 logging.info("Ending SVD")
                 inonzero = self._xp.arange(len(self.S))[
                     self.S > 1e-10

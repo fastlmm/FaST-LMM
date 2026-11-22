@@ -221,8 +221,9 @@ def single_snp(
          None (default) uses ARRAY_DTYPE, then float64. Two-kernel calls use
          float64, with a warning for a requested float32 configuration.
          With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
-         decomposition inputs and outputs and SNP rotations use single precision; backend solver
-         implementations can still round differently. The per-SNP statistics are computed in float64, but input/decomposition
+         decomposition inputs and outputs and SNP rotations use single precision. NumPy-backed
+         float32 calls use SciPy's single-precision LAPACK drivers; CuPy-backed calls use CuPy's
+         solver. Backend solver implementations can still round differently. The per-SNP statistics are computed in float64, but input/decomposition
          rounding remains. Kernel/factor formation uses the requested dtype on both CPU
          and GPU; kernel diagonal normalization still sums in float64. 'float32' gives
          different p-values and can be faster on

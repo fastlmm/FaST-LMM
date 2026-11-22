@@ -7,6 +7,7 @@ import unittest
 import os.path
 import doctest
 import pandas as pd
+import scipy.linalg
 from numpy.random import RandomState
 from pathlib import Path
 
@@ -914,11 +915,14 @@ class TestSingleSnp(unittest.TestCase):
             assert observed
 
     def test_numpy_float32_decomposition_stays_float32(self):
-        real_eigh = np.linalg.eigh
-        real_svd = np.linalg.svd
+        real_eigh = scipy.linalg.eigh
+        real_svd = scipy.linalg.svd
         observed = []
 
         def eigh(values, *args, **kwargs):
+            routine = scipy.linalg.get_lapack_funcs(("syevd",), (values,))[0]
+            assert routine.typecode == "s"
+            assert kwargs["driver"] == "evd"
             result = real_eigh(values, *args, **kwargs)
             assert values.dtype == np.float32
             assert all(item.dtype == np.float32 for item in result)
@@ -926,6 +930,9 @@ class TestSingleSnp(unittest.TestCase):
             return result
 
         def svd(values, *args, **kwargs):
+            routine = scipy.linalg.get_lapack_funcs(("gesdd",), (values,))[0]
+            assert routine.typecode == "s"
+            assert kwargs["lapack_driver"] == "gesdd"
             result = real_svd(values, *args, **kwargs)
             assert values.dtype == np.float32
             assert all(item.dtype == np.float32 for item in result)
@@ -934,7 +941,13 @@ class TestSingleSnp(unittest.TestCase):
 
         for force_low_rank, expected in [(False, "eigh"), (True, "svd")]:
             observed.clear()
-            with patch.object(np.linalg, "eigh", eigh), patch.object(np.linalg, "svd", svd):
+            with patch.object(scipy.linalg, "eigh", eigh), patch.object(
+                scipy.linalg, "svd", svd
+            ), patch.object(
+                np.linalg,
+                expected,
+                side_effect=AssertionError("float32 decomposition used NumPy LAPACK"),
+            ):
                 self._dtype_frame("float32", force_low_rank)
             assert observed == [expected]
 
