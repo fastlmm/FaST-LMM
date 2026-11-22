@@ -126,10 +126,18 @@ class LMM(object):
         self.K.flat[:: N + 1] += 1.0
         K_ = self.linreg.regress(Y=self.K)
         K_ = self.linreg.regress(Y=K_.T)
+        # NumPy's linalg computes float32 in float64 and casts back, so CPU
+        # float32 uses SciPy's float32 LAPACK driver to match the GPU path.
         if self._xp is np and K_.dtype == np.float32:
             [self.S, self.U] = scipy.linalg.eigh(K_, driver="evd")
-        else:
+        elif self._xp is np and K_.dtype == np.float64:
+            [self.S, self.U] = np.linalg.eigh(K_)
+        elif self._xp.__name__ == "cupy":
             [self.S, self.U] = self._xp.linalg.eigh(K_)
+        else:
+            raise ValueError(
+                f"Unsupported array module {self._xp.__name__} with dtype {K_.dtype}"
+            )
         if np.any(self.S < -0.1):
             logging.warning("kernel contains a negative Eigenvalue")
 
@@ -150,6 +158,7 @@ class LMM(object):
                 PxG = self.linreg.regress(Y=self.G)
                 # was
                 logging.info("Starting SVD")
+                # See setSU_fromK for why CPU float32 uses SciPy.
                 if self._xp is np and PxG.dtype == np.float32:
                     [self.U, self.S, V] = scipy.linalg.svd(
                         PxG,
@@ -157,10 +166,18 @@ class LMM(object):
                         compute_uv=True,
                         lapack_driver="gesdd",
                     )
-                else:
+                elif self._xp is np and PxG.dtype == np.float64:
+                    [self.U, self.S, V] = np.linalg.svd(
+                        PxG, full_matrices=False, compute_uv=True
+                    )  # , N x min, min, min x k
+                elif self._xp.__name__ == "cupy":
                     [self.U, self.S, V] = self._xp.linalg.svd(
                         PxG, full_matrices=False, compute_uv=True
                     )  # , N x min, min, min x k
+                else:
+                    raise ValueError(
+                        f"Unsupported array module {self._xp.__name__} with dtype {PxG.dtype}"
+                    )
                 logging.info("Ending SVD")
                 inonzero = self._xp.arange(len(self.S))[
                     self.S > 1e-10

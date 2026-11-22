@@ -951,6 +951,19 @@ class TestSingleSnp(unittest.TestCase):
                 self._dtype_frame("float32", force_low_rank)
             assert observed == [expected]
 
+    def test_decomposition_rejects_unsupported_dtype(self):
+        # NumPy's pinv rejects float16 before the decomposition, so bypass the
+        # covariate regression to reach the decomposition's dtype dispatch.
+        from fastlmm.inference.lmm_cov import LMM, Linreg
+
+        rng = np.random.default_rng(0)
+        G = rng.standard_normal((20, 5)).astype(np.float16)
+        for forcefullrank in [True, False]:
+            with patch.object(Linreg, "regress", lambda self, Y: Y):
+                lmm = LMM(G=G, X=np.ones((20, 1)), forcefullrank=forcefullrank)
+                with self.assertRaisesRegex(ValueError, "dtype float16"):
+                    lmm.getSU()
+
     def test_dtype_float32_cache(self):
         # Low rank keeps UUY, which the cache must round-trip for float32, too.
         for force_low_rank in [False, True]:
