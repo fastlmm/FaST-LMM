@@ -1039,27 +1039,25 @@ class TestSingleSnp(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self._dtype_frame("float32", force_low_rank, pheno=pheno, cache_file=cache32)
 
-    def test_cupy_reads_bed_on_gpu(self):
-        # With bed-reader built with GPU support, test-SNP blocks of a .bed file are read and
-        # standardized on the GPU (no host copy); results must match numpy as the other GPU paths do.
+    def test_cupy_standardizes_cpu_bed_reads(self):
+        # BED blocks are read on CPU, transferred, and standardized with CuPy;
+        # preserve the established backend comparisons.
         try:
             import cupy  # noqa: F401
         except ModuleNotFoundError:
             raise unittest.SkipTest("cupy is not installed")
-        from bed_reader import has_gpu_support
-        from bed_reader import bed_reader as native
+        from pysnptools.util.gpu import has_gpu_support
+        from pysnptools.standardizer import Standardizer
 
         if not has_gpu_support():
-            raise unittest.SkipTest("bed-reader was built without GPU support")
+            raise unittest.SkipTest("requires CuPy and a usable CUDA device")
         for dtype, tolerance in [("float64", self.CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL),
                                  ("float32", self.CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL)]:
             for force_low_rank in [False, True]:
                 frame_np = self._dtype_frame(dtype, force_low_rank, xp="numpy")
-                with patch.object(native, "read_gpu", wraps=native.read_gpu) as reads, \
-                     patch.object(native, "standardize_gpu", wraps=native.standardize_gpu) as standardizes:
+                with patch.object(Standardizer, "_standardize_cupy", wraps=Standardizer._standardize_cupy) as standardizes:
                     frame_cp = self._dtype_frame(dtype, force_low_rank, xp="cupy")
-                assert reads.call_count > 0
-                assert standardizes.call_count == reads.call_count
+                assert standardizes.call_count > 0
                 diff = self._max_log10_pvalue_diff(frame_np, frame_cp)
                 assert diff < tolerance, (dtype, force_low_rank, diff)
                 if dtype == "float64":
@@ -1076,9 +1074,9 @@ class TestSingleSnp(unittest.TestCase):
                     np.testing.assert_allclose(frame_cp_fixed.EffectSize, frame_np_fixed.EffectSize, rtol=1e-8)
 
     def test_cupy_builds_kernel_on_gpu(self):
-        from bed_reader import has_gpu_support
+        from pysnptools.util.gpu import has_gpu_support
         if not has_gpu_support():
-            raise unittest.SkipTest("bed-reader was built without GPU support")
+            raise unittest.SkipTest("requires CuPy and a usable CUDA device")
         try:
             import cupy as cp
         except ModuleNotFoundError:

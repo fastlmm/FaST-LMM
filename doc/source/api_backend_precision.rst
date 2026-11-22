@@ -9,7 +9,7 @@ These are development-source guarantees, not acceptance of a new published alpha
 ``single_snp`` with one kernel supports NumPy/CuPy and float32/float64.
 An explicit ``xp`` or ``dtype`` overrides the corresponding environment variable;
 otherwise ``ARRAY_MODULE`` and ``ARRAY_DTYPE`` apply, finally defaulting to
-NumPy/float64. Missing GPU dependencies or native support raise an error.
+NumPy/float64. Missing CuPy or an unusable CUDA device raises an error.
 Returning a pandas DataFrame does not imply CPU computation.
 
 The numerical workflows below that are qualified only on CPU/float64 warn when

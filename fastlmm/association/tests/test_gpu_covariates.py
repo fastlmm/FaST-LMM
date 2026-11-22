@@ -36,15 +36,15 @@ def test_chromosome_covariates_on_selected_backend(backend, dtype):
 @pytest.mark.parametrize("dtype", ["float32", "float64"])
 @pytest.mark.parametrize("in_memory", [False, True])
 def test_loco_covariates_and_native_test_snps(tmp_path, dtype, in_memory):
-    from bed_reader import has_gpu_support, to_bed
+    from bed_reader import to_bed
+    from pysnptools.util.gpu import has_gpu_support
     from fastlmm.association import single_snp
     from fastlmm.inference.lmm_cov import LMM
     from pysnptools.snpreader import Bed
 
     if not has_gpu_support():
-        pytest.skip("requires bed-reader built with the cubecl-cuda Cargo feature")
+        pytest.skip("requires CuPy and a usable CUDA device")
     cupy = pytest.importorskip("cupy")
-    from bed_reader._gpu import is_cubecl_backed
     rng = np.random.default_rng(42)
     path = tmp_path / "covariates.bed"
     to_bed(path, rng.integers(0, 3, size=(40, 24), dtype=np.int8),
@@ -65,7 +65,7 @@ def test_loco_covariates_and_native_test_snps(tmp_path, dtype, in_memory):
     def evaluate(model, *args, **kwargs):
         if kwargs.get("snps") is not None:
             values = kwargs["snps"]
-            assert isinstance(values, cupy.ndarray) and is_cubecl_backed(values)
+            assert isinstance(values, cupy.ndarray)
             tested_blocks.append(values.shape)
         return original_evaluate(model, *args, **kwargs)
 
