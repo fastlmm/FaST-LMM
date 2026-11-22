@@ -126,7 +126,6 @@ Remember if the GPU work restarts:
 - CubeCL turns on `cudarc`'s build-time `nvcc` check, so any installed `nvcc` newer than `cudarc` supports breaks GPU builds (`cudarc` 0.19.10 supports up to CUDA 13.4). After each new CUDA release, check that a `cudarc` release supports it. The `gpu` docs give the workaround.
 - Upgrading CubeCL changes public types (`Client`, `TensorHandle`, and the errors in `gpu::Error`). With the GPU API labeled Beta rather than `_experimental`, each upgrade after 1.3.0 is a deliberate semver exception to call out in the release notes.
 
-
 # Done
 
 - November 20, 2026: bed-reader `numpy` is enabled only by `extension-module`, `ndarray-npy` is a test-only dependency, and `byteorder` declares the `std` feature it always needed (before, `ndarray-npy` turned it on). Downstream Rust 1.85 builds no longer need `cargo update -p psm --precise 0.1.28`; verified with a fresh crate on Rust 1.85.
