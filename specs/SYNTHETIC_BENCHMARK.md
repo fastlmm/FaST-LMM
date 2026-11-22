@@ -17,14 +17,14 @@ This is a 12.7x GPU speedup for this `single_snp` workload. CPU and GPU float32 
 
 Only one float64 run per backend completed before the run was stopped: CPU 420.284 s, GPU 594.400 s. The remaining float64 repeats were interrupted, so these are not stable timing estimates. No GPU float64 runs are needed in future benchmark batches.
 
-## Resume an overnight batch
+## Historical overnight batch
 
-From the FaST-LMM checkout, use the cached environment to run CPU and GPU float32, then CPU float64 as the precision reference.
+The original batch used the command below to run CPU and GPU float32, then CPU float64 as the precision reference. The old `gpu-read-share` environment was retired after the CPU-only switch. For a new run, set up an environment against the current development heads and point the driver's `PYTHON` setting at that interpreter.
 
 ```bash
 /home/carlk/.cache/gpu-read-share/venv/bin/python -u tools/synthetic-benchmark/driver_synthetic.py --repeats 3
 ```
 
-The driver runs one worker at a time and reuses completed JSON results. With the saved results in the cache, this command only runs CPU float64 repeats 2 and 3. The CPU benchmark uses a 32-thread setting.
+The driver runs one worker at a time and reuses completed JSON results. When qualifying new development heads, use a new results directory so the driver measures every configuration again. The CPU benchmark uses a 32-thread setting.
 
 Timing JSON, association results, and logs live in `~/.cache/synthetic-bed/benchmark-results/`. A stopped repeat may leave a partial `.log`; it has no completed JSON result and will be run again when resumed.
