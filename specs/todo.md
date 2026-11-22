@@ -49,6 +49,17 @@ Make CPU float32 eigendecomposition really float32. NumPy's `numpy.linalg.eigh` 
 
 Find the fastest CPU BLAS thread setting for the larger mouse problem by timing 1, 4, and 16 threads, then compare it with GPU at the same precision. The synthetic benchmark already provides a float32 CPU/GPU comparison at 32 CPU threads.
 
+Release notes for the next FaST-LMM release must cover the CPU float32 speedups, not only the GPU.
+
+- CPU float32 `single_snp` now builds its kernel in float32 (about 30–37% faster for that step, about 25% less kernel memory) and runs its eigendecomposition and low-rank SVD in float32 through SciPy's float32 LAPACK drivers (`evd`, `gesdd`). NumPy's `linalg` computes float32 inputs in float64 by design, a legacy of its bundled double-only `lapack_lite`. CPU float64 is unchanged.
+- Quote fair numbers: compare at the same thread count, from the November 22 synthetic benchmark (`~/.cache/synthetic-bed/benchmark-results/2026-11-22-cpu-f32-eigh/`, summarized in `SYNTHETIC_BENCHMARK.md` once complete). At 16 threads, CPU float32 took about 159 s against about 394 s for CPU float64 (warm-up figure; use the final medians). The old 393 s CPU float32 figure used 32 threads, so it overstates the code speedup; the eigendecomposition alone fell from about 232 s to about 102 s at 32 threads.
+- State the GPU speedup against the fastest CPU float32 configuration (about 33 s against about 159 s, roughly 4.8x), not against the old, slower CPU path.
+- Say that CPU float32 p-values now differ slightly from earlier releases (float32 kernel and decomposition), with the measured size, and that float64 results are unchanged.
+
+Decide CPU thread-count guidance and defaults. On this 16-core, 32-thread Ryzen 9 7950X, 16 threads beat 32 for every configuration measured (CPU float32 medians: 8 threads 187.9 s, 16 threads 158.9 s, 32 threads 187.5 s with a wide 173.7–208.3 s spread; NumPy `eigh` at N=4,000 showed the same pattern). Check what `single_snp` and PySnpTools use by default when no thread count is given; if it is the logical CPU count, consider defaulting to physical cores (a behavior change for PySnpTools and FaST-LMM, so Carl decides), or at least document the advice in the performance docs.
+
+Optionally confirm the CPU float32 gain with other LAPACK libraries before quoting it broadly: a conda NumPy/SciPy built with MKL on an Intel CPU, and Accelerate on macOS. NumPy's `linalg` upcasts float32 regardless of the library, so a gain is expected everywhere, but its size (about 2.2–2.7x here with OpenBLAS) will vary.
+
 Prepare the next coordinated alpha and its artifact validation plan. Do not publish, push release tags, or merge into main without explicit human authorization.
 
 - Prepare the updated PySnpTools alpha first. Determine whether bed-reader needs another release based on required changes rather than automatically bumping all three projects.
