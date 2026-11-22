@@ -221,11 +221,11 @@ def single_snp(
          None (default) uses ARRAY_DTYPE, then float64. Two-kernel calls use
          float64, with a warning for a requested float32 configuration.
          With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
-         decomposition outputs and SNP rotations use single precision; internal solver precision depends
-         on the backend. The per-SNP statistics are still computed in float64, but input/decomposition
-         rounding remains. CPU kernel/factor
-         formation retains float64 before conversion to the LMM dtype; GPU formation uses
-         the requested dtype. 'float32' gives different p-values and can be faster on
+         decomposition inputs and outputs and SNP rotations use single precision; backend solver
+         implementations can still round differently. The per-SNP statistics are computed in float64, but input/decomposition
+         rounding remains. Kernel/factor formation uses the requested dtype on both CPU
+         and GPU; kernel diagonal normalization still sums in float64. 'float32' gives
+         different p-values and can be faster on
          consumer GPUs (``xp='cupy'``), which have limited float64 throughput; on data-center GPUs with fast
          float64 (for example, NVIDIA A100 or H100), 'float64' is fast, too. 'float32' works with
          ``xp='numpy'``, so its numerical effect can be checked without a GPU. With 'float32', covariate and
@@ -727,8 +727,8 @@ class _Mixer(object):
             mixer.do_g = True
             #!!!there is no need for block_size here because we want G0 in full. But if starting with SNPs and not low-rank then batches are needed and the two standardizers must be remembered for use later
 
-            # Preserve the CPU path's float64 kernel formation before the LMM
-            # casts to the run dtype. GPU formation stays in the requested dtype.
+            # Build the kernel or low-rank factor in the run dtype on both backends.
+            # (The two-kernel fallback resolves the run dtype to float64.)
             if sid_count_0 > 0:
                 (
                     K0,
@@ -738,7 +738,7 @@ class _Mixer(object):
                     return_trained=True,
                     to_kerneldata=not mixer.do_g,
                     kernel_standardizer=kernel_standardizer,
-                    dtype=np.float64 if xp is np else dtype,
+                    dtype=dtype,
                     xp=xp,
                 )
             if sid_count_1 > 0:
@@ -750,7 +750,7 @@ class _Mixer(object):
                     return_trained=True,
                     to_kerneldata=not mixer.do_g,
                     kernel_standardizer=kernel_standardizer,
-                    dtype=np.float64 if xp is np else dtype,
+                    dtype=dtype,
                     xp=xp,
                 )
 
@@ -806,7 +806,7 @@ class _Mixer(object):
                     return_trained=True,
                     to_kerneldata=True,
                     kernel_standardizer=DiagKtoN(),
-                    dtype=np.float64 if xp is np else dtype,
+                    dtype=dtype,
                     xp=xp,
                 )  #!!!pass in a new argument, the kernel_standardizer(???)
 
@@ -819,7 +819,7 @@ class _Mixer(object):
                     return_trained=True,
                     to_kerneldata=True,
                     kernel_standardizer=DiagKtoN(),
-                    dtype=np.float64 if xp is np else dtype,
+                    dtype=dtype,
                     xp=xp,
                 )
 

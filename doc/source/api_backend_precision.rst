@@ -146,9 +146,11 @@ Parent-process settings alone do not qualify worker execution.
 Numerical qualification limits
 ------------------------------
 
-Float32 support describes the main model arrays and rotations. Established
-float64 per-SNP statistics, CPU kernel formation, and backend-dependent internal
-solver precision are deliberate and remain documented in :doc:`gpu`.
+Float32 support describes the main model arrays, kernel or factor formation,
+decomposition, and rotations on both backends. Established float64 h2 likelihood
+calculations, per-SNP statistics, and kernel-diagonal normalization are deliberate
+and remain documented in :doc:`gpu`. Backend solver implementations and reduction
+orders can still round differently while using the same dtype.
 
 The November 18 numerical investigation retained an independent float64 fitted-h2
 comparison failure: maximum synthetic absolute delta log10(P) was ``5.36e-8``

@@ -77,8 +77,9 @@ serialized; direct environment changes outside the workflow are process-wide.
 
 A standalone NumPy/CuPy function does not read these settings: numerical
 allocations still specify dtype where needed. Existing arrays retain their
-dtype; standardizers follow those arrays. The CPU's established float64 kernel
-formation and explicit higher-precision statistics remain unchanged.
+dtype; standardizers follow those arrays. Kernel and factor formation follow
+the workflow dtype on both backends; explicit higher-precision statistics and
+the float64 kernel-diagonal sum remain unchanged.
 
 For example, using the existing sample files::
 
@@ -177,12 +178,12 @@ universal error bound.
    is required. Float64 statistics computed after a float32 decomposition
    cannot recover precision already lost in that decomposition.
 
-The same array dtype also does not guarantee the same internal solver precision.
-In the November 2026 development investigation, the loaded NumPy float32
-eigensolver computed in double precision before returning float32, while CuPy
-used a native single-precision GPU solve. For the 1,940-sample mouse example,
-CuPy float32 differed from NumPy float64 by up to approximately 0.0004 in
-log10(p), even with h2 held fixed. Promoting the same GPU float32 kernel to a
+The same array dtype does not guarantee identical solver results. NumPy and
+CuPy both receive float32 matrices and return float32 eigenvalues and
+eigenvectors, but their LAPACK and cuSOLVER implementations and reduction orders
+can round differently. For the 1,940-sample mouse example, CuPy float32 differed
+from NumPy float64 by up to approximately 0.0004 in log10(p), even with h2 held
+fixed. A diagnostic that explicitly promoted the same GPU float32 kernel to a
 double-precision solve reduced the errors on the two worst chromosomes to about
 0.00001. These are measured examples, not universal error bounds. Float64 is
 needed when the observed float32 errors exceed a study's accuracy requirement;
@@ -203,10 +204,10 @@ Choose precision and memory use
 -------------------------------
 
 Float32 stores the main LMM covariates, phenotypes, kernel/factor, decomposition,
-and test SNP arrays in single precision. On the CPU, training kernel/factor
-formation still uses float64 before conversion to the requested LMM dtype; GPU
-formation uses the requested dtype. Per-SNP statistics use float64 arithmetic, but
-this cannot recover precision already lost in the decomposition or rotations.
+and test SNP arrays in single precision on both CPU and GPU. Kernel-diagonal
+normalization, h2 likelihood calculations, and per-SNP statistics deliberately
+use float64 on both backends, but cannot recover precision already lost in the
+decomposition or rotations.
 Float32 uses less array memory and can accelerate consumer GPUs with limited
 float64 throughput. GPUs with strong float64 support may perform well with the
 default precision. Timings depend on hardware, problem size, and transfers.
@@ -499,5 +500,6 @@ argument and does not return a device array.
 
 CPU read buffers, host-to-device copies, CuPy pools, temporary products,
 the factor/kernel, and solver workspace all contribute to memory use; CUDA allocation failures propagate. Python HIP is not implemented.
-CPU kernel formation and its intermediate memory can remain float64 even for a
-float32 LMM. No timing or memory guarantee follows from ``dtype`` alone.
+CPU kernel formation uses the selected dtype, but reader, BLAS, and solver
+workspace still contribute intermediate memory. No timing or memory guarantee
+follows from ``dtype`` alone.

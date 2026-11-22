@@ -872,11 +872,9 @@ class TestSingleSnp(unittest.TestCase):
 
     # TODO0 Tighten these tolerances to measured values (plus margin) before merging. (may no longer apply: tightened 2026-11-14)
     # Max |Δlog10 p| measured on this data (full rank / low rank), RTX 3060, cupy 14.2:
-    #   numpy float32 vs float64: 5.2e-7 / 4.7e-7
+    #   numpy float32 vs float64: 5.7e-6 / 2.6e-6 (including float32 kernel formation)
     #   cupy vs numpy, float64:   2.5e-14 / 8.9e-10
-    #   cupy vs numpy, float32:   2.3e-6 / 1.3e-6 (two independent float32 roundoffs);
-    #     7.6e-6 / 3.2e-6 when bed-reader builds the kernel on the GPU in float32 (a third roundoff;
-    #     otherwise the float64 kernel from PySnpTools is cast to float32)
+    #   cupy vs numpy, float32:   4.8e-6 / 4.8e-6 (both kernels formed in float32)
     # Each tolerance is about 20x the larger measurement.
     FLOAT32_VS_FLOAT64_LOG10P_TOL = 1e-5
     CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL = 2e-8
@@ -894,6 +892,51 @@ class TestSingleSnp(unittest.TestCase):
             diff = self._max_log10_pvalue_diff(frame64, frame32)
             assert diff < self.FLOAT32_VS_FLOAT64_LOG10P_TOL, (force_low_rank, diff)
             assert abs(frame64.Nullh2.iloc[0] - frame32.Nullh2.iloc[0]) < 1e-4
+
+    def test_numpy_builds_kernel_in_run_dtype(self):
+        real = SnpKernel._read_with_standardizing
+        observed = []
+
+        def spy(kernel, *args, **kwargs):
+            result = real(kernel, *args, **kwargs)
+            data = result[0]
+            values = data.val if hasattr(data, "val") else data.snpreader.val
+            assert isinstance(values, np.ndarray)
+            assert np.dtype(kwargs["dtype"]) == np.dtype("float32")
+            assert values.dtype == np.dtype("float32")
+            observed.append(values.shape)
+            return result
+
+        for force_low_rank in [False, True]:
+            observed.clear()
+            with patch.object(SnpKernel, "_read_with_standardizing", spy):
+                self._dtype_frame("float32", force_low_rank)
+            assert observed
+
+    def test_numpy_float32_decomposition_stays_float32(self):
+        real_eigh = np.linalg.eigh
+        real_svd = np.linalg.svd
+        observed = []
+
+        def eigh(values, *args, **kwargs):
+            result = real_eigh(values, *args, **kwargs)
+            assert values.dtype == np.float32
+            assert all(item.dtype == np.float32 for item in result)
+            observed.append("eigh")
+            return result
+
+        def svd(values, *args, **kwargs):
+            result = real_svd(values, *args, **kwargs)
+            assert values.dtype == np.float32
+            assert all(item.dtype == np.float32 for item in result)
+            observed.append("svd")
+            return result
+
+        for force_low_rank, expected in [(False, "eigh"), (True, "svd")]:
+            observed.clear()
+            with patch.object(np.linalg, "eigh", eigh), patch.object(np.linalg, "svd", svd):
+                self._dtype_frame("float32", force_low_rank)
+            assert observed == [expected]
 
     def test_dtype_float32_cache(self):
         # Low rank keeps UUY, which the cache must round-trip for float32, too.
@@ -936,7 +979,11 @@ class TestSingleSnp(unittest.TestCase):
             frame32 = self._dtype_frame("float32", force_low_rank, pheno=self._scaled_pheno(1e20))
             diff = self._max_log10_pvalue_diff(frame64, frame32)
             assert diff < self.FLOAT32_VS_FLOAT64_LOG10P_TOL, (force_low_rank, diff)
-            np.testing.assert_allclose(frame32.EffectSize, frame64.EffectSize, rtol=1e-4)
+            # Two essentially zero effects (6.23e-6 and 2.35e-8) differed by at
+            # most 9.78e-10 after float32 kernel formation, or 1.57e-4 relative.
+            np.testing.assert_allclose(
+                frame32.EffectSize, frame64.EffectSize, rtol=1e-4, atol=1e-9
+            )
 
     def test_dtype_float32_out_of_range_input(self):
         # Values that float32 cannot hold (or that could overflow a length-N sum)

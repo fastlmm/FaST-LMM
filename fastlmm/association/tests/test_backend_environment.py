@@ -111,8 +111,8 @@ def test_mixed_workers_select_environment_and_restore(tmp_path, monkeypatch, out
     columns = ["sid_index"] + (["Pheno"] if phenotype_count > 1 else [])
     actual = actual.sort_values(columns)
     expected = expected.sort_values(columns)
-    # Use the established single_snp backend bounds: float32 kernel formation,
-    # decomposition and rotation contribute independent roundoff.
+    # Max |Δlog10 p| measured across these cases: 8.97e-7 for float32
+    # (including float32 kernel formation on both backends) and 5.55e-15 for float64.
     tolerance = 1.5e-4 if dtype == "float32" else 2e-8
     np.testing.assert_allclose(np.log10(actual.PValue), np.log10(expected.PValue), rtol=0, atol=tolerance)
 
