@@ -11,13 +11,7 @@ Review and merge bed-reader `implement/cpu-only` (`b535ef3`): one commit on top 
 - Review with `git diff origin/main implement/cpu-only` (23 files), not commit by commit, and not against local `main` (behind `origin/main`). Includes the Python changes in `bed_reader/_array_module.py`, `bed_reader/_open_bed.py`, and `bed_reader/__init__.py`.
 - CI run 44962789065. After it passes, open a PR and squash-merge, so `main` gets one clean commit. Qualification record: `/mnt/c/deldir/bed-reader-cpu-split/REPORT.txt`.
 
-Switch PySnpTools `cupy-sub-matrix` and FaST-LMM `gpu-bed-reader` off bed-reader's GPU API, which CPU-only bed-reader no longer has (`_read_gpu`, `standardize_gpu`, `allocate_gpu`, `bed_reader._gpu`, `has_gpu_support`, `GpuFloat64Warning`, `read(xp=...)`).
-
-- PySnpTools: read on the CPU, `cupy.asarray`, then `_standardize_cupy`; drop the CubeCL allocator coupling; own the GPU float64 warning and GPU-support detection; declare CuPy directly (optional extra). Update or remove the tests that patch bed-reader's GPU internals, and the docs.
-- FaST-LMM: tests and docs that import `has_gpu_support`, `GpuFloat64Warning`, or `is_cubecl_backed` from bed-reader.
-- Validate on the RTX 3060 against the current GPU path: identical or explained results, and timing close to the benchmark's 29.7 s. Check `nvidia-smi` first; the GPU is shared.
-- Then set PySnpTools' bed-reader lower bound to the CPU-only beta once it is published.
-
+After the bed-reader CPU-only beta is published, set PySnpTools' bed-reader lower bound to it, then publish PySnpTools and refresh FaST-LMM's dependency lock (FaST-LMM CI needs the updated PySnpTools). Review both migration branches first (now merged into `cupy-sub-matrix` and `gpu-bed-reader`).
 Every code review (bed-reader Rust and Python, PySnpTools, FaST-LMM) also checks safety and ownership:
 
 - User-supplied indexes and sizes: negative, repeated, out-of-range, empty, and huge values; u32 and usize overflow; and whether every value that reaches a `launch_unchecked` kernel or raw pointer was validated first.
@@ -128,6 +122,7 @@ Remember if the GPU work restarts:
 
 # Done
 
+- November 21, 2026: PySnpTools and FaST-LMM no longer use bed-reader's GPU API (`implement/cpu-bed-reader`: PySnpTools `1e5a103`, fast-forwarded into `cupy-sub-matrix`; FaST-LMM `3393c10`, merged into `gpu-bed-reader` as `f3aef6b`). PySnpTools reads on the CPU, copies to CuPy, standardizes with `_standardize_cupy`, and owns CuPy allocation, GPU detection, and `GpuFloat64Warning`; the `cupy` extra now requires `cupy-cuda13x` directly. FaST-LMM's only runtime change is its warning helper. Canonical suites: 771 and 227 tests passed (seven skips each); GPU regressions, strict docs, and Python 3.11 and 3.15 artifact checks passed; mouse results match pipeline B exactly; WTCCC 28.50 s versus 29.72 s in the benchmark. Not run: other platforms and full boundary-version suites. Report: `/mnt/c/deldir/cpu-bed-reader/REPORT.txt`.
 - November 20, 2026: bed-reader `numpy` is enabled only by `extension-module`, `ndarray-npy` is a test-only dependency, and `byteorder` declares the `std` feature it always needed (before, `ndarray-npy` turned it on). Downstream Rust 1.85 builds no longer need `cargo update -p psm --precise 0.1.28`; verified with a fresh crate on Rust 1.85.
 - November 18, 2026: bed-reader docs reviewed and committed (`4fa5dcd`), with Rust pre-review fixes: checked packed-input u32 indexing, `Drop` reports CUDA errors as unraisable instead of aborting Python, GPU failures raise `RuntimeError`, the CUDA context is retained once, dead code removed, and fractional-value standardization is a parallel two-pass f64 reduction (about 6–22 times faster, identical float32 results). Baseline heads that day: bed-reader `gpu-cubecl` at `71f62e4`, PySnpTools `cupy-sub-matrix` at `75652ce`, FaST-LMM `gpu-bed-reader` at `d37dccf`.
 - November 20, 2026: converted the 71 redundant explicit rustdoc links in bed-reader's `lib.rs` to intra-doc links (`05f5c15`).
