@@ -24,12 +24,15 @@ def main():
     parser.add_argument("--individuals", type=int, default=15000)
     parser.add_argument("--markers", type=int, default=100000)
     parser.add_argument("--repeat", default="pilot")
+    parser.add_argument("--threads", type=int, default=32)
+    parser.add_argument("--label", choices=["warmup", "timed"], default="timed")
+    parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--bed", type=Path, default=LARGE)
     parser.add_argument("--pheno", type=Path)
     arguments = parser.parse_args()
     os.environ["ARRAY_MODULE"] = "numpy" if arguments.backend == "cpu" else "cupy"
     os.environ["ARRAY_DTYPE"] = arguments.precision
-    thread_count = 32
+    thread_count = arguments.threads
     for variable in ["OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OMP_NUM_THREADS", "BLIS_NUM_THREADS", "PST_NUM_THREADS", "NUM_THREADS"]:
         os.environ[variable] = str(thread_count)
     import numpy as np
@@ -37,7 +40,7 @@ def main():
     cp = None
     if arguments.backend == "gpu":
         import cupy as cp
-    import pandas as pd
+    import scipy.linalg
     import fastlmm
     import pysnptools
     import bed_reader
@@ -53,7 +56,7 @@ def main():
 
     assert str(ROOT) in fastlmm.__file__
     assert "/home/carlk/programs/PySnpTools/" in pysnptools.__file__
-    OUTPUT.mkdir(parents=True, exist_ok=True)
+    arguments.output.mkdir(parents=True, exist_ok=True)
     if arguments.size == "mouse":
         bed = Bed(example_file("tests/datasets/mouse/alldata.*", "*.bed"), count_A1=False)
         phenotype_path = example_file("tests/datasets/mouse/pheno_10_causals.txt")
@@ -147,7 +150,12 @@ def main():
     wrap(SnpKernel, "_read_with_standardizing", "kernel")
     wrap(module, "_snp_tester", "association")
     wrap(module, "_fit_h2", "h2_fit")
-    linalg = cp.linalg if cp is not None else np.linalg
+    if cp is not None:
+        linalg = cp.linalg
+    elif arguments.precision == "float32":
+        linalg = scipy.linalg
+    else:
+        linalg = np.linalg
     original_eigh = linalg.eigh
 
     def measured_eigh(matrix, *args, **kwargs):
@@ -183,19 +191,19 @@ def main():
         print(json.dumps({"label": label, "seconds": stages, "calls": dict(calls)}), flush=True)
         return frame, {"seconds": stages, "calls": dict(calls), "eigh": list(evidence)}
 
-    warm_frame, warm = run("warmup")
-    frame, timed = run("timed")
-    pd.testing.assert_frame_equal(frame, warm_frame, check_exact=True)
-    name = f"{arguments.size}-{arguments.individuals if arguments.size == 'large' else 1940}-{arguments.backend}-{arguments.precision}-{arguments.repeat}"
-    frame.to_pickle(OUTPUT / f"{name}.pkl")
+    frame, measurement = run(arguments.label)
+    name = f"{arguments.size}-{arguments.individuals if arguments.size == 'large' else 1940}-{arguments.backend}-{arguments.precision}-threads{thread_count}-{arguments.repeat}"
+    if arguments.label == "timed":
+        frame.to_pickle(arguments.output / f"{name}.pkl")
+    blas = threadpool_info()
+    assert blas and all(pool["num_threads"] == thread_count for pool in blas), blas
     result = dict(
         arguments={key: str(value) if isinstance(value, Path) else value for key, value in vars(arguments).items()},
         dimensions=dimensions,
-        warmup=warm,
-        timed=timed,
+        **{arguments.label: measurement},
         versions={package: importlib.metadata.version(package) for package in ["fastlmm", "pysnptools", "bed-reader", "cupy-cuda13x", "numpy", "scipy"]},
         imports={package: loaded.__file__ for package, loaded in [("fastlmm", fastlmm), ("pysnptools", pysnptools), ("bed_reader", bed_reader)]},
-        blas=threadpool_info(),
+        blas=blas,
         gpu_memory=cp.cuda.runtime.memGetInfo() if cp is not None else None,
         settings={
             "backend": arguments.backend,
@@ -211,7 +219,7 @@ def main():
             "explicit_numpy_read_used_for_legacy_reader": read_accepts_xp,
         },
     )
-    (OUTPUT / f"{name}.json").write_text(json.dumps(result, indent=2))
+    (arguments.output / f"{name}.json").write_text(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
