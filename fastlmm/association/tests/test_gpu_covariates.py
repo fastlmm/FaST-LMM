@@ -35,7 +35,7 @@ def test_chromosome_covariates_on_selected_backend(backend, dtype):
 
 @pytest.mark.parametrize("dtype", ["float32", "float64"])
 @pytest.mark.parametrize("in_memory", [False, True])
-def test_loco_covariates_and_native_test_snps(tmp_path, dtype, in_memory):
+def test_loco_covariates_and_gpu_test_snps(tmp_path, dtype, in_memory):
     from bed_reader import to_bed
     from pysnptools.util.gpu import has_gpu_support
     from fastlmm.association import single_snp

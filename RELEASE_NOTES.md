@@ -1,5 +1,14 @@
 # FaST-LMM release notes
 
+## Unreleased
+
+- Use CPU-only bed-reader: test SNPs from any reader, including BED, are decoded
+  on the CPU, then copied to CuPy for GPU standardization and computation.
+- `GpuFloat64Warning` and `has_gpu_support` now come from
+  `pysnptools.util.gpu`. Code that filters `bed_reader.GpuFloat64Warning`
+  must use the PySnpTools class instead.
+- Requires the PySnpTools release that provides `pysnptools.util.gpu`.
+
 ## 1.1.0a1 (2026-11-18, alpha)
 
 - Add the `cupy` extra and require the coordinated PySnpTools 1.1.0a1 and
