@@ -68,6 +68,19 @@ Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2
 
 - PySnpTools: full pytest needs an external `qctool` for two doctests. Document how to install and configure it, name the tests that need it, and make them fail clearly (not silently skip) when it is missing.
 - Document what each runner covers (pytest and the legacy `tests/test.py` in each repository). FaST-LMM's broad pytest collection also imports old setup and benchmark files; clean that up before pytest can replace the canonical runner.
+- FaST-LMM CPU pytest failures to follow up separately. The canonical `tests/test.py` run passed 227 cases with 7 skipped.
+
+  | Pytest case | Cause | Covered by `tests/test.py`? |
+  | --- | --- | --- |
+  | `fastlmm.association.single_snp_scale.single_snp_scale` doctest | Pytest treats the expected `-etc-` marker as literal output, but the example prints nothing at that step. | Yes. `TestSingleSnpScale.test_doctest` sets `doctest.ELLIPSIS_MARKER` to `-etc-` and passes. |
+  | `fastlmm.association.snp_set.snp_set` doctest | Pytest runs the example from the repository root, where `../../tests/datasets/phenSynthFrom22.23.N300.txt` does not resolve to the fixture. | Yes. `TestSnpSet.test_doctest` changes to `fastlmm/association` first and passes. |
+  | `TestSingleSnpSelect.test_old_sel_plus_pc` | The bundled `fastlmmc` auto-selection command exits with status 132 (SIGILL), so the expected `.aoselect.snps.txt` file is missing. | No. The runner omits the deprecated `test_single_snp_select` suite. |
+  | `fastlmm.external.pca.PCA` doctest | scikit-learn 1.9.1 prints `PCA(n_components=2)` instead of including the default parameters in its estimator representation. | No. The runner does not collect doctests from this module. |
+  | `fastlmm.external.pca.ProbabilisticPCA` doctest | The example also instantiates scikit-learn's `PCA` and expects its older estimator representation. | No. The runner does not collect doctests from this module. |
+  | `fastlmm.external.pca.RandomizedPCA` doctest | The example imports `RandomizedPCA` from `sklearn.decomposition`, which no longer exports that class. | No. The runner does not collect doctests from this module. |
+
+  The scikit-learn representation and removed import affect these examples. `compute_auto_pcs` imports FaST-LMM's vendored `PCA`; `PrecomputeLocoPcs` imports the still available `sklearn.decomposition.PCA`. No production code imports scikit-learn's removed `RandomizedPCA` or checks the old representation.
+
 - Still open for later: PySnpTools and FaST-LMM legacy suites depend on fixtures excluded from wheels, so full installed-wheel suite coverage needs independently available regression fixtures.
 - After the release: make pytest the single test runner in PySnpTools and FaST-LMM, replacing the hand-built `unittest` suites (`pysnptools/test.py` via `tests/test.py`, and FaST-LMM's `tests/test.py`), which are what CI runs today. Use `--doctest-modules` for the doctest wrappers, convert generated cases such as `NaNCNCTestCases` to parametrized tests, give tests that write fixed shared paths their own temporary folders (two concurrent runs of the PySnpTools suite collided on these on November 21), then try parallel runs (pytest-xdist) to cut the long run time. Show that pytest collects everything the old runners do before switching CI and retiring them.
 
