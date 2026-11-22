@@ -82,6 +82,12 @@ Maintain one qualification record linking exact commits, artifact hashes, enviro
 - Keep reusable scripts and run evidence under a findable folder in /mnt/c/deldir; keep virtual environments and large build output under ~/.cache or /mnt/c/deldir.
 - Distinguish old worktree evidence from validation of the integrated development heads.
 
+Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2026). These are not migration defects: the installed-wheel smoke tests passed, and the canonical suites passed with source fixtures. Keep them out of the migration work.
+
+- PySnpTools: full pytest needs an external `qctool` for two doctests. Document how to install and configure it, name the tests that need it, and make them fail clearly (not silently skip) when it is missing.
+- PySnpTools and FaST-LMM: the legacy suites depend on fixtures excluded from wheels, so the full suites can't run against an installed wheel. Make the regression fixtures available independently of the source checkout (for example, a separate download or test-data package), so the full suites can test installed artifacts.
+- Document what each runner covers (pytest and the legacy `tests/test.py` in each repository). FaST-LMM's broad pytest collection also imports old setup and benchmark files; clean that up before pytest can replace the canonical runner.
+
 Parked: bed-reader GPU work (branch `implement/gpu` at `39c5392`, files identical to the reviewed head `d19587d`; `implement/read-cubecl-method` keeps the review history). Months away or never; a possible RustConf workshop. The record below is kept for a restart.
 
 Review Rust bed-reader code (work branch `implement/read-cubecl-method`, based on `gpu-cubecl` at `49b670b`, with approved formatting commit `0b51112`), one batch at a time, in this order:
