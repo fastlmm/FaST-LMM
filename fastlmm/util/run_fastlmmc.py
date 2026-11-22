@@ -138,7 +138,10 @@ def run(
         import stat
 
         st = os.stat(fastlmmpath)
-        os.chmod(fastlmmpath, st.st_mode | stat.S_IEXEC)
+        # The binary is stored executable in git; change the mode only when
+        # needed, so a run doesn't modify a tracked or installed file.
+        if not st.st_mode & stat.S_IEXEC:
+            os.chmod(fastlmmpath, st.st_mode | stat.S_IEXEC)
     else:
         logging.info("\n\n unsupported operating system!")
     if not os.path.isfile(fastlmmpath):

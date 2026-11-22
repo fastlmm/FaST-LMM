@@ -182,7 +182,7 @@ class TestEpistasis(unittest.TestCase):
         from unittest.mock import patch
         import pandas as pd
         from pysnptools.snpreader import Bed
-        from pysnptools.util.mapreduce1.runner import Local, LocalMultiProc
+        from pysnptools.util.mapreduce1.runner import LocalMultiProc
 
         reader = Bed(self.bedbase, count_A1=False)
         arguments = dict(test_snps=reader, pheno=self.phen_fn, G0=reader, covar=self.cov_fn,
@@ -190,8 +190,11 @@ class TestEpistasis(unittest.TestCase):
         with TemporaryDirectory() as directory, patch.dict(
             os.environ, {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float64"}
         ):
+            # Run the reference through the same one-thread worker runner: BLAS
+            # results depend on the thread count (16 parent threads changed PValue
+            # by up to 1.8e-7), so only the task environment may differ.
             expected = epistasis(cache_file=str(Path(directory) / "reference.npz"),
-                                 runner=Local(), **arguments)
+                                 runner=LocalMultiProc(taskcount=1, num_threads=1), **arguments)
             # Explicit task environments override parent defaults after worker
             # imports. Reader arguments must still enforce the qualified dtype.
             runner = LocalMultiProc(
