@@ -49,9 +49,9 @@ class TestGwas(unittest.TestCase):
     #    make sure gwas yields same results as fastlmmC
     #    """
 
-    #    os.chdir(r"d:\data\carlk\cachebio\genetics\wtccc\data")
-    #    bed_fn = "filtered/wtcfb"
-    #    pheno_fn = r'pheno\cad.txt'
+    #    # Supply a local BED and phenotype for this comparison.
+    #    bed_fn = "path/to/input.bed"
+    #    pheno_fn = "path/to/input.pheno.txt"
 
     #    logging.info("Loading Bed")
     #    snp_reader = Bed(bed_fn)
