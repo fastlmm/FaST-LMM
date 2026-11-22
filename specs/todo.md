@@ -12,6 +12,7 @@ Review and merge bed-reader `implement/cpu-only` (`b535ef3`): one commit on top 
 - CI run 44962789065. After it passes, open a PR and squash-merge, so `main` gets one clean commit. Qualification record: `/mnt/c/deldir/bed-reader-cpu-split/REPORT.txt`.
 
 After the bed-reader CPU-only beta is published, set PySnpTools' bed-reader lower bound to it, then publish PySnpTools and refresh FaST-LMM's dependency lock (FaST-LMM CI needs the updated PySnpTools). Review both migration branches first (now merged into `cupy-sub-matrix` and `gpu-bed-reader`).
+
 Every code review (bed-reader Rust and Python, PySnpTools, FaST-LMM) also checks safety and ownership:
 
 - User-supplied indexes and sizes: negative, repeated, out-of-range, empty, and huge values; u32 and usize overflow; and whether every value that reaches a `launch_unchecked` kernel or raw pointer was validated first.
