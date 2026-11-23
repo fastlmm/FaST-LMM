@@ -150,13 +150,16 @@ FaST-LMM's dependency minimums and performing final Python 3.15 acceptance.
 
 ## Publish
 
-Immediately before any publish step, re-read the open-work records:
-FaST-LMM's `specs/todo.md` (shared by the FaST-LMM family of repositories), this
-repository's `specs/` folder, and its open GitHub issues. Search them for
-FaST-LMM and give the maintainer a list of every open item, each marked as
-included in this release or deferred, with the reason. Do not publish until the
-maintainer has seen that list. Parallel work may have added items after
-preparation started, so an earlier check does not count.
+Immediately before any publish step, re-read the open-work records: FaST-LMM's
+`specs/todo.md` (shared by the FaST-LMM family of repositories), this
+repository's `specs/` folder, and its open GitHub issues and pull requests.
+Search them for FaST-LMM. Also search the code with `git grep -niE "todo0|cmk0"`
+for release-blocking markers (`TODO0`, `TODO00`, ...; `cmk0` in older code);
+plain `TODO` marks later work and needs only a skim. Give the maintainer a list
+of every open item, each marked as included in this release or deferred, with
+the reason. Do not publish until the maintainer has seen that list. Parallel
+work may have added items after preparation started, so an earlier check does
+not count.
 
 1. Merge the reviewed release change into the default branch and confirm that
    it is clean and up to date.
