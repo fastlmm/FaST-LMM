@@ -111,6 +111,8 @@ def test_concurrent_default_precision_resolves_after_restoration(monkeypatch):
 def test_gpu_user_values_are_validated_before_widening_or_narrowing(monkeypatch):
     from fastlmm.association.single_snp import _cpu_user_data, _read_user_values
 
+    if not has_gpu_support():
+        pytest.skip("requires CuPy and a usable CUDA device")
     cupy = pytest.importorskip("cupy")
     monkeypatch.setenv("ARRAY_DTYPE", "float32")
     raw = SnpData(iid=[["f", "0"], ["f", "1"]], sid=["y"],
