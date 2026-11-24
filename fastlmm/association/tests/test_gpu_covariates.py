@@ -1,5 +1,6 @@
 """Chromosome covariates follow the selected backend and align sample IDs."""
 
+from importlib import import_module
 from unittest.mock import patch
 
 import numpy as np
@@ -13,7 +14,7 @@ from fastlmm.association.single_snp import _create_covar_chrom
 
 @pytest.mark.parametrize("backend", ["numpy", "cupy"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_chromosome_covariates_on_selected_backend(backend, dtype):
+def test_chromosome_covariates_on_selected_backend(backend, dtype, monkeypatch):
     if backend == "cupy" and not has_gpu_support():
         pytest.skip("requires CuPy and a usable CUDA device")
     xp = np if backend == "numpy" else pytest.importorskip("cupy")
@@ -24,8 +25,9 @@ def test_chromosome_covariates_on_selected_backend(backend, dtype):
     rows = [3, 0, 4, 1, 2]
     chromosome = SnpData(iid=iid[rows], sid=["chromosome_covariate"],
                          val=(values + 10)[rows], xp=np)
-    with patch.dict("os.environ", {"ARRAY_MODULE": backend}):
-        result = _create_covar_chrom(covariates, {1: chromosome}, 1)
+    monkeypatch.setenv("ARRAY_MODULE", backend)
+    monkeypatch.delenv("ARRAY_DTYPE", raising=False)
+    result = _create_covar_chrom(covariates, {1: chromosome}, 1)
     assert isinstance(result.val, xp.ndarray)
     np.testing.assert_array_equal(result.iid, iid)
     np.testing.assert_array_equal(result.sid, ["covariate", "chromosome_covariate"])
@@ -38,16 +40,16 @@ def test_chromosome_covariates_on_selected_backend(backend, dtype):
 
 @pytest.mark.parametrize("dtype", ["float32", "float64"])
 @pytest.mark.parametrize("in_memory", [False, True])
-def test_loco_covariates_and_gpu_test_snps(tmp_path, dtype, in_memory):
+@pytest.mark.parametrize("backend", ["numpy", "cupy"])
+def test_loco_model_inputs(tmp_path, dtype, in_memory, backend):
     from bed_reader import to_bed
-    from pysnptools.util.gpu import has_gpu_support
     from fastlmm.association import single_snp
     from fastlmm.inference.lmm_cov import LMM
     from pysnptools.snpreader import Bed
 
-    if not has_gpu_support():
+    if backend == "cupy" and not has_gpu_support():
         pytest.skip("requires CuPy and a usable CUDA device")
-    cupy = pytest.importorskip("cupy")
+    xp = np if backend == "numpy" else pytest.importorskip("cupy")
     rng = np.random.default_rng(42)
     path = tmp_path / "covariates.bed"
     to_bed(path, rng.integers(0, 3, size=(40, 24), dtype=np.int8),
@@ -55,30 +57,49 @@ def test_loco_covariates_and_gpu_test_snps(tmp_path, dtype, in_memory):
     reader = Bed(path, count_A1=True)
     phenotype = SnpData(iid=reader.iid, sid=["phenotype"], val=rng.normal(size=(40, 1)), xp=np)
     covariates = SnpData(iid=reader.iid, sid=["covariate"], val=rng.normal(size=(40, 1)), xp=np)
-    by_chromosome = {chromosome: SnpData(iid=reader.iid[::-1], sid=["chromosome_covariate"],
-                                       val=rng.normal(size=(40, 1)), xp=np)
-                     for chromosome in (1, 2)}
+    chromosome_values = {chromosome: rng.normal(size=(40, 1)) for chromosome in (1, 2)}
+    by_chromosome = {
+        chromosome: SnpData(iid=reader.iid[::-1], sid=["chromosome_covariate"],
+                            val=values[::-1].copy(), xp=np)
+        for chromosome, values in chromosome_values.items()
+    }
     arguments = dict(pheno=phenotype, covar=covariates, covar_by_chrom=by_chromosome,
                      h2=0.3, force_full_rank=True, dtype=dtype)
     expected = single_snp(reader, xp=np, **arguments)
-    source = reader.read(dtype=dtype, xp=cupy) if in_memory else reader
+    source = reader.read(dtype=dtype, xp=xp) if in_memory else reader
+    module = import_module("fastlmm.association.single_snp")
+    original_snp_tester = module._snp_tester
     original_evaluate = LMM.nLLeval
+    tested_chromosomes = set()
     tested_blocks = []
+
+    def snp_tester(test_snps, interact, pheno, lmm, *args, **kwargs):
+        chromosome, = np.unique(test_snps.pos[:, 0])
+        rows = reader.iid_to_index(test_snps.iid)
+        assert isinstance(lmm.X, xp.ndarray)
+        assert lmm.X.dtype == np.dtype(dtype)
+        expected_design = np.column_stack((
+            covariates.val[rows], chromosome_values[chromosome][rows], np.ones(len(rows))
+        )).astype(dtype)
+        np.testing.assert_array_equal(asnumpy(lmm.X), expected_design)
+        tested_chromosomes.add(chromosome)
+        return original_snp_tester(test_snps, interact, pheno, lmm, *args, **kwargs)
 
     def evaluate(model, *args, **kwargs):
         if kwargs.get("snps") is not None:
             values = kwargs["snps"]
-            assert isinstance(values, cupy.ndarray)
+            assert isinstance(values, xp.ndarray)
+            assert values.dtype == np.dtype(dtype)
             tested_blocks.append(values.shape)
         return original_evaluate(model, *args, **kwargs)
 
-    with patch.object(LMM, "nLLeval", evaluate):
-        actual = single_snp(source, xp=cupy, **arguments)
+    with patch.object(module, "_snp_tester", snp_tester), patch.object(LMM, "nLLeval", evaluate):
+        actual = single_snp(source, xp=xp, **arguments)
+    assert tested_chromosomes == {1, 2}
     assert tested_blocks
     actual = actual.sort_values("SNP")
     expected = expected.sort_values("SNP")
     np.testing.assert_array_equal(actual.SNP, expected.SNP)
-    # Max |Δlog10 p| measured here: 5.80e-7 for float32 (including float32
-    # kernel formation on both backends) and 2.44e-15 for float64.
+    # Allow the same CPU/GPU rounding margins as the other association tests.
     tolerance = 1.5e-4 if dtype == "float32" else 2e-8
     np.testing.assert_allclose(np.log10(actual.PValue), np.log10(expected.PValue), rtol=0, atol=tolerance)

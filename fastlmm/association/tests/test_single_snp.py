@@ -876,7 +876,8 @@ class TestSingleSnp(unittest.TestCase):
     #   numpy float32 vs float64: 5.7e-6 / 2.6e-6 (including float32 kernel formation)
     #   cupy vs numpy, float64:   2.5e-14 / 8.9e-10
     #   cupy vs numpy, float32:   4.8e-6 / 4.8e-6 (both kernels formed in float32)
-    # Each tolerance is about 20x the larger measurement.
+    # The CPU precision comparison allows about 1.75x the larger measurement.
+    # The GPU comparisons allow about 22x (float64) and 31x (float32).
     FLOAT32_VS_FLOAT64_LOG10P_TOL = 1e-5
     CUPY_VS_NUMPY_FLOAT64_LOG10P_TOL = 2e-8
     CUPY_VS_NUMPY_FLOAT32_LOG10P_TOL = 1.5e-4
