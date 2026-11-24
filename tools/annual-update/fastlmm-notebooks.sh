@@ -21,6 +21,9 @@ import json, sys, subprocess, time, tomllib
 from pathlib import Path
 repo, run = Path(sys.argv[1]), Path(sys.argv[2]); only = set(sys.argv[3:])
 policy = tomllib.loads((repo / "tests/notebooks.toml").read_text())["notebook"]
+unknown = only - {Path(entry["path"]).stem for entry in policy}
+if unknown:
+    sys.exit(f"Unknown notebook name(s): {', '.join(sorted(unknown))}")
 py = Path(sys.executable)
 
 def portable(nb):
