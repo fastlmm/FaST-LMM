@@ -1,4 +1,4 @@
-from fastlmm.util._backend import cpu64
+from fastlmm.util._backend import cpu64, cpu64_mapper
 from pysnptools.util.mapreduce1.runner import *
 import logging
 import cloudpickle
@@ -130,10 +130,10 @@ def work_item2(
 
     if permute_plus_index >= 0:
         # We shuffle the val, but not the iid, because that would cancel out.
-        # Integrate the permute_plus_index into the random.
-        np.random.seed((permute_plus_seed + permute_plus_index) % 4294967295)
+        # Keep the legacy seeded permutation sequence with task-local state.
+        rng = np.random.RandomState((permute_plus_seed + permute_plus_index) % 4294967295)
         new_index = np.arange(G_kernel.iid_count)
-        np.random.shuffle(new_index)
+        rng.shuffle(new_index)
         E_kernel_temp = E_kernel[new_index].read()
         E_kernel = KernelData(
             iid=E_kernel.iid,
@@ -212,9 +212,9 @@ def work_item2(
         val = G_kernel.val * E_kernel.val
         if permute_times_index >= 0:
             # We shuffle the val, but not the iid, because doing both would cancel out
-            np.random.seed((permute_times_seed + permute_times_index) % 4294967295)
+            rng = np.random.RandomState((permute_times_seed + permute_times_index) % 4294967295)
             new_index = np.arange(G_kernel.iid_count)
-            np.random.shuffle(new_index)
+            rng.shuffle(new_index)
             val = pstutil.sub_matrix(val, new_index, new_index)
 
         GxE_kernel = KernelData(
@@ -351,6 +351,7 @@ def heritability_spatial_correction(
 
     """
     with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:
+        scoped_work_item = cpu64_mapper(work_item, "heritability_spatial_correction")
         ######################
         # Prepare the inputs
         ######################
@@ -413,9 +414,9 @@ def heritability_spatial_correction(
 
             # Run "run_line" on each set of arguments and save to file
             return_list = (
-                map_function(work_item, arg_list)
+                map_function(scoped_work_item, arg_list)
                 if len(arg_list) > 1 or always_remote
-                else list(map(work_item, arg_list))
+                else list(map(scoped_work_item, arg_list))
             )
             return_list = [
                 line for line in return_list if line is not None
@@ -487,9 +488,9 @@ def heritability_spatial_correction(
 
             # Run "run_line" on each set of arguments and save to file
             return_list = (
-                map_function(work_item, arg_list)
+                map_function(scoped_work_item, arg_list)
                 if len(arg_list) > 1 or always_remote
-                else list(map(work_item, arg_list))
+                else list(map(scoped_work_item, arg_list))
             )
             return_list = [
                 line for line in return_list if line is not None
@@ -673,9 +674,9 @@ def heritability_spatial_correction(
 
             # Run "run_line" on each set of arguments and save to file
             return_list = (
-                map_function(work_item, arg_list)
+                map_function(scoped_work_item, arg_list)
                 if len(arg_list) > 1 or always_remote
-                else list(map(work_item, arg_list))
+                else list(map(scoped_work_item, arg_list))
             )
             return_list = [
                 line for line in return_list if line is not None
@@ -759,9 +760,9 @@ def heritability_spatial_correction(
 
                 # Run "run_line" on each set of arguments and save to file
                 return_list = (
-                    map_function(work_item, arg_list)
+                    map_function(scoped_work_item, arg_list)
                     if len(arg_list) > 1 or always_remote
-                    else list(map(work_item, arg_list))
+                    else list(map(scoped_work_item, arg_list))
                 )
                 return_list = [
                     line for line in return_list if line is not None

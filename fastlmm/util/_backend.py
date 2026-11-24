@@ -1,10 +1,11 @@
 """Conservative boundaries for workflows qualified only on NumPy/float64."""
 from contextlib import contextmanager, nullcontext
 from contextvars import ContextVar
-from functools import wraps
+from functools import partial, wraps
 from inspect import signature
-from threading import RLock, get_ident
+from threading import Condition, RLock, get_ident
 import os
+from types import MemberDescriptorType
 import warnings
 
 import numpy as np
@@ -24,6 +25,8 @@ class _Cpu64Scope:
         self.pid = os.getpid()
         self.owner = get_ident()
         self.active = True
+        self._condition = Condition()
+        self._borrowers = 0
 
     def is_local(self):
         return self.active and self.pid == os.getpid()
@@ -31,6 +34,26 @@ class _Cpu64Scope:
     def __reduce__(self):
         # A serialized worker must establish its own environment.
         return type(None), ()
+
+    @contextmanager
+    def borrow(self):
+        with self._condition:
+            admitted = self.active
+            if admitted:
+                self._borrowers += 1
+        try:
+            yield admitted
+        finally:
+            if admitted:
+                with self._condition:
+                    self._borrowers -= 1
+                    if not self._borrowers:
+                        self._condition.notify_all()
+
+    def close(self):
+        with self._condition:
+            self._condition.wait_for(lambda: not self._borrowers)
+            self.active = False
 
 
 def cpu64_required():
@@ -42,10 +65,16 @@ def cpu64_required():
 def cpu64_scope(api, *, backend=None, dtype=None, scope=None):
     if scope is None or not scope.is_local():
         scope = _cpu64_active.get()
-    borrowed = scope is not None and scope.is_local() and scope.owner != get_ident()
-    # A synchronous runner waits for its threads before the owning scope can
-    # restore the environment. Its threads share that scope without taking
-    # the owner's lock or writing to the process environment.
+    may_borrow = scope is not None and scope.is_local() and scope.owner != get_ident()
+    # Workers share the owner's settings without writing to the environment.
+    # If the map raises, the owner still waits for admitted threads to finish.
+    with scope.borrow() if may_borrow else nullcontext(False) as borrowed:
+        with _cpu64_environment(api, backend, dtype, scope, borrowed):
+            yield
+
+
+@contextmanager
+def _cpu64_environment(api, backend, dtype, scope, borrowed):
     with nullcontext() if borrowed else workflow_lock:
         backend = os.environ.get("ARRAY_MODULE", "numpy") if backend is None else backend
         if not isinstance(backend, str) or backend not in ("numpy", "cupy"):
@@ -56,7 +85,7 @@ def cpu64_scope(api, *, backend=None, dtype=None, scope=None):
         if backend != "numpy" or dtype != np.dtype("float64"):
             warnings.warn(
                 f"{api} is qualified only for numpy/float64; running with numpy/float64 "
-                f"instead of requested {backend}/{dtype.name}.", UserWarning, stacklevel=3,
+                f"instead of requested {backend}/{dtype.name}.", UserWarning, stacklevel=5,
             )
         settings = {"ARRAY_MODULE": "numpy", **dtype_environment(np.dtype("float64"))}
         if borrowed:
@@ -76,7 +105,7 @@ def cpu64_scope(api, *, backend=None, dtype=None, scope=None):
             os.environ.update(settings)
             yield
         finally:
-            scope.active = False
+            scope.close()
             _cpu64_active.reset(token)
             for key, value in previous.items():
                 if value is None:
@@ -124,29 +153,51 @@ def cpu64(function=None, *, api=None):
         return lambda function: cpu64(function, api=api)
     parameters = signature(function)
     api = function.__qualname__ if api is None else api
+    receiver = next(iter(parameters.parameters), None)
+    check_model = (
+        function.__module__.startswith("fastlmm.inference.")
+        and receiver in ("self", "lmm")
+        and function.__name__ != "fit"
+    )
 
     @wraps(function)
     def wrapped(*args, **kwargs):
         with cpu64_scope(api):
             # Old pickles or direct attribute assignments can contain unqualified
             # model state. Widening a cached decomposition cannot repair its error.
-            if args and function.__name__ != "fit" and type(args[0]).__module__.startswith("fastlmm.inference"):
-                state = dict(getattr(args[0], "__dict__", {}))
-                for name in getattr(type(args[0]), "__slots__", ()):
-                    state[name] = getattr(args[0], name, None)
-                for name, value in state.items():
-                    if isinstance(value, np.ndarray) and value.dtype == np.float32:
-                        raise ValueError(f"{function.__qualname__}: cached model {name} is float32; refit with numpy/float64")
-                    if type(value).__module__.split(".")[0] == "cupy":
-                        raise ValueError(f"{function.__qualname__}: cached model {name} uses CuPy; refit with numpy/float64")
-            args = tuple(_cpu_input(value, api) for value in args)
-            kwargs = {key: _cpu_input(value, api) for key, value in kwargs.items()}
             bound = parameters.bind(*args, **kwargs)
+            if check_model:
+                _check_model_state(bound.arguments[receiver], function.__qualname__)
             for name, value in bound.arguments.items():
+                value = _cpu_input(value, api)
                 if name.endswith("runner"):
-                    bound.arguments[name] = cpu64_runner(value, api)
+                    value = cpu64_runner(value, api)
+                bound.arguments[name] = value
             return function(*bound.args, **bound.kwargs)
     return wrapped
+
+
+def _check_model_state(model, api):
+    def check(name, value):
+        if isinstance(value, np.ndarray) and value.dtype == np.float32:
+            raise ValueError(f"{api}: cached model {name} is float32; refit with numpy/float64")
+        if type(value).__module__.split(".")[0] == "cupy":
+            raise ValueError(f"{api}: cached model {name} uses CuPy; refit with numpy/float64")
+
+    for name, value in getattr(model, "__dict__", {}).items():
+        check(name, value)
+    # Walk defining classes so inherited, private, and shadowed slots are all
+    # inspected directly, without invoking properties on a user subclass.
+    for model_class in type(model).__mro__:
+        if "__slots__" not in vars(model_class):
+            continue
+        for name, descriptor in vars(model_class).items():
+            if isinstance(descriptor, MemberDescriptorType):
+                try:
+                    value = descriptor.__get__(model)
+                except AttributeError:
+                    continue  # The slot has not been set.
+                check(name, value)
 
 
 def cpu64_if(required, *, api=None):
@@ -158,6 +209,11 @@ def cpu64_runner(runner, api):
     if runner is None or isinstance(runner, _Cpu64Runner):
         return runner
     return _Cpu64Runner(runner, api)
+
+
+def cpu64_mapper(mapper, api):
+    """Carry the current CPU64 scope through a synchronous map callback."""
+    return partial(_cpu64_call, mapper, api, _cpu64_active.get())
 
 
 class _Cpu64Runner:
@@ -172,18 +228,15 @@ class _Cpu64Runner:
     def run_list(self, distributable_list, reducer, name=None):
         work = [_Cpu64Distributable(distributable, self.api) for distributable in distributable_list]
         if hasattr(self.runner, "run_list"):
-            from functools import partial
-            scoped_reducer = partial(
-                _cpu64_reduce, cpu64(reducer), self.api, _cpu64_active.get()
-            )
+            scoped_reducer = cpu64_mapper(cpu64(reducer), self.api)
             return self.runner.run_list(work, reducer=scoped_reducer, name=name)
         with cpu64_scope(self.api):
             return reducer(self.runner.run(distributable) for distributable in work)
 
 
-def _cpu64_reduce(reducer, api, scope, result_sequence):
+def _cpu64_call(callback, api, scope, argument):
     with cpu64_scope(api, scope=scope):
-        return reducer(result_sequence)
+        return callback(argument)
 
 
 def _cpu64_work(work, api, scope):
@@ -220,7 +273,6 @@ class _Cpu64Distributable:
         return self._sequence(lambda: islice(self.distributable.work_sequence(), start, end))
 
     def _sequence(self, make_sequence):
-        from functools import partial
         # Both generator initialization and advancing can read numerical data.
         # End each scope before yielding; never hold the process lock across a
         # suspended generator that a runner might consume on another thread.

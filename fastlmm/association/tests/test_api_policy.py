@@ -177,6 +177,106 @@ class TestApiPolicy(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "cached model beta is float32"):
                 predictor.predict(X=self.covar, K0_whole_test=kernel)
 
+    def test_inherited_methods_check_cached_model_state(self):
+        from fastlmm.inference.lmm import LMM
+
+        class ExternalPredictor(LinearRegression):
+            __slots__ = ()
+
+        class ExternalLmm(LMM):
+            __slots__ = ()
+
+        predictor = ExternalPredictor().fit(X=self.covar, y=self.pheno)
+        predictor.predict(X=self.covar)
+        predictor.beta = predictor.beta.astype(np.float32)
+        with self.assertRaisesRegex(ValueError, "cached model beta is float32"):
+            predictor.predict(X=self.covar)
+        with self.assertRaisesRegex(ValueError, "cached model beta is float32"):
+            LinearRegression.predict(self=predictor, X=self.covar)
+
+        model = ExternalLmm()
+        model.setG(self.reader.read(xp=np, dtype=np.float64).val)
+        model.S = model.S.astype(np.float32)
+        with self.assertRaisesRegex(ValueError, "cached model S is float32"):
+            model.sety(self.pheno.val[:, 0])
+
+    def test_spatial_correction_threaded_map(self):
+        import subprocess
+        import sys
+        from textwrap import dedent
+
+        # A regression would leave executor threads blocked even on shutdown.
+        subprocess.run(
+            [sys.executable, "-c", dedent("""
+                from concurrent.futures import ThreadPoolExecutor
+                import os
+                from unittest.mock import patch
+                import numpy as np
+                import pandas as pd
+                from fastlmm.association import heritability_spatial_correction
+                from pysnptools.snpreader import SnpData
+
+                rng = np.random.default_rng(243)
+                iid = [["family", str(index)] for index in range(40)]
+                reader = SnpData(iid=iid, sid=[str(index) for index in range(24)],
+                                 val=rng.integers(0, 3, size=(40, 24)).astype(float), xp=np)
+                pheno = SnpData(iid=iid, sid=["y"], val=rng.normal(size=(40, 1)), xp=np)
+                coordinates = np.arange(80, dtype=np.float64).reshape(40, 2)
+                arguments = (reader, coordinates, reader.iid, [10, 20], 2, pheno)
+                options = dict(jackknife_count=2, permute_plus_count=3,
+                               permute_times_count=3, always_remote=True)
+                settings = {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float32"}
+                with patch.dict(os.environ, settings), ThreadPoolExecutor(max_workers=2) as executor:
+                    random_state = np.random.get_state()
+                    expected = heritability_spatial_correction(*arguments, **options)
+                    actual = heritability_spatial_correction(
+                        *arguments, map_function=executor.map, **options
+                    )
+                    pd.testing.assert_frame_equal(actual, expected)
+                    assert {key: os.environ[key] for key in settings} == settings
+                    np.testing.assert_equal(np.random.get_state(), random_state)
+            """)],
+            check=True, timeout=30,
+        )
+
+    def test_cpu64_drains_active_map_workers_on_error(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Event
+        from fastlmm.util._backend import _Cpu64Scope, cpu64_mapper
+
+        entered, closing, release = Event(), Event(), Event()
+        worker_futures = []
+        original_close = _Cpu64Scope.close
+
+        def close(scope):
+            closing.set()
+            original_close(scope)
+
+        def worker(_):
+            entered.set()
+            self.assertTrue(release.wait(5))
+            return os.environ["ARRAY_DTYPE"]
+
+        @cpu64
+        def failing_map(executor):
+            worker_futures.append(executor.submit(cpu64_mapper(worker, "map test"), None))
+            self.assertTrue(entered.wait(5))
+            raise RuntimeError("map failed")
+
+        with patch.dict(os.environ, {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float32"}), \
+             patch.object(_Cpu64Scope, "close", close), ThreadPoolExecutor(max_workers=2) as executor:
+            caller = executor.submit(failing_map, executor)
+            try:
+                self.assertTrue(closing.wait(5))
+                self.assertFalse(caller.done())
+                self.assertEqual(os.environ["ARRAY_DTYPE"], "float64")
+            finally:
+                release.set()
+            with self.assertRaisesRegex(RuntimeError, "map failed"):
+                caller.result(timeout=5)
+            self.assertEqual(worker_futures[0].result(timeout=5), "float64")
+            self.assertEqual(os.environ["ARRAY_DTYPE"], "float32")
+
     def test_cpu64_scope_does_not_leak_to_concurrent_single_kernel(self):
         from concurrent.futures import ThreadPoolExecutor
         from threading import Event, RLock
