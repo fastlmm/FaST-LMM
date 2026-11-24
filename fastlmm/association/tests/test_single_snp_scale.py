@@ -403,15 +403,13 @@ class TestSingleSnpScale(unittest.TestCase):
                 )
             return windows_fn
 
-    def test_doctest(self):  # Can't get doc test to work so marked out.
+    def test_doctest(self):
         old_dir = os.getcwd()
         os.chdir(os.path.dirname(os.path.realpath(__file__)) + "/..")
-        doctest.ELLIPSIS_MARKER = "-etc-"
         result = doctest.testmod(
             sys.modules["fastlmm.association.single_snp_scale"],
             optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE,
         )
-        doctest.ELLIPSIS_MARKER = "..."
         os.chdir(old_dir)
         assert result.failed == 0, "failed doc test: " + __file__
 

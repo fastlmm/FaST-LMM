@@ -168,7 +168,6 @@ def single_snp_scale(
     >>> pheno_fn = example_file("tests/datasets/synth/pheno_10_causals.txt")
     >>> cov_fn = example_file("tests/datasets/synth/cov.txt")
     >>> results_dataframe = single_snp_scale(test_snps=test_snps, pheno=pheno_fn, covar=cov_fn, count_A1=False)
-    -etc-
     >>> print(results_dataframe.iloc[0].SNP,round(results_dataframe.iloc[0].PValue,7),len(results_dataframe))
     snp1200_m0_.37m1_.36 0.0 500
 
@@ -1859,7 +1858,5 @@ if __name__ == "__main__":
 
     # logging.getLogger().setLevel(logging.WARN)
 
-    doctest.ELLIPSIS_MARKER = "-etc-"
     doctest.testmod(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
-    doctest.ELLIPSIS_MARKER = "..."
     print("done")
