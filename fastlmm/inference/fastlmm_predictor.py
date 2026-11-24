@@ -501,7 +501,7 @@ class FastLMM(object):
             # the same linear transformation to test. Unit standardization is necessary for FastLMM to work correctly.
             #!!!later is the calculation of the training data's stats done twice???
             X, covar_unit_trained = X.standardize(
-                self.covariate_standardizer, block_size=block_size, return_trained=True
+                self.covariate_standardizer, return_trained=True
             )  # This also fills missing with the mean
 
             # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
