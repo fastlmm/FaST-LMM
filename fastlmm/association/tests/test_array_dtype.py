@@ -1,4 +1,5 @@
 """Workflow-wide precision, raw-input validation, and environment restoration."""
+from importlib import import_module
 import os
 import warnings
 
@@ -46,7 +47,7 @@ def test_range_validation_keeps_nan_for_missing_value_handling():
 
 @pytest.mark.parametrize("explicit", [None, "float32"])
 @pytest.mark.parametrize("chromosome_covariates", [False, True])
-def test_float32_workflow_avoids_float64_gpu_allocations(tmp_path, monkeypatch, explicit, chromosome_covariates):
+def test_float32_workflow_does_not_warn_about_gpu_float64(tmp_path, monkeypatch, explicit, chromosome_covariates):
     if not has_gpu_support():
         pytest.skip("requires CuPy and a usable CUDA device")
     cupy = pytest.importorskip("cupy")
@@ -77,11 +78,27 @@ def test_float32_workflow_avoids_float64_gpu_allocations(tmp_path, monkeypatch, 
 
 def test_concurrent_default_precision_resolves_after_restoration(monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
-    from threading import Event
+    from threading import Event, RLock
 
     monkeypatch.setenv("ARRAY_DTYPE", "float64")
+    monkeypatch.setenv("ARRAY_MODULE", "numpy")
     first_entered, second_attempted, release_first = Event(), Event(), Event()
+    lock = RLock()
     observed = []
+
+    class ObservedLock:
+        def __enter__(self):
+            # The first workflow still holds the lock and its float32 default
+            # when the second workflow reaches this point.
+            if first_entered.is_set():
+                second_attempted.set()
+            lock.acquire()
+
+        def __exit__(self, *exception):
+            lock.release()
+
+    module = import_module("fastlmm.association.single_snp")
+    monkeypatch.setattr(module, "_array_module_lock", ObservedLock())
 
     def first():
         with _workflow_array_module(np, False, dtype="float32"):
@@ -90,7 +107,6 @@ def test_concurrent_default_precision_resolves_after_restoration(monkeypatch):
             assert release_first.wait(10)
 
     def second():
-        second_attempted.set()
         with _workflow_array_module(np, False):
             observed.append(os.environ["ARRAY_DTYPE"])
 
