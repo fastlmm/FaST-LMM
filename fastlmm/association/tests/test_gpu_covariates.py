@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from pysnptools.snpreader import SnpData
 from pysnptools.util import asnumpy
+from pysnptools.util.gpu import has_gpu_support
 
 from fastlmm.association.single_snp import _create_covar_chrom
 
@@ -13,6 +14,8 @@ from fastlmm.association.single_snp import _create_covar_chrom
 @pytest.mark.parametrize("backend", ["numpy", "cupy"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_chromosome_covariates_on_selected_backend(backend, dtype):
+    if backend == "cupy" and not has_gpu_support():
+        pytest.skip("requires CuPy and a usable CUDA device")
     xp = np if backend == "numpy" else pytest.importorskip("cupy")
     iid = np.array([["family", str(sample)] for sample in range(5)])
     values = np.arange(5, dtype=dtype).reshape(-1, 1)

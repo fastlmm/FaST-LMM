@@ -982,6 +982,9 @@ class TestSingleSnp(unittest.TestCase):
 
     def test_cupy_matches_numpy(self):
         # cupy is optional; this test needs it and a GPU.
+        from pysnptools.util.gpu import has_gpu_support
+        if not has_gpu_support():
+            raise unittest.SkipTest("requires CuPy and a usable CUDA device")
         try:
             import cupy  # noqa: F401
         except ModuleNotFoundError:
@@ -1199,6 +1202,9 @@ class TestSingleSnp(unittest.TestCase):
     def test_cupy_options_match_numpy(self):
         # GPU runs of options beyond the basic case: multiple phenotypes, log_delta,
         # and a cache reused by a second run. (Two kernels always run on numpy.)
+        from pysnptools.util.gpu import has_gpu_support
+        if not has_gpu_support():
+            raise unittest.SkipTest("requires CuPy and a usable CUDA device")
         try:
             import cupy as cp
         except ModuleNotFoundError:

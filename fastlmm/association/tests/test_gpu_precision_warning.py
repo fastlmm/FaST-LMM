@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 import pytest
-from pysnptools.util.gpu import GpuFloat64Warning
+from pysnptools.util.gpu import GpuFloat64Warning, has_gpu_support
 
 from fastlmm.association.single_snp import _worker_array, _workflow_array_module
 from fastlmm.inference.lmm_cov import LMM
@@ -23,6 +23,8 @@ def test_cpu_and_two_kernel_coercion_do_not_warn_about_fp64():
 
 
 def test_worker_precision_warning_and_dtype_preservation():
+    if not has_gpu_support():
+        pytest.skip("requires CuPy and a usable CUDA device")
     cupy = pytest.importorskip("cupy")
     with pytest.warns(WarningType, match="consumer GPUs"):
         values = _worker_array(np.eye(3), cupy)
@@ -34,6 +36,8 @@ def test_worker_precision_warning_and_dtype_preservation():
 
 
 def test_direct_gpu_model_decomposition_warns():
+    if not has_gpu_support():
+        pytest.skip("requires CuPy and a usable CUDA device")
     cupy = pytest.importorskip("cupy")
     model = LMM(X=cupy.ones((3, 1)), Y=cupy.arange(3, dtype=cupy.float64).reshape(-1, 1),
                 K=cupy.eye(3), xp=cupy)
