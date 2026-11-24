@@ -17,6 +17,7 @@ from fastlmm.inference import getLMM
 import unittest
 from importlib.util import find_spec
 import os.path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 import pysnptools.util
@@ -334,16 +335,9 @@ class TestFeatureSelection(unittest.TestCase):
     def blocking_cov_pcs(self, strategy):
         currentFolder = os.path.dirname(os.path.realpath(__file__))
         cov_fn = currentFolder + "/examples/toydata.cov"
-        output_dir = "tmp"
-        try:
-            os.mkdir(output_dir)
-        except Exception:
-            pass
-        output_dir = output_dir + "/feature_selection"
-        try:
-            os.mkdir(output_dir)
-        except Exception:
-            pass
+        output = TemporaryDirectory(prefix="fastlmm-feature-selection-")
+        self.addCleanup(output.cleanup)
+        output_dir = output.name
         self.blocking(
             self.snpreader_bed,
             cov_fn,
