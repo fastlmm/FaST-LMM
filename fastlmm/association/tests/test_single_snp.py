@@ -1310,6 +1310,26 @@ class TestSingleSnp(unittest.TestCase):
                 self._assert_frames_close(fitted, frame, tol=self.REFIT_TOL)
                 np.testing.assert_allclose(frame.Nullh2, fitted.Nullh2, rtol=self.REFIT_TOL)
 
+    def test_integer_h2_cache_uses_nan_sentinel(self):
+        for pheno in [self.phen_fn, self._h2_two_phenos()]:
+            cache_file = self._fresh_cache(
+                "integer_h2_multi" if isinstance(pheno, SnpData) else "integer_h2"
+            )
+            self._h2_frame(True, pheno=pheno, h2=0, cache_file=cache_file)
+
+            cache_paths_and_keys = [(cache_file, "h2_0")]
+            if isinstance(pheno, SnpData):
+                cache_paths_and_keys.append((f"{cache_file}.extra.npz", "h2"))
+            for cache_path, key in cache_paths_and_keys:
+                with np.load(cache_path) as data:
+                    sentinel = data[key]
+                    assert np.issubdtype(sentinel.dtype, np.floating)
+                    assert np.isnan(sentinel).all()
+
+            fitted = self._h2_frame(True, pheno=pheno, cache_file=cache_file)
+            assert np.isfinite(fitted.Nullh2).all()
+            assert ((0 <= fitted.Nullh2) & (fitted.Nullh2 <= 1)).all()
+
     def test_cache_given_h2_overrides_cached_fit(self):
         # A given h2 used to be silently replaced by the h2 fitted when the cache was made.
         for pheno in [self.phen_fn, self._h2_two_phenos()]:

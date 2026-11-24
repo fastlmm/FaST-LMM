@@ -1279,7 +1279,11 @@ def _find_h2_s_u(
 
         if cache_file is not None:
             # Store NaN for a given h2, so the cache never presents it as a fitted h2.
-            h2_to_cache = h2_0 if h2 is None else np.full_like(h2_0, np.nan)
+            h2_to_cache = (
+                h2_0
+                if h2 is None
+                else np.full(h2_0.shape, np.nan, dtype=np.float64)
+            )
             save_cache(lmm_0, h2_to_cache, mixing_0, cache_file, cache_file_extra, xp)
 
     if multi_pheno.sid_count == 1:
@@ -1311,7 +1315,11 @@ def _find_h2_s_u(
         dtype,
     )
     if cache_file_extra is not None:
-        h2_to_cache = multi_h2 if h2 is None else np.full_like(multi_h2, np.nan)
+        h2_to_cache = (
+            multi_h2
+            if h2 is None
+            else np.full(multi_h2.shape, np.nan, dtype=np.float64)
+        )
         save_cache_extra(lmm_multi, h2_to_cache, multi_mixing, cache_file_extra, xp)
     return lmm_multi, multi_h2, multi_mixing
 
