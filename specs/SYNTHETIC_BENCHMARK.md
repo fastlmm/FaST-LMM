@@ -28,11 +28,17 @@ Earlier result (November 21, 32 threads, before the float32 kernel and decomposi
 
 ## Rerunning
 
-Build a venv in the FaST-LMM worktree (`venv/`, the driver's default `--python`) with editable installs of the three repositories and CuPy, then run the driver with a new `--output` directory so every configuration is measured again:
+Use an isolated venv with editable installs of the three repositories and CuPy,
+then run the driver with a new `--output` directory so every configuration is
+measured again. The driver uses its own Python interpreter for workers by default.
 
 ```bash
-venv/bin/python -u tools/synthetic-benchmark/driver_synthetic.py --repeats 3 --output ~/.cache/synthetic-bed/benchmark-results/<date>-<label>
+python -u tools/synthetic-benchmark/driver_synthetic.py --repeats 3 --output ~/.cache/synthetic-bed/benchmark-results/2026-11-24-development
 ```
 
-The driver runs one worker at a time, waits for the GPU to be idle, and reuses completed JSON results in its output directory. Check that no heavy job (for example, a backup) is running first. A stopped repeat may leave a partial `.log` with no JSON; it is rerun when resumed.
+The driver runs one worker at a time, waits for the GPU to be idle, and reuses
+completed JSON results only when the recorded checkout revisions, interpreter,
+and input paths match. Use a new output directory if uncommitted code or input
+files change. A stopped repeat may leave a partial `.log` with no JSON and is
+rerun when resumed.
 

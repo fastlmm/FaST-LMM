@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import statistics
 import subprocess
+import sys
 import time
 
 
@@ -17,7 +18,7 @@ DEFAULT_OUTPUT = (
     / "benchmark-results"
     / "2026-11-22-cpu-f32-eigh"
 )
-DEFAULT_PYTHON = ROOT / "venv" / "bin" / "python"
+DEFAULT_PYTHON = Path(sys.executable)
 DEFAULT_BED = Path.home() / ".cache" / "synthetic-bed" / "synth_14925x100000.bed"
 
 
@@ -72,7 +73,14 @@ def write_manifest(arguments):
             for name, path in repositories.items()
         },
     }
-    (arguments.output / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    destination = arguments.output / "manifest.json"
+    if destination.exists():
+        if json.loads(destination.read_text()) != manifest:
+            raise ValueError(f"{destination} describes a different run. Use a new --output directory.")
+        return
+    if any(arguments.output.glob("large-*.json")):
+        raise ValueError("Benchmark results have no manifest. Use a new --output directory.")
+    destination.write_text(json.dumps(manifest, indent=2))
 
 
 def git(repository, *arguments):

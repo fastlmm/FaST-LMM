@@ -197,11 +197,14 @@ def main():
         frame.to_pickle(arguments.output / f"{name}.pkl")
     blas = threadpool_info()
     assert blas and all(pool["num_threads"] == thread_count for pool in blas), blas
+    packages = ["fastlmm", "pysnptools", "bed-reader", "numpy", "scipy"]
+    if cp is not None:
+        packages.append("cupy-cuda13x")
     result = dict(
         arguments={key: str(value) if isinstance(value, Path) else value for key, value in vars(arguments).items()},
         dimensions=dimensions,
         **{arguments.label: measurement},
-        versions={package: importlib.metadata.version(package) for package in ["fastlmm", "pysnptools", "bed-reader", "cupy-cuda13x", "numpy", "scipy"]},
+        versions={package: importlib.metadata.version(package) for package in packages},
         imports={package: loaded.__file__ for package, loaded in [("fastlmm", fastlmm), ("pysnptools", pysnptools), ("bed_reader", bed_reader)]},
         blas=blas,
         gpu_memory=cp.cuda.runtime.memGetInfo() if cp is not None else None,
