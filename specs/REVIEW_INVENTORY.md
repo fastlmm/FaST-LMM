@@ -52,6 +52,14 @@ batch table above for tracking Carl's progress.
 | 7. Tests | `test*.py` | Approved November 23 at `d200e3b`. Agent review found that CI's legacy runner did not collect the pytest-only modules; `80fac2d` added an explicit pytest CI step for them. |
 | 8. Docs and packaging | `CHANGELOG.md`, `README.md`, `doc/`, `pyproject.toml`, `uv.lock`, `.github/`, `specs/` | Approved November 23 at `4645f66`. Review corrected release notes and GPU documentation, extended CPU pytest coverage to Python 3.15 and Windows ARM, added installed-artifact Python 3.15 tests, and removed two completed specifications. |
 
+A post-approval review found that blocked `DiagKtoN` kernels fitted a separate
+normalization factor to every SNP block, an old bug newly exposed for narrow
+data by the explicit-`block_size` change. PySnpTools `9d6f294` scales the summed
+kernel once, returns `DiagKtoNTrained`, adds CPU/GPU regressions, and rejects
+invalid manually supplied `UnitTrained` deviations before mutation. This
+supersedes the previously reviewed `8a9c624` head and requires fresh CI and
+release qualification.
+
 The strict `xp=None` rule (commit `8f37851`, Carl's decision November 23):
 `xp=None` never copies an existing NumPy or CuPy array to the other module;
 constructors, `.val` assignment, and reads of in-memory values raise
