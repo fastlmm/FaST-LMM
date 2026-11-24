@@ -1025,6 +1025,46 @@ class TestSingleSnp(unittest.TestCase):
         # float64 accepts the same inputs.
         self._dtype_frame("float64", force_low_rank=True, covar=tiny_covar)
 
+    def test_dtype_float32_preserves_near_collinear_phenotype(self):
+        from tempfile import TemporaryDirectory
+
+        rng = np.random.default_rng(12)
+        iid = [["family", str(index)] for index in range(40)]
+        covariate = rng.normal(size=(40, 1))
+        signal = rng.normal(size=(40, 1))
+        phenotype = covariate + 4e-5 * signal + 1e-5 * rng.normal(size=(40, 1))
+        covar = SnpData(iid=iid, sid=["covariate"], val=covariate, xp=np)
+        pheno = SnpData(iid=iid, sid=["phenotype"], val=phenotype, xp=np)
+        snps = SnpData(iid=iid, sid=["signal", "other"],
+                       val=np.hstack([signal, rng.normal(size=(40, 1))]), xp=np)
+        options = dict(covar=covar, xp=np, leave_out_one_chrom=False, h2=0.3)
+        with TemporaryDirectory() as directory:
+            legacy_float64 = Path(directory) / "float64.npz"
+            reference_options = dict(options, cache_file=str(legacy_float64))
+            expected = single_snp(snps, pheno, dtype="float64", **reference_options).set_index("SNP")
+            with np.load(legacy_float64) as saved:
+                old_cache = dict(saved)
+            np.savez(legacy_float64, **{**old_cache, "version": 3})
+            cached = single_snp(snps, pheno, dtype="float64", **reference_options).set_index("SNP")
+            pd.testing.assert_frame_equal(expected, cached)
+
+            cache = Path(directory) / "near-collinear.npz"
+            options["cache_file"] = str(cache)
+            actual = single_snp(snps, pheno, dtype="float32", **options).set_index("SNP")
+            cached = single_snp(snps, pheno, dtype="float32", **options).set_index("SNP")
+            pd.testing.assert_frame_equal(actual, cached)
+            with np.load(cache) as saved:
+                old_cache = dict(saved)
+            np.savez(cache, **{**old_cache, "version": 3})
+            with self.assertRaisesRegex(ValueError, "predates the float32 residual fix"):
+                single_snp(snps, pheno, dtype="float32", **options)
+        assert actual.index.tolist() == expected.index.tolist()
+        assert actual.loc["signal", "PValue"] < 1e-8
+        # Input narrowing rounds the nearly collinear phenotype before the recheck.
+        np.testing.assert_allclose(
+            np.log10(actual.PValue), np.log10(expected.PValue), rtol=0, atol=0.01
+        )
+
     def test_dtype_float32_snp_explained_by_covariates(self):
         # A test SNP that a covariate explains gets PValue 1 and SnpWeight 0 in float64.
         # float32 regression leaves roundoff residuals that must not be tested as signal.

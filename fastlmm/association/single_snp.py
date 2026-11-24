@@ -155,6 +155,7 @@ def single_snp(
                 It is in Python's np.savez (\*.npz) format.
                 Calls using the same cache file should have the same inputs (pheno, K0, K1, covar) but test_snps can differ.
                 Model arrays must match the requested dtype; otherwise ValueError is raised.
+                Older float32 caches that used the previous phenotype residual cutoff must be rebuilt.
                 An explicit h2 overrides the cached fit. If a cache was created with a given h2,
                 omitting h2 in a later call fits it. An explicit mixing that disagrees with
                 the cached mixing raises ValueError. See :doc:`/gpu` for a cache example.
@@ -1126,7 +1127,19 @@ def _as_dtype(xp, val, dtype, name):
     return _worker_array(converted, xp)
 
 
-cache_version = 3
+cache_version = 4
+
+
+def _check_cache_version(data, dtype, cache_file):
+    version = data["version"]
+    if version == 3:
+        if dtype == np.float32:
+            raise ValueError(
+                f"cache_file '{cache_file}' predates the float32 residual fix; "
+                "use a new cache path to recompute it"
+            )
+        return
+    assert version == cache_version, f"Expect cache version {cache_version}"
 
 
 def save_cache(lmm_0, h2_0, mixing_0, cache_file, cache_file_extra, xp):
@@ -1153,8 +1166,7 @@ def load_cache(covar_val, y_0, cache_file, xp, dtype):
     # np.load keeps everything on the host; model arrays then move to xp, while the
     # h2 and mixing control parameters stay numpy, as when they are computed.
     with np.load(cache_file) as data:  #!! similar code in epistasis
-        version = data["version"]
-        assert version == cache_version, f"Expect cache version {cache_version}"
+        _check_cache_version(data, dtype, cache_file)
         lmm_0.S = _cached_array(data, "S", dtype, cache_file, xp)
         lmm_0.U = _cached_array(data, "U", dtype, cache_file, xp)
         lmm_0.UY = _cached_array(data, "UY", dtype, cache_file, xp)
@@ -1209,8 +1221,7 @@ def save_cache_extra(lmm_multi, multi_h2, multi_mixing, cache_file_extra, xp):
 def load_cache_extra(lmm_multi, multi_y, cache_file_extra, xp, dtype):
     # See load_cache: model arrays move to xp; h2 and mixing stay numpy.
     with np.load(cache_file_extra) as data:  #!! similar code in epistasis
-        version = data["version"]
-        assert version == cache_version, f"Expect cache version {cache_version}"
+        _check_cache_version(data, dtype, cache_file_extra)
         lmm_multi.UY = _cached_array(data, "UY", dtype, cache_file_extra, xp)
         lmm_multi.UUY = _cached_array(data, "UUY", dtype, cache_file_extra, xp)
         h2_multi = data["h2"]

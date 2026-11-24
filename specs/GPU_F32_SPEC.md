@@ -61,8 +61,10 @@ The review found bugs in three patterns; each fix was followed by a search for t
   cache.
 - **Thresholds tuned for float64.** `rotate` zeroed columns explained by covariates using an absolute
   1e-10 cutoff, below float32 regression roundoff (about 1e-7 relative), so float32 tested roundoff
-  as signal (p 0.72, SnpWeight 5e10). float32 now uses a cutoff relative to each column's std; float64
-  is unchanged. `setSU_fromG`'s 1e-10 singular-value cutoff was examined and left alone: a kept
+  as signal (p 0.72, SnpWeight 5e10). The float32 path rechecks small relative residuals in float64
+  before zeroing them, preserving signals above the float32 input rounding threshold. The float64
+  cutoff is unchanged. Version 3 float32 caches must be rebuilt because they can contain phenotype
+  rotations zeroed by the earlier cutoff. `setSU_fromG`'s 1e-10 singular-value cutoff was examined and left alone: a kept
   near-zero direction has `Sd ≈ 1 - h2`, the same as the low-rank remainder, so results are unaffected.
 - The numpy/float64 path was checked against `origin/main` for exact equality on 15 small cases
   (full and low rank, leave-out-one-chrom, two phenotypes, two kernels, `log_delta`,
