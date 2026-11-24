@@ -335,26 +335,38 @@ class TestApiPolicy(unittest.TestCase):
         self.assertEqual(sum("qualified only" in str(item.message) for item in caught), 1)
 
     def test_failure_restores_settings_for_every_boundary(self):
+        from functools import partial
+
         calls = list(self._calls().items()) + [
-            ("snp_set", lambda: association.snp_set(None, None, None)),
-            ("compute_auto_pcs", lambda: compute_auto_pcs("/does-not-exist.bed")),
+            ("compute_auto_pcs", partial(compute_auto_pcs, self.reader)),
         ]
-        for predictor_type in (FastLMM, LinearRegression):
-            predictor = predictor_type()
-            for method in ("fit", "predict", "score"):
-                calls.append((f"{predictor_type.__name__}.{method}", getattr(predictor, method)))
-        # Force failure only after the real boundary has established its scope.
-        def fail(*args, **kwargs):
-            self.assertEqual(os.environ["ARRAY_MODULE"], "numpy")
-            self.assertEqual(os.environ["ARRAY_DTYPE"], "float64")
-            raise RuntimeError("intentional read failure")
+        with patch.dict(os.environ, {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float64"}):
+            for predictor_type in (FastLMM, LinearRegression):
+                kernel = self.reader if predictor_type is FastLMM else None
+                heritability = {"h2raw": 0.3} if predictor_type is FastLMM else {"h2": 0.3}
+                fit_options = dict(X=self.covar, y=self.pheno, K0_train=kernel, **heritability)
+                predictor = predictor_type().fit(**fit_options)
+                predict_options = dict(X=self.covar, K0_whole_test=kernel)
+                calls.extend([
+                    (f"{predictor_type.__name__}.fit", partial(predictor_type().fit, **fit_options)),
+                    (f"{predictor_type.__name__}.predict", partial(predictor.predict, **predict_options)),
+                    (f"{predictor_type.__name__}.score", partial(predictor.score, y=self.pheno, **predict_options)),
+                ])
 
         for name, call in calls:
+            failure = RuntimeError("intentional test failure")
+
+            def fail(*args, **kwargs):
+                self.assertEqual(os.environ["ARRAY_MODULE"], "numpy")
+                self.assertEqual(os.environ["ARRAY_DTYPE"], "float64")
+                raise failure
+
             with self.subTest(api=name), patch.dict(os.environ, {"ARRAY_MODULE": "cupy", "ARRAY_DTYPE": "float32"}), \
                  patch.object(SnpReader, "read", fail), patch.object(Local, "run", fail), warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
-                with self.assertRaises(Exception):
+                with self.assertRaisesRegex(RuntimeError, "intentional test failure") as raised:
                     call()
+                self.assertIs(raised.exception, failure)
                 policy = [str(item.message) for item in caught if "qualified only" in str(item.message)]
                 self.assertEqual(len(policy), 1)
                 self.assertIn(name, policy[0])
@@ -676,8 +688,14 @@ class TestApiPolicy(unittest.TestCase):
                             first = association.single_snp(self.reader, self.pheno, xp=backend, dtype=dtype,
                                                            cache_file=cache, **options)
                             stage = "cached"
-                            cached = association.single_snp(self.reader, self.pheno, xp=backend, dtype=dtype,
-                                                            cache_file=cache, **options)
+                            recomputed = AssertionError("cache reuse must not recompute the decomposition")
+                            with patch.object(module, "load_cache", wraps=module.load_cache) as load_cache, \
+                                 patch.object(LMM, "setSU_fromK", side_effect=recomputed), \
+                                 patch.object(LMM, "setSU_fromG", side_effect=recomputed):
+                                cached = association.single_snp(self.reader, self.pheno, xp=backend, dtype=dtype,
+                                                                cache_file=cache, **options)
+                            expected_loads = len(np.unique(self.reader.pos[:, 0])) if loco else 1
+                            self.assertEqual(load_cache.call_count, expected_loads)
                         self.assertTrue(decompositions)
                         self.assertEqual(len(models["fresh"]), len(models["cached"]))
                         for fresh_model, cached_model in zip(models["fresh"], models["cached"]):
