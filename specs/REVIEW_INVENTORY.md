@@ -57,8 +57,10 @@ normalization factor to every SNP block, an old bug newly exposed for narrow
 data by the explicit-`block_size` change. PySnpTools `9d6f294` scales the summed
 kernel once, returns `DiagKtoNTrained`, adds CPU/GPU regressions, and rejects
 invalid manually supplied `UnitTrained` deviations before mutation. This
-supersedes the previously reviewed `8a9c624` head and requires fresh CI and
-release qualification.
+supersedes the previously reviewed `8a9c624` head. Corrected head `0510bfc`
+passed all 39 CI jobs (run 45417729712) and final source/GPU/artifact
+qualification on November 24. The subsequent release-record refresh changes
+documentation only and still requires its own final CI result.
 
 The strict `xp=None` rule (commit `8f37851`, Carl's decision November 23):
 `xp=None` never copies an existing NumPy or CuPy array to the other module;
