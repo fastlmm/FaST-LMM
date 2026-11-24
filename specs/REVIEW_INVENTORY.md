@@ -47,9 +47,9 @@ batch table above for tracking Carl's progress.
 | 2. Standardizers | `standardizer/{unit,unittrained,beta,betatrained,diag_K_to_N}.py` | Approved November 23 at `077f35b`. Review fixed `UnitTrained` reordering with repeated SNP IDs (silently used the last copy's moments) and the Python Beta path accepting means outside [0, 2]. |
 | 3. Array utilities and containers | `util/__init__.py`, `pstreader/{pstdata,pstreader,_oneshot,_subset,pstmemmap}.py`, `snpreader/_subset.py`, `kernelreader/_subset.py` | Approved November 23 at `30ebc30`. Review removed a dead CuPy-fallback flag and corrected the `sub_matrix` dtype default documentation. |
 | 4. SNP readers | `snpreader/{__init__,snpreader,snpdata,snpmemmap,bed,dat,dense,ped,pheno}.py`, `util/generate.py` | Approved November 23 at `bba4f6b`. Review fixed the SnpData Identity kernel fast path ignoring an explicit `block_size`, made `SnpData.standardize(block_size=...)` warn like the standardizers (FaST-LMM `11833d2` stopped passing it), and noted the explicit-block-size rounding change in the changelog. |
-| 5. Kernels and distributed readers | `kernelreader/{kerneldata,kernelreader,snpkernel}.py`, `distreader/{bgen,distdata,distreader,distmemmap}.py` | Next |
-| 6. Thread control | `util/mapreduce1/runner/{_threads,localinparts,localmultiproc,localmultithread}.py` | Open |
-| 7. Tests | `test*.py` | Open |
+| 5. Kernels and distributed readers | `kernelreader/{kerneldata,kernelreader,snpkernel}.py`, `distreader/{bgen,distdata,distreader,distmemmap}.py` | Approved November 23 at `89db1f1`. Review added explicit NumPy copies in every writer (writing is an explicit request to leave the GPU), normalized deprecated writer argument order first, kept F layout in `asnumpy`, and fixed the `Dense.write` reversed-argument typo. |
+| 6. Thread control | `util/mapreduce1/runner/{_threads,localinparts,localmultiproc,localmultithread}.py` | Approved November 23 at `d48b746`. Review made an unset runner `num_threads` raise AttributeError rather than KeyError. |
+| 7. Tests | `test*.py` | Next |
 | 8. Docs and packaging | `CHANGELOG.md`, `README.md`, `doc/`, `pyproject.toml`, `uv.lock`, `.github/`, `specs/` | Open |
 
 The strict `xp=None` rule (commit `8f37851`, Carl's decision November 23):
