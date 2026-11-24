@@ -205,6 +205,42 @@ class TestEpistasis(unittest.TestCase):
                                runner=runner, **arguments)
             pd.testing.assert_frame_equal(actual, expected, check_exact=True)
 
+    def test_local_multithread_matches_local(self):
+        import subprocess
+        from textwrap import dedent
+
+        # Bound the test in a separate process because a deadlocked runner
+        # cannot clean up its own threads.
+        subprocess.run(
+            [sys.executable, "-c", dedent("""
+                from pathlib import Path
+                from tempfile import TemporaryDirectory
+                from unittest.mock import patch
+                import os
+                import numpy as np
+                import pandas as pd
+                from fastlmm.association import epistasis
+                from pysnptools.snpreader import SnpData
+                from pysnptools.util.mapreduce1.runner import Local, LocalMultiThread
+
+                rng = np.random.default_rng(10)
+                iid = [["family", str(index)] for index in range(24)]
+                snps = SnpData(iid=iid, sid=["a", "b", "c"],
+                               val=rng.integers(0, 3, size=(24, 3)).astype(float), xp=np)
+                pheno = dict(iid=np.asarray(iid), vals=rng.normal(size=24))
+                settings = {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float32"}
+                with TemporaryDirectory() as directory, patch.dict(os.environ, settings):
+                    options = dict(G0=snps, log_delta=0,
+                                   cache_file=str(Path(directory) / "cache.npz"))
+                    expected = epistasis(snps, pheno, runner=Local(), **options)
+                    actual = epistasis(snps, pheno, runner=LocalMultiThread(2), **options)
+                    assert len(actual) == 3
+                    pd.testing.assert_frame_equal(actual, expected)
+                    assert {key: os.environ[key] for key in settings} == settings
+            """)],
+            check=True, timeout=30,
+        )
+
     def test_match_cpp(self):
         r"""
         match

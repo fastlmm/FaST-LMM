@@ -1,4 +1,5 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
+from copy import copy
 # flake8: noqa: E501
 
 import logging
@@ -20,7 +21,7 @@ from fastlmm.inference.fastlmm_predictor import (
 )
 from fastlmm.inference.lmm_cov import LMM as lmm_cov
 from fastlmm.util._precision import array_dtype, dtype_environment
-from fastlmm.util._backend import workflow_lock, cpu64_scope, cpu64_if, cpu64_required
+from fastlmm.util._backend import workflow_lock, cpu64_scope, cpu64_if, cpu64_required, cpu64_runner
 from pysnptools.kernelreader import Identity as KernelIdentity
 from pysnptools.kernelreader import KernelData, SnpKernel
 from pysnptools.snpreader import Bed, Pheno, SnpData
@@ -278,6 +279,8 @@ def single_snp(
     cpu_only = has_second_kernel or cpu64_required()
     with _workflow_array_module(xp, has_second_kernel=has_second_kernel, dtype=dtype) as xp:
         dtype = array_dtype() if cpu_only else array_dtype(dtype)
+        if cpu_only:
+            runner = cpu64_runner(runner, "single_snp")
         if dtype not in (np.float64, np.float32):
             raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
 
@@ -456,7 +459,7 @@ def single_snp(
 def _workflow_array_module(xp, has_second_kernel, dtype=None):
     # Resolve defaults only after any preceding workflow restores its environment.
     # Keep selection, two-kernel coercion, and restoration under the same lock.
-    with _array_module_lock:
+    with nullcontext() if cpu64_required() else _array_module_lock:
         dtype = array_dtype(dtype)
         if dtype not in (np.dtype("float32"), np.dtype("float64")):
             raise ValueError(f"dtype must be 'float64' or 'float32', not '{dtype}'")
@@ -1364,9 +1367,14 @@ def _worker_array(value, xp, *, warn_float64=True):
     return xp.asarray(value)
 
 
-def _worker_lmm(lmm, xp):
+def _worker_lmm(lmm, xp, *, independent=False):
     """Recreate a decomposed model on the worker's backend without decomposing again."""
     if lmm._xp is xp:
+        if independent:
+            # A threaded runner shares the payload. Keep mutable regression
+            # state local to each task while sharing the decomposition arrays.
+            lmm = copy(lmm)
+            lmm.linreg = copy(lmm.linreg)
         return lmm
     assert lmm.S is not None and lmm.U is not None
     result = lmm_cov(
@@ -1398,8 +1406,9 @@ def compute_extra(
     h2_list = [h2_0]
     mixing_list = [mixing_0]
 
-    model_payload = _worker_lmm(lmm_0, np) if runner is not None else lmm_0
-    phenotype_payload = _worker_array(multi_y, np) if runner is not None else multi_y
+    has_runner = runner is not None
+    model_payload = _worker_lmm(lmm_0, np) if has_runner else lmm_0
+    phenotype_payload = _worker_array(multi_y, np) if has_runner else multi_y
 
     phenotype_count = multi_pheno.sid_count
 
@@ -1407,7 +1416,7 @@ def compute_extra(
         _check_worker_dtype(dtype)
         logging.info(f"working on pheno_index {pheno_index} of {phenotype_count}")
         worker_xp = pstutil.array_module()
-        model = _worker_lmm(model_payload, worker_xp)
+        model = _worker_lmm(model_payload, worker_xp, independent=has_runner)
         result = _find_h2_s_u_for_one_pheno(
             K0=None,
             K1=None,
@@ -1427,7 +1436,7 @@ def compute_extra(
         )
 
         model, fitted_h2, fitted_mixing = result
-        return (_worker_lmm(model, np) if runner is not None else model), fitted_h2, fitted_mixing
+        return (_worker_lmm(model, np) if has_runner else model), fitted_h2, fitted_mixing
 
     result_list = map_reduce(
         range(1, multi_pheno.col_count), mapper=mapper, runner=runner
@@ -1576,10 +1585,11 @@ def _snp_tester(
 
     # Serialize model arrays on the host so workers select their backend
     # independently of the parent's cached LMM.
-    model_payload = _worker_lmm(lmm, np) if runner is not None else lmm
-    sd_payload = _worker_array(Sd, np) if runner is not None else Sd
-    denom_payload = _worker_array(denom, np) if runner is not None else denom
-    interact_payload = _worker_array(interact, np) if runner is not None else interact
+    has_runner = runner is not None
+    model_payload = _worker_lmm(lmm, np) if has_runner else lmm
+    sd_payload = _worker_array(Sd, np) if has_runner else Sd
+    denom_payload = _worker_array(denom, np) if has_runner else denom
+    interact_payload = _worker_array(interact, np) if has_runner else interact
 
     # We define three closures, that is, functions define inside function so that the inner function has access to the local variables of the outer function.
     def debatch_closure(work_index):
@@ -1589,7 +1599,7 @@ def _snp_tester(
     def mapper_closure(work_index):
         _check_worker_dtype(dtype)
         xp = pstutil.array_module()
-        worker_lmm = _worker_lmm(model_payload, xp)
+        worker_lmm = _worker_lmm(model_payload, xp, independent=has_runner)
         # These internal statistical arrays deliberately retain float64. They
         # are not user storage whose precision should follow ARRAY_DTYPE.
         worker_sd = _worker_array(sd_payload, xp, warn_float64=False)
