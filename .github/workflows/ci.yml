@@ -176,6 +176,15 @@ jobs:
         working-directory: tests
         run: uv run --frozen --no-sync python test.py
 
+      - name: Run backend and dtype pytest coverage
+        run: >-
+          uv run --frozen --no-sync python -m pytest -rs
+          fastlmm/association/tests/test_array_dtype.py
+          fastlmm/association/tests/test_backend_environment.py
+          fastlmm/association/tests/test_backend_selection.py
+          fastlmm/association/tests/test_gpu_covariates.py
+          fastlmm/association/tests/test_gpu_precision_warning.py
+
   core-python-315:
     name: Core (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
