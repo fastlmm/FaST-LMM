@@ -7,7 +7,12 @@
 - `GpuFloat64Warning` and `has_gpu_support` now come from
   `pysnptools.util.gpu`. Code that filters `bed_reader.GpuFloat64Warning`
   must use the PySnpTools class instead.
-- Requires the PySnpTools release that provides `pysnptools.util.gpu`.
+- Require bed-reader 1.3.0b3 and PySnpTools 1.1.0b1 or later. The `cupy` extra
+  installs GPU support through PySnpTools.
+- Recheck small float32 residuals in float64 to preserve signal that would
+  previously have been zeroed. Rebuild version 3 float32 caches before reuse.
+- Preserve NumPy/float64 execution in same-process threaded workers without
+  deadlocking the parent workflow.
 
 ## 1.1.0a1 (2026-11-18, alpha)
 

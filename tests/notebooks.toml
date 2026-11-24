@@ -5,7 +5,7 @@
 path = "doc/ipynb/FaST-LMM.ipynb"
 mode = "full"
 reason = "Public core workflow; qualify all active examples, including the slow two-kernel LRT and subsequent prediction."
-evidence = "Saved Python 3.14.5 execution counts run consecutively from 1 through 9, including the slow LRT cell and final prediction. No cell timestamps are recorded."
+evidence = "The saved two-kernel feature-selection cell contains a KeyboardInterrupt and worker logs from an interrupted run. A fresh full execution is required before refreshing the saved outputs."
 
 [[notebook]]
 path = "doc/ipynb/fastlmm2021.ipynb"

@@ -1,24 +1,24 @@
 GPU association and floating-point precision
 ============================================
 
-This guide describes the ``1.1.0a1`` alpha. NumPy remains the default backend.
-This development GPU backend requires the upcoming PySnpTools release with
-CPU-only bed-reader support; published PySnpTools 1.1.0a1 uses the former GPU API.
+This guide describes the unreleased CPU-read/CuPy-transfer workflow. NumPy
+remains the default backend.
 
 Installing development GPU support
 -----------------------------------
 
-Install the CPU-only bed-reader beta wheel, then the matching development
-checkouts into one environment::
+In a fresh virtual environment, install this checkout with the CuPy extra
+from the FaST-LMM repository root::
 
-    uv pip install "/path/to/PySnpTools[cupy]" "/path/to/FaST-LMM[cupy]"
+    uv pip install ".[cupy]"
+
+The checkout requires bed-reader 1.3.0b3 and PySnpTools 1.1.0b1 or later.
 
 .. note::
 
    Published ``1.1.0a1`` packages use bed-reader's former GPU API and do not
-   include the numerical fixes and API policy described below. The revised
-   notebook also requires PySnpTools' development ``num_threads`` support.
-   Coordinated published-artifact qualification remains necessary before release.
+   include the numerical fixes and API policy described below. PySnpTools
+   1.1.0b1 provides the notebook's ``num_threads`` runner option.
 
 The ``cupy`` extra follows the dependency chain through ``pysnptools[cupy]``
 and CuPy directly. Follow
@@ -299,6 +299,9 @@ Reuse precomputation safely
 A cache requires the same phenotype, covariates, and training inputs; it is not
 a general cache keyed by input contents. Use distinct paths for distinct
 analyses and precisions. A cache with another dtype raises ``ValueError``.
+Rebuild version 3 float32 caches because they can contain phenotype rotations
+computed with the earlier residual cutoff. Version 3 float64 caches can still
+be reused.
 This independent CPU example changes a supplied heritability while reusing the
 same decomposition and verifies it against an uncached calculation::
 
@@ -350,9 +353,9 @@ their own environment, including explicit runner overrides; model arrays move to
 the worker's backend. A parent CuPy call alone therefore does not prove every
 worker ran on the GPU. Two-kernel analyses continue to use NumPy.
 
-These APIs are included in the published alpha. Its dependency bounds select
-the coordinated PySnpTools and bed-reader alphas. Installed CPU/GPU workflows
-were validated against all three published packages.
+The worker example below requires this FaST-LMM workflow and PySnpTools
+1.1.0b1 or later. Qualification of the older published alpha used the former
+bed-reader GPU stack.
 
 
 This complete worker example checks array types inside real subprocesses and
@@ -443,7 +446,7 @@ Options and results
        raises ``ImportError``; an unknown name raises ``ValueError``.
    * - ``dtype``
      - ``"float64"``
-     - Float32/float64 only. An unsupported floating dtype or unsafe finite
+     - Float32/float64 only. An unsupported floating dtype or unsafe
        float32 covariate/phenotype range raises ``ValueError``. Float32 range
        checks do not establish numerical accuracy for a study.
    * - ``leave_out_one_chrom``

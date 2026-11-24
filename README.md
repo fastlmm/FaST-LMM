@@ -45,9 +45,10 @@ GPU and precision features (experimental alpha)
 
 `single_snp` supports NumPy/CuPy backends and float32/float64 linear algebra.
 Explicit `xp`/`dtype` override the `ARRAY_MODULE`/`ARRAY_DTYPE` environment defaults.
-Install the published `1.1.0a1` alpha with `pip install "fastlmm[cupy]==1.1.0a1"`.
-The extra uses PySnpTools and bed-reader's GPU support and follows CuPy's NVIDIA
-CUDA prerequisites. CPU remains the default; Python 3.15 is currently CPU-only.
+For the GPU workflow in this checkout, activate a fresh virtual environment
+and run `uv pip install ".[cupy]"` from the repository root. PySnpTools
+transfers CPU-decoded genotypes to CuPy
+and follows CuPy's NVIDIA CUDA prerequisites. CPU remains the default.
 See the [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/gpu-bed-reader/doc/source/gpu.rst)
 for platform limits and complete examples.
 
@@ -89,6 +90,8 @@ focused tests and editor integration. The canonical `tests/test.py` runner also
 executes the input-based expected-output cases in `tests/inputs` and assembles
 the project's legacy unittest suites. The runners overlap but cover different
 workflows, so pytest collection does not replace the canonical runner.
+CI and release qualification also run the focused backend and dtype pytest
+modules. Cases that need a usable CUDA device require a separate GPU run.
 
 See [RELEASING.md](RELEASING.md) for lower-bound, artifact, notebook, and
 release qualification.
