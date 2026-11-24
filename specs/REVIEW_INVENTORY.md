@@ -35,6 +35,29 @@ Comparison: `v1.0.1` (`bd0a04244e4c0bdef0129f757375b84df4e6b062`) to
 | User documentation and notebook (~850 lines) | `CHANGELOG.md`, `README.md`, `doc/ipynb/gpu_workflow.ipynb`, `doc/source/gpu-api-preview.rst`, `doc/source/gpu.rst`, `doc/source/index.rst`, `specs/GPU_DOCUMENTATION_AUDIT.md` | CPU-read/CuPy-transfer workflow, public support matrix, installation requirements, warnings, and saved example outputs. |
 | CI and packaging (~140 lines) | `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `pyproject.toml`, `uv.lock` | Optional GPU dependency, build metadata, supported Python versions, and release validation. |
 
+### Carl's PySnpTools review against `main` (started November 23, 2026)
+
+Comparison: `git diff origin/main...cupy-sub-matrix` (merge base `8c68afc`),
+about 4,700 changed lines across 64 files at `9ae0a1d`. This supersedes the
+batch table above for tracking Carl's progress.
+
+| Batch | Files | Status |
+| --- | --- | --- |
+| 1. GPU and precision core | `util/_array.py`, `util/_precision.py`, `util/_gpu_warnings.py`, `util/gpu.py`, `util/_device.py`, `standardizer/_cupy.py`, `standardizer/standardizer.py` | Approved November 23 at `69112e4`; delta (`_device.py`, the explicit stats-shape check) approved at `9ae0a1d`. Review fixed constant fractional SNPs standardizing to +/-1 on CuPy and the Python CPU path. |
+| 2. Standardizers | `standardizer/{unit,unittrained,beta,betatrained,diag_K_to_N}.py` | Approved November 23 at `077f35b`. Review fixed `UnitTrained` reordering with repeated SNP IDs (silently used the last copy's moments) and the Python Beta path accepting means outside [0, 2]. |
+| 3. Array utilities and containers | `util/__init__.py`, `pstreader/{pstdata,pstreader,_oneshot,_subset,pstmemmap}.py`, `snpreader/_subset.py`, `kernelreader/_subset.py` | Approved November 23 at `30ebc30`. Review removed a dead CuPy-fallback flag and corrected the `sub_matrix` dtype default documentation. |
+| 4. SNP readers | `snpreader/{__init__,snpreader,snpdata,snpmemmap,bed,dat,dense,ped,pheno}.py`, `util/generate.py` | Approved November 23 at `bba4f6b`. Review fixed the SnpData Identity kernel fast path ignoring an explicit `block_size`, made `SnpData.standardize(block_size=...)` warn like the standardizers (FaST-LMM `11833d2` stopped passing it), and noted the explicit-block-size rounding change in the changelog. |
+| 5. Kernels and distributed readers | `kernelreader/{kerneldata,kernelreader,snpkernel}.py`, `distreader/{bgen,distdata,distreader,distmemmap}.py` | Next |
+| 6. Thread control | `util/mapreduce1/runner/{_threads,localinparts,localmultiproc,localmultithread}.py` | Open |
+| 7. Tests | `test*.py` | Open |
+| 8. Docs and packaging | `CHANGELOG.md`, `README.md`, `doc/`, `pyproject.toml`, `uv.lock`, `.github/`, `specs/` | Open |
+
+The strict `xp=None` rule (commit `8f37851`, Carl's decision November 23):
+`xp=None` never copies an existing NumPy or CuPy array to the other module;
+constructors, `.val` assignment, and reads of in-memory values raise
+`ValueError`, while lists, `val=None`, and file-decoded values follow
+`ARRAY_MODULE`.
+
 ## FaST-LMM
 
 Comparison: `v1.0.0` (`279fdb01f6cfb8f4ff1a09d5c3322488546c4ed2`) to
