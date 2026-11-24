@@ -70,22 +70,24 @@ constructors, `.val` assignment, and reads of in-memory values raise
 
 ## FaST-LMM
 
-Comparison: `v1.0.0` (`279fdb01f6cfb8f4ff1a09d5c3322488546c4ed2`) to
-`gpu-bed-reader` (`8f67daad275402c827b64a7ae07bfb5afde46653`), approximately
-10,630 changed lines across 66 files.
+Comparison: `git diff v1.0.0...gpu-bed-reader` (merge base `9da663a`) at
+`8148066`, approximately 11,550 changed lines across 74 files. Notebook JSON
+and generated numerical evidence inflate the textual line counts; review those
+batches semantically as noted below.
 
-| Batch | Files and approximate size | Review focus |
-| --- | --- | --- |
-| Numerical and GPU paths (~830 lines) | `fastlmm/association/epistasis.py`, `single_snp.py`; `fastlmm/util/_backend.py`, `_gpu_warnings.py`, `_precision.py` | Precision policy, NumPy/CuPy selection, warnings, fallback boundaries, worker propagation, and numerical changes. |
-| Public API and integration (~180 lines) | `fastlmm/association/{heritability_spatial_correction.py,single_snp_all_plus_select.py,single_snp_linreg.py,single_snp_scale.py,single_snp_select.py,snp_set.py,varcomp_test.py}`; `fastlmm/inference/{__init__.py,fastlmm_predictor.py,glmm.py,linear_regression.py,lmm.py,lmm_cov.py}`; `fastlmm/util/{compute_auto_pcs.py,util.py}`, `fastlmm/util/matrix/mmultfile.py` | Compatibility of forwarded backend/dtype options and interactions with existing inference and association APIs. |
-| Tests (~1,790 lines) | `fastlmm/association/tests/test_api_policy.py`, `test_array_dtype.py`, `test_backend_environment.py`, `test_backend_selection.py`, `test_gpu_covariates.py`, `test_gpu_precision_warning.py`, `test_gwas.py`, `test_single_snp.py`, `testepistasis.py`, `tests/test.py` | Numerical tolerances, explicit failures and warnings, backend behavior, worker execution, and regression coverage. |
-| Public guides and release notes (~2,900 lines) | `README.md`, `RELEASE_NOTES.md`, `doc/source/api_backend_precision.rst`, `doc/source/gpu.rst`, `doc/source/index.rst`, `doc/ipynb/FaST-LMM.ipynb` | Supported configurations, platform limits, installation, precision examples, and consistency of the main notebook with implementation. |
-| Experiment notebook evidence (~2,690 lines) | `specs/experiments/gpu_f32.ipynb`, `specs/experiments/gpu_fastest_path.ipynb` | Source provenance, saved outputs, numerical identity and ordering, warnings, and benchmark claims. The saved configurations require reruns against current development heads. |
-| Specifications and qualification tools (~2,100 lines) | `AGENTS.md`, `CLAUDE.md`, `specs/ANNUAL_UPDATE_RUNBOOK.md`, `specs/BRANCH_INVENTORY_2026.md`, `specs/GPU_ALPHA_RELEASE_CHECKLIST.md`, `specs/GPU_API_POLICY_PROMPT.md` (deleted), `specs/GPU_API_POLICY_STATUS.md` (deleted), `specs/GPU_API_SPEC.md` (deleted), `specs/GPU_DOCS_REVIEW.md`, `specs/GPU_F32_SPEC.md`, `specs/GPU_NUMERICAL_CORRECTNESS.md`, `specs/SYNTHETIC_BENCHMARK.md`, `specs/todo.md`, `tools/annual-update/README.md`, `tools/annual-update/{compare-notebook-outputs.py,countdown.sh,fastlmm-notebooks.sh,notebook-env.sh,refresh-notebook-outputs.py,runcountdown.sh}`, `tools/synthetic-benchmark/{benchmark.py,driver_synthetic.py}` | Review branch-maintenance changes, historical evidence, current qualification status, and reproducibility tools. |
-| CI and packaging (~150 lines) | `.github/dependabot.yml`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `pyproject.toml`, `uv.lock` | Dependency bounds, optional GPU extra, supported Python versions, and build/release workflows. |
-
-The FaST-LMM comparison includes the three specifications deleted by this
-cleanup because they were part of the reviewed head. The current tree retains
-`GPU_DOCS_REVIEW.md`, `GPU_F32_SPEC.md`, `GPU_NUMERICAL_CORRECTNESS.md`, and
-`GPU_ALPHA_RELEASE_CHECKLIST.md` as evidence or open qualification records;
-their historical bed-reader GPU statements are identified as such.
+| Batch | Files and approximate size | Review focus | Status |
+| --- | --- | --- | --- |
+| 1. `single_snp` numerical and GPU path (~610 lines) | `fastlmm/association/single_snp.py` | Precision and dtype policy, NumPy/CuPy switching, covariate placement, worker propagation, memory behavior, and result changes. | Approved November 24, 2026 at `8a98823`. Review fixed integer `h2` corrupting the cache's NaN sentinel (`3e6fff3`) and float32 validation accepting infinity (`6715e09`). Validation added usable-CUDA checks (`cd0078f`, `ffb4e33`). Later `single_snp` changes are tracked with batch 2. |
+| 2. Remaining numerical and GPU paths (~430 lines) | `fastlmm/association/epistasis.py`; `fastlmm/inference/lmm_cov.py`; `fastlmm/util/{_backend,_gpu_warnings,_precision}.py` | Numerical equivalence, GPU linear algebra, fallback boundaries and warnings, thread/environment propagation, and float32 behavior. | Awaiting approval. Review fixed the `LocalMultiThread` deadlock (`66390cd`) and preserved small float32 residual signals while requiring affected older caches to be rebuilt (`8148066`). |
+| 3. Public API and integration (~150 lines) | `fastlmm/association/{heritability_spatial_correction,single_snp_all_plus_select,single_snp_linreg,single_snp_scale,single_snp_select,snp_set,varcomp_test}.py`; `fastlmm/inference/{__init__,fastlmm_predictor,glmm,linear_regression,lmm}.py`; `fastlmm/util/{compute_auto_pcs,run_fastlmmc,util}.py`; `fastlmm/util/matrix/mmultfile.py` | Compatibility of forwarded backend/dtype options and interactions with existing inference and association APIs. | Pending |
+| 4. API-policy tests (~650 lines) | `fastlmm/association/tests/test_api_policy.py` | Public defaults, fallback warnings, worker propagation, nested execution, and failure behavior. | Pending |
+| 5. Dtype, backend, and GPU tests (~520 lines) | `fastlmm/association/tests/{test_array_dtype,test_backend_environment,test_backend_selection,test_gpu_covariates,test_gpu_precision_warning}.py` | Array ownership, dtype/layout, environment policy, optional GPU behavior, and precision warnings. | Pending |
+| 6. Numerical regression tests (~690 lines) | `fastlmm/association/tests/{test_gwas,test_single_snp,testepistasis}.py` | CPU/GPU agreement, tolerances, ordering, cache behavior, and end-to-end result coverage. | Pending |
+| 7. Guides and release notes (~750 lines) | `README.md`, `RELEASE_NOTES.md`, `RELEASING.md`, `doc/source/{api_backend_precision,gpu,index}.rst` | Supported configurations, installation, precision and fallback claims, platform limits, and release accuracy. | Pending |
+| 8. Main notebook (~2,160 raw JSON lines; semantic review) | `doc/ipynb/FaST-LMM.ipynb` | Executable workflow, saved outputs, dependency/version evidence, and consistency with the guides and implementation. | Pending |
+| 9. CI and packaging (~170 lines plus two binaries) | `.github/dependabot.yml`, `.github/workflows/{ci,release}.yml`, `conftest.py`, `pyproject.toml`, `uv.lock`, `tests/test.py`, `external/fastlmmc/fastlmmc`, `fastlmm/association/Fastlmm_autoselect/fastlmmc` | Dependency bounds, optional GPU extra, supported Python versions, test collection, lock changes, and provenance of packaged executables. | Pending |
+| 10. Qualification and maintenance specs (~790 lines; skim) | `specs/{ANNUAL_UPDATE_RUNBOOK,BRANCH_INVENTORY_2026,GPU_ALPHA_RELEASE_CHECKLIST,GPU_DOCS_REVIEW}.md` | Current qualification state, branch-maintenance history, and remaining release evidence. | Pending |
+| 11. Numerical and planning specs (~550 lines; skim) | `AGENTS.md`, `specs/{GPU_F32_SPEC,GPU_NUMERICAL_CORRECTNESS,REVIEW_INVENTORY,SYNTHETIC_BENCHMARK,todo}.md` | Numerical requirements, deferred work, review bookkeeping, and repository guidance. | Pending |
+| 12. Experiment notebooks (~2,690 raw JSON lines; semantic skim) | `specs/experiments/{gpu_f32,gpu_fastest_path}.ipynb` | Source provenance, saved configurations and outputs, numerical identity and ordering, warnings, and benchmark claims. | Pending |
+| 13. Qualification tools (~700 lines; skim) | `tools/annual-update/README.md`, `tools/annual-update/{compare-notebook-outputs.py,countdown.sh,fastlmm-notebooks.sh,notebook-env.sh,refresh-notebook-outputs.py,runcountdown.sh}`; `tools/synthetic-benchmark/{benchmark,driver_synthetic}.py` | Reproducibility, failure handling, environment isolation, and benchmark methodology. | Pending |
+| 14. Generated feature-selection evidence (~570 lines; skim) | `tmp/feature_selection/lmm_full_cv_{k_pcs,ll,mse,report,snp}.*` | Provenance, reproducibility, and whether generated evidence belongs in the release artifact. | Pending |
