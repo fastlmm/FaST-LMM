@@ -1105,9 +1105,10 @@ def _as_dtype(xp, val, dtype, name):
         # Reject unsafe length-N sums and nonzero subnormals before narrowing.
         magnitude = np.abs(pstutil.asnumpy(val))
         finfo = np.finfo(np.float32)
-        out_of_range = np.isfinite(magnitude) & (
-            (magnitude > finfo.max / max(1, magnitude.shape[0]))
-            | ((magnitude > 0) & (magnitude < finfo.tiny))
+        out_of_range = (
+            magnitude > finfo.max / max(1, magnitude.shape[0])
+        ) | (
+            (magnitude > 0) & (magnitude < finfo.tiny)
         )
         if out_of_range.any():
             raise ValueError(

@@ -26,7 +26,9 @@ def test_workflow_precision_precedence_and_restoration(monkeypatch, configured):
         assert os.environ["ARRAY_DTYPE"] == configured
 
 
-@pytest.mark.parametrize("unsafe", [1e-50, 1e40, -1e-50, -1e40])
+@pytest.mark.parametrize(
+    "unsafe", [1e-50, 1e40, -1e-50, -1e40, np.inf, -np.inf]
+)
 @pytest.mark.parametrize("backend", ["numpy", "cupy"])
 def test_range_validation_precedes_narrowing(unsafe, backend):
     xp = np if backend == "numpy" else pytest.importorskip("cupy")
@@ -34,6 +36,12 @@ def test_range_validation_precedes_narrowing(unsafe, backend):
     with pytest.raises(ValueError, match="outside the range"):
         _as_dtype(xp, raw, np.float32, "pheno")
     assert raw[0, 0] == unsafe
+
+
+def test_range_validation_keeps_nan_for_missing_value_handling():
+    raw = np.array([[np.nan], [1.0]], dtype=np.float64)
+    converted = _as_dtype(np, raw, np.float32, "pheno")
+    assert np.isnan(converted[0, 0])
 
 
 @pytest.mark.parametrize("explicit", [None, "float32"])
