@@ -496,7 +496,7 @@ class FastLMM(object):
                 self.force_low_rank,
             )
 
-            X = X.read()
+            X = X.read(xp=np)
             # If possible, unit standardize train and test together. If that is not possible, unit standardize only train and later apply
             # the same linear transformation to test. Unit standardization is necessary for FastLMM to work correctly.
             #!!!later is the calculation of the training data's stats done twice???
@@ -513,7 +513,7 @@ class FastLMM(object):
             )
 
             y0 = (
-                y.read().val
+                y.read(xp=np).val
             )  #!!!later would view_ok=True,order='A' be ok because this code already did a fresh read to look for any missing values
 
             from fastlmm.association.single_snp import (
@@ -663,9 +663,9 @@ class FastLMM(object):
         )
         y = _pheno_fixup(y, iid_if_none=covar0.iid, count_A1=count_A1)
         mean, covar, y = intersect_apply([mean0, covar0, y])
-        mean = mean.read(order="A", view_ok=True).val
-        covar = covar.read(order="A", view_ok=True).val
-        y_actual = y.read().val
+        mean = mean.read(order="A", view_ok=True, xp=np).val
+        covar = covar.read(order="A", view_ok=True, xp=np).val
+        y_actual = y.read(xp=np).val
         if not return_per_iid:
             var = multivariate_normal(mean=mean.reshape(-1), cov=covar)
             nll = -np.log(var.pdf(y_actual.reshape(-1)))
@@ -762,12 +762,12 @@ class FastLMM(object):
                 intersect_before_standardize=True,
                 is_test=True,
             )
-            X = X.read().standardize(self.covar_unit_trained)
+            X = X.read(xp=np).standardize(self.covar_unit_trained)
             # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
             X = SnpData(
                 iid=X.iid,
                 sid=self._new_snp_name(X),
-                val=np.c_[X.read().val, np.ones((X.iid_count, 1))],
+                val=np.c_[X.read(xp=np).val, np.ones((X.iid_count, 1))],
             )
             assert np.array_equal(
                 X.sid, self.covar_sid

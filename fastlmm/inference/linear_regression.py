@@ -109,8 +109,8 @@ class LinearRegression(object):
             X = _pheno_fixup(X, iid_if_none=y.iid, count_A1=count_A1)
 
             X, y = intersect_apply([X, y])
-            y = y.read()
-            X, covar_unit_trained = X.read().standardize(
+            y = y.read(xp=np)
+            X, covar_unit_trained = X.read(xp=np).standardize(
                 self.covariate_standardizer, return_trained=True
             )
 
@@ -180,13 +180,13 @@ class LinearRegression(object):
             )  # could also accept no snps
 
             X = _pheno_fixup(X, iid_if_none=iid_if_none, count_A1=count_A1)
-            X = X.read().standardize(self.covar_unit_trained)
+            X = X.read(xp=np).standardize(self.covar_unit_trained)
 
             # add a column of 1's to cov to increase DOF of model (and accuracy) by allowing a constant offset
             X = SnpData(
                 iid=X.iid,
                 sid=FastLMM._new_snp_name(X),
-                val=np.c_[X.read().val, np.ones((X.iid_count, 1))],
+                val=np.c_[X.read(xp=np).val, np.ones((X.iid_count, 1))],
             )
             assert np.array_equal(
                 X.sid, self.covar_sid
@@ -264,10 +264,10 @@ class LinearRegression(object):
             y = _pheno_fixup(y, iid_if_none=covar0.iid, count_A1=count_A1)
             mean, covar, y = intersect_apply([mean0, covar0, y])
             var = multivariate_normal(
-                mean=mean.read(order="A", view_ok=True).val.reshape(-1),
-                cov=covar.read(order="A", view_ok=True).val,
+                mean=mean.read(order="A", view_ok=True, xp=np).val.reshape(-1),
+                cov=covar.read(order="A", view_ok=True, xp=np).val,
             )
-            y_actual = y.read().val
+            y_actual = y.read(xp=np).val
             nll = -np.log(var.pdf(y_actual.reshape(-1)))
             if not return_mse_too:
                 return nll
