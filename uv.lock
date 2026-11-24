@@ -89,30 +89,47 @@ wheels = [
 
 [[package]]
 name = "bed-reader"
-version = "1.3.0a1"
+version = "1.3.0b3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/12/604ad1f036bd0851f5a91bcf13b86c07686ec12ff63f267471a7b956e6cb/bed_reader-1.3.0a1.tar.gz", hash = "sha256:8b7e3f4515a95390d529b9a7762f53c0d2d3432f59b2a5f2f78aba3b061ff7ef", size = 2717943, upload-time = "2026-11-18T03:25:31.567Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/b9/78b88c90bedc656564b9da1313eb1f5f7b9b96f2cdd3d838bf0fd805c788/bed_reader-1.3.0b3.tar.gz", hash = "sha256:ce5f15b69961cdd3108fa8c5c00687f8d42a9dd99a9135330176233235f0cc7f", size = 2673083, upload-time = "2026-11-24T00:08:49.949Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/14/ad0d55002ea995efaaf147f8aae826ee0ab3c52372329dc69563f6f00af1/bed_reader-1.3.0a1-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:e1de6297a2366dee3ce41488d43934a785f562cfcc4c6d994c443a7721f178e9", size = 43996257, upload-time = "2026-11-18T03:24:46.056Z" },
-    { url = "https://files.pythonhosted.org/packages/c5/e1/58ce994977eaf52d0fd5caceaed24b9e2c703650816fa9219ee42199ac62/bed_reader-1.3.0a1-cp311-cp311-win_amd64.whl", hash = "sha256:2f8246be9754c1f7f75b23a9e0ac58693891b1c4aa8f3477e77b8936364553b6", size = 34723736, upload-time = "2026-11-18T03:24:50.531Z" },
-    { url = "https://files.pythonhosted.org/packages/0b/e3/707f19527de7fa164b5e7441e01b3014810d506ae001828a39845533180a/bed_reader-1.3.0a1-cp312-cp312-manylinux_2_35_x86_64.whl", hash = "sha256:f8818b6e8d0a1b02cbb55bb0889eacb166089a26fb633e4da8ceaf2cf14bedbe", size = 43999538, upload-time = "2026-11-18T03:24:55.173Z" },
-    { url = "https://files.pythonhosted.org/packages/5f/31/682be4684722ecd8e5c8b8012b570b8cb397d0d6988a4ea091134434132a/bed_reader-1.3.0a1-cp312-cp312-win_amd64.whl", hash = "sha256:21070d562c25a7b83d5613a6cac6557e2fb49cf2fa5275fbae1b2c8c461607e4", size = 34714204, upload-time = "2026-11-18T03:24:59.418Z" },
-    { url = "https://files.pythonhosted.org/packages/b4/38/355006bc825f037eadacfd66adf06bd47bbce83ec85ab2f657a7139bca30/bed_reader-1.3.0a1-cp313-cp313-manylinux_2_35_x86_64.whl", hash = "sha256:48ad9c22ec825c696792579f72a55c3d129f5085bca31db4f034d43fc4337a43", size = 44004121, upload-time = "2026-11-18T03:25:04.186Z" },
-    { url = "https://files.pythonhosted.org/packages/57/92/9d004693c6a28aed80ea90b7a6aa1bd714df1cef48b3c4218520a4baa318/bed_reader-1.3.0a1-cp313-cp313-win_amd64.whl", hash = "sha256:936d7e6d2f2d19c26c54c7eb0ac0d2c4eeb74fa1c21298665e75f20942713235", size = 34712304, upload-time = "2026-11-18T03:25:09.029Z" },
-    { url = "https://files.pythonhosted.org/packages/45/f3/d41cfc482d10cd2a12fcd3012e9c4bee741015e16ccbfac2ca236d87c57c/bed_reader-1.3.0a1-cp314-cp314-manylinux_2_35_x86_64.whl", hash = "sha256:2a0cc89a3564e5b96cb974907b1c30ca99feef775282e5483bdc895488f0abc2", size = 43999440, upload-time = "2026-11-18T03:25:13.983Z" },
-    { url = "https://files.pythonhosted.org/packages/49/e5/11383d4144e8f22d60e4981e01e5c648dca2325a177a95713f781f0e0a89/bed_reader-1.3.0a1-cp314-cp314-win_amd64.whl", hash = "sha256:ed83e8d1561974a92be39d7e1e2f08139a9cfbfd87506b4eec9994a43080ea5c", size = 34713338, upload-time = "2026-11-18T03:25:18.911Z" },
-    { url = "https://files.pythonhosted.org/packages/99/78/4a4a2435f94b17fe3b7e5af15e396debca429c434973172ce2de19eee2b8/bed_reader-1.3.0a1-cp315-cp315-manylinux_2_35_x86_64.whl", hash = "sha256:b1ae684b594f62f049e944ed46dbc9f87a8dd13ff22061b2c6fade5892beb305", size = 43998167, upload-time = "2026-11-18T03:25:24.417Z" },
-    { url = "https://files.pythonhosted.org/packages/88/06/92bab6b34e46241ba2110c9c1e02122f41c51f582663511653b337e18b31/bed_reader-1.3.0a1-cp315-cp315-win_amd64.whl", hash = "sha256:2d04bbc24d36b6e9ba7437b07c538c03be886c6ec36e27214a91220f24ed7414", size = 34710637, upload-time = "2026-11-18T03:25:29.154Z" },
+    { url = "https://files.pythonhosted.org/packages/26/be/05d3b8b4f9a57103aa000c7310b359594faaa050f7107ab44714dd59fb7f/bed_reader-1.3.0b3-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:b78bbdb1beeabf1bfb388174a7648f37f8870755380439183a8841b316475711", size = 7702056, upload-time = "2026-11-24T00:07:55.019Z" },
+    { url = "https://files.pythonhosted.org/packages/25/da/82552d9ad122e3a101343999a2fc1867b2785f142e6aaf2f1ff26ad5c093/bed_reader-1.3.0b3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e9d22f85c4cb069a2ebb1f19b55a1414a4e4065f071d08e9160477f77ca090ff", size = 6952436, upload-time = "2026-11-24T00:07:57.136Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/38/48a24ff110fa1f85e30fb8a2685a4d3785309f9e1da315c81bdd41c4d0b9/bed_reader-1.3.0b3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:dd3476eb90eee767b931ed0f22d2bd40d40337f613baaf184f86a6ba5cf3b9e4", size = 8003010, upload-time = "2026-11-24T00:07:58.89Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/b7/0b18eedd8c6e1b83b835c2ae5dc96e08aeec53c5f9a59bb425f0365c9bd8/bed_reader-1.3.0b3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:6b50c39f3364ba4fa4b291720abf5c620686e584076300e5249636496c20356b", size = 7986719, upload-time = "2026-11-24T00:08:00.813Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/e5/556a5e4cb93c2a9d6ac40742e6ad9f967ce5ca0b36093431983e68ca29fe/bed_reader-1.3.0b3-cp311-cp311-win_amd64.whl", hash = "sha256:19d68fddd45a1895486cdaf69571fc1c091cb5f156a892ecf0b6d464405619f0", size = 7393063, upload-time = "2026-11-24T00:08:02.687Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/a3/8450cc216ddfe81a090cf801e077749c194977e43bea9b3225d1d2ebfff0/bed_reader-1.3.0b3-cp311-cp311-win_arm64.whl", hash = "sha256:b22402151750e32546af0ce7777215033429cea21df8fef8278e5d85ea9b3be4", size = 7070719, upload-time = "2026-11-24T00:08:04.611Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/3c/98597657a9ff351ac0d76ff9bb8183efa34bef5e6aeb2b0017566de828a1/bed_reader-1.3.0b3-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:cd11eb08e87e7d29482be51435ff4951b062f63c6d1ace8f452795397becaba3", size = 7713332, upload-time = "2026-11-24T00:08:06.295Z" },
+    { url = "https://files.pythonhosted.org/packages/85/ad/4d0510b97b3acf664c510ceeeafb14b864fef4e7d8540bd0cee8e8b4b9a8/bed_reader-1.3.0b3-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:90eff652e8ba3492c65392f04bbebaf467011a03672658745a5799e809334e53", size = 6944122, upload-time = "2026-11-24T00:08:08.337Z" },
+    { url = "https://files.pythonhosted.org/packages/74/66/912ed924c0d669e40d5a3dd809b1e0a7c41e487dd26d697edddf80b060f5/bed_reader-1.3.0b3-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:41ce971d759c6b6b8eaf2b4495dcb1ecccd6d1ff0578ac50c20d0e08a7475504", size = 7998393, upload-time = "2026-11-24T00:08:10.233Z" },
+    { url = "https://files.pythonhosted.org/packages/33/2e/3bd0a290ab2b1e57def3db41af4b114785512478c382c6509acc3b520e66/bed_reader-1.3.0b3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:38b9a3480de9dfa0854ac0771b1dfb92b1863e483797b1eec46eb6ac712726af", size = 7980908, upload-time = "2026-11-24T00:08:11.784Z" },
+    { url = "https://files.pythonhosted.org/packages/43/d0/2b900f86b6ebf5ac32d354583ad167ca0624e9a902801eb311a2f0cfdc70/bed_reader-1.3.0b3-cp312-cp312-win_amd64.whl", hash = "sha256:984de328bbbb23975380b5465b49c0f1db6f6c0973a343802a4cb3081f067b45", size = 7394911, upload-time = "2026-11-24T00:08:13.384Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/ec/2cc8ddf1cb9408edf09b70b4762c3e35c8ceed6ee24ede4c6066c922ac2a/bed_reader-1.3.0b3-cp312-cp312-win_arm64.whl", hash = "sha256:bb020152275362885888b1dfe50e0e680305a53f3f7ae049150f3083b4ad92be", size = 7070541, upload-time = "2026-11-24T00:08:15.13Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/92/ca4e6b4e975f20e1634d22c2f3254ad5ef3dc874db4234e30a1bd79a764d/bed_reader-1.3.0b3-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:b79292d0b1260d6de8c3c4c4ae4885ee69234b5c1152c1758afa4269fa4919ee", size = 7712929, upload-time = "2026-11-24T00:08:17.076Z" },
+    { url = "https://files.pythonhosted.org/packages/33/e3/2ecf92f3fac3249bac2bdbb9f893db1e23bba1acd4e38b078579f499465a/bed_reader-1.3.0b3-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:6f0c5ff810c3c9287f331d37b48cc3b1864a0d8e1601b4ce63943bea5d58498d", size = 6943578, upload-time = "2026-11-24T00:08:19.061Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/5f/6c440d87cf5ff4c8155a0ab1c14119c30fe6d6a6c1c6e04b0335fda21480/bed_reader-1.3.0b3-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:6ba6144b324ce5c7cf1e0801b0e228744458bd2fe14269ed8a344aecff88f43c", size = 7997536, upload-time = "2026-11-24T00:08:20.966Z" },
+    { url = "https://files.pythonhosted.org/packages/41/a0/f68170f72b432a1372c747ef390cfafa5e915b36986545c2aa609e863083/bed_reader-1.3.0b3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:abc0ba0684b0cbbf2ce3ee66871b3c20f92e9d61543772863a812c211004c4fb", size = 7979806, upload-time = "2026-11-24T00:08:22.707Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/11/5b4523c429c23f06c4128e89a9a769decfbf34dc5ca207be5358322d377e/bed_reader-1.3.0b3-cp313-cp313-win_amd64.whl", hash = "sha256:6783c1ad8f5db3617d4a0d084be67d378b9530aae553ee0f8cc2c23e47af2c21", size = 7394648, upload-time = "2026-11-24T00:08:24.55Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/62/83ce35f5240e1d8c6b720920b54c545b4fd22c936ec74884ef4aa3965c05/bed_reader-1.3.0b3-cp313-cp313-win_arm64.whl", hash = "sha256:4cfe452e30864db2046a64354d075a6bbb765d68da41e59d3aac7ec7781bd391", size = 7070007, upload-time = "2026-11-24T00:08:26.142Z" },
+    { url = "https://files.pythonhosted.org/packages/44/f2/651fbbf3046e4a942555a85f79309ff23a21d661b4258deab13dbc478059/bed_reader-1.3.0b3-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:f00ed229436683ff8688de66a7d16394ae4cf67fa4a777b9a458f18dfb5f74ee", size = 7710492, upload-time = "2026-11-24T00:08:27.765Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/30/700704ca9e5b40ba2f238904e18ab694f99beeb66ec010ababbb75bc007d/bed_reader-1.3.0b3-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:02173220e09e0bfc2e4fd7d51c81a6fffb911e0666b42470443c7545ac44eca0", size = 6939227, upload-time = "2026-11-24T00:08:29.482Z" },
+    { url = "https://files.pythonhosted.org/packages/69/71/0186da2b8531fa55c374aff8ca1546177eb800fc96477f79fa7a16c55e03/bed_reader-1.3.0b3-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:63329260ddae5646636cbe2a1f94d42d254662cf7ca6681074b9bfb11d5e074a", size = 8003672, upload-time = "2026-11-24T00:08:31.121Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/2c/6b871487c63074776145cfa80e7832dd3d69c09462c6fdbd70efb424e063/bed_reader-1.3.0b3-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:040b0e0e995493893a73a7a5d7643356532c781a64f220a4c4e2bb1c44e0fddd", size = 7984126, upload-time = "2026-11-24T00:08:32.785Z" },
+    { url = "https://files.pythonhosted.org/packages/81/03/52a88a393aa426d7c85b30db4b86e1261a15241c6bce68276b60565a3c5a/bed_reader-1.3.0b3-cp314-cp314-win_amd64.whl", hash = "sha256:fd3f98fa435a9fdad6723317414aea4757cd0eab2a650702e6eafaac6fce1669", size = 7393063, upload-time = "2026-11-24T00:08:34.499Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/21/6df584c48e3db81c6666722fb1e4bf75f3a58c065e234a465c01bae2952f/bed_reader-1.3.0b3-cp314-cp314-win_arm64.whl", hash = "sha256:7ba71da53f33bf78d2f9d0f6cdd1d0384fe4066349f7945f90fd0ddd3dce00c5", size = 7072737, upload-time = "2026-11-24T00:08:36.223Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/d0/c8f5cfed0e6cc4d28cf3ff2f96f17c252e9e7e4f01cb8c6df81adb30fd0b/bed_reader-1.3.0b3-cp315-cp315-macosx_10_12_x86_64.whl", hash = "sha256:f9e40d8208cd03626bcbd27743be9c41a1da8d9ef4c75746bfc2ef89a28d5c0d", size = 7708974, upload-time = "2026-11-24T00:08:38.552Z" },
+    { url = "https://files.pythonhosted.org/packages/91/72/1041fa61ab09523843f46855cb163d323c8782c975e9db336451667e7a4c/bed_reader-1.3.0b3-cp315-cp315-macosx_11_0_arm64.whl", hash = "sha256:903b10bf27e219f93254f62f592ceee4eb250b7e07b14a635420c9c45b338c01", size = 6939767, upload-time = "2026-11-24T00:08:40.581Z" },
+    { url = "https://files.pythonhosted.org/packages/27/1e/8eb57c6fc91c46277ba409269a5ad3a4383d4341c4eb7d9e26556b32a60e/bed_reader-1.3.0b3-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:ade354cfa578ce303b85e585c7bddcd9ee4d8a0d33f90e78611b0243d2d4d75a", size = 8003457, upload-time = "2026-11-24T00:08:42.363Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/8b/ebc3021b55908472d2cbf3d9b50bdf53a98624cdcc854bd3cce947a58ed7/bed_reader-1.3.0b3-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:9300e17c9b75eac0b2b974b058c6064f1d0f0d9dd5389f2edd2748cbd6843548", size = 7983733, upload-time = "2026-11-24T00:08:44.065Z" },
+    { url = "https://files.pythonhosted.org/packages/17/ba/119a42b0f9fb1e0d258006c837924e4025ec9822d751d8587ad17d281ca1/bed_reader-1.3.0b3-cp315-cp315-win_amd64.whl", hash = "sha256:ad3546fa601340ea3460db5555d3629d823fe60aadd2145feba18f987ac45276", size = 7393143, upload-time = "2026-11-24T00:08:45.916Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/bd/670dcb6b58fb13c51a3e053785b0a8d8030e2b074ae59abc495e7591e5fb/bed_reader-1.3.0b3-cp315-cp315-win_arm64.whl", hash = "sha256:e02d79150f75dfcfda47f320717787baa404a3e463fda453f4027a8e21acd1e2", size = 7071085, upload-time = "2026-11-24T00:08:48.343Z" },
 ]
 
 [package.optional-dependencies]
-cupy = [
-    { name = "cupy-cuda13x" },
-]
 samples = [
     { name = "pooch" },
 ]
@@ -1061,7 +1078,7 @@ notebook = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bed-reader", specifier = ">=1.3.0a1" },
+    { name = "bed-reader", specifier = ">=1.3.0b3" },
     { name = "bgen-reader", marker = "extra == 'bgen'", specifier = ">=4.0.9" },
     { name = "cbgen", marker = "extra == 'bgen'", specifier = ">=1.0.6" },
     { name = "cloudpickle", marker = "python_full_version < '3.14'", specifier = ">=3.1.0" },
@@ -1083,8 +1100,8 @@ requires-dist = [
     { name = "pandas", marker = "python_full_version >= '3.14'", specifier = ">=2.3.3,<4" },
     { name = "psutil", marker = "python_full_version < '3.14'", specifier = ">=6.1.0" },
     { name = "psutil", marker = "python_full_version >= '3.14'", specifier = ">=7.1.2" },
-    { name = "pysnptools", specifier = ">=1.1.0a1" },
-    { name = "pysnptools", extras = ["cupy"], marker = "extra == 'cupy'", specifier = ">=1.1.0a1" },
+    { name = "pysnptools", specifier = ">=1.1.0b1" },
+    { name = "pysnptools", extras = ["cupy"], marker = "extra == 'cupy'", specifier = ">=1.1.0b1" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pytest-datadir", marker = "extra == 'dev'" },
@@ -2684,7 +2701,7 @@ wheels = [
 
 [[package]]
 name = "pysnptools"
-version = "1.1.0a1"
+version = "1.1.0b1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bed-reader", extra = ["samples"] },
@@ -2696,15 +2713,16 @@ dependencies = [
     { name = "psutil" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "threadpoolctl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e4/3b/ba148b36843df5a0901dd9079ade2f239556b7efeda5f9d6c8627160f713/pysnptools-1.1.0a1.tar.gz", hash = "sha256:525f914ebeaf7202d97eced20d698dddc56814ffc310fef09caab59813eb7309", size = 251530, upload-time = "2026-11-18T04:51:53.78Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/81/217fae612de4f83d2b1b0c9f8fe91a7da4b9a0d29633bdb1bba2e7b904ec/pysnptools-1.1.0b1.tar.gz", hash = "sha256:69a312353d1c6952ed5f4d3cf4c48afff511f66660f27c07fc2a99c646d56fa6", size = 267728, upload-time = "2026-11-24T22:17:42.25Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/09/0105235996b30a8890853f1664b79578b1f5a29e2163013f42bb236bf589/pysnptools-1.1.0a1-py3-none-any.whl", hash = "sha256:330ab3c07c2a710545ed9e34b978fe521f29ef84919021cfad8bce87f529e63a", size = 317720, upload-time = "2026-11-18T04:51:52.053Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/aa/0b795456a6126f9cbe9f94db7d57140bcea5584205cf4d89254b8c39fadc/pysnptools-1.1.0b1-py3-none-any.whl", hash = "sha256:f953a3ca9d40dfb9bfa9bfd81ac75808c304e8e58060fcd8a271e766d8bdc476", size = 337132, upload-time = "2026-11-24T22:17:40.639Z" },
 ]
 
 [package.optional-dependencies]
 cupy = [
-    { name = "bed-reader", extra = ["cupy"] },
+    { name = "cupy-cuda13x" },
 ]
 
 [[package]]
