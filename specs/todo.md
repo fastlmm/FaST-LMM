@@ -74,12 +74,14 @@ Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2
 
 - PySnpTools: full pytest needs an external `qctool` for two doctests. Document how to install and configure it, name the tests that need it, and make them fail clearly (not silently skip) when it is missing.
 - Document what each runner covers (pytest and the legacy `tests/test.py` in each repository). FaST-LMM's broad pytest collection also imports old setup and benchmark files; clean that up before pytest can replace the canonical runner.
-- FaST-LMM CPU pytest failures to follow up separately. The canonical `tests/test.py` run passed 227 cases with 7 skipped.
+- Confirm the new backend and dtype pytest step runs on the next FaST-LMM PR. Qualify the CUDA cases separately on a supported GPU.
+- Refresh the public FaST-LMM notebook after a complete run with published prerequisites. The checked-in two-kernel feature-selection output is interrupted. Timings in the experimental notebooks remain historical until an approved benchmark rerun.
+- Decide whether to untrack the five historical files under `tmp/feature_selection/`. The regression test now writes to an isolated temporary directory. Keep the working-tree CSV copies available until that decision.
+- Strengthen the approved FaST-LMM API-policy tests by observing actual `snp_set` model arrays and requiring both `evaluate` and `test_snps` events in the single-kernel worker trace. Current coverage checks fallback behavior and worker arrays across the other tested paths.
+- FaST-LMM's remaining legacy pytest failures. The earlier canonical `tests/test.py` run passed 227 cases with 7 skipped. The review fixed both first-party association doctests in `06adad5`, with the same example results in both runners.
 
   | Pytest case | Cause | Covered by `tests/test.py`? |
   | --- | --- | --- |
-  | `fastlmm.association.single_snp_scale.single_snp_scale` doctest | Pytest treats the expected `-etc-` marker as literal output, but the example prints nothing at that step. | Yes. `TestSingleSnpScale.test_doctest` sets `doctest.ELLIPSIS_MARKER` to `-etc-` and passes. |
-  | `fastlmm.association.snp_set.snp_set` doctest | Pytest runs the example from the repository root, where `../../tests/datasets/phenSynthFrom22.23.N300.txt` does not resolve to the fixture. | Yes. `TestSnpSet.test_doctest` changes to `fastlmm/association` first and passes. |
   | `TestSingleSnpSelect.test_old_sel_plus_pc` | The bundled `fastlmmc` auto-selection command exits with status 132 (SIGILL), so the expected `.aoselect.snps.txt` file is missing. | No. The runner omits the deprecated `test_single_snp_select` suite. |
   | `fastlmm.external.pca.PCA` doctest | scikit-learn 1.9.1 prints `PCA(n_components=2)` instead of including the default parameters in its estimator representation. | No. The runner does not collect doctests from this module. |
   | `fastlmm.external.pca.ProbabilisticPCA` doctest | The example also instantiates scikit-learn's `PCA` and expects its older estimator representation. | No. The runner does not collect doctests from this module. |

@@ -71,23 +71,68 @@ constructors, `.val` assignment, and reads of in-memory values raise
 ## FaST-LMM
 
 Comparison: `git diff v1.0.0...gpu-bed-reader` (merge base `9da663a`) at
-`8148066`, approximately 11,550 changed lines across 74 files. Notebook JSON
+`06adad5`, approximately 11,650 changed lines across 77 files. Notebook JSON
 and generated numerical evidence inflate the textual line counts; review those
 batches semantically as noted below.
 
 | Batch | Files and approximate size | Review focus | Status |
 | --- | --- | --- | --- |
 | 1. `single_snp` numerical and GPU path (~610 lines) | `fastlmm/association/single_snp.py` | Precision and dtype policy, NumPy/CuPy switching, covariate placement, worker propagation, memory behavior, and result changes. | Approved November 24, 2026 at `8a98823`. Review fixed integer `h2` corrupting the cache's NaN sentinel (`3e6fff3`) and float32 validation accepting infinity (`6715e09`). Validation added usable-CUDA checks (`cd0078f`, `ffb4e33`). Later `single_snp` changes are tracked with batch 2. |
-| 2. Remaining numerical and GPU paths (~430 lines) | `fastlmm/association/epistasis.py`; `fastlmm/inference/lmm_cov.py`; `fastlmm/util/{_backend,_gpu_warnings,_precision}.py` | Numerical equivalence, GPU linear algebra, fallback boundaries and warnings, thread/environment propagation, and float32 behavior. | Awaiting approval. Review fixed the `LocalMultiThread` deadlock (`66390cd`) and preserved small float32 residual signals while requiring affected older caches to be rebuilt (`8148066`). |
-| 3. Public API and integration (~150 lines) | `fastlmm/association/{heritability_spatial_correction,single_snp_all_plus_select,single_snp_linreg,single_snp_scale,single_snp_select,snp_set,varcomp_test}.py`; `fastlmm/inference/{__init__,fastlmm_predictor,glmm,linear_regression,lmm}.py`; `fastlmm/util/{compute_auto_pcs,run_fastlmmc,util}.py`; `fastlmm/util/matrix/mmultfile.py` | Compatibility of forwarded backend/dtype options and interactions with existing inference and association APIs. | Pending |
-| 4. API-policy tests (~650 lines) | `fastlmm/association/tests/test_api_policy.py` | Public defaults, fallback warnings, worker propagation, nested execution, and failure behavior. | Pending |
-| 5. Dtype, backend, and GPU tests (~520 lines) | `fastlmm/association/tests/{test_array_dtype,test_backend_environment,test_backend_selection,test_gpu_covariates,test_gpu_precision_warning}.py` | Array ownership, dtype/layout, environment policy, optional GPU behavior, and precision warnings. | Pending |
-| 6. Numerical regression tests (~690 lines) | `fastlmm/association/tests/{test_gwas,test_single_snp,testepistasis}.py` | CPU/GPU agreement, tolerances, ordering, cache behavior, and end-to-end result coverage. | Pending |
-| 7. Guides and release notes (~750 lines) | `README.md`, `RELEASE_NOTES.md`, `RELEASING.md`, `doc/source/{api_backend_precision,gpu,index}.rst` | Supported configurations, installation, precision and fallback claims, platform limits, and release accuracy. | Pending |
-| 8. Main notebook (~2,160 raw JSON lines; semantic review) | `doc/ipynb/FaST-LMM.ipynb` | Executable workflow, saved outputs, dependency/version evidence, and consistency with the guides and implementation. | Pending |
-| 9. CI and packaging (~170 lines plus two binaries) | `.github/dependabot.yml`, `.github/workflows/{ci,release}.yml`, `conftest.py`, `pyproject.toml`, `uv.lock`, `tests/test.py`, `external/fastlmmc/fastlmmc`, `fastlmm/association/Fastlmm_autoselect/fastlmmc` | Dependency bounds, optional GPU extra, supported Python versions, test collection, lock changes, and provenance of packaged executables. | Pending |
-| 10. Qualification and maintenance specs (~790 lines; skim) | `specs/{ANNUAL_UPDATE_RUNBOOK,BRANCH_INVENTORY_2026,GPU_ALPHA_RELEASE_CHECKLIST,GPU_DOCS_REVIEW}.md` | Current qualification state, branch-maintenance history, and remaining release evidence. | Pending |
-| 11. Numerical and planning specs (~550 lines; skim) | `AGENTS.md`, `specs/{GPU_F32_SPEC,GPU_NUMERICAL_CORRECTNESS,REVIEW_INVENTORY,SYNTHETIC_BENCHMARK,todo}.md` | Numerical requirements, deferred work, review bookkeeping, and repository guidance. | Pending |
-| 12. Experiment notebooks (~2,690 raw JSON lines; semantic skim) | `specs/experiments/{gpu_f32,gpu_fastest_path}.ipynb` | Source provenance, saved configurations and outputs, numerical identity and ordering, warnings, and benchmark claims. | Pending |
-| 13. Qualification tools (~700 lines; skim) | `tools/annual-update/README.md`, `tools/annual-update/{compare-notebook-outputs.py,countdown.sh,fastlmm-notebooks.sh,notebook-env.sh,refresh-notebook-outputs.py,runcountdown.sh}`; `tools/synthetic-benchmark/{benchmark,driver_synthetic}.py` | Reproducibility, failure handling, environment isolation, and benchmark methodology. | Pending |
-| 14. Generated feature-selection evidence (~570 lines; skim) | `tmp/feature_selection/lmm_full_cv_{k_pcs,ll,mse,report,snp}.*` | Provenance, reproducibility, and whether generated evidence belongs in the release artifact. | Pending |
+| 2. Remaining numerical and GPU paths (~430 lines) | `fastlmm/association/epistasis.py`; `fastlmm/inference/lmm_cov.py`; `fastlmm/util/{_backend,_gpu_warnings,_precision}.py` | Numerical equivalence, GPU linear algebra, fallback boundaries and warnings, thread/environment propagation, and float32 behavior. | Approved November 24, 2026 at `d035567`. Review fixed the `LocalMultiThread` deadlock (`66390cd`) and preserved small float32 residual signals while requiring affected older caches to be rebuilt (`8148066`). |
+| 3. Public API and integration (~150 lines) | `fastlmm/association/{heritability_spatial_correction,single_snp_all_plus_select,single_snp_linreg,single_snp_scale,single_snp_select,snp_set,varcomp_test}.py`; `fastlmm/inference/{__init__,fastlmm_predictor,glmm,linear_regression,lmm}.py`; `fastlmm/util/{compute_auto_pcs,run_fastlmmc,util}.py`; `fastlmm/util/matrix/mmultfile.py` | Compatibility of forwarded backend/dtype options and interactions with existing inference and association APIs. | Approved November 24, 2026 with the working-tree fixes for threaded spatial correction and inherited predictor state validation. The pre-existing `fastlmmc` SIGILL remains tracked in `specs/todo.md`. |
+| 4. API-policy tests (~770 lines including Batch 3 regression tests) | `fastlmm/association/tests/test_api_policy.py` | Public defaults, fallback warnings, worker propagation, nested execution, and failure behavior. | Approved November 24, 2026 with the working-tree test changes (blob `926bfe7`, based on `d035567`). The cache matrix verifies cache loads and forbids recomputation. The failure-restoration test requires the exact injected exception. Both tests rejected the simulated regressions. Record the commit once the approved changes are committed. |
+| 5. Backend and numerical tests (former 5–6) | Backend/dtype/GPU modules plus `test_gwas.py`, `test_single_snp.py`, and `testepistasis.py` | Check the regression contracts and numerical tolerances. | Ready for review. The dtype race and warning contract were tightened in `4c797a7`. With the published prerequisites, 135 passed and 26 required CUDA. |
+| 6. User documentation and notebook evidence (former 7–8, 10–12) | README, release notes, Sphinx guides, notebooks, and qualification specs | Review the current installation instructions, cache migration, and what the notebook evidence supports. | Ready for review. `9337de9` corrects the alpha and notebook claims; `06adad5` fixes the two first-party association doctests. Fresh notebook execution and the three vendored PCA doctests remain open. |
+| 7. CI, artifacts, and maintenance tools (former 9, 13–14) | Workflow and dependency changes, artifact contents, runner helpers, and generated feature-selection evidence | Review the CI test step, dependency bounds, package contents, and whether to untrack the historical CSVs. | Ready for review. `da89be7` wires pytest into CI; `34b9de3`, `7afea48`, and `2ebb688` isolate output and harden qualification helpers. Locally built wheel and source archive passed installed smoke tests. |
+
+### Consolidated review commands
+
+Use the committed branch diff for the baseline and inspect any pending edits
+to the same paths with `git diff -- <paths>`.
+
+**5. Backend and numerical tests**
+
+```bash
+git diff v1.0.0...gpu-bed-reader -- \
+  fastlmm/association/tests/{test_array_dtype,test_backend_environment,test_backend_selection,test_gpu_covariates,test_gpu_precision_warning,test_gwas,test_single_snp,testepistasis}.py
+```
+
+On Linux/WSL2 with Python 3.14.5, published PySnpTools 1.1.0b1 and
+bed-reader 1.3.0b3, the canonical runner passed 230 tests and skipped six
+CUDA cases. The focused suite passed 135 tests and 12 subtests, with 26
+CUDA skips. The five CI pytest modules also passed with CuPy imports
+disabled (18 passed, 30 skipped).
+
+**6. User documentation and notebook evidence**
+
+```bash
+git diff v1.0.0...gpu-bed-reader -- README.md RELEASE_NOTES.md RELEASING.md \
+  doc/source doc/ipynb/FaST-LMM.ipynb tests/notebooks.toml \
+  fastlmm/association/{single_snp_scale,snp_set}.py \
+  fastlmm/association/tests/test_single_snp_scale.py \
+  specs AGENTS.md CLAUDE.md
+```
+
+Historical notebooks and timing records were reviewed for provenance and
+consistency. Their timings still describe the original configurations.
+The main notebook's interrupted output requires a full rerun. The
+strict Sphinx build passed, and both fixed association doctests passed
+under pytest and their canonical unittest wrappers. The broader doctest
+rerun had 14 passes and three known failures in the vendored PCA examples,
+which remain tracked in `specs/todo.md`.
+
+**7. CI, artifacts, and maintenance tools**
+
+```bash
+git diff v1.0.0...gpu-bed-reader -- .github conftest.py pyproject.toml uv.lock tests/test.py \
+  external/fastlmmc/fastlmmc fastlmm/association/Fastlmm_autoselect/fastlmmc \
+  tools fastlmm/feature_selection/test.py tmp/feature_selection
+git diff -- pyproject.toml uv.lock
+```
+
+The two executable blobs match the baseline and gained executable permissions.
+The reviewed wheel and source archive preserve the packaged executable bit and
+exclude the generated feature-selection files. The dependency-bound and lockfile
+edits were already present in the worktree during review. The artifacts built
+with those edits still have the existing `1.1.0a1` version and are local test
+artifacts. Platform CI and GPU acceptance remain open.
