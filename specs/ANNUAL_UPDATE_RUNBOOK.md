@@ -1,7 +1,5 @@
 # Annual FaST-LMM ecosystem update
 
-<!-- TODO0 consider deleting this spec once the work below is implemented and released. -->
-
 This coordinates the repositories; each package's `RELEASING.md` remains the
 authority for its release gates. Record exact commits, CI runs, artifacts,
 and published versions for each annual update.
