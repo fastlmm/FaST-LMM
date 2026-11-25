@@ -871,7 +871,6 @@ class TestSingleSnp(unittest.TestCase):
         assert list(frame_a.index) == list(frame_b.index)
         return np.max(np.abs(np.log10(frame_a.PValue) - np.log10(frame_b.PValue)))
 
-    # TODO0 Tighten these tolerances to measured values (plus margin) before merging. (may no longer apply: tightened 2026-11-14)
     # Max |Δlog10 p| measured on this data (full rank / low rank), RTX 3060, cupy 14.2:
     #   numpy float32 vs float64: 5.7e-6 / 2.6e-6 (including float32 kernel formation)
     #   cupy vs numpy, float64:   2.5e-14 / 8.9e-10
