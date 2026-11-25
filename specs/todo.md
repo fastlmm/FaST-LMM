@@ -75,7 +75,8 @@ Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2
 - PySnpTools: full pytest needs an external `qctool` for two doctests. Document how to install and configure it, name the tests that need it, and make them fail clearly (not silently skip) when it is missing.
 - Document what each runner covers (pytest and the legacy `tests/test.py` in each repository). FaST-LMM's broad pytest collection also imports old setup and benchmark files; clean that up before pytest can replace the canonical runner.
 - Confirm the new backend and dtype pytest step runs on the next FaST-LMM PR. Qualify the CUDA cases separately on a supported GPU.
-- Refresh the public FaST-LMM notebook after a complete run with published prerequisites. The checked-in two-kernel feature-selection output is interrupted. Timings in the experimental notebooks remain historical until an approved benchmark rerun.
+- Timings in the experimental FaST-LMM notebooks remain historical until an approved benchmark rerun. (The public notebook was refreshed November 24, 2026 from a complete run with published prerequisites.)
+- Decide whether to untrack `tests/select/null.map` and `tests/select/null.ped`. `FastLmmSet` writes them with `fastlmmc` and reads them back on every canonical run, so each run rewrites these tracked files (tracked since 0.2.7). Untracking needs the test to write to a temporary directory first.
 - Strengthen the approved FaST-LMM API-policy tests by observing actual `snp_set` model arrays and requiring both `evaluate` and `test_snps` events in the single-kernel worker trace. Current coverage checks fallback behavior and worker arrays across the other tested paths.
 - FaST-LMM's remaining legacy pytest failures. The earlier canonical `tests/test.py` run passed 227 cases with 7 skipped. The review fixed both first-party association doctests in `06adad5`, with the same example results in both runners.
 
