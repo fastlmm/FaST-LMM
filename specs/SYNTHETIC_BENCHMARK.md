@@ -1,8 +1,30 @@
 # Synthetic FaST-LMM benchmark
 
-## Result (November 22, 2026)
+## Result (November 25, 2026, release candidate)
 
-The dataset is `/home/carlk/.cache/synthetic-bed/synth_14925x100000.bed` (14,925 individuals x 100,000 SNPs, synthetic, nothing from WTCCC), with its matching `.pheno.txt`. The generator is `/mnt/c/deldir/synthetic-bed/make_synthetic_bed.py`. `single_snp` used one kernel built from all 100,000 SNPs, which were also the test SNPs.
+Same dataset and model as below. Code: FaST-LMM `gpu-bed-reader` at `14f68ac` and PySnpTools `cupy-sub-matrix` at `df052a3` (both editable checkouts), with the published bed-reader 1.3.0b3 wheel, NumPy 2.5.5, SciPy 1.18.1, and CuPy 14.2.0, in `~/.cache/fastlmm-bench-2026-11-25/venv`. Machine and protocol as below (Ryzen 9 7950X, RTX 3060, otherwise idle; three timed repeats after one warm-up, one repeat for CPU float64 at 32 threads). Command: `driver_synthetic.py --repeats 3 --prerequisites checkout`. Results: `~/.cache/synthetic-bed/benchmark-results/2026-11-25-dev-checkouts/` (`summary.json`; summary script `~/deldir/synthetic-benchmark/summarize.py`).
+
+Median seconds per stage:
+
+| Configuration | Read | Copy | Kernel | Eigendecomposition | h2 fit | Association | Total (range) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| GPU float32 | 2.0 | 2.2 | 4.7 | 11.9 | 0.4 | 7.1 | 29.1 (29.0–30.2) |
+| CPU float32, 8 threads | 0.9 | — | 27.8 | 81.3 | 3.3 | 69.9 | 185.0 (180.1–186.5) |
+| CPU float32, 16 threads | 0.9 | — | 20.3 | 75.3 | 2.7 | 54.0 | 154.3 (152.3–154.7) |
+| CPU float32, 32 threads | 1.1 | — | 16.3 | 130.0 | 3.3 | 48.8 | 200.4 (166.0–204.3) |
+| CPU float64, 16 threads | 1.6 | — | 36.8 | 164.9 | 65.9 | 108.6 | 379.2 (375.0–381.3) |
+| CPU float64, 32 threads (one run) | 2.1 | — | 31.6 | 249.2 | 66.5 | 109.8 | 460.6 |
+
+Findings:
+
+- GPU float32 is 13.0x faster than CPU float64 and 5.3x faster than CPU float32, both at 16 threads. CPU float32 is 2.5x faster than CPU float64. User-facing docs round these to about 10x and about 5x and do not quote times (Carl, November 25).
+- 16 threads is again the fastest CPU setting for both precisions; 32 threads is slower and noisier, mainly in the eigendecomposition.
+- Reads are faster than on November 22 (GPU 2.0 s against 5.5 s; CPU about 0.9 s against 3.7 s), consistent with bed-reader 1.3.0b3's chunked reads.
+- Accuracy against CPU float64 (16 threads): GPU float32 max absolute log10(P) difference 3.42e-3; CPU float32 1.71e-3; CPU float64 at 32 threads 4.4e-10. All configurations rank the top 10 SNPs identically.
+
+## Earlier result (November 22, 2026)
+
+The synthetic dataset is `/home/carlk/.cache/synthetic-bed/synth_14925x100000.bed` (14,925 individuals x 100,000 SNPs), with its matching `.pheno.txt`. The generator is `/mnt/c/deldir/synthetic-bed/make_synthetic_bed.py`. `single_snp` used one kernel built from all 100,000 SNPs, which were also the test SNPs.
 
 Code: FaST-LMM `implement/cpu-f32-eigh` at `a4d7580` (CPU float32 builds its kernel in float32 and decomposes it with SciPy's float32 LAPACK `evd` driver), PySnpTools `cupy-sub-matrix` at `b4b57d4`, and CPU-only bed-reader `implement/cpu-only` at `53e2eb5`. Machine: Ryzen 9 7950X (16 cores, 32 threads), RTX 3060, otherwise idle. Three timed repeats per configuration after one warm-up, each in a fresh process (one repeat for CPU float64 at 32 threads). Results: `~/.cache/synthetic-bed/benchmark-results/2026-11-22-cpu-f32-eigh/` (`summary.json`; summary script `/mnt/c/deldir/synthetic-benchmark/summarize_cpu_f32_eigh.py`).
 
