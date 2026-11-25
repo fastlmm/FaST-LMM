@@ -26,20 +26,9 @@ Quick install:
 
 `pip install fastlmm`
 
-FaST-LMM supports Python 3.11.5 through 3.14. Python 3.15 qualification is in progress.
+FaST-LMM supports Python 3.11.5 through 3.15. HDF5 and BGEN file support are optional and available on Python 3.11 through 3.14: install `fastlmm[hdf5]`, `fastlmm[bgen]`, or `fastlmm[hdf5,bgen]`.
 
-HDF5 support is optional. To read or write HDF5 files, install:
-
-    pip install fastlmm[hdf5]
-
-Existing HDF5 users upgrading from an earlier release should install this extra.
-Install `fastlmm[hdf5,bgen]` to enable both optional formats.
-
-*If you need support for BGEN files, instead do:*
-
-    pip install fastlmm[bgen]
-
-For best performance, be sure your Python distribution includes a fast version of NumPy. We use Anaconda's [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
+For best CPU performance, limit BLAS threads to your physical core count (for example, `export OMP_NUM_THREADS=16` on a 16-core, 32-thread CPU); in our tests, using every logical core was slower. For large problems, an NVIDIA GPU is much faster; see [GPU and float32](#gpu-and-float32).
 
 GPU and float32
 =================================
