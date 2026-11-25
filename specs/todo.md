@@ -40,7 +40,6 @@ Things to remember:
 
 Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2026). These are not migration defects: the installed-wheel smoke tests passed, and the canonical suites passed with source fixtures. Keep them out of the migration work.
 
-- PySnpTools: full pytest needs an external `qctool` for two doctests. Document how to install and configure it, name the tests that need it, and make them fail clearly (not silently skip) when it is missing.
 - Document what each runner covers (pytest and the legacy `tests/test.py` in each repository). FaST-LMM's broad pytest collection also imports old setup and benchmark files; clean that up before pytest can replace the canonical runner.
 - Timings in the experimental FaST-LMM notebooks remain historical until an approved benchmark rerun. (The public notebook was refreshed November 24, 2026 from a complete run with published prerequisites.)
 - Decide whether to untrack `tests/select/null.map` and `tests/select/null.ped`. `FastLmmSet` writes them with `fastlmmc` and reads them back on every canonical run, so each run rewrites these tracked files (tracked since 0.2.7). Untracking needs the test to write to a temporary directory first.
@@ -105,6 +104,7 @@ Remember if the GPU work restarts:
 
 # Done
 
+- November 25, 2026: confirmed the PySnpTools `qctool` item is done: README's Testing section names `Bgen.genwrite` and `Bgen.write`, explains installing QCTool v2 and setting `QCTOOLPATH` (including WSL), and the tests fail with a clear message when it is missing.
 - November 25, 2026: strengthened the API-policy tests: `snp_set`'s CPU64 check now observes the arrays its score test computes with (NumPy float64), and the single-kernel worker trace requires both `evaluate` and `test_snps` events.
 - November 25, 2026: decided (Carl) not to add a PySnpTools context manager for `ARRAY_MODULE`/`ARRAY_DTYPE`; the guides document standard Python's `unittest.mock.patch.dict`.
 - November 25, 2026: stopped bundling `fastlmmc` (Carl). Removed `FastLmmSet` autoselect (now `ValueError`) and `fastlmm.util.run_fastlmmc`; deleted `fastlmm/association/Fastlmm_autoselect`. Tests keep `fastlmmc` 2.08 as a reference from `external/fastlmmc` (launcher moved to `fastlmm/association/tests/_fastlmmc.py`, bypass data to `external/fastlmmc/bypass`). The six canonical `sc_davies`/`sc_mom` inputs keep their exact expected outputs: one-kernel inputs never used autoselect, and two-kernel inputs read the saved selection `tests/datasets/all_chr.maf0.001.chr22.23.N300.autoselect.ped` (identical for both phenotype orders).
