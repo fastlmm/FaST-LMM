@@ -6,6 +6,16 @@ import logging
 # methods to call FaSTLMM-C++ Code
 
 
+def _fastlmmc_environment():
+    environment = os.environ.copy()
+    environment["FastLmmUseAnyMklLib"] = "1"
+    # The bundled MKL can select instructions that fail on AMD CPUs.
+    # Preserve explicit MKL settings and limit the default to the child process.
+    if "MKL_DEBUG_CPU_TYPE" not in environment:
+        environment.setdefault("MKL_CBWR", "COMPATIBLE")
+    return environment
+
+
 def runLIN(bfile, pheno, outFilename, fastlmm_path=None, **kwargs):
     """
     use linear model for filtering SNPs
@@ -103,6 +113,9 @@ def run(
     """
     interface for FastLMM software
 
+    The child process defaults to MKL_CBWR=COMPATIBLE for the legacy binary.
+    An explicit MKL_CBWR or MKL_DEBUG_CPU_TYPE setting overrides this default.
+
     --------------------------------------------------------------------------
     Input:
     bfile       basename for PLINK's binary .bed,.fam and .bin files
@@ -127,7 +140,6 @@ def run(
     topKbyLinRegdirects AutoSelect to use only the top <int> SNPs, as determined by linear regression, while selecting SNPs
     for more information, we refer to the user-manual of fast-lmm
     """
-    os.environ["FastLmmUseAnyMklLib"] = "1"
     logging.info("Run FAST-LMM")
 
     osname = sys.platform
@@ -229,7 +241,9 @@ def run(
 
     output = ""
     try:
-        output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+        output = subprocess.check_output(
+            cmd, shell=True, stderr=subprocess.STDOUT, env=_fastlmmc_environment()
+        )
     except Exception as e:
         print(e)
     print(output)

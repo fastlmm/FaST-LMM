@@ -11,6 +11,7 @@ from fastlmm.util import run_fastlmmc
 from fastlmm.inference import LMM
 import unittest
 import os.path
+import sys
 
 import platform
 
@@ -18,6 +19,27 @@ currentFolder = os.path.dirname(os.path.realpath(__file__))
 
 
 class TestGwas(unittest.TestCase):
+    def test_fastlmmc_mkl_environment(self):
+        from unittest.mock import patch
+
+        settings = (
+            ({}, {"MKL_CBWR": "COMPATIBLE"}),
+            ({"MKL_CBWR": "AUTO"}, {"MKL_CBWR": "AUTO"}),
+            ({"MKL_DEBUG_CPU_TYPE": "4"}, {"MKL_DEBUG_CPU_TYPE": "4"}),
+        )
+        for overrides, expected in settings:
+            with self.subTest(overrides=overrides), patch.dict(
+                os.environ, overrides, clear=True
+            ), patch.object(sys, "platform", "win32"), patch.object(
+                os.path, "isfile", return_value=True
+            ), patch.object(run_fastlmmc.subprocess, "check_output", return_value=b"") as run:
+                run_fastlmmc.run(fastlmm_path="fastlmmc-directory")
+                run.assert_called_once()
+                self.assertEqual(
+                    run.call_args.kwargs["env"], {**expected, "FastLmmUseAnyMklLib": "1"}
+                )
+                self.assertEqual(dict(os.environ), overrides)
+
     @classmethod
     def setUpClass(self):
         # self.snpreader_bed = Bed(currentFolder + "../feature_selection/examples/toydata.5chrom.bed")

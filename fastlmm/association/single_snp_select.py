@@ -46,7 +46,7 @@ def single_snp_select(
     count_A1=None,
 ):
     """
-    DEPRECATED: Runs only on Intel, not AMD. We can't test this function because `compute_auto_pcs` uses the 'fastlmmC' executable which is not available in the test environment.
+    DEPRECATED.
 
     Function performing single SNP GWAS based on covariates (often PCs) and a similarity matrix constructed of the top *k* SNPs where
     SNPs are ordered via the PValue from :meth:`.single_snp_linreg` and *k* is determined via out-of-sample prediction. Will reorder and intersect IIDs as needed.
@@ -127,7 +127,7 @@ def single_snp_select(
     snp495_m0_.01m1_.04 0.0 5000
 
     """
-    warning_text = "This function is deprecated. Runs only on Intel, not AMD. We can't test this function because `compute_auto_pcs` uses the 'fastlmmC' executable which is not available in the test environment."
+    warning_text = "single_snp_select is deprecated."
     warnings.warn(warning_text, category=DeprecationWarning, stacklevel=2)
     print(warning_text, file=sys.stderr)
     with patch.dict("os.environ", {"ARRAY_MODULE": "numpy"}) as _:

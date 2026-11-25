@@ -8,6 +8,7 @@ from pysnptools.util.mapreduce1.distributable import *
 from pysnptools.util.mapreduce1.runner import *
 import pysnptools.util as pstutil
 import fastlmm.util.util as utilx
+from fastlmm.util.run_fastlmmc import _fastlmmc_environment
 import time
 from .Result import *
 from .PairResult import *
@@ -1077,7 +1078,6 @@ class FastLmmSet:  # implements IDistributable
             dir = os.path.split(__file__)[
                 0
             ]  # __file__ is the pathname of the file from which the module
-            os.environ["FastLmmUseAnyMklLib"] = "1"
             if (
                 osname.find("win") >= 0
             ):  #         was loaded, if it was loaded from a file
@@ -1112,6 +1112,7 @@ class FastLmmSet:  # implements IDistributable
                             stdout=stdout_temp,
                             stderr=subprocess.STDOUT,
                             stdin=stdin_temp,
+                            env=_fastlmmc_environment(),
                         )
                     else:
                         subprocess.call(
@@ -1128,6 +1129,7 @@ class FastLmmSet:  # implements IDistributable
                             stdout=stdout_temp,
                             stderr=subprocess.STDOUT,
                             stdin=stdin_temp,
+                            env=_fastlmmc_environment(),
                         )
                     stdout_temp.seek(0)
                     stdout_string = stdout_temp.read()
