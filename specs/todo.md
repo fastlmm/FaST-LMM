@@ -70,6 +70,8 @@ Maintain one qualification record linking exact commits, artifact hashes, enviro
 - Keep reusable scripts and run evidence under a findable folder in /mnt/c/deldir; keep virtual environments and large build output under ~/.cache or /mnt/c/deldir.
 - Distinguish old worktree evidence from validation of the integrated development heads.
 
+Decide (Carl) how to make `fastlmm/util/mingrid.py` `minimize1D` robust to non-reproducible roundoff. On CI's macOS Intel runner (Python 3.14, run 45551525605), the threaded `heritability_spatial_correction` in `test_spatial_correction_threaded_map` failed with SciPy's "Bracketing values ... do not fulfill this requirement" from `LMM.findA2`: the grid search picks a bracket, SciPy's `brent` re-evaluates those points, and on a nearly flat likelihood (the test uses 40 samples) last-bit differences break the bracket. The serial call in the same script succeeded. Options: pass the grid's function values to the bracket check instead of re-evaluating, fall back to the grid minimum when the bracket fails, or give the test better-conditioned data. Changing `minimize1D` affects every h2/a2 search, so it is a numerical behavior change.
+
 Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2026). These are not migration defects: the installed-wheel smoke tests passed, and the canonical suites passed with source fixtures. Keep them out of the migration work.
 
 - PySnpTools: full pytest needs an external `qctool` for two doctests. Document how to install and configure it, name the tests that need it, and make them fail clearly (not silently skip) when it is missing.

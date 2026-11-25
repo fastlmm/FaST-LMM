@@ -20,6 +20,22 @@ from fastlmm.inference import FastLMM, LinearRegression
 from fastlmm.util import compute_auto_pcs, manhattan_plot
 from fastlmm.util._backend import cpu64
 
+# Repeating the same CPU float64 computation is not bitwise reproducible on every
+# platform: on CI's macOS Intel runners, p-values changed by up to about 1e-15
+# relative between runs (BLAS reduction order). A float32 computation differs by
+# about 1e-6 relative or more, so this tolerance still proves the float64 path ran.
+_FLOAT64_RTOL = 1e-12
+
+
+def _assert_float64_frames_match(actual, reference):
+    import pandas as pd
+
+    pd.testing.assert_frame_equal(actual, reference, check_exact=False, rtol=_FLOAT64_RTOL, atol=0)
+
+
+def _assert_float64_arrays_match(actual, reference):
+    np.testing.assert_allclose(actual, reference, rtol=_FLOAT64_RTOL, atol=0)
+
 
 class _PolicyBed(Bed):
     """Assert actual reader arrays inside workers, including native kernels."""
@@ -138,8 +154,7 @@ class TestApiPolicy(unittest.TestCase):
                     if reference is None:
                         reference = actual
                     else:
-                        import pandas as pd
-                        pd.testing.assert_frame_equal(actual, reference, check_exact=True)
+                        _assert_float64_frames_match(actual, reference)
 
     def test_predictor_methods(self):
         for predictor_type in (FastLMM, LinearRegression):
@@ -393,7 +408,7 @@ class TestApiPolicy(unittest.TestCase):
             xp.testing.assert_array_equal(data.val, original)
             # Input rounding is retained exactly; compare against those same
             # rounded values explicitly supplied in the qualified representation.
-            np.testing.assert_array_equal(result.PValue, reference.PValue)
+            _assert_float64_arrays_match(result.PValue, reference.PValue)
 
     def test_epistasis_rejects_float32_cache(self):
         cache = self.folder / "cache.npz"
@@ -454,7 +469,7 @@ class TestApiPolicy(unittest.TestCase):
             warnings.simplefilter("always")
             alias = association.single_snp_leave_out_one_chrom(self.reader, self.pheno, xp=np, dtype="float64", h2=0.3)
         reference = association.single_snp(self.reader, self.pheno, xp=np, dtype="float64", h2=0.3)
-        np.testing.assert_array_equal(alias.PValue, reference.PValue)
+        _assert_float64_arrays_match(alias.PValue, reference.PValue)
         self.assertTrue(any(issubclass(item.category, DeprecationWarning) for item in caught))
 
     def test_missing_cupy_is_an_error_for_single_kernel(self):
@@ -492,8 +507,7 @@ class TestApiPolicy(unittest.TestCase):
             self.assertEqual(os.environ["ARRAY_MODULE"], "cupy")
             self.assertEqual(os.environ["ARRAY_DTYPE"], "float32")
         self.assertTrue(any("single_snp (two kernels)" in str(item.message) and "running with numpy/float64" in str(item.message) for item in caught))
-        import pandas as pd
-        pd.testing.assert_frame_equal(actual, reference, check_exact=True)
+        _assert_float64_frames_match(actual, reference)
 
     def test_unqualified_worker_overrides_use_cpu64(self):
         import json
@@ -653,7 +667,7 @@ class TestApiPolicy(unittest.TestCase):
         import importlib
         from pysnptools.util import asnumpy
         from fastlmm.inference.lmm_cov import LMM
-        from fastlmm.association.tests.test_backend_environment import _TracingBed
+        from fastlmm.association.tests._backend_tracing import _TracingBed
 
         original_decompose = LMM.getSU
         module = importlib.import_module("fastlmm.association.single_snp")
@@ -763,8 +777,7 @@ class TestApiPolicy(unittest.TestCase):
         self.assertEqual(original.val.dtype, np.float32)
         self.assertTrue(np.isfinite(result.PValue).all())
         reference = association.single_snp_linreg(original.read(xp=np, dtype=np.float64), self.pheno)
-        import pandas as pd
-        pd.testing.assert_frame_equal(result, reference, check_exact=True)
+        _assert_float64_frames_match(result, reference)
         with self.assertRaisesRegex(TypeError, "requires host data"):
             manhattan_plot(cp.ones((2, 3), dtype=cp.float32))
 
