@@ -12,6 +12,10 @@
   previously have been zeroed. Rebuild version 3 float32 caches before reuse.
 - Preserve NumPy/float64 execution in same-process threaded workers without
   deadlocking the parent workflow.
+- Fix a crash in heritability and mixing searches on nearly flat likelihoods. When
+  re-evaluating a grid triplet gave slightly different values, SciPy's `brent`
+  rejected the bracket with `ValueError`; FaST-LMM now searches that interval with a
+  bounded search instead. Results are unchanged wherever the search succeeded before.
 - Bundle FaST-LMM C++ (`fastlmmc`) 2.08 in place of 2.07, for the deprecated
   `compute_auto_pcs`/`single_snp_select` path. 2.08 is licensed under the
   Apache License 2.0 (2.07 was non-commercial only), builds with oneMKL

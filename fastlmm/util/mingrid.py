@@ -1,6 +1,15 @@
 import numpy as np
 import scipy.optimize as opt
 
+# SciPy's brent re-evaluates f at a given bracket and raises ValueError unless the
+# middle value is strictly the lowest. Its message changed across SciPy versions.
+_BRACKET_REJECTED = (
+    "(f(xb) < f(xa)) and (f(xb) < f(xc))",  # newer SciPy
+    "Not a bracketing interval.",  # older SciPy (for example, 1.9)
+)
+# Match brent's default tolerance; on [0, 1], fminbound's absolute xtol is comparable.
+_BRENT_TOLERANCE = 1.48e-8
+
 
 def minimize1D(
     f,
@@ -92,11 +101,28 @@ def minimize1D(
                 # onebrent = True
                 if verbose:
                     print("found triplet to explore")
-                minlocal = opt.brent(
-                    f,
-                    brack=(evalgrid[i], evalgrid[i + 1], evalgrid[i + 2]),
-                    full_output=True,
-                )
+                try:
+                    minlocal = opt.brent(
+                        f,
+                        brack=(evalgrid[i], evalgrid[i + 1], evalgrid[i + 2]),
+                        full_output=True,
+                    )
+                except ValueError as error:
+                    # brent re-evaluates the grid triplet. When f is itself an inner
+                    # optimization (for example, findA2 calling findH2), a nearly flat
+                    # f can come out slightly different on re-evaluation, so the
+                    # middle point is no longer strictly lowest and brent rejects the
+                    # bracket. Search the same interval without a bracket instead.
+                    # Valid brackets take the brent path, so their results are unchanged.
+                    if not any(message in str(error) for message in _BRACKET_REJECTED):
+                        raise
+                    minlocal = opt.fminbound(
+                        f,
+                        evalgrid[i],
+                        evalgrid[i + 2],
+                        xtol=_BRENT_TOLERANCE,
+                        full_output=True,
+                    )
                 if minlocal[1] < minglobal[1]:
                     minglobal = minlocal[0:2]
                     if verbose:
