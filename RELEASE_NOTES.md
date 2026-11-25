@@ -4,15 +4,19 @@
 
 - Use CPU-only bed-reader: test SNPs from any reader, including BED, are decoded
   on the CPU, then copied to CuPy for GPU standardization and computation.
-- `GpuFloat64Warning` and `has_gpu_support` now come from
-  `pysnptools.util.gpu`. Code that filters `bed_reader.GpuFloat64Warning`
-  must use the PySnpTools class instead.
-- Require bed-reader 1.3.0b3 and PySnpTools 1.1.0b1 or later. The `cupy` extra
+- PySnpTools provides `GpuFloat64Warning` and `has_gpu_support` in
+  `pysnptools.util.gpu`.
+- Require bed-reader 1.3.0b3 and PySnpTools 1.1.0b2 or later. The `cupy` extra
   installs GPU support through PySnpTools.
 - Recheck small float32 residuals in float64 to preserve signal that would
   previously have been zeroed. Rebuild version 3 float32 caches before reuse.
 - Preserve NumPy/float64 execution in same-process threaded workers without
   deadlocking the parent workflow.
+- Run the bundled legacy `fastlmmc` executable on AMD CPUs: FaST-LMM's
+  launchers now set `MKL_CBWR=COMPATIBLE` for the child process unless
+  `MKL_CBWR` or `MKL_DEBUG_CPU_TYPE` is already set. They also no longer set
+  `FastLmmUseAnyMklLib` in the caller's own environment. Direct shell calls to
+  `fastlmmc` on AMD still need `MKL_CBWR=COMPATIBLE`.
 
 ## 1.1.0a1 (2026-11-18, alpha)
 

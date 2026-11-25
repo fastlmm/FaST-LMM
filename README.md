@@ -40,16 +40,16 @@ Install `fastlmm[hdf5,bgen]` to enable both optional formats.
 
 For best performance, be sure your Python distribution includes a fast version of NumPy. We use Anaconda's [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
-GPU and precision features (experimental alpha)
+GPU and precision features
 =================================
 
 `single_snp` supports NumPy/CuPy backends and float32/float64 linear algebra.
 Explicit `xp`/`dtype` override the `ARRAY_MODULE`/`ARRAY_DTYPE` environment defaults.
 For the GPU workflow in this checkout, activate a fresh virtual environment
 and run `uv pip install ".[cupy]"` from the repository root. PySnpTools
-transfers CPU-decoded genotypes to CuPy
+1.1.0b2 or later transfers CPU-decoded genotypes to CuPy
 and follows CuPy's NVIDIA CUDA prerequisites. CPU remains the default.
-See the [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/gpu-bed-reader/doc/source/gpu.rst)
+See the [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/main/doc/source/gpu.rst)
 for platform limits and complete examples.
 
 Documentation

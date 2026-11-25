@@ -1100,8 +1100,8 @@ requires-dist = [
     { name = "pandas", marker = "python_full_version >= '3.14'", specifier = ">=2.3.3,<4" },
     { name = "psutil", marker = "python_full_version < '3.14'", specifier = ">=6.1.0" },
     { name = "psutil", marker = "python_full_version >= '3.14'", specifier = ">=7.1.2" },
-    { name = "pysnptools", specifier = ">=1.1.0b1" },
-    { name = "pysnptools", extras = ["cupy"], marker = "extra == 'cupy'", specifier = ">=1.1.0b1" },
+    { name = "pysnptools", specifier = ">=1.1.0b2" },
+    { name = "pysnptools", extras = ["cupy"], marker = "extra == 'cupy'", specifier = ">=1.1.0b2" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pytest-datadir", marker = "extra == 'dev'" },
@@ -2701,7 +2701,7 @@ wheels = [
 
 [[package]]
 name = "pysnptools"
-version = "1.1.0b1"
+version = "1.1.0b2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bed-reader", extra = ["samples"] },
@@ -2715,9 +2715,9 @@ dependencies = [
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "threadpoolctl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/81/217fae612de4f83d2b1b0c9f8fe91a7da4b9a0d29633bdb1bba2e7b904ec/pysnptools-1.1.0b1.tar.gz", hash = "sha256:69a312353d1c6952ed5f4d3cf4c48afff511f66660f27c07fc2a99c646d56fa6", size = 267728, upload-time = "2026-11-24T22:17:42.25Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/e7/9d2d8aaf402a1df6f1b7a190b6b33558fd99f308cf001e049a2b364b0d20/pysnptools-1.1.0b2.tar.gz", hash = "sha256:21f902f075c0d2ee7351cfb09f69d891f400ddc37199639b4000c36cbe6d5b81", size = 276640, upload-time = "2026-11-24T23:51:15.145Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/aa/0b795456a6126f9cbe9f94db7d57140bcea5584205cf4d89254b8c39fadc/pysnptools-1.1.0b1-py3-none-any.whl", hash = "sha256:f953a3ca9d40dfb9bfa9bfd81ac75808c304e8e58060fcd8a271e766d8bdc476", size = 337132, upload-time = "2026-11-24T22:17:40.639Z" },
+    { url = "https://files.pythonhosted.org/packages/36/e6/4f47182912157c1661b92dedf10f698fec28baf71ab08212c803c2fd2a0b/pysnptools-1.1.0b2-py3-none-any.whl", hash = "sha256:6cfd8c0b19b32712d63c43442eab41f897a978f0c4df4c469cfcd832ba9a0c16", size = 337129, upload-time = "2026-11-24T23:51:13.649Z" },
 ]
 
 [package.optional-dependencies]

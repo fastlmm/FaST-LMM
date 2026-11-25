@@ -1,38 +1,28 @@
 GPU association and floating-point precision
 ============================================
 
-This guide describes the unreleased CPU-read/CuPy-transfer workflow. NumPy
-remains the default backend.
+PySnpTools reads genotype data on the CPU and transfers it to CuPy for GPU
+computation. NumPy remains the default backend.
 
-Installing development GPU support
------------------------------------
+Installing GPU support
+----------------------
 
 In a fresh virtual environment, install this checkout with the CuPy extra
 from the FaST-LMM repository root::
 
     uv pip install ".[cupy]"
 
-The checkout requires bed-reader 1.3.0b3 and PySnpTools 1.1.0b1 or later.
-
-.. note::
-
-   Published ``1.1.0a1`` packages use bed-reader's former GPU API and do not
-   include the numerical fixes and API policy described below. PySnpTools
-   1.1.0b1 provides the notebook's ``num_threads`` runner option.
+The checkout requires bed-reader 1.3.0b3 or later and PySnpTools 1.1.0b2 or later.
 
 The ``cupy`` extra follows the dependency chain through ``pysnptools[cupy]``
 and CuPy directly. Follow
 `CuPy's installation guide <https://docs.cupy.dev/en/stable/install.html>`_
 for CUDA driver/toolkit prerequisites. A CPU bed-reader wheel is sufficient.
 GPU support targets NVIDIA Windows/Linux x86-64, including WSL2.
-CuPy 14.2 has no Python 3.15 wheel, so Python 3.15 is currently CPU-only. Linux GPU wheels require glibc 2.35 or later. The published alpha
-stack passed native Linux GPU integration tests on Ubuntu 24.04 x86-64 with
-an RTX 3060, Python 3.11, and CUDA toolkit 13.3, in addition to Windows and
-WSL2 testing. Other CPU
-platforms can use bed-reader's CPU wheels, subject to FaST-LMM's existing
-dependency limits; Windows ARM64 requires Python 3.13 or later. Omit ``[cupy]``
-for CPU-only use. Normal unpinned installations still
-select stable releases.
+CuPy 14.2 has no Python 3.15 wheel, so Python 3.15 is CPU-only with that
+version. Linux GPU wheels require glibc 2.35 or later. Other CPU platforms
+can use bed-reader's CPU wheels, subject to FaST-LMM's dependency limits.
+Windows ARM64 requires Python 3.13 or later. Omit ``[cupy]`` for CPU-only use.
 
 Set the defaults once for a workflow::
 
@@ -352,11 +342,6 @@ protect that process-wide context. Runner workers resolve their backend from
 their own environment, including explicit runner overrides; model arrays move to
 the worker's backend. A parent CuPy call alone therefore does not prove every
 worker ran on the GPU. Two-kernel analyses continue to use NumPy.
-
-The worker example below requires this FaST-LMM workflow and PySnpTools
-1.1.0b1 or later. Qualification of the older published alpha used the former
-bed-reader GPU stack.
-
 
 This complete worker example checks array types inside real subprocesses and
 then uses the same runner for association. The example runs in its own temporary

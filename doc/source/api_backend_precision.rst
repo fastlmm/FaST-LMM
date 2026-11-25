@@ -4,7 +4,6 @@ Public API backend and precision policy
 This checklist follows :doc:`index`, including the documented predictor methods,
 and reconciles the exports in ``fastlmm.association``, ``fastlmm.inference``, and
 ``fastlmm.util``. See :doc:`gpu` for installation and numerical limitations.
-These are development-source guarantees, not acceptance of a new published alpha.
 
 ``single_snp`` with one kernel supports NumPy/CuPy and float32/float64.
 An explicit ``xp`` or ``dtype`` overrides the corresponding environment variable;
@@ -156,12 +155,12 @@ The November 18 numerical investigation retained an independent float64 fitted-h
 comparison failure: maximum synthetic absolute delta log10(P) was ``5.36e-8``
 against ``2e-8``. Shared CPU64 h2 reduced it to ``2.49e-14``. Mouse float32
 CuPy eigensolver differences reached about ``0.0004`` in log10(P); the concrete
-example and accepted alpha precision exception are described in :doc:`gpu`.
+example and its precision limitations are described in :doc:`gpu`.
 These are historical controls, not passing strict comparisons or universal error
 bounds. The investigation's original epistasis float32 failures also remain
 recorded. Routing epistasis to CPU/float64 does not fix or qualify its float32
 algorithm. No established accuracy tolerance or expected fixture was widened.
 
 Development validation and remaining gates are recorded in
-``specs/GPU_API_POLICY_STATUS.md`` and ``specs/todo.md``. Full notebook execution
+``specs/REVIEW_INVENTORY.md`` and ``specs/todo.md``. Full notebook execution
 is additional integration coverage; commented deprecated examples are not tests.
