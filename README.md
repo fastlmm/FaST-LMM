@@ -44,7 +44,7 @@ For best performance, be sure your Python distribution includes a fast version o
 GPU and float32
 =================================
 
-FaST-LMM's single-kernel `single_snp` can run on an NVIDIA GPU, in float32 or float64.
+FaST-LMM's single-kernel `single_snp` can run on an NVIDIA GPU, in float32 (strongly recommended) or float64.
 On a synthetic dataset with 14,925 individuals and 100,000 SNPs, float32 on an RTX 3060
 ran about 10 times as fast as the default CPU float64, and about 5 times as fast as
 CPU float32. On the CPU alone, float32 ran about 2.5 times as fast as float64.
