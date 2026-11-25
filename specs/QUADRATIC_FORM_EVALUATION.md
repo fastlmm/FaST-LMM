@@ -148,9 +148,10 @@ CI or final artifact qualification against sibling source checkouts.
 
 Detailed JSONL data, tail checks, increased-subdivision results, and both
 integration logs are retained in `/tmp/fastlmm-maintenance-review` for this
-session. No upstream issue/comment was posted and no release was published.
-The verified, self-contained [upstream issue](https://github.com/abhranildas/gx2-py/issues/1) (filed November 13, 2026; fixed in gx2 1.6 and 1.6.1)
-contains two elementary-reference reproducers and a working diagnosis.
+session. No release was published. The self-contained draft, with two
+elementary-reference reproducers and a working diagnosis, was later filed as
+[gx2-py issue 1](https://github.com/abhranildas/gx2-py/issues/1) (November 13, 2026)
+and fixed in gx2 1.6 and 1.6.1.
 
 Because independent correctness checks failed, this assessment stopped
 before a complete OS/architecture/Python 3.11-3.15 qualification, minimum
