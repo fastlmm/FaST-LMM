@@ -11,12 +11,10 @@ as appropriate. Verify each command in a fresh environment.
 
 Open items (tidied November 25, 2026), in order:
 
-FaST-LMM 1.1.0b1 release:
+FaST-LMM 1.1.0 final:
 
-1. After Carl's review, commit the consolidated release notes: FaST-LMM 1.1.0 (`RELEASE_NOTES.md` on `gpu-bed-reader`), PySnpTools 1.1.0 (`CHANGELOG.md` on `cupy-sub-matrix`), and bed-reader 1.3.0 (`CHANGELOG.md` on `implement/cpu-only`), each relative to the last main release.
-2. Open the release PR from `gpu-bed-reader` to `main` (it closes #71, #72, and #73) and monitor its CI.
-3. Final acceptance: build the wheel and source distribution and test them in clean environments against the published PySnpTools 1.1.0b2 and bed-reader 1.3.0b3, at Python 3.11 and 3.15.
-4. Prepare the tag and publish commands for Carl. After publication, Carl yanks FaST-LMM 1.1.0a1 on PyPI.
+1. Carl tries the published 1.1.0b1 (released November 25 from tag `v1.1.0b1` on `gpu-bed-reader`; 1.1.0a1 is yanked). Fixes found go into 1.1.0b2 or the final release.
+2. When ready, open the PR from `gpu-bed-reader` to `main` (it closes #71, #72, and #73), wait for CI, and release 1.1.0 from `main` per `RELEASING.md`. Then replace the beta-pinned install commands as described above.
 
 bed-reader 1.3.0 final:
 
@@ -102,6 +100,7 @@ Remember if the GPU work restarts:
 
 # Done
 
+- November 25, 2026: published FaST-LMM 1.1.0b1 (Carl pushed tag `v1.1.0b1` at `5843ef3` on `gpu-bed-reader` and approved the PyPI deployment; release workflow 45717145229 passed; full CI 45714024683 passed on `001f80f`). Carl yanked 1.1.0a1. Smoke tests of the published packages: InstallTest minitests (including a new CPU float32 check) passed locally, and the GPU Quick start passed on the RTX 3060. The InstallTest matrix runs from its `beta-1.1` branch.
 - November 25, 2026: decided (Carl) not to confirm the CPU float32 speedup on MKL or Accelerate; the docs tie the figure to the measured configuration.
 - November 25, 2026: confirmed the runner-coverage item is done: both READMEs explain the two runners and their overlap, and FaST-LMM's `conftest.py` keeps old setup and benchmark files out of pytest collection.
 - November 25, 2026: confirmed the PySnpTools `qctool` item is done: README's Testing section names `Bgen.genwrite` and `Bgen.write`, explains installing QCTool v2 and setting `QCTOOLPATH` (including WSL), and the tests fail with a clear message when it is missing.
