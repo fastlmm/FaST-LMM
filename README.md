@@ -2,7 +2,7 @@ FaST-LMM
 =================================
 
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing 
-genome-wide association studies (GWAS) on datasets of all sizes, up to one millions samples.
+genome-wide association studies (GWAS) on datasets of all sizes, up to one million individuals.
 
 This release contains the following features, each illustrated with an IPython notebook.
 

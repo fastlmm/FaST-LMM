@@ -18,7 +18,7 @@ data when precision matters.
 Quick start
 -----------
 
-This complete example uses FaST-LMM's sample data, which it downloads on first use:
+This complete example uses FaST-LMM's example data, which it downloads on first use:
 
 .. code-block:: python
 
@@ -74,8 +74,8 @@ recover precision already lost in the float32 decomposition.
 .. warning::
 
    Float32 results differ from float64, and GPU float32 can differ more than CPU
-   float32 because GPU and CPU solvers round differently. On the 1,940-sample
-   mouse dataset, the largest difference was about 0.0004 in log10(p), about 0.09%
+   float32 because GPU and CPU solvers round differently. On the mouse dataset
+   (1,940 individuals), the largest difference was about 0.0004 in log10(p), about 0.09%
    relative error in the p-value. That is one observed example, not a bound for
    other data. Check representative results, including associations near your
    significance threshold, and use float64 when you need closer agreement.
@@ -159,7 +159,7 @@ its own cache file, and multiple phenotypes add a ``.extra.npz`` file.
 Memory
 ------
 
-The dense kernel is samples by samples, and the decomposition, CuPy's memory pool,
+The dense kernel is individuals by individuals, and the decomposition, CuPy's memory pool,
 and temporary products need GPU memory too. ``GB_goal`` sets how many test SNPs are
 processed at once; it is a target, not a cap on GPU memory, and it can raise the
 target (with a warning) to keep blocks large enough. Low-rank analysis still needs
