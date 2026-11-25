@@ -7,8 +7,11 @@ from threading import Condition, RLock, get_ident
 import os
 from types import MemberDescriptorType
 import warnings
+from weakref import WeakKeyDictionary
 
 import numpy as np
+from pysnptools.kernelreader import KernelData
+from pysnptools.snpreader import SnpData
 
 from fastlmm.util._precision import array_dtype, dtype_environment
 
@@ -65,12 +68,46 @@ def cpu64_required():
 def cpu64_scope(api, *, backend=None, dtype=None, scope=None):
     if scope is None or not scope.is_local():
         scope = _cpu64_active.get()
+    if (
+        backend is None and dtype is None and scope is not None and scope.is_local()
+        and scope.owner == get_ident() and _cpu64_settings_active()
+    ):
+        # Nested call on the owning thread: the owner already holds workflow_lock
+        # and its environment is unchanged, so re-entering would only rewrite
+        # and restore identical values. Inner-loop methods such as LMM.nLLeval
+        # take this path, which keeps the policy from slowing epistasis.
+        # A scope passed explicitly may not be in this context yet; nested
+        # cpu64_required() checks must still see it.
+        token = None if _cpu64_active.get() is scope else _cpu64_active.set(scope)
+        try:
+            yield
+        finally:
+            if token is not None:
+                _cpu64_active.reset(token)
+        return
     may_borrow = scope is not None and scope.is_local() and scope.owner != get_ident()
     # Workers share the owner's settings without writing to the environment.
     # If the map raises, the owner still waits for admitted threads to finish.
     with scope.borrow() if may_borrow else nullcontext(False) as borrowed:
         with _cpu64_environment(api, backend, dtype, scope, borrowed):
             yield
+
+
+_CPU64_SETTINGS = {"ARRAY_MODULE": "numpy", **dtype_environment(np.dtype("float64"))}
+
+
+def _cpu64_settings_active():
+    return all(os.environ.get(key) == value for key, value in _CPU64_SETTINGS.items())
+
+
+def _nested_on_owner_thread():
+    # True inside an active scope on the thread that owns it (and so holds
+    # workflow_lock), with the scope's environment still in place.
+    scope = _cpu64_active.get()
+    return (
+        scope is not None and scope.is_local() and scope.owner == get_ident()
+        and _cpu64_settings_active()
+    )
 
 
 @contextmanager
@@ -87,7 +124,7 @@ def _cpu64_environment(api, backend, dtype, scope, borrowed):
                 f"{api} is qualified only for numpy/float64; running with numpy/float64 "
                 f"instead of requested {backend}/{dtype.name}.", UserWarning, stacklevel=5,
             )
-        settings = {"ARRAY_MODULE": "numpy", **dtype_environment(np.dtype("float64"))}
+        settings = _CPU64_SETTINGS
         if borrowed:
             if any(os.environ.get(key) != value for key, value in settings.items()):
                 raise RuntimeError(f"{api}: worker changed the shared NumPy/float64 environment")
@@ -117,9 +154,6 @@ def _cpu64_environment(api, backend, dtype, scope, borrowed):
 def _cpu_input(value, api):
     # Only inspect numerical storage, never metadata such as iid/pos. read()
     # converts in-memory PySnpTools readers without modifying the user's object.
-    from pysnptools.snpreader import SnpData
-    from pysnptools.kernelreader import KernelData
-
     if isinstance(value, (SnpData, KernelData)):
         values = value.val
         if type(values).__module__.split(".")[0] == "cupy" or values.dtype == np.float32:
@@ -160,8 +194,25 @@ def cpu64(function=None, *, api=None):
         and function.__name__ != "fit"
     )
 
+    has_runner_parameter = any(name.endswith("runner") for name in parameters.parameters)
+
     @wraps(function)
     def wrapped(*args, **kwargs):
+        if not has_runner_parameter and (args or not check_model) and _nested_on_owner_thread():
+            # Nested call on the owning thread, such as LMM.nLLeval for each
+            # epistasis pair: the environment and lock are already in place, so
+            # apply the same model and input checks without re-entering the
+            # scope or binding the signature. The receiver is the first
+            # parameter, so a positional call passes it as args[0].
+            if check_model:
+                _check_model_state(args[0], function.__qualname__)
+            checked_args = []
+            for value in args:
+                checked_args.append(_cpu_input(value, api))
+            checked_kwargs = {}
+            for name, value in kwargs.items():
+                checked_kwargs[name] = _cpu_input(value, api)
+            return function(*checked_args, **checked_kwargs)
         with cpu64_scope(api):
             # Old pickles or direct attribute assignments can contain unqualified
             # model state. Widening a cached decomposition cannot repair its error.
@@ -178,26 +229,46 @@ def cpu64(function=None, *, api=None):
 
 
 def _check_model_state(model, api):
+    # Runs on every call to a decorated inference method (for example, per
+    # epistasis pair), so the common NumPy case avoids string work.
     def check(name, value):
-        if isinstance(value, np.ndarray) and value.dtype == np.float32:
-            raise ValueError(f"{api}: cached model {name} is float32; refit with numpy/float64")
-        if type(value).__module__.split(".")[0] == "cupy":
+        if isinstance(value, np.ndarray):
+            if value.dtype == np.float32:
+                raise ValueError(f"{api}: cached model {name} is float32; refit with numpy/float64")
+            return
+        module = type(value).__module__
+        if module == "cupy" or module.startswith("cupy."):
             raise ValueError(f"{api}: cached model {name} uses CuPy; refit with numpy/float64")
 
     for name, value in getattr(model, "__dict__", {}).items():
         check(name, value)
+    for name, descriptor in _slot_descriptors(type(model)):
+        try:
+            value = descriptor.__get__(model)
+        except AttributeError:
+            continue  # The slot has not been set.
+        check(name, value)
+
+
+# Weak keys, so caching does not keep dynamically created classes alive.
+_slot_descriptor_cache = WeakKeyDictionary()
+
+
+def _slot_descriptors(model_class):
     # Walk defining classes so inherited, private, and shadowed slots are all
     # inspected directly, without invoking properties on a user subclass.
-    for model_class in type(model).__mro__:
-        if "__slots__" not in vars(model_class):
-            continue
-        for name, descriptor in vars(model_class).items():
-            if isinstance(descriptor, MemberDescriptorType):
-                try:
-                    value = descriptor.__get__(model)
-                except AttributeError:
-                    continue  # The slot has not been set.
-                check(name, value)
+    # Slots are fixed when a class is created, so the walk is cached per class.
+    descriptors = _slot_descriptor_cache.get(model_class)
+    if descriptors is None:
+        descriptors = tuple(
+            (name, descriptor)
+            for defining_class in model_class.__mro__
+            if "__slots__" in vars(defining_class)
+            for name, descriptor in vars(defining_class).items()
+            if isinstance(descriptor, MemberDescriptorType)
+        )
+        _slot_descriptor_cache[model_class] = descriptors
+    return descriptors
 
 
 def cpu64_if(required, *, api=None):

@@ -199,3 +199,69 @@ def test_environment_restored_after_worker_failure(tmp_path, monkeypatch):
     records = [json.loads(line) for file in tmp_path.glob("failure.*.jsonl")
                for line in file.read_text().splitlines()]
     assert any(record["pid"] != os.getpid() and record["kind"] == "forced_failure" for record in records)
+
+
+def _nested_lmm():
+    from fastlmm.inference.lmm import LMM as InferenceLMM
+
+    rng = np.random.default_rng(17)
+    model = InferenceLMM()
+    model.setG(rng.standard_normal((40, 10)))
+    model.setX(np.ones((40, 1)))
+    model.sety(rng.standard_normal(40))
+    return model
+
+
+def test_nested_cpu64_calls_reuse_owner_environment(monkeypatch):
+    # Inner-loop methods called inside a workflow must not rewrite the
+    # environment on every call (an epistasis slowdown), yet must still
+    # return the same results as an unwrapped call.
+    from fastlmm.inference.lmm import LMM as InferenceLMM
+    from fastlmm.util import _backend
+
+    model = _nested_lmm()
+    expected = InferenceLMM.nLLeval.__wrapped__(model, delta=1.0, REML=False)
+    with _backend.cpu64_scope("outer"):
+        def forbidden(*args, **kwargs):
+            raise AssertionError("nested call re-entered the CPU64 environment")
+
+        monkeypatch.setattr(_backend, "_cpu64_environment", forbidden)
+        actual = model.nLLeval(delta=1.0, REML=False)
+    assert actual["nLL"] == expected["nLL"]
+    np.testing.assert_array_equal(actual["beta"], expected["beta"])
+
+
+def test_nested_cpu64_calls_still_check_model_and_inputs():
+    from fastlmm.util import _backend
+
+    model = _nested_lmm()
+    with _backend.cpu64_scope("outer"):
+        float32_y = np.ones(40, dtype=np.float32)
+        with pytest.warns(UserWarning, match="copied to numpy/float64"):
+            model.sety(float32_y)
+        assert model.y.dtype == np.float64
+        model.S = model.S.astype(np.float32)
+        with pytest.raises(ValueError, match="cached model S is float32"):
+            model.nLLeval(delta=1.0, REML=False)
+
+
+def test_nested_cpu64_call_restores_changed_environment():
+    # If code inside a workflow changes the environment, a nested call takes
+    # the full path: it runs with NumPy/float64 and then restores the change.
+    from fastlmm.util import _backend
+    from fastlmm.util._backend import cpu64
+
+    observed = []
+
+    @cpu64(api="nested probe")
+    def probe():
+        observed.append(os.environ["ARRAY_DTYPE"])
+
+    with patch.dict("os.environ", {"ARRAY_MODULE": "numpy", "ARRAY_DTYPE": "float64"}):
+        with _backend.cpu64_scope("outer"):
+            os.environ["ARRAY_DTYPE"] = "float32"
+            with pytest.warns(UserWarning, match="qualified only for numpy/float64"):
+                probe()
+            assert os.environ["ARRAY_DTYPE"] == "float32"
+            os.environ["ARRAY_DTYPE"] = "float64"
+    assert observed == ["float64"]

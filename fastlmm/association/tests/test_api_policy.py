@@ -236,7 +236,9 @@ class TestApiPolicy(unittest.TestCase):
                     assert {key: os.environ[key] for key in settings} == settings
                     np.testing.assert_equal(np.random.get_state(), random_state)
             """)],
-            check=True, timeout=30,
+            # The timeout only turns a deadlock into a failure. The run includes
+            # importing FaST-LMM, which can be slow on CI runners, so allow ample time.
+            check=True, timeout=300,
         )
 
     def test_cpu64_drains_active_map_workers_on_error(self):
