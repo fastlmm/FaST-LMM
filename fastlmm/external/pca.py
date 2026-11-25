@@ -183,15 +183,12 @@ class PCA(BaseEstimator, TransformerMixin):
     Examples
     --------
 
-    >>> #This doctest is not tested
     >>> import numpy as np
-    >>> from sklearn.decomposition import PCA
+    >>> from fastlmm.external.pca import PCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> pca = PCA(n_components=2)
-    >>> pca.fit(X)
-    PCA(copy=True, n_components=2, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
-    [ 0.99244...  0.00755...]
+    >>> pca = PCA(n_components=2).fit(X)
+    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    [0.99244... 0.00755...]
 
     See also
     --------
@@ -669,14 +666,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.decomposition import RandomizedPCA
+    >>> from fastlmm.external.pca import RandomizedPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> pca = RandomizedPCA(n_components=2)
-    >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    RandomizedPCA(copy=True, iterated_power=3, n_components=2,
-           random_state=None, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
-    [ 0.99244...  0.00755...]
+    >>> pca = RandomizedPCA(n_components=2, random_state=0).fit(X)
+    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    [0.99244... 0.00755...]
 
     See also
     --------
