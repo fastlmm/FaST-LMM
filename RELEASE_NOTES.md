@@ -32,6 +32,9 @@ Other changes:
   supplied `h2`. A supplied `h2` now takes precedence over a cached one, and a supplied
   `mixing` that disagrees with the cache raises `ValueError`. Caches also record their
   dtype, and a mismatch raises `ValueError`. Caches from 1.0 still work with float64.
+- Remove the unused `standardize_unit_python` and `standardize_beta_python` from
+  `fastlmm.util.standardizer`; they predate PySnpTools and standardized constant
+  fractional SNPs to +/-1. Use PySnpTools' `Unit` and `Beta` standardizers.
 - Fix a crash in heritability and mixing searches on nearly flat likelihoods, where
   SciPy's `brent` rejected a grid bracket with `ValueError`. Results are unchanged
   wherever the search succeeded before.
