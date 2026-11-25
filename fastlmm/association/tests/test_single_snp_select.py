@@ -169,7 +169,7 @@ class TestSingleSnpSelect(unittest.TestCase):
         logging.info("selected number of PCs: {0}".format(result["vals"].shape[1]))
 
         # import algorithms
-        from fastlmm.util.run_fastlmmc import runLMMSELECT
+        from fastlmm.association.tests._fastlmmc import runLMMSELECT
 
         # set some file paths for fastlmmc
         phen_fn = self.pythonpath + "/tests/datasets/synth/pheno_10_causals.txt"

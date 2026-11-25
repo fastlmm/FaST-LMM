@@ -6,7 +6,7 @@ FastLmmSet(  # noqa: F821
     altset_list = 'datasets/set_input.small.txt',
     covarfile  =  None,
     filenull = None,
-    autoselect = True,
+    autoselect=False,
     mindist = 0,
     idist=2,
     nperm = 0,

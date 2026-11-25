@@ -5,8 +5,8 @@ FastLmmSet(   # noqa: F821
     alt_snpreader = 'datasets/all_chr.maf0.001.N300',
     altset_list = 'datasets/set_input.small.txt',
     covarfile  =  None,
-    filenull = 'datasets/all_chr.maf0.001.chr22.23.N300.bed',
-    autoselect = True,
+    filenull = 'datasets/all_chr.maf0.001.chr22.23.N300.autoselect.ped',  # SNPs chosen by FaST-LMM C++ autoselect (removed in 1.1)
+    autoselect=False,
     mindist = 0,
     idist=2,
     nperm = 0,

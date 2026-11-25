@@ -38,13 +38,12 @@ Other changes:
 - Fix a crash in heritability and mixing searches on nearly flat likelihoods, where
   SciPy's `brent` rejected a grid bracket with `ValueError`. Results are unchanged
   wherever the search succeeded before.
-- Bundle FaST-LMM C++ (`fastlmmc`) 2.08 in place of 2.07. FaST-LMM uses it only for
-  legacy `FastLmmSet(autoselect=True)` callers and as a test reference. 2.08 is licensed
-  under the Apache License 2.0 (2.07 was non-commercial only), runs on current Intel
-  and AMD CPUs (the 2.07 Linux binary crashed with "Illegal instruction"), computes the
-  same results, and ran 1.6 to 2.4 times as fast. Its license, notice, and third-party
-  licenses are installed beside the executables. The launchers no longer set
-  `FastLmmUseAnyMklLib` in the caller's own environment.
+- Stop bundling the legacy FaST-LMM C++ program (`fastlmmc`), which shrinks the wheel
+  by about 40 MB. Its only use was `FastLmmSet(autoselect=True)`, an undocumented
+  option that `snp_set` never used; `autoselect` now defaults to `False`, and `True`
+  raises `ValueError` (pass the chosen SNPs as `filenull` instead).
+  `fastlmm.util.run_fastlmmc` is removed. FaST-LMM's tests still compare against
+  `fastlmmc` 2.08 (Apache License 2.0) from the repository's `external/fastlmmc`.
 - Require PySnpTools 1.1 and bed-reader 1.3 (during the beta, 1.1.0b2 and 1.3.0b3 or
   later). bed-reader now reads on the CPU only; PySnpTools copies the data to the GPU.
   The new `cupy` extra installs GPU support through PySnpTools.

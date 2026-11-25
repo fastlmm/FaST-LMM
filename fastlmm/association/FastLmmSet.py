@@ -1,14 +1,12 @@
 from fastlmm.pyplink.plink import *
 from pysnptools.util.pheno import *
 from fastlmm.pyplink.altset_list import *
-import subprocess
 import sys
 import os.path
 from pysnptools.util.mapreduce1.distributable import *
 from pysnptools.util.mapreduce1.runner import *
 import pysnptools.util as pstutil
 import fastlmm.util.util as utilx
-from fastlmm.util.run_fastlmmc import _fastlmmc_environment
 import time
 from .Result import *
 from .PairResult import *
@@ -19,7 +17,6 @@ from itertools import *
 from fastlmm.pyplink.snpreader.Bed import *
 import logging
 import warnings
-from tempfile import TemporaryFile
 import fastlmm.util.preprocess as util
 import os
 from unittest.mock import patch
@@ -42,11 +39,11 @@ class FastLmmSet:  # implements IDistributable
         phenofile       : string of the filename containing phenotype
         alt_snpreader   : A snpreader for the SNPs for alternative kernel. If just a file name is given, the Bed reader (with standardization) is used.
         bedfilealt      : (deprecated) same as alt_snpreader
-        filenull        : string of the filename (with .bed or .ped suffix) containing SNPs for null kernel. Should be Bed format if autoselect is true.
+        filenull        : string of the filename (with .bed or .ped suffix) containing SNPs for null kernel.
         extractSim      : string of a filename containing a list of whitespace-delmited SNPs. Only these SNPs will be used when filenull is read.
                                By default all SNPs in filenull are used.
                                It is an error to specify extractSim and not filenull.
-                               Currently assumes that filenull is in bed format and that autoselect is not being used.
+                               Currently assumes that filenull is in bed format.
         altset_list     : list of the altsets
                                By default this is a file that will be read by SnpAndSetNameCollection
                                but a file of nuc ranges can be given again via 'NucRangeSet(filename)'
@@ -59,7 +56,8 @@ class FastLmmSet:  # implements IDistributable
         idist=1         : the index of the position index to use with mindist
                             1 : genomic distance
                             2 : base-pair distance
-        autoselect = True   : Should autoselect to used?
+        autoselect = False  : Removed in FaST-LMM 1.1; True raises ValueError. To use a
+                              selected set of SNPs, pass them as filenull.
         test="lrt"      :['sc_davies', 'sc_mom', 'sc_liuskat','sc_daviesskat','sc_all','lrt','lrt_up']
         nperm = 10       : number of pemutations per test
         npermabs = None : absolutely number of permutations
@@ -77,7 +75,7 @@ class FastLmmSet:  # implements IDistributable
         self.mpheno = 1
         self.mindist = 2.0
         self.idist = 1
-        self.autoselect = True
+        self.autoselect = False
         self.extractSim = None
         self.nperm = 10  # used to permute the data in order to get empirical distrib of null for param fitting of null; these are global
         self.npermabs = None  # used instead of nperm to compute an at least this many permutations (I say at least because it is # of perms per test)
@@ -120,6 +118,11 @@ class FastLmmSet:  # implements IDistributable
 
         self.__dict__.update(entries)
         self._check_entries(entries)
+        if self.autoselect:
+            raise ValueError(
+                "FastLmmSet autoselect, which ran the legacy FaST-LMM C++ program to choose "
+                "background SNPs, was removed in FaST-LMM 1.1. Pass the chosen SNPs as filenull."
+            )
         self._ran_once = False
         self.addpostifx_to_outfile()
 
@@ -1066,105 +1069,29 @@ class FastLmmSet:  # implements IDistributable
     def setSNPs0(self):
         logging.info("Reading SNPs0")
         root, ext = os.path.splitext(self.filenull)
-        if self.autoselect:
-            # raise Exception("this autoselect option has been removed. please use the stand-alone FastLmm-SELECT in this same download")
-            assert (
-                not self.forcefullrank
-            ), "cannot currently force full rank with autoselect=True"
-            if self.extractSim is not None:
-                raise Exception("extractSim not supported with autoselect")
-            # call C++ version of FaST-LMM select to determine background Covariance matrix of the LMM
-            osname = sys.platform
-            dir = os.path.split(__file__)[
-                0
-            ]  # __file__ is the pathname of the file from which the module
-            if (
-                osname.find("win") >= 0
-            ):  #         was loaded, if it was loaded from a file
-                fastlmmpath = os.path.join(dir, "Fastlmm_autoselect", "fastlmmc.exe")
-            elif osname.find("linux") >= 0:
-                fastlmmpath = os.path.join(dir, "Fastlmm_autoselect", "fastlmmc")
-                import stat
-
-                st = os.stat(fastlmmpath)
-                os.chmod(fastlmmpath, st.st_mode | stat.S_IEXEC)
-            else:
-                logging.info("\n\n unsupported operating system!")
-            if not os.path.isfile(fastlmmpath):
-                raise Exception("Expect file {0}".format(fastlmmpath))
-            logging.info("fastlmmC path=" + fastlmmpath)
-
-            if not os.path.exists("select"):
-                subprocess.call("mkdir select", shell=True)
-
-            with TemporaryFile() as stdin_temp:  # An empty to file from which to read stdin (This allows this to run even when there is no normal stdin defined)
-                with TemporaryFile() as stdout_temp:
-                    if self.covarfile is None:
-                        subprocess.call(
-                            fastlmmpath
-                            + " -autoselect select/auto -bfilesim "
-                            + root
-                            + " -pheno "
-                            + self.phenofile
-                            + " -pedOutFile "
-                            + "select/null",
-                            shell=True,
-                            stdout=stdout_temp,
-                            stderr=subprocess.STDOUT,
-                            stdin=stdin_temp,
-                            env=_fastlmmc_environment(),
-                        )
-                    else:
-                        subprocess.call(
-                            fastlmmpath
-                            + " -autoselect select/auto -bfilesim "
-                            + root
-                            + " -pheno "
-                            + self.phenofile
-                            + " -covar "
-                            + self.covarfile
-                            + " -pedOutFile "
-                            + "select/null",
-                            shell=True,
-                            stdout=stdout_temp,
-                            stderr=subprocess.STDOUT,
-                            stdin=stdin_temp,
-                            env=_fastlmmc_environment(),
-                        )
-                    stdout_temp.seek(0)
-                    stdout_string = stdout_temp.read()
-            logging.info(stdout_string)
-
+        if ext.lower() == ".bed":
+            snp_set = CreateSnpSetReaderForFileNull(self.extractSim)
+            bed = Bed(root)
+            snp_set_bed = snp_set.addbed(bed)
+            num_snps = len(snp_set_bed)
             self.__SNPs0 = {
-                "data": readPED("select/null"),
-                "filename": "select/null",
+                "snp_set": snp_set_bed,
+                "reader": snp_set_bed.bed,
+                "filename": root,
+                # "data":readBED(root, snp_set=snp_set)
             }
+            self.__SNPs0["original_iids"] = self.__SNPs0["reader"].original_iids
+            self.__SNPs0["num_snps"] = num_snps
+            # import fastlmm.util.preprocess as util
+            # self.__SNPs0['data']['snps'] = util.standardize(self.__SNPs0['data']['snps'])
+        else:
+            if self.extractSim is not None:
+                raise Exception(
+                    "extractSim not supported with filenull in ped format, please use bed format"
+                )
+            self.__SNPs0 = {"data": readPED(root), "filename": root}
             self.__SNPs0["original_iids"] = self.__SNPs0["data"]["iid"]
             self.__SNPs0["num_snps"] = self.__SNPs0["data"]["snps"].shape[1]
-        else:
-            if ext.lower() == ".bed":
-                snp_set = CreateSnpSetReaderForFileNull(self.extractSim)
-                bed = Bed(root)
-                snp_set_bed = snp_set.addbed(bed)
-                num_snps = len(snp_set_bed)
-                self.__SNPs0 = {
-                    "snp_set": snp_set_bed,
-                    "reader": snp_set_bed.bed,
-                    "filename": root,
-                    # "data":readBED(root, snp_set=snp_set)
-                }
-                self.__SNPs0["original_iids"] = self.__SNPs0["reader"].original_iids
-                self.__SNPs0["num_snps"] = num_snps
-                # import fastlmm.util.preprocess as util
-                # self.__SNPs0['data']['snps'] = util.standardize(self.__SNPs0['data']['snps'])
-            else:
-                if self.extractSim is not None:
-                    raise Exception(
-                        "extractSim not supported with filenull in ped format, please use bed format"
-                    )
-                self.__SNPs0 = {"data": readPED(root), "filename": root}
-                self.__SNPs0["original_iids"] = self.__SNPs0["data"]["iid"]
-                self.__SNPs0["num_snps"] = self.__SNPs0["data"]["snps"].shape[1]
 
     def varcomp_test_setup(self, y, SNPs0=None, i_exclude=None):
         # in case we exclude all SNPs (needed for score, not for lrt, not sure about lrt_up)

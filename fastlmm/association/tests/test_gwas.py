@@ -7,7 +7,9 @@ from fastlmm.pyplink.snpreader.Bed import Bed
 from fastlmm.association.LeaveOneChromosomeOut import LeaveOneChromosomeOut
 from fastlmm.association.PrecomputeLocoPcs import load_intersect
 from fastlmm.association.LocoGwas import FastGwas
-from fastlmm.util import run_fastlmmc
+# The legacy FaST-LMM C++ program (fastlmmc) serves only as a numerical reference here;
+# it lives in the repository's external/fastlmmc folder and is not part of the package.
+from fastlmm.association.tests import _fastlmmc as run_fastlmmc
 from fastlmm.inference import LMM
 import unittest
 import os.path
@@ -124,7 +126,7 @@ class TestGwas(unittest.TestCase):
         out_file = os.path.normpath(
             os.path.join(
                 os.path.dirname(__file__),
-                "../Fastlmm_autoselect/bypass",
+                "../../../external/fastlmmc/bypass",
                 filename,
             )
         )
@@ -509,7 +511,7 @@ class GwasTest(object):
         self.REML = REML
 
         currentFolder = os.path.dirname(os.path.realpath(__file__))
-        self.fastlmm_path = os.path.join(currentFolder, "../Fastlmm_autoselect")
+        self.fastlmm_path = os.path.join(currentFolder, "../../../external/fastlmmc")
         self.out_file = "out.txt"
 
         self.sorted_p_values = None

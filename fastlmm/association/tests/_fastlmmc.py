@@ -3,7 +3,9 @@ import os
 import sys
 import logging
 
-# methods to call FaSTLMM-C++ Code
+# Test-only helpers to run the legacy FaST-LMM C++ program (fastlmmc) as a numerical
+# reference. The executables are in the repository's external/fastlmmc folder, not
+# in the package.
 
 
 def _fastlmmc_environment():
