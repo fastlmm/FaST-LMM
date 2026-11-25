@@ -28,7 +28,6 @@ PySnpTools 1.1.0 final:
 
 Not release blockers:
 
-- PySnpTools API idea: a public context manager such as `with pysnptools.util.array_settings(xp="cupy", dtype="float32"):` instead of documenting `unittest.mock.patch.dict` for scoping `ARRAY_MODULE`/`ARRAY_DTYPE` (the GPU guide documents patch.dict as of November 25). FaST-LMM's internal `cpu64_scope` is a similar pattern.
 - Optionally confirm the CPU float32 gain with other LAPACK libraries before quoting it broadly: a conda NumPy/SciPy built with MKL on an Intel CPU, and Accelerate on macOS. NumPy's `linalg` upcasts float32 regardless of the library, so a gain is expected everywhere, but its size (about 2.2–2.7x here with OpenBLAS) will vary.
 
 bed-reader is CPU-only (Carl, November 21, 2026). GPU support stays in PySnpTools and FaST-LMM: read on the CPU, `cupy.asarray`, then PySnpTools' CuPy standardizer. With CPU BED reads on both backends, the synthetic float32 `single_snp` workload ran 12.7x faster on GPU (30.3 s versus 384.8 s on CPU). See [synthetic benchmark and rerun instructions](SYNTHETIC_BENCHMARK.md). The bed-reader GPU work is parked (see the end of Next).
@@ -106,6 +105,7 @@ Remember if the GPU work restarts:
 
 # Done
 
+- November 25, 2026: decided (Carl) not to add a PySnpTools context manager for `ARRAY_MODULE`/`ARRAY_DTYPE`; the guides document standard Python's `unittest.mock.patch.dict`.
 - November 25, 2026: stopped bundling `fastlmmc` (Carl). Removed `FastLmmSet` autoselect (now `ValueError`) and `fastlmm.util.run_fastlmmc`; deleted `fastlmm/association/Fastlmm_autoselect`. Tests keep `fastlmmc` 2.08 as a reference from `external/fastlmmc` (launcher moved to `fastlmm/association/tests/_fastlmmc.py`, bypass data to `external/fastlmmc/bypass`). The six canonical `sc_davies`/`sc_mom` inputs keep their exact expected outputs: one-kernel inputs never used autoselect, and two-kernel inputs read the saved selection `tests/datasets/all_chr.maf0.001.chr22.23.N300.autoselect.ped` (identical for both phenotype orders).
 - November 25, 2026: tidied this file. Finished and removed from Next: raising the PySnpTools and bed-reader bounds, the notebook rerun and its `num_threads` reconciliation, the CPU float32 release-note requirements (drafted), the CPU thread-count decision (README advice, default unchanged), the coordinated alpha plan (superseded by the betas), Carl's PySnpTools and FaST-LMM reviews (all batches and passes approved), the version bump to 1.1.0b1, the obsolete tolerance TODO0, the GPU memory sizing, and confirming the backend and dtype pytest step in CI. Kept as a decision record: Decided by Carl (November 23): `warn_gpu_float64` stays private in PySnpTools. FaST-LMM's `fastlmm/util/_gpu_warnings.py` keeps importing `pysnptools.util._gpu_warnings.warn_gpu_float64`; its `pysnptools>=1.1.0b2` lower bound guarantees the helper exists. Revisit if a third package needs it.
 - November 25, 2026: Carl yanked PySnpTools 1.1.0a1 on PyPI (reason: superseded by 1.1.0b2; its GPU path needs bed-reader's withdrawn GPU API). 1.1.0b1 and 1.1.0b2 remain available.
