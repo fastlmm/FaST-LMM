@@ -4,6 +4,16 @@ todo000 This is the main todo. Only the human can remove this opening instructio
 
 Items are ordered by what to do next. Agents may maintain the task list, moving completed work to the Done section and removing its original entry.
 
+Waiting on Carl's decisions (listed November 25, 2026; details are in the entries below):
+
+1. Choose how to make `minimize1D` robust to non-reproducible roundoff (macOS Intel CI failure; options in its entry below).
+2. Approve drafting the CPU float32 release note for the FaST-LMM beta.
+3. Bump FaST-LMM to `1.1.0b1` (`pyproject.toml` and the notebook header), and decide the `TODO0` tolerance comment at `fastlmm/association/tests/test_single_snp.py:874` (already annotated as possibly obsolete).
+4. FaST-LMM PR #74 (feature-selection test cleanup): rebase onto `gpu-bed-reader` or close as superseded. PRs #71 and #73 are contained in `gpu-bed-reader` and can close when it merges.
+5. Housekeeping: yank PySnpTools 1.1.0a1 on PyPI or not; CPU thread-count default; untrack `tests/select/null.*`; delete specs whose work is done; tidy this file (several entries below are already done).
+6. bed-reader: the final 1.3.0 squash-merge of `implement/cpu-only` into `main`, after refreshing its stale section of `REVIEW_INVENTORY.md`.
+7. PySnpTools: merge `release/1.1.0b2` (and `cupy-sub-matrix` work) into `main` at the next release; close PR #28 (superseded) and issue #26 (fixed); delete the 1.1.0b1 handoff spec or not.
+
 bed-reader is CPU-only (Carl, November 21, 2026). GPU support stays in PySnpTools and FaST-LMM: read on the CPU, `cupy.asarray`, then PySnpTools' CuPy standardizer. With CPU BED reads on both backends, the synthetic float32 `single_snp` workload ran 12.7x faster on GPU (30.3 s versus 384.8 s on CPU). See [synthetic benchmark and rerun instructions](SYNTHETIC_BENCHMARK.md). The bed-reader GPU work is parked (see the end of Next).
 
 Review and merge bed-reader `implement/cpu-only` once its code stops changing. The branch removes the GPU code and keeps the CPU work (shared index resolver and the mode-0 wrong-axis fix, `ARRAY_DTYPE` and the `dtype=None` policy, the dependency cleanup, CI and release hardening, docs inventory retries, release notes withdrawing the 1.3.0a1 GPU features), adds chunked positional reads (issue #45) and edition 2024 (issue #44), both published in 1.3.0b2 (PyPI and crates.io, tag `v1.3.0b2` at `bd0e532`), and the 1.3.0b3 constant-SNP standardizer fix (versions bumped, not yet tagged or published). Betas are tagged on the branch; `main` gets one squash-merged commit with the final 1.3.0.
