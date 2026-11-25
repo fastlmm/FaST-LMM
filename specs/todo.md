@@ -14,7 +14,7 @@ Waiting on Carl's decisions (listed November 25, 2026; details are in the entrie
 1. (Decided November 25: fallback when SciPy rejects the bracket; done, see Done.)
 2. Approve drafting the CPU float32 release note for the FaST-LMM beta.
 3. Bump FaST-LMM to `1.1.0b1` (`pyproject.toml` and the notebook header), and decide the `TODO0` tolerance comment at `fastlmm/association/tests/test_single_snp.py:874` (already annotated as possibly obsolete).
-4. FaST-LMM PR #74 (feature-selection test cleanup): rebase onto `gpu-bed-reader` or close as superseded. PRs #71 and #73 are contained in `gpu-bed-reader` and can close when it merges.
+4. (November 25: closed FaST-LMM PR #74 as superseded; its collect-once idea moves to the pytest migration.) PRs #71 and #73 are contained in `gpu-bed-reader` and can close when it merges.
 5. Housekeeping: yank PySnpTools 1.1.0a1 on PyPI or not; CPU thread-count default; untrack `tests/select/null.*`; delete specs whose work is done; tidy this file (several entries below are already done).
 6. bed-reader: the final 1.3.0 squash-merge of `implement/cpu-only` into `main`, after refreshing its stale section of `REVIEW_INVENTORY.md`.
 7. PySnpTools: merge `release/1.1.0b2` (and `cupy-sub-matrix` work) into `main` at the next release; close PR #28 (superseded) and issue #26 (fixed); delete the 1.1.0b1 handoff spec or not.
