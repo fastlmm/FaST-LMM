@@ -202,52 +202,26 @@ def single_snp(
     :param map_reduce_outer: If true (default), divides work by chromosome. If false, divides test_snp work into chunks.
     :type map_reduce_outer: bool
 
-    :param xp: NumPy or CuPy module or name. An explicit value overrides ARRAY_MODULE;
-        otherwise the environment selects the backend, with NumPy as the default.
-        Single-kernel CuPy execution requires it to be installed; a missing installation raises ImportError.
-        Establishes ARRAY_MODULE for this workflow and restores it on success or failure.
-        Workers resolve their backend from their own environment, including runner overrides.
-        Backend selection, workflow execution, and environment restoration are serialized
-        between single_snp calls in one process. With xp=None, selection occurs after
-        preceding calls restore their environment. Standalone reader xp arguments
-        still override their environment. If two kernels are
-        given, unsupported requests warn and use NumPy/float64. See :doc:`/gpu` for a complete example, GPU BED
-        prerequisites, and memory limitations.
+    :param xp: ``'numpy'`` (CPU) or ``'cupy'`` (NVIDIA GPU), as a name or module.
+        None (default) uses the ``ARRAY_MODULE`` environment variable, then NumPy.
+        Requesting CuPy without it installed raises ImportError. Two-kernel calls
+        warn and run on the CPU. See :doc:`/gpu` for setup and examples.
     :type xp: string or Python module
 
     :param count_A1: If it needs to read SNP data from a BED-formatted file, tells if it should count the number of A1
          alleles (the PLINK standard) or the number of A2 alleles. False is the current default, but in the future the default will change to True.
     :type count_A1: bool
 
-    :param dtype: The floating-point precision of the main linear algebra: 'float64' or 'float32'.
-         None (default) uses ARRAY_DTYPE, then float64. Two-kernel calls use
-         float64, with a warning for a requested float32 configuration.
-         With 'float32', the covariates, phenotypes, kernel, and test SNPs are stored as float32, so the costly
-         decomposition inputs and outputs and SNP rotations use single precision. NumPy-backed
-         float32 calls use SciPy's single-precision LAPACK drivers; CuPy-backed calls use CuPy's
-         solver. Backend solver implementations can still round differently. The per-SNP statistics are computed in float64, but input/decomposition
-         rounding remains. Kernel/factor formation uses the requested dtype on both CPU
-         and GPU; kernel diagonal normalization still sums in float64. 'float32' gives
-         different p-values and can be faster on
-         consumer GPUs (``xp='cupy'``), which have limited float64 throughput; on data-center GPUs with fast
-         float64 (for example, NVIDIA A100 or H100), 'float64' is fast, too. 'float32' works with
-         ``xp='numpy'``, so its numerical effect can be checked without a GPU. With 'float32', covariate and
-         phenotype values too large or too small (but nonzero) for float32 to handle safely raise a ValueError.
-         GPU float32 can be less accurate than CPU float32. In the 1,940-sample mouse example,
-         CPU float64 P=2.0918834e-87 versus GPU float32 P=2.0899597e-87 at the same h2,
-         about 0.092% relative error. This is a measured example, not a universal error bound;
-         use float64 when closer agreement is required. See :doc:`/gpu` for the precision warning.
-         A ``cache_file`` created with one dtype raises a ValueError if used with the other.
-         GPU float64 emits PySnpTools' GpuFloat64Warning about potentially much slower
-         arithmetic on consumer GPUs. The warning does not change precision. See :doc:`/gpu`.
-         An explicit dtype overrides the environment.
-         The resolved precision is the default for nested reads and workers and is restored
-         after the workflow. Raw covariates/phenotypes are validated before narrowing.
+    :param dtype: ``'float32'`` (recommended on a GPU) or ``'float64'``. None (default)
+         uses the ``ARRAY_DTYPE`` environment variable, then float64. Float32 is faster,
+         especially on consumer GPUs, but changes p-values slightly; compare against
+         float64 on representative data. Two-kernel calls warn and use float64.
+         See :doc:`/gpu` for precision guidance.
     :type dtype: string or numpy dtype
 
     :returns: CPU pandas DataFrame sorted by PValue, with one row per retained
         SNP/phenotype pair. Multiple phenotypes add Pheno and PhenoCount. Optional
-        filters can remove rows. Columns and complete examples are in :doc:`/gpu`.
+        filters can remove rows.
     :rtype: pandas.DataFrame
     :raises ValueError: Unsupported dtype, unsafe float32 covariate/phenotype
         magnitude, or cached model dtype/explicit mixing mismatch.
