@@ -122,7 +122,10 @@ class TestApiPolicy(unittest.TestCase):
         }
 
     def test_numerical_apis_compute_on_cpu64(self):
+        from fastlmm.association import score
+
         original_read = SnpReader.read
+        original_test_g = score.scoretest.testG
         for name, call in self._calls().items():
             reference = None
             for backend, dtype in [("numpy", "float64"), ("numpy", "float32"), ("cupy", "float64"), ("cupy", "float32")]:
@@ -137,8 +140,17 @@ class TestApiPolicy(unittest.TestCase):
                         self.assertEqual(observed[-1], ("numpy", np.dtype("float64")))
                         return result
 
+                    def test_g(model, G1, *args, **kwargs):
+                        # snp_set reads through the legacy pyplink readers, so observe the
+                        # arrays its score test actually computes with.
+                        for array in (G1, model.Y):
+                            observed.append((get_array_module(array).__name__, array.dtype))
+                            self.assertEqual(observed[-1], ("numpy", np.dtype("float64")))
+                        return original_test_g(model, G1, *args, **kwargs)
+
                     settings = {"ARRAY_MODULE": backend, "ARRAY_DTYPE": dtype}
-                    with patch.dict(os.environ, settings), patch.object(SnpReader, "read", read), warnings.catch_warnings(record=True) as caught:
+                    with patch.dict(os.environ, settings), patch.object(SnpReader, "read", read), \
+                         patch.object(score.scoretest, "testG", test_g), warnings.catch_warnings(record=True) as caught:
                         warnings.simplefilter("always")
                         actual = call()
                         self.assertEqual({key: os.environ[key] for key in settings}, settings)
@@ -149,8 +161,7 @@ class TestApiPolicy(unittest.TestCase):
                         self.assertIn("running with numpy/float64", policy[0])
                     else:
                         self.assertEqual(policy, [])
-                    if name != "snp_set":
-                        self.assertTrue(observed)
+                    self.assertTrue(observed, name)
                     if reference is None:
                         reference = actual
                     else:
@@ -751,7 +762,8 @@ class TestApiPolicy(unittest.TestCase):
                     os.chdir(before)
             records = [json.loads(line) for path in self.folder.glob(trace.name + ".*.jsonl") for line in path.read_text().splitlines()]
             workers = [record for record in records if record["pid"] != os.getpid() and record["kind"] in ("evaluate", "test_snps")]
-            self.assertTrue(workers)
+            # Workers must both evaluate the model and receive test SNPs, not just one of them.
+            self.assertEqual({record["kind"] for record in workers}, {"evaluate", "test_snps"})
             self.assertEqual({record["backend"] for record in workers}, {backend})
             self.assertEqual({record["actual_dtype"] for record in workers}, {dtype})
             reference = association.single_snp(self.reader, self.pheno, xp="numpy", dtype="float64", covar=self.covar, h2=0.3, force_full_rank=True)
