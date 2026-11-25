@@ -1,8 +1,8 @@
 GPU association and floating-point precision
 ============================================
 
-Single-kernel :func:`.single_snp` can run on an NVIDIA GPU, in float32 or float64.
-NumPy on the CPU remains the default.
+Single-kernel :func:`.single_snp` can run on an NVIDIA GPU, in float32 (strongly
+recommended) or float64. NumPy on the CPU remains the default.
 
 **~10× faster with GPU and float32.** On a synthetic dataset with 14,925
 individuals and 100,000 SNPs, single-kernel ``single_snp`` ran about 10 times as
@@ -12,8 +12,7 @@ float64. The CPU runs used 16 threads on a Ryzen 9 7950X. Most of the time goes 
 the eigendecomposition and the association tests, which run on the GPU.
 
 We recommend float32 for GPU work. Consumer GPUs like the RTX 3060 process float32
-arithmetic much faster than float64, and float32 arrays use half the memory.
-Float32 changes p-values slightly, so compare against float64 on representative
+arithmetic much faster than float64. Float32 changes p-values slightly, so compare against float64 on representative
 data when precision matters.
 
 Quick start
@@ -46,8 +45,8 @@ Install FaST-LMM with the ``cupy`` extra::
     pip install "fastlmm[cupy]==1.1.0b1"
 
 From a source checkout, run ``uv pip install ".[cupy]"`` in a fresh virtual
-environment instead. FaST-LMM requires bed-reader 1.3.0b3 or later and PySnpTools
-1.1.0b2 or later; pip installs them automatically.
+environment instead. FaST-LMM requires PySnpTools 1.1.0b2 or later; pip installs it
+automatically.
 
 GPU support requires NVIDIA CUDA on x86-64 Windows or Linux, including WSL2. Linux
 GPU wheels require glibc 2.35 or later. Python 3.15 is currently CPU-only because
@@ -56,8 +55,8 @@ CuPy has no Python 3.15 wheel yet. See
 driver and CUDA setup. Omit ``[cupy]`` for CPU-only use.
 
 ``pysnptools.util.gpu.has_gpu_support()`` reports whether CuPy can use the current
-device. Requesting ``xp="cupy"`` without CuPy installed raises ``ImportError``; there
-is no silent fallback to NumPy, and GPU errors propagate to the caller.
+device. Requesting ``xp="cupy"`` without CuPy installed raises ``ImportError``, and
+GPU errors propagate to the caller.
 
 Genotypes are always decoded on the CPU (bed-reader needs no GPU build), then
 PySnpTools copies them to the GPU and standardizes them there. See
@@ -68,9 +67,9 @@ Choosing precision
 ------------------
 
 With ``dtype="float32"``, the covariates, phenotypes, kernel, decomposition, and
-test SNPs are stored in single precision on both the CPU and the GPU. Likelihood
-calculations, the kernel-diagonal normalization, and the per-SNP statistics still
-use float64, but they cannot recover precision lost in the decomposition.
+test SNPs are stored in single precision on both the CPU and the GPU. The h2
+likelihood and the per-SNP test statistics are computed in float64, but that cannot
+recover precision already lost in the float32 decomposition.
 
 .. warning::
 
@@ -82,9 +81,16 @@ use float64, but they cannot recover precision lost in the decomposition.
    significance threshold, and use float64 when you need closer agreement.
 
 Float64 works on GPUs, but it can be much slower than float32 on consumer GPUs
-(data-center GPUs such as the A100 and H100 have fast float64). GPU float64 emits
-``pysnptools.util.gpu.GpuFloat64Warning``, a ``UserWarning`` that does not change
-the precision; filter it if float64 is what you want.
+(data-center GPUs such as the A100 and H100 have fast float64). When you use float64
+on a GPU, PySnpTools warns about this with ``GpuFloat64Warning``. The warning changes
+nothing. If you want float64 anyway, you can silence it:
+
+.. code-block:: python
+
+    import warnings
+    from pysnptools.util.gpu import GpuFloat64Warning
+
+    warnings.filterwarnings("ignore", category=GpuFloat64Warning)
 
 With float32, covariate or phenotype values too large or too small for float32 to
 handle safely raise ``ValueError``; rescale them or use float64.
@@ -92,7 +98,9 @@ handle safely raise ``ValueError``; rescale them or use float64.
 What runs on the GPU
 --------------------
 
-Only single-kernel ``single_snp`` runs on the GPU or in float32. Two-kernel
+Currently, only single-kernel ``single_snp`` runs on the GPU or in float32. Please
+`open an issue on GitHub <https://github.com/fastlmm/FaST-LMM/issues>`_ if you would
+like GPU support for another function. Two-kernel
 analyses (``K1`` or ``G1``), epistasis, the predictors, and the other numerical
 functions warn and run on the CPU in float64, whatever ``xp``, ``dtype``, or the
 environment requests. :doc:`api_backend_precision` lists every function.
@@ -132,8 +140,8 @@ Reusing precomputation
 ``cache_file`` saves the decomposition so later calls with the same phenotype,
 covariates, and kernel inputs can skip it; only the test SNPs may differ. It is not
 keyed by input contents, so use separate paths for separate analyses and
-precisions. A cache made with the other dtype raises ``ValueError``. Rebuild
-version 3 float32 caches; version 3 float64 caches can still be reused.
+precisions. A cache made with the other dtype raises ``ValueError``. Rebuild float32
+caches made by FaST-LMM 1.1.0a1; float64 caches from earlier releases still work.
 
 A supplied ``h2`` takes precedence over a cached one, so the same cache can serve
 several heritabilities:
