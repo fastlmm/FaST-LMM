@@ -9,89 +9,40 @@ GPU install commands in the PySnpTools and FaST-LMM READMEs, docs, and project
 website with `pip install "pysnptools[cupy]"` and `pip install "fastlmm[cupy]"`
 as appropriate. Verify each command in a fresh environment.
 
-Waiting on Carl's decisions (listed November 25, 2026; details are in the entries below):
+Open items (tidied November 25, 2026), in order:
 
-1. (Decided November 25: fallback when SciPy rejects the bracket; done, see Done.)
-2. Approve drafting the CPU float32 release note for the FaST-LMM beta.
-3. Bump FaST-LMM to `1.1.0b1` (`pyproject.toml` and the notebook header), and decide the `TODO0` tolerance comment at `fastlmm/association/tests/test_single_snp.py:874` (already annotated as possibly obsolete).
-4. (November 25: closed FaST-LMM PR #74 as superseded; its collect-once idea moves to the pytest migration.) PRs #71 and #73 are contained in `gpu-bed-reader` and can close when it merges.
-5. Housekeeping: (November 25: PySnpTools 1.1.0a1 is yanked on PyPI, confirmed. Still to do: yank FaST-LMM 1.1.0a1 after FaST-LMM 1.1.0b1 is published; Carl does the clicking.) (CPU thread-count default: November 25, keep the default and document physical-core advice in the README, done; revisit if other CPUs show the same effect.) untrack `tests/select/null.*`; delete specs whose work is done; tidy this file (several entries below are already done).
-6. bed-reader: the final 1.3.0 squash-merge of `implement/cpu-only` into `main`, after refreshing its stale section of `REVIEW_INVENTORY.md`.
-7. PySnpTools: merge `release/1.1.0b2` (and `cupy-sub-matrix` work) into `main` at the next release; close PR #28 (superseded) and issue #26 (fixed); delete the 1.1.0b1 handoff spec or not.
-8. PySnpTools API idea (not a release blocker): a public context manager such as `with pysnptools.util.array_settings(xp="cupy", dtype="float32"):` instead of documenting `unittest.mock.patch.dict` for scoping `ARRAY_MODULE`/`ARRAY_DTYPE` (the GPU guide documents patch.dict as of November 25). FaST-LMM's internal `cpu64_scope` is a similar pattern.
-9. (November 25: GPU memory sizing measured; see the GPU memory sizing section of SYNTHETIC_BENCHMARK.md. Rule: about 28 bytes x individuals x min(individuals, kernel SNPs) plus about 1 GB; a 12 GB card handles about 20,000 individuals at full rank. Added to the GPU guide and README, November 25.)
-10. fastlmmc (not a release blocker): only legacy `FastLmmSet(autoselect=True)` (where `autoselect` defaults to `True`) and tests launch it; `snp_set` passes `autoselect=False`, and `compute_auto_pcs`/`single_snp_select` are pure Python. Consider deprecating `FastLmmSet`'s `autoselect`, then shipping the executables (about 40 MB, most of the wheel) only as test fixtures.
+FaST-LMM 1.1.0b1 release:
+
+1. After Carl's review, commit the consolidated release notes: FaST-LMM 1.1.0 (`RELEASE_NOTES.md` on `gpu-bed-reader`), PySnpTools 1.1.0 (`CHANGELOG.md` on `cupy-sub-matrix`), and bed-reader 1.3.0 (`CHANGELOG.md` on `implement/cpu-only`), each relative to the last main release.
+2. Open the release PR from `gpu-bed-reader` to `main` (it closes #71, #72, and #73) and monitor its CI.
+3. Final acceptance: build the wheel and source distribution and test them in clean environments against the published PySnpTools 1.1.0b2 and bed-reader 1.3.0b3, at Python 3.11 and 3.15.
+4. Prepare the tag and publish commands for Carl. After publication, Carl yanks FaST-LMM 1.1.0a1 on PyPI.
+
+bed-reader 1.3.0 final:
+
+- Refresh the bed-reader section of [REVIEW_INVENTORY.md](REVIEW_INVENTORY.md) (it still describes `b535ef3`) and confirm Carl's review covers the chunked reads, edition 2024, and the standardizer fixes. Then squash-merge `implement/cpu-only` into `main` (review with `git diff origin/main implement/cpu-only`) and close issues #44 and #45. Close issues #44 and #45 when the merge lands. Earlier qualification record (for `b535ef3`): `/mnt/c/deldir/bed-reader-cpu-split/REPORT.txt`.
+
+PySnpTools 1.1.0 final:
+
+- Merge `release/1.1.0b2` and the `cupy-sub-matrix` work into `main`; close PR #28 (superseded) and issue #26 (fixed); decide whether to delete the 1.1.0b1 handoff spec.
+
+Not release blockers:
+
+- PySnpTools API idea: a public context manager such as `with pysnptools.util.array_settings(xp="cupy", dtype="float32"):` instead of documenting `unittest.mock.patch.dict` for scoping `ARRAY_MODULE`/`ARRAY_DTYPE` (the GPU guide documents patch.dict as of November 25). FaST-LMM's internal `cpu64_scope` is a similar pattern.
+- fastlmmc: only legacy `FastLmmSet(autoselect=True)` (where `autoselect` defaults to `True`) and tests launch it; `snp_set` passes `autoselect=False`, and `compute_auto_pcs`/`single_snp_select` are pure Python. Consider deprecating `FastLmmSet`'s `autoselect`, then shipping the executables (about 40 MB, most of the wheel) only as test fixtures.
+- Optionally confirm the CPU float32 gain with other LAPACK libraries before quoting it broadly: a conda NumPy/SciPy built with MKL on an Intel CPU, and Accelerate on macOS. NumPy's `linalg` upcasts float32 regardless of the library, so a gain is expected everywhere, but its size (about 2.2–2.7x here with OpenBLAS) will vary.
 
 bed-reader is CPU-only (Carl, November 21, 2026). GPU support stays in PySnpTools and FaST-LMM: read on the CPU, `cupy.asarray`, then PySnpTools' CuPy standardizer. With CPU BED reads on both backends, the synthetic float32 `single_snp` workload ran 12.7x faster on GPU (30.3 s versus 384.8 s on CPU). See [synthetic benchmark and rerun instructions](SYNTHETIC_BENCHMARK.md). The bed-reader GPU work is parked (see the end of Next).
-
-Review and merge bed-reader `implement/cpu-only` once its code stops changing. The branch removes the GPU code and keeps the CPU work (shared index resolver and the mode-0 wrong-axis fix, `ARRAY_DTYPE` and the `dtype=None` policy, the dependency cleanup, CI and release hardening, docs inventory retries, release notes withdrawing the 1.3.0a1 GPU features), adds chunked positional reads (issue #45) and edition 2024 (issue #44), both published in 1.3.0b2 (PyPI and crates.io, tag `v1.3.0b2` at `bd0e532`), and the 1.3.0b3 constant-SNP standardizer fix (versions bumped, not yet tagged or published). Betas are tagged on the branch; `main` gets one squash-merged commit with the final 1.3.0.
-
-- Review with `git diff origin/main implement/cpu-only`, not commit by commit, and not against local `main` (behind `origin/main`). Includes the Python changes in `bed_reader/_dtype.py` and `bed_reader/_open_bed.py`. Refresh the bed-reader section of [REVIEW_INVENTORY.md](REVIEW_INVENTORY.md) first: it still describes `b535ef3` (23 files) and omits the chunked-read rewrite, edition 2024, and the standardizer fix.
-- Close issues #44 and #45 when the merge lands. Earlier qualification record (for `b535ef3`): `/mnt/c/deldir/bed-reader-cpu-split/REPORT.txt`.
-
-After the bed-reader CPU-only beta is published, set PySnpTools' bed-reader lower bound to it, then publish PySnpTools and refresh FaST-LMM's dependency lock (FaST-LMM CI needs the updated PySnpTools). Both migration branches were reviewed on November 21; the fixes that did not depend on a release were applied (see Done).
-
-- Raise FaST-LMM's `pysnptools>=1.1.0a1` lower bound, in both `dependencies` and the `cupy` extra, to the new PySnpTools release, not just the lock. PySnpTools 1.1.0a1 has no `pysnptools.util.gpu`, so four FaST-LMM test modules fail at collection against it. Also, its `_gpu_warnings` imports `bed_reader._gpu`, which breaks the GPU float64 warning once the CPU-only bed-reader is installed.
-- Decided by Carl (November 23): `warn_gpu_float64` stays private in PySnpTools. FaST-LMM's `fastlmm/util/_gpu_warnings.py` keeps importing `pysnptools.util._gpu_warnings.warn_gpu_float64`; its `pysnptools>=1.1.0b2` lower bound guarantees the helper exists. Revisit if a third package needs it.
-
-PySnpTools: now that bed-reader 1.3.0b3 is published (it fixes the native constant-fractional-SNP standardization; see Done), raise PySnpTools' bound to `bed-reader[samples]>=1.3.0b3` and refresh `uv.lock`, remove the three TODO-marked native-path caveats in `Unit`, `Beta`, and `gpu.rst`, and enable the native case in `TestBetaPython._check_constant_fractional_snps`. A patch with these edits (except the lock) is in `/mnt/c/deldir/bed-reader-constant-snp/pysnptools-native-caveat-removal.patch`.
-
-Remaining code reviews check user-supplied indexes and sizes, CuPy array dtype, shape, memory order, and device, and memory ownership of CuPy views.
 
 Things to remember:
 
 - Rust 1.85 for downstream users needs only Cargo's MSRV-aware resolver (because of `crc-fast` and ICU). bed-reader's own tests still need `psm` 0.1.28, retained in the lockfile: `ar_archive_writer` 0.5.1, a build dependency of `psm` (through the test-only `ndarray-npy`), uses Rust 1.88 syntax (let chains) without declaring a `rust-version`. Upstream already fixed this: 0.5.5 declares `rust-version = "1.88.0"`; older published releases cannot be changed, so no report is needed. Revisit the pin if `psm` stops depending on those older releases or the MSRV is raised.
 - The documentation CI job runs Sphinx with `-W`, so a timeout fetching an intersphinx inventory (for example, `docs.scipy.org`) fails the job. Carl approved (November 20) downloading each inventory in CI with retries and listing the local file first in `conf.py`, keeping `-W`.
 
-Carl needs to review the PySnpTools and FaST-LMM GPU changes, plus bed-reader's CPU changes on `implement/cpu-only`, before the next release.
-
-- Review the linked [inventory of changed files and review batches](REVIEW_INVENTORY.md), including changes already published in the first alpha and subsequent development fixes. It records the comparison base and reviewed commit for each repository.
-- Review numerical algorithms, precision, backend boundaries, memory ownership, public APIs, and thread control in depth. Review tests, packaging, dependencies, CI, and remaining code at a level appropriate to their risk.
-- Review user guides, API documentation, notebook source and saved outputs, installation instructions, platform limitations, warnings, and performance claims for accuracy and consistency.
-- Track Carl's review progress, questions, and required corrections by batch. Agent review and passing tests do not mark Carl's review complete; re-review subsequent changes as needed.
-- Scope: PySnpTools and FaST-LMM GPU changes, and bed-reader CPU changes on `implement/cpu-only`. Starting points: [bed-reader](/home/carlk/programs/bed-reader), [PySnpTools](/home/carlk/programs/PySnpTools), [FaST-LMM](/home/carlk/programs/FaST-LMM), [GPU documentation review](GPU_DOCS_REVIEW.md), and [release checklist](GPU_ALPHA_RELEASE_CHECKLIST.md).
-
-Rerun the notebook configurations against the current PySnpTools and FaST-LMM development heads; the old executed copies used bed-reader's GPU path and no longer qualify the current implementation. Keep those copies as historical evidence.
-
-- The stopped API-policy chat completed four fresh, sequential configurations under `/mnt/c/deldir/fastlmm-api-policy-20261118/notebooks-final/`. Their saved outputs and source manifests remain historical evidence. Do not rerun them as part of this cleanup; they are GPU-heavy.
-- Verify numerical results, identities, ordering, finite masks, warnings, and explicit failures. Record exact commits, installed artifacts, import paths, dependencies, thread settings, and per-cell timings.
-- Existing combined validation recorded 157 passed, 44 subtests passed, and two runner doctests; it did not rerun the full integrated notebook.
-- Reference: [post-alpha integration and release checklist](GPU_ALPHA_RELEASE_CHECKLIST.md#post-alpha-runner-and-notebook-integration).
-
-Reconcile notebook documentation and dependency requirements with the next PySnpTools alpha.
-
-- The revised notebook uses num_threads, which published PySnpTools 1.1.0a1 does not support. Document the development requirement until a compatible release is available.
-- Review dependency bounds, direct threadpoolctl requirements, installation instructions, GPU platform limits, and precision guidance together.
-- Reference: [release checklist](GPU_ALPHA_RELEASE_CHECKLIST.md).
-
-Release notes for the next FaST-LMM release must cover the CPU float32 speedups, not only the GPU.
-
-- CPU float32 `single_snp` now builds its kernel in float32 (about 30–37% faster for that step, about 25% less kernel memory) and runs its eigendecomposition and low-rank SVD in float32 through SciPy's float32 LAPACK drivers (`evd`, `gesdd`). NumPy's `linalg` computes float32 inputs in float64 by design, a legacy of its bundled double-only `lapack_lite`. CPU float64 is unchanged.
-- Quote fair numbers: compare at the same thread count, from the November 22 synthetic benchmark (`~/.cache/synthetic-bed/benchmark-results/2026-11-22-cpu-f32-eigh/`, summarized in `SYNTHETIC_BENCHMARK.md`). At 16 threads, CPU float32 took 158.9 s against 395.8 s for CPU float64 (medians of three), 2.5x faster. The old 393 s CPU float32 figure used 32 threads, so it overstates the code speedup; the eigendecomposition alone fell from about 232 s to about 102 s at 32 threads.
-- State the GPU speedup against the fastest CPU float32 configuration (33.2 s against 158.9 s, 4.8x; 11.9x against CPU float64), not against the old, slower CPU path.
-- Say that CPU float32 p-values now differ slightly from earlier releases (float32 kernel and decomposition), with the measured size, and that float64 results are unchanged.
-
-Decide CPU thread-count guidance and defaults. On this 16-core, 32-thread Ryzen 9 7950X, 16 threads beat 32 for every configuration measured (CPU float32 medians: 8 threads 187.9 s, 16 threads 158.9 s, 32 threads 187.5 s with a wide 173.7–208.3 s spread; NumPy `eigh` at N=4,000 showed the same pattern). Check what `single_snp` and PySnpTools use by default when no thread count is given; if it is the logical CPU count, consider defaulting to physical cores (a behavior change for PySnpTools and FaST-LMM, so Carl decides), or at least document the advice in the performance docs.
-
-Optionally confirm the CPU float32 gain with other LAPACK libraries before quoting it broadly: a conda NumPy/SciPy built with MKL on an Intel CPU, and Accelerate on macOS. NumPy's `linalg` upcasts float32 regardless of the library, so a gain is expected everywhere, but its size (about 2.2–2.7x here with OpenBLAS) will vary.
-
-Prepare the next coordinated alpha and its artifact validation plan. Do not publish, push release tags, or merge into main without explicit human authorization.
-
-- Prepare the updated PySnpTools alpha first. Determine whether bed-reader needs another release based on required changes rather than automatically bumping all three projects.
-- Prepare FaST-LMM dependency bounds and release notes, then perform final acceptance against published prerequisites after authorized prerequisite publication.
-- Build and test wheels and source distributions in isolated environments outside source checkouts. Cover supported Python boundaries, relevant optional dependencies, CPU platforms, and supported GPU configurations; report unavailable checks explicitly.
-- Retain numerical exceptions and platform failures as visible release decisions. Do not reuse an existing published alpha version.
-
-Maintain one qualification record linking exact commits, artifact hashes, environments, executed notebooks, numerical comparisons, benchmark results, and remaining release gates.
-
-- Keep reusable scripts and run evidence under a findable folder in /mnt/c/deldir; keep virtual environments and large build output under ~/.cache or /mnt/c/deldir.
-- Distinguish old worktree evidence from validation of the integrated development heads.
-
 Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2026). These are not migration defects: the installed-wheel smoke tests passed, and the canonical suites passed with source fixtures. Keep them out of the migration work.
 
 - PySnpTools: full pytest needs an external `qctool` for two doctests. Document how to install and configure it, name the tests that need it, and make them fail clearly (not silently skip) when it is missing.
 - Document what each runner covers (pytest and the legacy `tests/test.py` in each repository). FaST-LMM's broad pytest collection also imports old setup and benchmark files; clean that up before pytest can replace the canonical runner.
-- Confirm the new backend and dtype pytest step runs on the next FaST-LMM PR. Qualify the CUDA cases separately on a supported GPU.
 - Timings in the experimental FaST-LMM notebooks remain historical until an approved benchmark rerun. (The public notebook was refreshed November 24, 2026 from a complete run with published prerequisites.)
 - Decide whether to untrack `tests/select/null.map` and `tests/select/null.ped`. `FastLmmSet` writes them with `fastlmmc` and reads them back on every canonical run, so each run rewrites these tracked files (tracked since 0.2.7). Untracking needs the test to write to a temporary directory first.
 - Strengthen the approved FaST-LMM API-policy tests by observing actual `snp_set` model arrays and requiring both `evaluate` and `test_snps` events in the single-kernel worker trace. Current coverage checks fallback behavior and worker arrays across the other tested paths.
@@ -157,6 +108,7 @@ Remember if the GPU work restarts:
 
 # Done
 
+- November 25, 2026: tidied this file. Finished and removed from Next: raising the PySnpTools and bed-reader bounds, the notebook rerun and its `num_threads` reconciliation, the CPU float32 release-note requirements (drafted), the CPU thread-count decision (README advice, default unchanged), the coordinated alpha plan (superseded by the betas), Carl's PySnpTools and FaST-LMM reviews (all batches and passes approved), the version bump to 1.1.0b1, the obsolete tolerance TODO0, the GPU memory sizing, and confirming the backend and dtype pytest step in CI. Kept as a decision record: Decided by Carl (November 23): `warn_gpu_float64` stays private in PySnpTools. FaST-LMM's `fastlmm/util/_gpu_warnings.py` keeps importing `pysnptools.util._gpu_warnings.warn_gpu_float64`; its `pysnptools>=1.1.0b2` lower bound guarantees the helper exists. Revisit if a third package needs it.
 - November 25, 2026: Carl yanked PySnpTools 1.1.0a1 on PyPI (reason: superseded by 1.1.0b2; its GPU path needs bed-reader's withdrawn GPU API). 1.1.0b1 and 1.1.0b2 remain available.
 - November 25, 2026: `minimize1D` no longer crashes when SciPy's `brent` rejects a grid triplet on re-evaluation (macOS Intel CI, threaded `heritability_spatial_correction`). Carl chose option 1: on that specific `ValueError`, search the same interval with `fminbound` (tolerance matched to `brent`); valid brackets are unchanged. Regression tests in `fastlmm/util/test.py` fail on the old code and pass with the fix; also checked against SciPy 1.9.3's older error message.
 - November 24, 2026: re-reviewed FaST-LMM Passes 1–7. Fixed the nested `@cpu64` overhead (epistasis about 20% slower than 1.0.0, now about 4–7%), the notebook's local GPU-guide link and pandas join deprecation, the README's branch link, the missing `fastlmmc` release note, and a 30 s subprocess timeout. Carl approved Passes 6 and 7 and decided to untrack the five `tmp/feature_selection/` files (accidentally committed in `df93690`; tests do not read them), now ignored via `/tmp/`. A fresh notebook run completed with no errors; the one float64 difference from the saved output (P 2.990684e-23 versus 2.990662e-23) also occurs with published FaST-LMM 1.0.0 on current NumPy/SciPy.
