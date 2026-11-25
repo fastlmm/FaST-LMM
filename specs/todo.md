@@ -28,6 +28,7 @@ PySnpTools 1.1.0 final:
 
 Not release blockers:
 
+- After FaST-LMM 1.1.0 (decided by Carl, November 25): migrate SNP-set score tests from fastlmmrslib to gx2 via draft PR #75. Carl told gx2's author (abhranildas/gx2-py#1, closed November 15) that the migration was prepared; gx2 1.6.1 (MIT) fixed the three bugs he reported. Rebase #75 onto `main` after `gpu-bed-reader` merges, rerun full CI, and release it on its own (1.1.x or 1.2).
 - Optionally confirm the CPU float32 gain with other LAPACK libraries before quoting it broadly: a conda NumPy/SciPy built with MKL on an Intel CPU, and Accelerate on macOS. NumPy's `linalg` upcasts float32 regardless of the library, so a gain is expected everywhere, but its size (about 2.2–2.7x here with OpenBLAS) will vary.
 
 bed-reader is CPU-only (Carl, November 21, 2026). GPU support stays in PySnpTools and FaST-LMM: read on the CPU, `cupy.asarray`, then PySnpTools' CuPy standardizer. With CPU BED reads on both backends, the synthetic float32 `single_snp` workload ran 12.7x faster on GPU (30.3 s versus 384.8 s on CPU). See [synthetic benchmark and rerun instructions](SYNTHETIC_BENCHMARK.md). The bed-reader GPU work is parked (see the end of Next).
