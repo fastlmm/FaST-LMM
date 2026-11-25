@@ -476,3 +476,6 @@ doc/ipynb/DebugApr2024.ipynb
 /docs/
 # Generated test output (feature-selection runs from the repository root).
 /tmp/
+# Written and read back by the legacy FastLmmSet fastlmmc selection test on every run.
+/tests/select/null.map
+/tests/select/null.ped
