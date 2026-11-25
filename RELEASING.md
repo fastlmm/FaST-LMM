@@ -8,6 +8,14 @@ The maintainer chooses the version and explicitly approves publication. A
 release must be built from a clean commit on the repository's default branch,
 and its `vX.Y.Z` tag must point to that exact commit.
 
+Pre-releases (`aN`, `bN`, `rcN`) are the exception: the maintainer may tag them
+on the development branch, so the release can be tried before it is merged into
+`main`. The tag workflow builds, tests, and publishes the artifacts itself, so
+the maintainer may start CI on the tagged commit and approve publication once the
+tag workflow's tests pass, without waiting for the full CI matrix. A problem that
+CI finds later ships in the next pre-release; never move a published tag. Final
+releases still come from `main` after CI passes.
+
 The default branch is `main`. Existing local clones should rename their
 branch with `git branch -m master main`, fetch `origin`, and set the upstream
 with `git branch --set-upstream-to=origin/main main`.
