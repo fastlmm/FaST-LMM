@@ -20,7 +20,7 @@ Effect size and multiple phenotypes are illustrated in the `multiple-phenotype n
 <https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_.
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
 
    gpu
    api_backend_precision
