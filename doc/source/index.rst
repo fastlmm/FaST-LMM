@@ -10,18 +10,13 @@ single-SNP and SNP-set genome-wide association studies (GWAS) on extremely large
 See `FaST-LMM's README.md <https://github.com/fastlmm/FaST-LMM/blob/main/README.md>`_ for installation instructions, documentation, code, and a bibliography.
 
 
-HDF5 and BGEN support are optional. Install ``fastlmm[hdf5]``,
-``fastlmm[bgen]``, or ``fastlmm[hdf5,bgen]`` as needed.
-Existing HDF5 users upgrading from an earlier release must install the HDF5 extra.
-Core Python 3.15 qualification excludes both backends; HDF5 and BGEN remain
-covered by the Python 3.11 through 3.14 test matrix.
+NumPy is the default backend. Single-kernel :func:`.single_snp` can also run on an
+NVIDIA GPU, about 10 times as fast with float32. See the :doc:`GPU guide <gpu>`.
 
+HDF5 and BGEN support are optional and available on Python 3.11 through 3.14.
+Install ``fastlmm[hdf5]``, ``fastlmm[bgen]``, or ``fastlmm[hdf5,bgen]`` as needed.
 
-Single-kernel :func:`.single_snp` can run on an NVIDIA GPU, in float32 or float64.
-With float32 on a GPU it ran about 10 times as fast as the default CPU float64 on a
-large synthetic dataset. See the :doc:`GPU guide <gpu>` for setup and examples, and
-:doc:`api_backend_precision` for which functions support the GPU. Effect size and
-multiple phenotypes are illustrated in the `multiple-phenotype notebook
+Effect size and multiple phenotypes are illustrated in the `multiple-phenotype notebook
 <https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_.
 
 .. toctree::
