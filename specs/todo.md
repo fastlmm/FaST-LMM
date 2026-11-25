@@ -40,7 +40,6 @@ Things to remember:
 
 Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2026). These are not migration defects: the installed-wheel smoke tests passed, and the canonical suites passed with source fixtures. Keep them out of the migration work.
 
-- Document what each runner covers (pytest and the legacy `tests/test.py` in each repository). FaST-LMM's broad pytest collection also imports old setup and benchmark files; clean that up before pytest can replace the canonical runner.
 - Timings in the experimental FaST-LMM notebooks remain historical until an approved benchmark rerun. (The public notebook was refreshed November 24, 2026 from a complete run with published prerequisites.)
 - Decide whether to untrack `tests/select/null.map` and `tests/select/null.ped`. `FastLmmSet` writes them with `fastlmmc` and reads them back on every canonical run, so each run rewrites these tracked files (tracked since 0.2.7). Untracking needs the test to write to a temporary directory first.
 - FaST-LMM's remaining legacy pytest failures. The earlier canonical `tests/test.py` run passed 227 cases with 7 skipped. The review fixed both first-party association doctests in `06adad5`, with the same example results in both runners.
@@ -104,6 +103,7 @@ Remember if the GPU work restarts:
 
 # Done
 
+- November 25, 2026: confirmed the runner-coverage item is done: both READMEs explain the two runners and their overlap, and FaST-LMM's `conftest.py` keeps old setup and benchmark files out of pytest collection.
 - November 25, 2026: confirmed the PySnpTools `qctool` item is done: README's Testing section names `Bgen.genwrite` and `Bgen.write`, explains installing QCTool v2 and setting `QCTOOLPATH` (including WSL), and the tests fail with a clear message when it is missing.
 - November 25, 2026: strengthened the API-policy tests: `snp_set`'s CPU64 check now observes the arrays its score test computes with (NumPy float64), and the single-kernel worker trace requires both `evaluate` and `test_snps` events.
 - November 25, 2026: decided (Carl) not to add a PySnpTools context manager for `ARRAY_MODULE`/`ARRAY_DTYPE`; the guides document standard Python's `unittest.mock.patch.dict`.
