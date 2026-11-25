@@ -29,6 +29,10 @@ def main():
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--bed", type=Path, default=LARGE)
     parser.add_argument("--pheno", type=Path)
+    # "checkout" requires the sibling PySnpTools checkout (development runs).
+    # "installed" measures the PySnpTools and bed-reader installed in this
+    # interpreter, such as published releases; the result records their versions.
+    parser.add_argument("--prerequisites", choices=["checkout", "installed"], default="checkout")
     arguments = parser.parse_args()
     os.environ["ARRAY_MODULE"] = "numpy" if arguments.backend == "cpu" else "cupy"
     os.environ["ARRAY_DTYPE"] = arguments.precision
@@ -55,7 +59,13 @@ def main():
     from threadpoolctl import threadpool_info
 
     assert str(ROOT) in fastlmm.__file__
-    assert "/home/carlk/programs/PySnpTools/" in pysnptools.__file__
+    from_checkout = "/home/carlk/programs/PySnpTools/" in pysnptools.__file__
+    if arguments.prerequisites == "checkout":
+        assert from_checkout, f"expected the PySnpTools checkout, imported {pysnptools.__file__}"
+    elif arguments.prerequisites == "installed":
+        assert not from_checkout, f"expected installed PySnpTools, imported {pysnptools.__file__}"
+    else:
+        raise ValueError(f"unknown prerequisites {arguments.prerequisites!r}")
     arguments.output.mkdir(parents=True, exist_ok=True)
     if arguments.size == "mouse":
         bed = Bed(example_file("tests/datasets/mouse/alldata.*", "*.bed"), count_A1=False)

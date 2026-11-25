@@ -29,6 +29,8 @@ def main():
     parser.add_argument("--python", type=Path, default=DEFAULT_PYTHON)
     parser.add_argument("--bed", type=Path, default=DEFAULT_BED)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    # See benchmark.py: "installed" measures published PySnpTools and bed-reader.
+    parser.add_argument("--prerequisites", choices=["checkout", "installed"], default="checkout")
     arguments = parser.parse_args()
     arguments.output.mkdir(parents=True, exist_ok=True)
     write_manifest(arguments)
@@ -55,11 +57,12 @@ def main():
 
 
 def write_manifest(arguments):
-    repositories = {
-        "fastlmm": ROOT,
-        "pysnptools": Path("/home/carlk/programs/PySnpTools"),
-        "bed-reader": Path("/home/carlk/programs/bed-reader"),
-    }
+    repositories = {"fastlmm": ROOT}
+    if arguments.prerequisites == "checkout":
+        repositories["pysnptools"] = Path("/home/carlk/programs/PySnpTools")
+        repositories["bed-reader"] = Path("/home/carlk/programs/bed-reader")
+    elif arguments.prerequisites != "installed":
+        raise ValueError(f"unknown prerequisites {arguments.prerequisites!r}")
     manifest = {
         "python": str(arguments.python.resolve()),
         "bed": str(arguments.bed.resolve()),
@@ -73,6 +76,15 @@ def write_manifest(arguments):
             for name, path in repositories.items()
         },
     }
+    if arguments.prerequisites == "installed":
+        # Record what the worker interpreter will import instead of checkout commits.
+        manifest["installed"] = json.loads(subprocess.check_output(
+            [str(arguments.python), "-I", "-c",
+             "import json; from importlib.metadata import version; "
+             "print(json.dumps({name: version(name) for name in "
+             "('pysnptools', 'bed-reader', 'numpy', 'scipy', 'cupy-cuda13x')}))"],
+            text=True,
+        ))
     destination = arguments.output / "manifest.json"
     if destination.exists():
         if json.loads(destination.read_text()) != manifest:
@@ -149,6 +161,8 @@ def run_worker(arguments, backend, precision, threads, label, repeat):
         repeat,
         "--output",
         str(arguments.output),
+        "--prerequisites",
+        arguments.prerequisites,
     ]
     log = result_path(arguments, backend, precision, threads, repeat, ".log")
     with log.open("w") as output:
