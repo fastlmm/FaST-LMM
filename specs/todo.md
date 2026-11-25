@@ -4,6 +4,11 @@ todo000 This is the main todo. Only the human can remove this opening instructio
 
 Items are ordered by what to do next. Agents may maintain the task list, moving completed work to the Done section and removing its original entry.
 
+When stable 1.1.0 is available on PyPI for each package, replace the beta-pinned
+GPU install commands in the PySnpTools and FaST-LMM READMEs, docs, and project
+website with `pip install "pysnptools[cupy]"` and `pip install "fastlmm[cupy]"`
+as appropriate. Verify each command in a fresh environment.
+
 Waiting on Carl's decisions (listed November 25, 2026; details are in the entries below):
 
 1. (Decided November 25: fallback when SciPy rejects the bracket; done, see Done.)
@@ -13,6 +18,7 @@ Waiting on Carl's decisions (listed November 25, 2026; details are in the entrie
 5. Housekeeping: yank PySnpTools 1.1.0a1 on PyPI or not; CPU thread-count default; untrack `tests/select/null.*`; delete specs whose work is done; tidy this file (several entries below are already done).
 6. bed-reader: the final 1.3.0 squash-merge of `implement/cpu-only` into `main`, after refreshing its stale section of `REVIEW_INVENTORY.md`.
 7. PySnpTools: merge `release/1.1.0b2` (and `cupy-sub-matrix` work) into `main` at the next release; close PR #28 (superseded) and issue #26 (fixed); delete the 1.1.0b1 handoff spec or not.
+8. PySnpTools API idea (not a release blocker): a public context manager such as `with pysnptools.util.array_settings(xp="cupy", dtype="float32"):` instead of documenting `unittest.mock.patch.dict` for scoping `ARRAY_MODULE`/`ARRAY_DTYPE` (the GPU guide documents patch.dict as of November 25). FaST-LMM's internal `cpu64_scope` is a similar pattern.
 
 bed-reader is CPU-only (Carl, November 21, 2026). GPU support stays in PySnpTools and FaST-LMM: read on the CPU, `cupy.asarray`, then PySnpTools' CuPy standardizer. With CPU BED reads on both backends, the synthetic float32 `single_snp` workload ran 12.7x faster on GPU (30.3 s versus 384.8 s on CPU). See [synthetic benchmark and rerun instructions](SYNTHETIC_BENCHMARK.md). The bed-reader GPU work is parked (see the end of Next).
 
