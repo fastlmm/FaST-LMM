@@ -10,6 +10,7 @@ This release contains the following features, each illustrated with an IPython n
 
 Improvements:
 
+* **New: GPU and float32 for `single_snp`** ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/FaST-LMM.ipynb), [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/main/doc/source/gpu.rst)) -- single-kernel `single_snp` runs about 10 times as fast on an NVIDIA GPU with float32 as on the CPU with the default float64. See [GPU and float32](#gpu-and-float32) below.
 * New features for single_snp (including effect size and multiple phenotype support) and epistasis (including reporting beta and using pre-computed eigenvalue decompositions) ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb))  -- [Lippert *et al.*, *Nature Methods* 2011](http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html)
 * Ludicrous-Speed GWAS ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/SingleSnpScale.ipynb)) -- [Kadie and Heckerman, *bioRxiv* 2018](https://www.biorxiv.org/content/10.1101/154682v2)
 * Heritability with Spatial Correction ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/heritability_si.ipynb)), [Heckerman *et al.*, *PNAS* 2016](http://www.pnas.org/content/113/27/7377.abstract)
@@ -40,17 +41,32 @@ Install `fastlmm[hdf5,bgen]` to enable both optional formats.
 
 For best performance, be sure your Python distribution includes a fast version of NumPy. We use Anaconda's [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
-GPU and precision features
+GPU and float32
 =================================
 
-`single_snp` supports NumPy/CuPy backends and float32/float64 linear algebra.
-Explicit `xp`/`dtype` override the `ARRAY_MODULE`/`ARRAY_DTYPE` environment defaults.
-For the GPU workflow in this checkout, activate a fresh virtual environment
-and run `uv pip install ".[cupy]"` from the repository root. PySnpTools
-1.1.0b2 or later transfers CPU-decoded genotypes to CuPy
-and follows CuPy's NVIDIA CUDA prerequisites. CPU remains the default.
+FaST-LMM's single-kernel `single_snp` can run on an NVIDIA GPU, in float32 or float64.
+On a synthetic dataset with 14,925 individuals and 100,000 SNPs, float32 on an RTX 3060
+ran about 10 times as fast as the default CPU float64, and about 5 times as fast as
+CPU float32. On the CPU alone, float32 ran about 2.5 times as fast as float64.
+
+Install the `cupy` extra:
+
+    pip install "fastlmm[cupy]==1.1.0b1"
+
+Then ask for the GPU and float32:
+
+```python
+from fastlmm.association import single_snp
+
+results = single_snp(bed_fn, pheno_fn, covar=cov_fn, count_A1=False, xp="cupy", dtype="float32")
+```
+
+Float32 changes p-values slightly, so compare against float64 on representative data
+when precision matters. Other FaST-LMM functions, including two-kernel `single_snp` and
+epistasis, warn and run on the CPU in float64. GPU support requires NVIDIA CUDA on
+x86-64 Windows or Linux, including WSL2; Python 3.15 is currently CPU-only.
 See the [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/main/doc/source/gpu.rst)
-for platform limits and complete examples.
+for setup, defaults, caching, and limitations.
 
 Documentation
 =================================

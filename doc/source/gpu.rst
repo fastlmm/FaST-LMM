@@ -1,18 +1,46 @@
 GPU association and floating-point precision
 ============================================
 
-PySnpTools reads genotype data on the CPU and transfers it to CuPy for GPU
-computation. NumPy remains the default backend.
+Single-kernel :func:`.single_snp` can run on an NVIDIA GPU, in float32 or float64.
+NumPy on the CPU remains the default.
+
+**~10× faster with GPU and float32.** On a synthetic dataset with 14,925
+individuals and 100,000 SNPs, single-kernel ``single_snp`` ran about 10 times as
+fast with float32 on an RTX 3060 as with the default CPU float64, and about 5 times
+as fast as CPU float32. On the CPU alone, float32 ran about 2.5 times as fast as
+float64. The CPU runs used 16 threads on a Ryzen 9 7950X. Most of the time goes to
+the eigendecomposition and the association tests, which run on the GPU.
+
+We recommend float32 for GPU work. Consumer GPUs like the RTX 3060 process float32
+arithmetic much faster than float64, and float32 arrays use half the memory.
+Float32 changes p-values slightly, so compare against float64 on representative
+data when precision matters.
+
+Quick start
+-----------
+
+.. code-block:: python
+
+    from fastlmm.association import single_snp
+
+    results = single_snp(bed_fn, pheno_fn, covar=cov_fn, count_A1=False,
+                         xp="cupy", dtype="float32")
+
+PySnpTools reads the genotypes on the CPU and transfers them to the GPU. The
+results come back as an ordinary pandas DataFrame. Other FaST-LMM functions,
+including two-kernel ``single_snp`` and epistasis, warn and run on the CPU in
+float64; see :doc:`api_backend_precision`.
 
 Installing GPU support
 ----------------------
 
-In a fresh virtual environment, install this checkout with the CuPy extra
-from the FaST-LMM repository root::
+Install FaST-LMM with the ``cupy`` extra::
 
-    uv pip install ".[cupy]"
+    pip install "fastlmm[cupy]==1.1.0b1"
 
-The checkout requires bed-reader 1.3.0b3 or later and PySnpTools 1.1.0b2 or later.
+From a source checkout, run ``uv pip install ".[cupy]"`` in a fresh virtual
+environment instead. FaST-LMM requires bed-reader 1.3.0b3 or later and PySnpTools
+1.1.0b2 or later; pip installs them automatically.
 
 The ``cupy`` extra follows the dependency chain through ``pysnptools[cupy]``
 and CuPy directly. Follow
@@ -31,7 +59,10 @@ Set the defaults once for a workflow::
     os.environ["ARRAY_MODULE"] = "cupy"
     os.environ["ARRAY_DTYPE"] = "float32"
 
-Explicit ``xp`` and ``dtype`` still take precedence. These defaults are
+Explicit ``xp`` and ``dtype`` still take precedence. To set the defaults for just
+a block of code, use ``with patch.dict("os.environ", {"ARRAY_MODULE": "cupy",
+"ARRAY_DTYPE": "float32"}):`` from the standard library's ``unittest.mock``; it
+restores the previous settings when the block ends. These defaults are
 process-wide. Follow the function-specific limitations below; selecting CuPy
 for ``single_snp`` does not extend GPU support to every FaST-LMM function.
 

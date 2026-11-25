@@ -17,10 +17,10 @@ Core Python 3.15 qualification excludes both backends; HDF5 and BGEN remain
 covered by the Python 3.11 through 3.14 test matrix.
 
 
-The development single-kernel :func:`.single_snp` API supports NumPy/CuPy backends and
-float32/float64 linear algebra. See :doc:`api_backend_precision` for the complete
-public API support matrix and fallback policy. See :doc:`gpu` for GPU prerequisites, option
-semantics, tested examples, cache rules, and worker execution. Effect size and
+Single-kernel :func:`.single_snp` can run on an NVIDIA GPU, in float32 or float64.
+With float32 on a GPU it ran about 10 times as fast as the default CPU float64 on a
+large synthetic dataset. See the :doc:`GPU guide <gpu>` for setup and examples, and
+:doc:`api_backend_precision` for which functions support the GPU. Effect size and
 multiple phenotypes are illustrated in the `multiple-phenotype notebook
 <https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb>`_.
 

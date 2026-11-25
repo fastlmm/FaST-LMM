@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **GPU and float32 for single-kernel `single_snp`.** With `xp="cupy", dtype="float32"`,
+  it ran about 10 times as fast on an NVIDIA RTX 3060 as the default CPU float64, and
+  about 5 times as fast as CPU float32, on a synthetic dataset with 14,925 individuals
+  and 100,000 SNPs. Install with `pip install "fastlmm[cupy]"`. Other functions warn and
+  run on the CPU in float64. See the GPU guide.
+- **Faster CPU float32.** CPU float32 `single_snp` now builds its kernel in float32 and
+  runs its eigendecomposition and low-rank SVD with SciPy's float32 LAPACK drivers
+  (NumPy's `linalg` computes float32 inputs in float64). At the same thread count it
+  ran about 2.5 times as fast as CPU float64. CPU float32 p-values therefore differ
+  slightly from earlier releases (on the synthetic dataset, up to 1.7e-3 in log10 P
+  from CPU float64, with the same top SNPs). Float64 results are unchanged.
 - Use CPU-only bed-reader: test SNPs from any reader, including BED, are decoded
   on the CPU, then copied to CuPy for GPU standardization and computation.
 - PySnpTools provides `GpuFloat64Warning` and `has_gpu_support` in
