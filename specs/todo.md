@@ -81,10 +81,9 @@ Test-harness gaps found during the CPU-only bed-reader migration (November 21, 2
 - FaST-LMM's remaining legacy pytest failures. The earlier canonical `tests/test.py` run passed 227 cases with 7 skipped. The review fixed both first-party association doctests in `06adad5`, with the same example results in both runners.
 
   The legacy `TestSingleSnpSelect.test_old_sel_plus_pc` test previously failed
-  with SIGILL (status 132). It passed on an AMD Ryzen 9 7950X after the Python
-  launchers began defaulting to `MKL_CBWR=COMPATIBLE` in the child environment.
-  For direct invocation of the old 2.07c binary, set `MKL_CBWR=COMPATIBLE`
-  before running it. The canonical runner omits this deprecated suite.
+  with SIGILL (status 132) under the bundled 2.07 `fastlmmc`. FaST-LMM now
+  bundles `fastlmmc` 2.08 (oneMKL 2026.2.1), which runs on current CPUs without
+  an MKL workaround. The canonical runner omits this deprecated suite.
 
   | Pytest case | Cause | Covered by `tests/test.py`? |
   | --- | --- | --- |

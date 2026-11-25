@@ -1,0 +1,36 @@
+FaST-LMM C++ (FastLmmC)
+Copyright (c) Microsoft Corporation. All rights reserved.
+_____________________________________________________________________
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may
+not use this software except in compliance with the License. You can
+find a copy of the License in the file LICENSE.TXT accompanying this
+file, or at http://www.apache.org/licenses/LICENSE-2.0
+
+Versions through 2.07 were released under the Microsoft Research
+License Agreement. Starting with 2.08, FaST-LMM C++ is released under
+the Apache License, Version 2.0, like the Python version of FaST-LMM.
+_____________________________________________________________________
+
+Building or running this software uses additional libraries that are
+distributed under their own licenses. The released binaries include
+them, with their license texts in the third-party-licenses folder.
+_____________________________________________________________________
+Third-party components (version 2.08):
+
+  Intel oneMKL 2026.2.1 (Intel Simplified Software License)
+  Intel oneAPI Math Kernel Library: BLAS, LAPACK and other optimized
+  math routines. Statically linked into the released binaries.
+  https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html
+_____________________________________________________________________
+  Intel OpenMP runtime 2026.2.0 (Intel End User License Agreement for
+  Developer Tools)
+  Statically linked into the Linux binary; libiomp5md.dll accompanies
+  the Windows binary.
+_____________________________________________________________________
+  zlib (zlib license)
+  Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler.
+  Used to read gzip-compressed input files. Version 1.3.1 is statically
+  linked into the Windows binary; the Linux binary statically links the
+  zlib of the build system (Ubuntu 22.04). https://zlib.net
+_____________________________________________________________________

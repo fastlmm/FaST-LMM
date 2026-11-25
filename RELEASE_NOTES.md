@@ -12,11 +12,15 @@
   previously have been zeroed. Rebuild version 3 float32 caches before reuse.
 - Preserve NumPy/float64 execution in same-process threaded workers without
   deadlocking the parent workflow.
-- Run the bundled legacy `fastlmmc` executable on AMD CPUs: FaST-LMM's
-  launchers now set `MKL_CBWR=COMPATIBLE` for the child process unless
-  `MKL_CBWR` or `MKL_DEBUG_CPU_TYPE` is already set. They also no longer set
-  `FastLmmUseAnyMklLib` in the caller's own environment. Direct shell calls to
-  `fastlmmc` on AMD still need `MKL_CBWR=COMPATIBLE`.
+- Bundle FaST-LMM C++ (`fastlmmc`) 2.08 in place of 2.07, for the deprecated
+  `compute_auto_pcs`/`single_snp_select` path. 2.08 is licensed under the
+  Apache License 2.0 (2.07 was non-commercial only), builds with oneMKL
+  2026.2.1, and runs on current Intel and AMD CPUs; the 2.07 Linux binary
+  crashed with "Illegal instruction" on current CPUs. It computes the same
+  results and ran 1.6 to 2.4 times as fast in our tests. Its license, notice,
+  and third-party licenses are installed beside the executables. The launchers
+  also no longer set `FastLmmUseAnyMklLib` in the caller's own environment,
+  only in the child process.
 
 ## 1.1.0a1 (2026-11-18, alpha)
 

@@ -130,7 +130,7 @@ git diff v1.0.0...gpu-bed-reader -- .github conftest.py pyproject.toml uv.lock t
 git diff -- pyproject.toml uv.lock
 ```
 
-The two executable blobs match the baseline and gained executable permissions.
+The two executable blobs match the baseline and gained executable permissions. After the review (November 24, 2026), both bundled copies were replaced with `fastlmmc` 2.08 (Apache 2.0, oneMKL 2026.2.1) from the verified v2.08 release archives, with its license, notice, and third-party licenses beside the executables.
 The reviewed wheel and source archive preserve the packaged executable bit and
 exclude the generated feature-selection files. The reviewed dependency-bound
 and lockfile edits are in `5318980`. The artifacts built with those edits

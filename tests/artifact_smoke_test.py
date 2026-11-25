@@ -22,6 +22,14 @@ def main():
     required_data = [
         package.joinpath("util", "fastlmm.hashdown.json"),
         package.joinpath("association", "Fastlmm_autoselect", "fastlmmc"),
+        # The bundled fastlmmc's Apache license and the licenses of the Intel
+        # oneMKL and OpenMP code it contains must ship with the executable.
+        package.joinpath("association", "Fastlmm_autoselect", "LICENSE.TXT"),
+        package.joinpath("association", "Fastlmm_autoselect", "NOTICE.TXT"),
+        package.joinpath(
+            "association", "Fastlmm_autoselect", "third-party-licenses",
+            "Intel-oneMKL-LICENSE.txt",
+        ),
         package.joinpath(
             "feature_selection", "examples", "toydata.5chrom.bed"
         ),

@@ -7,12 +7,13 @@ import logging
 
 
 def _fastlmmc_environment():
+    # fastlmmc refuses an MKL build other than the one it expects unless this is
+    # set (still true in 2.08). Set it for the child only, not the caller's process.
+    # The bundled 2.08 binaries use oneMKL 2026.2.1, which runs on current Intel and
+    # AMD CPUs, so no MKL_CBWR workaround is needed (and MKL_CBWR=COMPATIBLE would
+    # slow it). Explicit MKL settings in the caller's environment pass through.
     environment = os.environ.copy()
     environment["FastLmmUseAnyMklLib"] = "1"
-    # The bundled MKL can select instructions that fail on AMD CPUs.
-    # Preserve explicit MKL settings and limit the default to the child process.
-    if "MKL_DEBUG_CPU_TYPE" not in environment:
-        environment.setdefault("MKL_CBWR", "COMPATIBLE")
     return environment
 
 
@@ -113,8 +114,8 @@ def run(
     """
     interface for FastLMM software
 
-    The child process defaults to MKL_CBWR=COMPATIBLE for the legacy binary.
-    An explicit MKL_CBWR or MKL_DEBUG_CPU_TYPE setting overrides this default.
+    Runs the bundled fastlmmc 2.08. MKL settings in the caller's environment,
+    such as MKL_CBWR, pass through to the child process unchanged.
 
     --------------------------------------------------------------------------
     Input:

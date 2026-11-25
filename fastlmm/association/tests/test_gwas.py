@@ -22,8 +22,10 @@ class TestGwas(unittest.TestCase):
     def test_fastlmmc_mkl_environment(self):
         from unittest.mock import patch
 
+        # fastlmmc 2.08 needs no MKL workaround: nothing is added beyond
+        # FastLmmUseAnyMklLib, and explicit MKL settings pass through unchanged.
         settings = (
-            ({}, {"MKL_CBWR": "COMPATIBLE"}),
+            ({}, {}),
             ({"MKL_CBWR": "AUTO"}, {"MKL_CBWR": "AUTO"}),
             ({"MKL_DEBUG_CPU_TYPE": "4"}, {"MKL_DEBUG_CPU_TYPE": "4"}),
         )
