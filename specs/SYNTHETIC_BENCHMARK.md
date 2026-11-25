@@ -22,6 +22,29 @@ Findings:
 - Reads are faster than on November 22 (GPU 2.0 s against 5.5 s; CPU about 0.9 s against 3.7 s), consistent with bed-reader 1.3.0b3's chunked reads.
 - Accuracy against CPU float64 (16 threads): GPU float32 max absolute log10(P) difference 3.42e-3; CPU float32 1.71e-3; CPU float64 at 32 threads 4.4e-10. All configurations rank the top 10 SNPs identically.
 
+## GPU memory sizing (November 25, 2026)
+
+GPU float32 `single_snp` with `leave_out_one_chrom=False`, on an RTX 3060 (12 GB) under WSL2, with the same code as the release-candidate result above. Data: `~/.cache/synthetic-bed-sizing/synth_50000x30000.bed` (50,000 individuals x 30,000 SNPs, made with the same generator), sliced to the first N individuals and the first K SNPs for the kernel (all 30,000 SNPs tested), plus the 14,925 x 100,000 benchmark file. Peak memory is CuPy's memory-pool high-water mark; each run used a fresh process. Script and raw results: `~/deldir/gpu-sizing/` (`measure.py`, `run.sh`, `results.jsonl`).
+
+| Individuals | Kernel SNPs | Rank | CuPy peak (MiB) | Bytes per individual x min(individuals, kernel SNPs) | Seconds |
+| ---: | ---: | --- | ---: | ---: | ---: |
+| 14,925 | 100,000 | full | 5,950 | 28.0 | 32.0 |
+| 16,000 | 30,000 | full | 6,837 | 28.0 | 20.1 |
+| 18,000 | 30,000 | full | 8,653 | 28.0 | 26.6 |
+| 20,000 | 30,000 | full | 10,683 | 28.0 | 41.8 |
+| 22,000 | 30,000 | full | 12,926 | 28.0 | 139.4 (spilled) |
+| 14,925 | 5,000 | low | 1,811 | 25.4 | 15.8 |
+| 50,000 | 5,000 | low | 6,113 | 25.6 | 18.7 |
+| 50,000 | 10,000 | low | 12,988 | 27.2 | 85.6 (spilled) |
+| 30,000 | 15,000 | low | 12,039 | 28.1 | 245.1 (spilled) |
+| 50,000 | 15,000 | low | 20,626 | 28.8 | 1,540.4 (spilled) |
+
+Findings:
+
+- Peak GPU memory is about 28 bytes x individuals x min(individuals, kernel SNPs), plus about 1 GB of CUDA context and library overhead (`nvidia-smi` minus the pool and the desktop's baseline). Full rank is 28.0 at every size.
+- A dedicated 12 GB card handles about 20,000 individuals at full rank, or individuals x kernel SNPs up to about 400 million at low rank (for example, 50,000 individuals with 8,000 kernel SNPs). A display sharing the card (about 2.7 GB here) lowers this.
+- Beyond the card's memory, Windows/WSL2 lets CUDA borrow system RAM (WDDM paging): runs still finish but slow down sharply (50,000 x 15,000 took 1,540 s) and push the desktop's GPU memory out. Native Linux would raise an out-of-memory error instead (not tested here).
+
 ## Earlier result (November 22, 2026)
 
 The synthetic dataset is `/home/carlk/.cache/synthetic-bed/synth_14925x100000.bed` (14,925 individuals x 100,000 SNPs), with its matching `.pheno.txt`. The generator is `/mnt/c/deldir/synthetic-bed/make_synthetic_bed.py`. `single_snp` used one kernel built from all 100,000 SNPs, which were also the test SNPs.
