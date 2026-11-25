@@ -474,3 +474,5 @@ doc/ipynb/DebugApr2024.ipynb
 
 # Documentation is built and deployed by GitHub Pages Actions.
 /docs/
+# Generated test output (feature-selection runs from the repository root).
+/tmp/
