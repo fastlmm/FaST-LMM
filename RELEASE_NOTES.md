@@ -1,61 +1,55 @@
 # FaST-LMM release notes
 
-## Unreleased
+## 1.1.0 (in beta; changes since 1.0.0)
+
+Highlights:
 
 - **GPU and float32 for single-kernel `single_snp`.** With `xp="cupy", dtype="float32"`,
   it ran about 10 times as fast on an NVIDIA RTX 3060 as the default CPU float64, and
   about 5 times as fast as CPU float32, on a synthetic dataset with 14,925 individuals
-  and 100,000 SNPs. Install with `pip install "fastlmm[cupy]"`. Other functions warn and
-  run on the CPU in float64. See the GPU guide.
-- **Faster CPU float32.** CPU float32 `single_snp` now builds its kernel in float32 and
-  runs its eigendecomposition and low-rank SVD with SciPy's float32 LAPACK drivers
-  (NumPy's `linalg` computes float32 inputs in float64). At the same thread count it
-  ran about 2.5 times as fast as CPU float64. CPU float32 p-values therefore differ
-  slightly from earlier releases (on the synthetic dataset, up to 1.7e-3 in log10 P
-  from CPU float64, with the same top SNPs). Float64 results are unchanged.
-- Use CPU-only bed-reader: test SNPs from any reader, including BED, are decoded
-  on the CPU, then copied to CuPy for GPU standardization and computation.
-- PySnpTools provides `GpuFloat64Warning` and `has_gpu_support` in
-  `pysnptools.util.gpu`.
-- Require bed-reader 1.3.0b3 and PySnpTools 1.1.0b2 or later. The `cupy` extra
-  installs GPU support through PySnpTools.
-- Recheck small float32 residuals in float64 to preserve signal that would
-  previously have been zeroed. Rebuild version 3 float32 caches before reuse.
-- Preserve NumPy/float64 execution in same-process threaded workers without
-  deadlocking the parent workflow.
-- Fix a crash in heritability and mixing searches on nearly flat likelihoods. When
-  re-evaluating a grid triplet gave slightly different values, SciPy's `brent`
-  rejected the bracket with `ValueError`; FaST-LMM now searches that interval with a
-  bounded search instead. Results are unchanged wherever the search succeeded before.
-- Bundle FaST-LMM C++ (`fastlmmc`) 2.08 in place of 2.07. FaST-LMM itself uses it
-  only for legacy `FastLmmSet(autoselect=True)` callers and as a test reference;
-  `snp_set` and the Python workflows do not need it. 2.08 is licensed under the
-  Apache License 2.0 (2.07 was non-commercial only), builds with oneMKL
-  2026.2.1, and runs on current Intel and AMD CPUs; the 2.07 Linux binary
-  crashed with "Illegal instruction" on current CPUs. It computes the same
-  results and ran 1.6 to 2.4 times as fast in our tests. Its license, notice,
-  and third-party licenses are installed beside the executables. The launchers
-  also no longer set `FastLmmUseAnyMklLib` in the caller's own environment,
-  only in the child process.
+  and 100,000 SNPs. Install with `pip install "fastlmm[cupy]"`. A 12 GB card handles
+  about 20,000 individuals with a full-rank kernel. See the GPU guide.
+- **Faster CPU float32.** CPU float32 `single_snp` builds its kernel in float32 and runs
+  its eigendecomposition and low-rank SVD with SciPy's float32 LAPACK drivers (NumPy's
+  `linalg` computes float32 inputs in float64). At the same thread count it ran about
+  2.5 times as fast as CPU float64. Float32 p-values differ slightly from float64 (on
+  the synthetic dataset, up to 1.7e-3 in log10 P, with the same top SNPs). Float64
+  results are unchanged.
 
-## 1.1.0a1 (2026-11-18, alpha)
+Other changes:
 
-- Add the `cupy` extra and require the coordinated PySnpTools 1.1.0a1 and
-  bed-reader 1.3.0a1 alphas. CPU execution remains the default.
-- Add `single_snp` NumPy/CuPy selection and float32/float64 workflow precision
-  through explicit arguments or `ARRAY_MODULE` and `ARRAY_DTYPE`. Propagate
-  defaults to workers and restore the environment on success or failure.
-- Preserve CubeCL-backed GPU SNP storage where supported; fix chromosome
-  covariate alignment and validate raw values before narrowing or transfer.
-- Report consumer-GPU float64 arithmetic costs without changing precision.
-  Retain higher precision for internal reductions and likelihood statistics.
-- Initial GPU scope is NVIDIA Windows/Linux x86-64, including WSL2, on Python
-  3.11–3.14. Python 3.15 remains CPU-only pending CuPy support. Published-alpha
-  integration tests passed on native Ubuntu 24.04 with an RTX 3060 and Python
-  3.11, in addition to Windows and WSL2 validation.
-- All three coordinated alphas are published on PyPI. Dependencies resolve
-  against the published PySnpTools and bed-reader alphas; the development-only
-  Git source has been removed.
+- `single_snp` takes `xp` (`"numpy"` or `"cupy"`) and `dtype` (`"float32"` or
+  `"float64"`). When omitted, the `ARRAY_MODULE` and `ARRAY_DTYPE` environment
+  variables supply the defaults, then NumPy and float64. Workers inherit the settings,
+  and `single_snp` restores the caller's environment afterward.
+- Every other numerical function, including two-kernel `single_snp`, epistasis, and the
+  predictors, warns and runs on the CPU in float64 if a GPU or float32 is requested. A
+  cached model holding float32 or CuPy arrays raises `ValueError`; refit it in float64.
+- GPU float64 emits PySnpTools' `GpuFloat64Warning`, because float64 can be much slower
+  than float32 on consumer GPUs. With float32, covariate and phenotype values too large
+  or too small for float32 raise `ValueError`.
+- Fix `cache_file` with a supplied `h2` or `mixing`, and multiple phenotypes with a
+  supplied `h2`. A supplied `h2` now takes precedence over a cached one, and a supplied
+  `mixing` that disagrees with the cache raises `ValueError`. Caches also record their
+  dtype, and a mismatch raises `ValueError`. Caches from 1.0 still work with float64.
+- Fix a crash in heritability and mixing searches on nearly flat likelihoods, where
+  SciPy's `brent` rejected a grid bracket with `ValueError`. Results are unchanged
+  wherever the search succeeded before.
+- Bundle FaST-LMM C++ (`fastlmmc`) 2.08 in place of 2.07. FaST-LMM uses it only for
+  legacy `FastLmmSet(autoselect=True)` callers and as a test reference. 2.08 is licensed
+  under the Apache License 2.0 (2.07 was non-commercial only), runs on current Intel
+  and AMD CPUs (the 2.07 Linux binary crashed with "Illegal instruction"), computes the
+  same results, and ran 1.6 to 2.4 times as fast. Its license, notice, and third-party
+  licenses are installed beside the executables. The launchers no longer set
+  `FastLmmUseAnyMklLib` in the caller's own environment.
+- Require PySnpTools 1.1 and bed-reader 1.3 (during the beta, 1.1.0b2 and 1.3.0b3 or
+  later). bed-reader now reads on the CPU only; PySnpTools copies the data to the GPU.
+  The new `cupy` extra installs GPU support through PySnpTools.
+- GPU support targets NVIDIA CUDA on x86-64 Windows and Linux, including WSL2. Python
+  3.15 is CPU-only until CuPy supports it.
+- New GPU guide, README section, and a float32 and GPU section in the main notebook. The
+  notebook's deprecated LMM(select)+PCs section is replaced by a link to its last
+  executed version.
 
 ## 1.0.0 (2026-11-14)
 
