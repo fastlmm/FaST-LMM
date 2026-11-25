@@ -159,6 +159,12 @@ its own cache file, and multiple phenotypes add a ``.extra.npz`` file.
 Memory
 ------
 
+A float32 run needs about 28 bytes × individuals × the smaller of individuals and
+kernel SNPs, plus about 1 GB. On a 12 GB card, that is about 20,000 individuals with
+a full-rank kernel, or, with a low-rank kernel, about 50,000 individuals with 8,000
+kernel SNPs. Larger runs fail on Linux; on Windows and WSL2 they borrow system memory
+and run much more slowly.
+
 The dense kernel is individuals by individuals, and the decomposition, CuPy's memory pool,
 and temporary products need GPU memory too. ``GB_goal`` sets how many test SNPs are
 processed at once; it is a target, not a cap on GPU memory, and it can raise the

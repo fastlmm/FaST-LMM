@@ -54,6 +54,8 @@ Float32 changes p-values slightly, so compare against float64 on representative 
 when precision matters. Other FaST-LMM functions, including two-kernel `single_snp` and
 epistasis, warn and run on the CPU in float64. GPU support requires NVIDIA CUDA on
 x86-64 Windows or Linux, including WSL2; Python 3.15 is currently CPU-only.
+A 12 GB card handles about 20,000 individuals with a full-rank kernel, or about 50,000
+individuals with an 8,000-SNP low-rank kernel; the guide gives the general rule.
 See the [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/main/doc/source/gpu.rst)
 for setup, defaults, caching, and limitations.
 
