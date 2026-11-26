@@ -17,7 +17,7 @@ Median seconds per stage:
 
 Findings:
 
-- GPU float32 is 13.0x faster than CPU float64 and 5.3x faster than CPU float32, both at 16 threads. CPU float32 is 2.5x faster than CPU float64. User-facing docs round these to about 10x and about 5x and do not quote times (Carl, November 25).
+- GPU float32 is 13.0x faster than CPU float64 and 5.3x faster than CPU float32, both at 16 threads. CPU float32 is 2.5x faster than CPU float64. User-facing docs say over 10x and about 5x and do not quote times, except the benchmark page, which gives the measured times and 13x (Carl, November 25).
 - 16 threads is again the fastest CPU setting for both precisions; 32 threads is slower and noisier, mainly in the eigendecomposition.
 - Reads are faster than on November 22 (GPU 2.0 s against 5.5 s; CPU about 0.9 s against 3.7 s), consistent with bed-reader 1.3.0b3's chunked reads.
 - Accuracy against CPU float64 (16 threads): GPU float32 max absolute log10(P) difference 3.42e-3; CPU float32 1.71e-3; CPU float64 at 32 threads 4.4e-10. All configurations rank the top 10 SNPs identically.

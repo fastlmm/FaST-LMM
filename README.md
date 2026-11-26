@@ -10,7 +10,7 @@ This release contains the following features, each illustrated with an IPython n
 
 Improvements:
 
-* **New: GPU and float32 for `single_snp`** ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/FaST-LMM.ipynb), [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/main/doc/source/gpu.rst)) -- single-kernel `single_snp` runs about 10 times as fast on an NVIDIA GPU with float32 as on the CPU with the default float64. See [GPU and float32](#gpu-and-float32) below.
+* **New: GPU and float32 for `single_snp`** ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/FaST-LMM.ipynb), [GPU guide](https://github.com/fastlmm/FaST-LMM/blob/main/doc/source/gpu.rst)) -- single-kernel `single_snp` runs over 10 times as fast on an NVIDIA GPU with float32 as on the CPU with the default float64. See [GPU and float32](#gpu-and-float32) below.
 * New features for single_snp (including effect size and multiple phenotype support) and epistasis (including reporting beta and using pre-computed eigenvalue decompositions) ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/fastlmm2021.ipynb))  -- [Lippert *et al.*, *Nature Methods* 2011](http://www.nature.com/nmeth/journal/v8/n10/abs/nmeth.1681.html)
 * Ludicrous-Speed GWAS ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/SingleSnpScale.ipynb)) -- [Kadie and Heckerman, *bioRxiv* 2018](https://www.biorxiv.org/content/10.1101/154682v2)
 * Heritability with Spatial Correction ([notebook](https://github.com/fastlmm/FaST-LMM/blob/main/doc/ipynb/heritability_si.ipynb)), [Heckerman *et al.*, *PNAS* 2016](http://www.pnas.org/content/113/27/7377.abstract)
@@ -35,7 +35,7 @@ GPU and float32
 
 FaST-LMM's single-kernel `single_snp` can run on an NVIDIA GPU, in float32 (strongly recommended) or float64, thanks to [CuPy](https://cupy.dev/), the NumPy-compatible GPU array library.
 On a synthetic dataset with 14,925 individuals and 100,000 SNPs, float32 on an RTX 3060
-ran about 10 times as fast as the default CPU float64, and about 5 times as fast as
+ran over 10 times as fast as the default CPU float64, and about 5 times as fast as
 CPU float32. On the CPU alone, float32 ran about 2.5 times as fast as float64.
 See the [benchmark](https://fastlmm.github.io/FaST-LMM/benchmark.html) for details and how to reproduce it.
 

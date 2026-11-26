@@ -11,7 +11,7 @@ See `FaST-LMM's README.md <https://github.com/fastlmm/FaST-LMM/blob/main/README.
 
 
 NumPy is the default backend. Single-kernel :func:`.single_snp` can also run on an
-NVIDIA GPU, about 10 times as fast with float32. See the :doc:`GPU guide <gpu>`
+NVIDIA GPU, over 10 times as fast with float32. See the :doc:`GPU guide <gpu>`
 and the :doc:`benchmark <benchmark>`.
 
 HDF5 and BGEN support are optional and available on Python 3.11 through 3.14.

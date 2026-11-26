@@ -5,8 +5,8 @@ Single-kernel :func:`.single_snp` can run on an NVIDIA GPU, in float32 (strongly
 recommended) or float64, thanks to `CuPy <https://cupy.dev/>`_, the NumPy-compatible GPU array
 library. NumPy on the CPU remains the default.
 
-**~10× faster with GPU and float32.** On a synthetic dataset with 14,925
-individuals and 100,000 SNPs, single-kernel ``single_snp`` ran about 10 times as
+**Over 10× faster with GPU and float32.** On a synthetic dataset with 14,925
+individuals and 100,000 SNPs, single-kernel ``single_snp`` ran over 10 times as
 fast with float32 on an RTX 3060 as with the default CPU float64, and about 5 times
 as fast as CPU float32. On the CPU alone, float32 ran about 2.5 times as fast as
 float64. The CPU runs used 16 threads on a Ryzen 9 7950X. Most of the time goes to

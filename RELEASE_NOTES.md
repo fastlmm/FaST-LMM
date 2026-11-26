@@ -5,7 +5,7 @@
 Highlights:
 
 - **GPU and float32 for single-kernel `single_snp`.** With `xp="cupy", dtype="float32"`,
-  it ran about 10 times as fast on an NVIDIA RTX 3060 as the default CPU float64, and
+  it ran over 10 times as fast on an NVIDIA RTX 3060 as the default CPU float64, and
   about 5 times as fast as CPU float32, on a synthetic dataset with 14,925 individuals
   and 100,000 SNPs. Install with `pip install "fastlmm[cupy]"`. A 12 GB card handles
   about 20,000 individuals with a full-rank kernel. See the GPU guide.
