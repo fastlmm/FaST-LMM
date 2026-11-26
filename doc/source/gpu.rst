@@ -2,14 +2,16 @@ GPU association and floating-point precision
 ============================================
 
 Single-kernel :func:`.single_snp` can run on an NVIDIA GPU, in float32 (strongly
-recommended) or float64. NumPy on the CPU remains the default.
+recommended) or float64, thanks to `CuPy <https://cupy.dev/>`_, the NumPy-compatible GPU array
+library. NumPy on the CPU remains the default.
 
 **~10× faster with GPU and float32.** On a synthetic dataset with 14,925
 individuals and 100,000 SNPs, single-kernel ``single_snp`` ran about 10 times as
 fast with float32 on an RTX 3060 as with the default CPU float64, and about 5 times
 as fast as CPU float32. On the CPU alone, float32 ran about 2.5 times as fast as
 float64. The CPU runs used 16 threads on a Ryzen 9 7950X. Most of the time goes to
-the eigendecomposition and the association tests, which run on the GPU.
+the eigendecomposition and the association tests, which run on the GPU. See the
+:doc:`benchmark <benchmark>` for details and how to reproduce it.
 
 We recommend float32 for GPU work. Consumer GPUs like the RTX 3060 process float32
 arithmetic much faster than float64. Float32 changes p-values slightly, so compare against float64 on representative
@@ -62,6 +64,8 @@ Genotypes are always decoded on the CPU (bed-reader needs no GPU build), then
 PySnpTools copies them to the GPU and standardizes them there. See
 `PySnpTools's GPU guide <https://fastlmm.github.io/PySnpTools/gpu.html>`_ for
 reading and standardizing data directly.
+
+.. _choosing-precision:
 
 Choosing precision
 ------------------
@@ -155,6 +159,8 @@ If a cache was made with a supplied ``h2`` and a later call omits it, the later 
 fits ``h2``. An explicit ``mixing`` that disagrees with the cached mixing raises
 ``ValueError``. With leave-one-chromosome-out (the default), each chromosome gets
 its own cache file, and multiple phenotypes add a ``.extra.npz`` file.
+
+.. _gpu-memory:
 
 Memory
 ------
