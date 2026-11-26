@@ -1,6 +1,10 @@
 FaST-LMM
 =================================
 
+[![PyPI version](https://badge.fury.io/py/fastlmm.svg)](https://badge.fury.io/py/fastlmm)
+[![Build Status](https://github.com/fastlmm/FaST-LMM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fastlmm/FaST-LMM/actions/workflows/ci.yml)
+![Python versions](https://img.shields.io/pypi/pyversions/fastlmm)
+
 FaST-LMM, which stands for Factored Spectrally Transformed Linear Mixed Models, is a program for performing 
 genome-wide association studies (GWAS) on datasets of all sizes, up to one million individuals.
 

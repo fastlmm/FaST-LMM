@@ -24,6 +24,10 @@ PySnpTools 1.1.0 final:
 
 - Merge `release/1.1.0b2` and the `cupy-sub-matrix` work into `main`; close PR #28 (superseded) and issue #26 (fixed); decide whether to delete the 1.1.0b1 handoff spec.
 
+After each final release merges (before the Monday announcement, November 30):
+
+- Run CI on `main` by hand (`gh workflow run ci.yml --ref main -R fastlmm/<repo>`) for FaST-LMM and PySnpTools, so the new docs and README CI badges show passing. CI does not rerun after a merge, FaST-LMM's `main` has never run CI ("no status"), and PySnpTools' last `main` run (November 13) was cancelled ("failing"). bed-reader's badge already passes.
+
 Not release blockers:
 
 - After FaST-LMM 1.1.0 (decided by Carl, November 25): migrate SNP-set score tests from fastlmmrslib to gx2 via draft PR #75. Carl told gx2's author (abhranildas/gx2-py#1, closed November 15) that the migration was prepared; gx2 1.6.1 (MIT) fixed the three bugs he reported. Rebase #75 onto `main` after `gpu-bed-reader` merges, rerun full CI, and release it on its own (1.1.x or 1.2).
